@@ -1,7 +1,24 @@
 // Ported from Design/reference-impl/gaugeScale.test.ts (node:test → Vitest).
 import { describe, expect, it } from 'vitest';
-import { COMPOUND_DIAL, DISCHARGE_DIAL, TACHO_DIAL } from './dials';
-import { arc, ticks, valueToAngle, zoneArcs, zoneAt } from './gaugeScale';
+import { compoundDial, dischargeDial, majorStep, tachoDial } from './dials';
+import { arc, range, ticks, valueToAngle, zoneArcs, zoneAt } from './gaugeScale';
+
+// Sheet 02's faces, built from scales like an appliance spec's.
+const DISCHARGE_DIAL = dischargeDial({
+  fullScale: 1600,
+  zones: [
+    { from: 1200, to: 1400, tone: 'caution' },
+    { from: 1400, to: 1600, tone: 'alarm' },
+  ],
+});
+const COMPOUND_DIAL = compoundDial({
+  fullScale: 1600,
+  zones: [
+    { from: -85, to: -70, tone: 'caution' },
+    { from: -100, to: -85, tone: 'alarm' },
+  ],
+});
+const TACHO_DIAL = tachoDial({ fullScale: 4000, zones: [{ from: 3500, to: 4000, tone: 'alarm' }] });
 
 describe('gauge scale', () => {
   it('maps the discharge dial linearly over 270°', () => {
@@ -66,5 +83,28 @@ describe('gauge scale', () => {
     expect(zoneAt(DISCHARGE_DIAL, 1300)).toBe('caution');
     expect(zoneAt(DISCHARGE_DIAL, 1400)).toBe('alarm');
     expect(zoneAt(COMPOUND_DIAL, -78)).toBe('caution');
+  });
+});
+
+describe('dial faces from a spec scale', () => {
+  it('picks round tick steps for the full scale', () => {
+    expect(majorStep(1600, 8)).toBe(200);
+    expect(majorStep(1600, 4)).toBe(400);
+    expect(majorStep(1400, 8)).toBe(200);
+    expect(majorStep(4000, 4)).toBe(1000);
+    expect(majorStep(3500, 4)).toBe(1000);
+  });
+
+  it('ends the scale at the spec full scale and carries its zones', () => {
+    const d = dischargeDial({ fullScale: 1400, zones: [{ from: 1200, to: 1400, tone: 'alarm' }] });
+    expect(range(d)).toEqual([0, 1400]);
+    expect(zoneAt(d, 1300)).toBe('alarm');
+    expect(range(compoundDial({ fullScale: 2400, zones: [] }))).toEqual([-100, 2400]);
+  });
+
+  it('labels a tacho only on whole thousands when the scale ends between them', () => {
+    const t = ticks(tachoDial({ fullScale: 3500, zones: [] }));
+    expect(t).toHaveLength(15);
+    expect(t.filter((x) => x.label).map((x) => x.label)).toEqual(['0', '1', '2', '3']);
   });
 });

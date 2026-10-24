@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { GaugeScaleSpec } from '../../sim/types';
 import { PrimerControl } from '../../ui/panel-pump/controls/PrimerControl';
 import { Throttle } from '../../ui/panel-pump/controls/Throttle';
 import { ValveHandle } from '../../ui/panel-pump/controls/ValveHandle';
@@ -25,11 +26,13 @@ function Card({ caption, children }: { caption: string; children: ReactNode }) {
 /** One dial face at several values, undamped. */
 export function GaugeGallery({
   dial,
+  scale,
   unit,
   label,
   values,
 }: {
   dial: DialId;
+  scale: GaugeScaleSpec;
   unit: string;
   label: string;
   values: readonly number[];
@@ -38,7 +41,12 @@ export function GaugeGallery({
     <Gallery>
       {values.map((v) => (
         <Card key={v} caption={`${String(v)} ${unit}`}>
-          <Gauge dial={DIALS[dial]} value={v} label={`${label} at ${String(v)}`} unit={unit} />
+          <Gauge
+            dial={DIALS[dial](scale)}
+            value={v}
+            label={`${label} at ${String(v)}`}
+            unit={unit}
+          />
         </Card>
       ))}
     </Gallery>

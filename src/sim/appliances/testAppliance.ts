@@ -17,7 +17,11 @@ export const TEST_APPLIANCE: ApplianceSpec = {
     { id: 'right', label: 'Right', sizeMm: 65 },
   ],
   instruments: [
-    { id: 'pressure', kind: 'discharge' },
+    {
+      id: 'pressure',
+      kind: 'discharge',
+      scale: { fullScale: 1400, zones: [{ from: 1200, to: 1400, tone: 'alarm' }] },
+    },
     { id: 'level', kind: 'tank' },
   ],
 };

@@ -1,71 +1,92 @@
-import type { DialSpec } from './gaugeScale';
+import type { GaugeScaleSpec } from '../../../sim/types';
+import type { DialSpec, ScaleSegment, Zone } from './gaugeScale';
 
-// Dial faces (Design sheet 02). A layout picks a face per instrument. Ranges and zone thresholds
-// are the design comps' figures, not doctrine (Design OPEN_DECISIONS #5). // PLACEHOLDER — needs Dek
+// Dial faces (Design sheet 02). A layout picks a face per instrument; the range and zones come
+// from that instrument's scale on the appliance spec, so each truck's gauges read its own figures.
 
 const hundreds = (v: number) => String(v / 100);
 
-/** Discharge (pressure) gauge, 0–1600 kPa. */
-export const DISCHARGE_DIAL: DialSpec = {
-  id: 'discharge',
-  segments: [{ v: [0, 1600], a: [-135, 135], major: 200, minor: 50, label: hundreds }],
-  zones: [
-    { v: [1200, 1400], tone: 'caution' },
-    { v: [1400, 1600], tone: 'alarm' },
-  ],
-  units: 'kPa ×100',
-  plate: 'DISCHARGE',
-};
+/** Tick steps a face may use: round numbers a gauge maker would print. */
+const NICE_STEPS = [50, 100, 200, 250, 400, 500, 1000, 2000, 2500, 5000] as const;
 
-/** Compound gauge: vacuum −100…0 kPa on a stretched sector, pressure 0…1600 kPa, joined at −75°. */
-export const COMPOUND_DIAL: DialSpec = {
-  id: 'compound',
-  segments: [
-    {
-      v: [-100, 0],
-      a: [-135, -75],
-      major: 50,
-      minor: 10,
-      label: (v) => (v === 0 ? null : `−${String(Math.abs(v))}`),
-      labelSize: 15,
-      labelMuted: true,
-      tint: true,
-    },
-    { v: [0, 1600], a: [-75, 135], major: 400, minor: 100, label: hundreds },
-  ],
-  zones: [
-    { v: [-85, -70], tone: 'caution' },
-    { v: [-100, -85], tone: 'alarm' },
-  ],
-  breaks: [0],
-  units: 'kPa ×100',
-  plate: 'COMPOUND',
-  subLabel: { text: 'VAC kPa', atValue: -50, r: 28 },
-};
+/** Smallest nice major step giving at most `maxMajors` intervals over `span`. Minor = major / 4. */
+export function majorStep(span: number, maxMajors: number): number {
+  return NICE_STEPS.find((s) => span / s <= maxMajors + 1e-9) ?? span;
+}
 
-/** Engine tachometer, 0–4000 rpm. */
-export const TACHO_DIAL: DialSpec = {
-  id: 'tacho',
-  segments: [
-    {
-      v: [0, 4000],
-      a: [-135, 135],
-      major: 1000,
-      minor: 250,
-      label: (v) => String(v / 1000),
-      labelSize: 22,
-    },
-  ],
-  zones: [{ v: [3500, 4000], tone: 'alarm' }],
-  units: 'RPM ×1000',
-  plate: 'ENGINE',
-};
+function linear(
+  fullScale: number,
+  a: readonly [number, number],
+  maxMajors: number,
+  extra: Partial<ScaleSegment> = {},
+): ScaleSegment {
+  const major = majorStep(fullScale, maxMajors);
+  return { v: [0, fullScale], a, major, minor: major / 4, label: hundreds, ...extra };
+}
+
+const zonesOf = (scale: GaugeScaleSpec): Zone[] =>
+  scale.zones.map((z) => ({ v: [z.from, z.to], tone: z.tone }));
+
+/** Discharge (pressure) gauge, 0 to full scale kPa over 270°. */
+export function dischargeDial(scale: GaugeScaleSpec): DialSpec {
+  return {
+    id: 'discharge',
+    segments: [linear(scale.fullScale, [-135, 135], 8)],
+    zones: zonesOf(scale),
+    units: 'kPa ×100',
+    plate: 'DISCHARGE',
+  };
+}
+
+/**
+ * Compound gauge: vacuum −100…0 kPa (near full vacuum) on a stretched sector, then pressure to full
+ * scale, joined at −75°.
+ */
+export function compoundDial(scale: GaugeScaleSpec): DialSpec {
+  return {
+    id: 'compound',
+    segments: [
+      {
+        v: [-100, 0],
+        a: [-135, -75],
+        major: 50,
+        minor: 10,
+        label: (v) => (v === 0 ? null : `−${String(Math.abs(v))}`),
+        labelSize: 15,
+        labelMuted: true,
+        tint: true,
+      },
+      linear(scale.fullScale, [-75, 135], 4),
+    ],
+    zones: zonesOf(scale),
+    breaks: [0],
+    units: 'kPa ×100',
+    plate: 'COMPOUND',
+    subLabel: { text: 'VAC kPa', atValue: -50, r: 28 },
+  };
+}
+
+/** Engine tachometer, 0 to full scale rpm. */
+export function tachoDial(scale: GaugeScaleSpec): DialSpec {
+  return {
+    id: 'tacho',
+    segments: [
+      linear(scale.fullScale, [-135, 135], 4, {
+        label: (v) => (v % 1000 === 0 ? String(v / 1000) : null),
+        labelSize: 22,
+      }),
+    ],
+    zones: zonesOf(scale),
+    units: 'RPM ×1000',
+    plate: 'ENGINE',
+  };
+}
 
 /** Faces a layout can name. */
 export const DIALS = {
-  discharge: DISCHARGE_DIAL,
-  compound: COMPOUND_DIAL,
-  tacho: TACHO_DIAL,
-} as const satisfies Record<string, DialSpec>;
+  discharge: dischargeDial,
+  compound: compoundDial,
+  tacho: tachoDial,
+} as const satisfies Record<string, (scale: GaugeScaleSpec) => DialSpec>;
 
 export type DialId = keyof typeof DIALS;

@@ -2,6 +2,7 @@
 // Renderers live in renderers.tsx, keyed by the same ids (docs/TESTING.md §3.2).
 import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
+import type { ApplianceSpec } from '../../sim/types';
 
 export type ViewportName = 'phone' | 'tablet' | 'desktop';
 
@@ -18,12 +19,6 @@ export interface FixtureMeta {
   applianceId?: string;
 }
 
-/** Appliances that get generated panel fixtures: the catalogue plus the test-only appliance. */
-export const PANEL_APPLIANCE_IDS: readonly string[] = [
-  ...APPLIANCES.map((a) => a.id),
-  TEST_APPLIANCE.id,
-];
-
 const PANEL_CAPTIONS = {
   idle:
     'Pump panel at rest with the tank-attack lines laid: every needle at its zero stop except ' +
@@ -36,31 +31,41 @@ const PANEL_CAPTIONS = {
     'compound just below 0, rpm above idle, tank still nearly full. No warnings.',
   'tank-low':
     'As tank-attack-700, but the tank is under a quarter: one amber segment with a triangle, ' +
-    'amber tank readout, TANK lamp amber with a triangle, message "Tank low: … L left."',
+    'amber tank readout, TANK lamp amber with a triangle, message "Tank low: watch the tank gauge."',
   'tank-empty':
     'As tank-attack-700, but the tank is empty: no segments lit, red outline, every pressure ' +
     'needle on its zero stop, TANK lamp red with a diamond (steady with a ring: reduced motion), ' +
     'message "Tank empty: the pump has no water."',
 } as const;
 
-type PanelState = keyof typeof PANEL_CAPTIONS;
+export type PanelState = keyof typeof PANEL_CAPTIONS;
 
-/** Panel states generated for each appliance; the test appliance gets a smaller set. */
-function panelStatesFor(applianceId: string): PanelState[] {
-  return applianceId === TEST_APPLIANCE.id
-    ? ['idle', 'tank-attack-700']
-    : ['idle', 'tank-attack-700', 'tank-low', 'tank-empty'];
+export interface PanelFixtureSet {
+  spec: ApplianceSpec;
+  states: readonly PanelState[];
 }
+
+const ALL_PANEL_STATES = Object.keys(PANEL_CAPTIONS) as PanelState[];
+
+/**
+ * Appliances that get generated panel fixtures, and the states each is shown in: every catalogue
+ * appliance in every state, plus the test-only appliance in a smaller set (it proves the panel is
+ * generic; its tank states would only repeat the reference appliance's).
+ */
+export const PANEL_FIXTURE_SETS: readonly PanelFixtureSet[] = [
+  ...APPLIANCES.map((spec) => ({ spec, states: ALL_PANEL_STATES })),
+  { spec: TEST_APPLIANCE, states: ['idle', 'tank-attack-700'] },
+];
 
 export function panelFixtureId(applianceId: string, state: string): string {
   return `panel/${applianceId}/${state}`;
 }
 
-const PANEL_FIXTURES: FixtureMeta[] = PANEL_APPLIANCE_IDS.flatMap((applianceId) =>
-  panelStatesFor(applianceId).map((state) => ({
-    id: panelFixtureId(applianceId, state),
+const PANEL_FIXTURES: FixtureMeta[] = PANEL_FIXTURE_SETS.flatMap(({ spec, states }) =>
+  states.map((state) => ({
+    id: panelFixtureId(spec.id, state),
     expect: PANEL_CAPTIONS[state],
-    applianceId,
+    applianceId: spec.id,
   })),
 );
 

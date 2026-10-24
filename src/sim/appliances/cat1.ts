@@ -42,10 +42,39 @@ export const CAT1: ApplianceSpec = {
     setKpa: 1100, // PLACEHOLDER — needs Dek
     slopeLpmPerKpa: 50, // bypass flow per kPa over set; holds discharge within ~20 kPa of set // PLACEHOLDER — needs Dek
   },
+  // Dial markings: the design comps' faces, with the discharge caution band starting at the relief
+  // set pressure and the tacho redline just above the governed max (CALIBRATION row 9).
   instruments: [
-    { id: 'compound', kind: 'compound' },
-    { id: 'discharge', kind: 'discharge' },
-    { id: 'tacho', kind: 'tacho' },
+    {
+      id: 'compound',
+      kind: 'compound',
+      scale: {
+        fullScale: 1600, // PLACEHOLDER — needs Dek
+        zones: [
+          { from: -85, to: -70, tone: 'caution' }, // PLACEHOLDER — needs Dek
+          { from: -100, to: -85, tone: 'alarm' }, // PLACEHOLDER — needs Dek
+        ],
+      },
+    },
+    {
+      id: 'discharge',
+      kind: 'discharge',
+      scale: {
+        fullScale: 1600, // PLACEHOLDER — needs Dek
+        zones: [
+          { from: 1100, to: 1400, tone: 'caution' }, // relief set → shutoff // PLACEHOLDER — needs Dek
+          { from: 1400, to: 1600, tone: 'alarm' }, // above shutoff: pressurised supply only // PLACEHOLDER — needs Dek
+        ],
+      },
+    },
+    {
+      id: 'tacho',
+      kind: 'tacho',
+      scale: {
+        fullScale: 3500, // PLACEHOLDER — needs Dek
+        zones: [{ from: 3100, to: 3500, tone: 'alarm' }], // redline above governed max // PLACEHOLDER — needs Dek
+      },
+    },
     { id: 'tank-level', kind: 'tank' },
   ],
 };
