@@ -76,12 +76,38 @@ Work order (one commit each, `npm run verify` green at the end):
 
 ## M3 — Scene panel v1
 
-- [ ] Static SVG scene: truck, hose lays, branches, firefighters, dam; composed from components. Truck art chosen by appliance id; hose lays drawn from the spec's deliveries.
-- [ ] Minimal reactivity: hose "charged" styling when flowing, branch spray on/off, water source level.
-- [ ] Scene↔panel correspondence: tapping a hose lay highlights its delivery on the panel (and vice versa).
-- [ ] Scene fixtures (all charged / one line off / tank low) and a journey for the correspondence tap.
+- [x] Static SVG scene: truck, hose lays, branches, firefighters, dam; composed from components. Truck art chosen by appliance id; hose lays drawn from the spec's deliveries.
+- [x] Minimal reactivity: hose "charged" styling when flowing, branch spray on/off, water source level.
+- [x] Scene↔panel correspondence: tapping a hose lay highlights its delivery on the panel (and vice versa).
+- [x] Scene fixtures (all charged / one line off / tank low) and a journey for the correspondence tap.
 
 **Demo:** turn off a delivery and the corresponding branch stops spraying.
+
+### M3 implementation plan
+
+Decisions taken to keep M3 demoable and schematic (PLAN risk "scope creep on scene art"); each open one is flagged under "needs Dek" in `docs/CALIBRATION.md`:
+
+* **Scene geometry is UI data, not sim data.** `HoseLine` has no coordinates, and shouldn't: the sim only needs lengths and elevation. A pure function (`ui/panel-scene/geometry.ts`) lays every line out from the scene art and the sim's lines: lines fan out from their delivery's coupling toward the fireground, each branch sits at a straight-line distance proportional to the hose laid (hoses snake, so ~85 % of the length), and the map scale shrinks so the longest line fits. The scale bar is drawn from that scale. Trucks, crews and the dam are map symbols, drawn larger than scale.
+* **Truck art is per-appliance data** (`ui/appliances/<id>/scene.ts`, registered like panel layouts): body size, cab end, tank hatch, and one coupling position per delivery, keyed by spec delivery id. One generic `ApplianceArt` component draws it. A consistency test checks art ↔ spec one-to-one, as for the panel layout. The test appliance's art lives in `src/testing/appliances/`.
+* **Delivery identity comes from the panel layout** (tag + glyph), so the scene and panel can never disagree. Charged hoses are outlet blue for every line (OPEN_DECISIONS #1 option B); the glyph marker at the branch carries identity.
+* **"Charged" means flowing.** Branches can't be shut by the crew yet (parking lot), so a pressurised line is a flowing one: a line is charged when its delivery flows ≥ 1 L/min (a display threshold, not physics). Otherwise a laid line is drawn dry; a delivery with no line shows a blank cap on its coupling.
+* **Water source level is the truck's tank** (a fill bar on the truck, amber with a triangle at ≤ ¼, red outline when empty, the same thresholds as the panel). The dam is static scenery until draughting arrives in M4.
+* **The scene SVG is `role="img"`; an HTML legend is its accessible, thumb-sized equivalent.** A hose drawn at phone scale is a few px wide and the bounding boxes of curved paths overlap, so the hoses can't be the 44 px targets. The legend lists every delivery (glyph, tag, label, "charged · 280 L/min" / "laid, dry" / "no line") plus the tank, and each row is a button. Tapping a hose on the map also works, through a wide invisible hit stroke.
+* **Correspondence is UI state in the store** (`highlight: { deliveryId, from }`), never sim state. Tapping a hose or a legend row ("Show Delivery 1 on panel") highlights that delivery's panel row and scrolls it into view; each panel delivery row gets a "Show Delivery 1 on scene" button (its text block, beside the drag-only valve) that highlights the hose and legend row. Tapping the highlighted item again clears it. Highlight is a double ring in dial colour and ink (Design §3 focus ring), never amber.
+* **Motion:** the flow highlight dash animates only under `prefers-reduced-motion: no-preference`; screenshots run reduced, so they are static.
+* **No elevation terrain yet.** Contours are decorative and unlabelled; a branch above or below the pump gets a "+14 m" label. The hydraulic section view (sheet 06) is parked.
+
+Work order (one commit each, `npm run verify` green at the end):
+
+1. **Plan** (this section).
+2. **Selectors + store.** `selectDeliveryLines(sim)` → per spec delivery: line, flow, branch pressure, state `charged | dry | none`; `tankFraction`; store `highlight` + `setHighlight` (toggle), cleared on `reset`. Vitest.
+3. **Scene art data.** `SceneArt` type, Cat 1 art, test-appliance art, registry, shared delivery glyph paths (moved out of `DeliveryTag`), art ↔ spec consistency test.
+4. **Geometry.** Pure `layoutScene(art, lines, view)` → truck pose, coupling points, a Bézier path + branch point + heading per laid line, map scale. Vitest: every laid line starts at its delivery's coupling, every branch inside the view, deterministic, longer lines reach further, a very long lay shrinks the scale instead of leaving the view.
+5. **Scene components** (`ui/panel-scene/`): `Backdrop` (ground tints, contours, track, scrub, dam, fire glow, north arrow), `ApplianceArt` (body, cab, hatch, couplings, tank fill bar), `HoseLay` (dry / charged with flow highlight, highlight halo, `data-testid="hose-lay-<id>"`, `data-state`), `BranchCrew` (branch glyph marker, crew figure, spray fan when flowing), `SceneLegend`, `SceneView`; mounted in `AppShell`.
+6. **Panel side of the correspondence.** Delivery row "Show … on scene" button with `aria-pressed`, highlighted row style, scroll into view.
+7. **Fixtures.** Generated per appliance: `scene/<id>/all-charged`, `one-line-off`, `tank-low`, `tank-empty`, and `scene/<id>/highlighted` (whole shell, first line highlighted on both panels). The test appliance gets `all-charged` and `one-line-off`. Scene fixture states built from pure sim calls next to the panel states.
+8. **Journeys + invariants.** `e2e/journeys/scene.spec.ts` over every journey appliance: the demo (open both lines → both charged and spraying; close one → it goes dry and stops spraying, the other keeps going), tank runs dry → every line dry, scene→panel tap on the hose itself, panel→scene tap, toggle off. Layout invariants over the scene fixtures (44 px, no scroll, no overlap, one legend row per delivery, one hose lay per line). Keyboard pass includes the new buttons.
+9. **Review loop**, baselines (every panel and shell baseline changes because the scene is no longer empty), docs (ARCHITECTURE §3/§7/§9.4, TESTING, CALIBRATION "needs Dek", PLAN tick).
 
 ## M4 — Sources, priming, failure behaviours
 
@@ -138,6 +164,12 @@ Work order (one commit each, `npm run verify` green at the end):
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
 * **Inputs have two sources of truth** (before M5, multi-truck relay): the store keeps one global `inputs`, while `TruckState.inputs` is the copy last applied on a tick, and there is no action to change the active truck. Make the active truck's inputs the single source, or key `inputs` by truck id. (PR #1 review.)
 * **Layout vocabulary gaps** (M4/M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button; an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` always shows the "not simulated" temperature and cavitation lamps, whatever instruments the truck has.
+* Scene follow-ups (M3): hydraulic section view along a line (Design sheet 06) with pump, friction, head and branch figures; elevation terrain that matches line elevations; a pressure-scaled spray throw; hose casing swelling on over-pressure and gaps on cavitation (Design §6 scene cues, with M4); a relay truck on the scene (M5).
+* **Scene off-screen on a phone while operating** (PR #2 review): below 900 px the scene stacks above the panel, so turning a delivery valve and watching its branch stop needs a scroll (the scene↔panel locate buttons scroll both ways). Candidates: a compact sticky scene or line-state HUD strip on phones, or a panel/scene tab switch. Needs a design decision before M4 adds more to watch.
+* **Scene model for M4/M5** (PR #2 review): `layoutScene` lays out one truck at a fixed anchor (`ui/panel-scene/site.ts`) and `SceneArt` couplings are deliveries only. M4 needs inlet couplings (suction hose to the dam, hydrant/collector) and M5 several trucks with truck-to-truck links: key couplings by control id with a `kind` (`delivery | inlet`), grow a scene model (trucks, sources, links) with this fan layout as the per-truck piece, and key `highlight` by truck as well as delivery.
+* **Pressurised vs flowing** (with branch shut-off above, CALIBRATION row 13): `LineState` `charged` is "delivery flows"; once a branch can be shut, split it so the hose follows pressure (`DeliveryLine.branchKpa`) and the spray follows flow.
+* Fan layout with many lines: spread is capped (38°, 16° per step), so 5–6 lines at short reach would crowd the branch markers. Fine for v1 (≤ 3 deliveries); revisit with a bigger truck (M7).
+* The e2e + review run has grown to ~60 s + ~30 s with the scene fixtures and journeys (budget ~60 s total, docs/TESTING.md §4); trim or parallelise before adding more.
 * Split `ValveHandle.tsx` (~260 lines) and `Gauge.tsx` (~250) under the ~200-line guideline; both are mostly SVG.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 

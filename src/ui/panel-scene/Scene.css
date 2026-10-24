@@ -1,0 +1,395 @@
+/* Plan-view scene (Design §7, sheet 06). Line weights are one step heavier than the panel's. */
+
+.scene {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  min-height: 0;
+}
+
+.scene__map {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 8 / 5;
+  border-radius: var(--radius-card);
+  background: var(--color-scene-dust-low);
+}
+
+/* Scenery */
+.scene-ground {
+  fill: var(--color-scene-dust-low);
+}
+.scene-ground--1 {
+  fill: var(--color-scene-dust);
+}
+.scene-ground--2 {
+  fill: var(--color-scene-dust-high1);
+}
+.scene-ground--3 {
+  fill: var(--color-scene-dust-high2);
+}
+.scene-contour {
+  fill: none;
+  stroke: var(--color-scene-contour);
+  stroke-width: 1.5;
+}
+.scene-contour--index {
+  stroke-width: 2.5;
+}
+.scene-ash {
+  fill: var(--color-scene-ash);
+  opacity: 0.55;
+}
+.scene-fire-front {
+  fill: none;
+  stroke: var(--color-signal-alarm);
+  stroke-width: 3;
+  stroke-dasharray: 10 6;
+  opacity: 0.55;
+}
+.scene-fire-front--glow {
+  stroke: var(--color-signal-caution);
+  stroke-width: 14;
+  stroke-dasharray: none;
+  opacity: 0.22;
+}
+.scene-smoke {
+  fill: var(--color-scene-smoke);
+  opacity: 0.28;
+}
+.scene-track {
+  fill: none;
+  stroke: var(--color-scene-track);
+  stroke-width: 24;
+  stroke-linecap: round;
+}
+.scene-track__ruts {
+  fill: none;
+  stroke: var(--color-scene-contour);
+  stroke-width: 1.5;
+  stroke-dasharray: 8 7;
+}
+.scene-scrub {
+  fill: var(--color-scene-scrub);
+  stroke: var(--color-scene-scrub-stroke);
+  stroke-width: 2;
+}
+.scene-scrub__highlight {
+  fill: none;
+  stroke: var(--color-scene-scrub-highlight);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.scene-shadow {
+  fill: #000;
+  opacity: 0.16;
+}
+.scene-dam {
+  fill: var(--color-scene-dam);
+  stroke: var(--color-scene-dam-bank);
+  stroke-width: 6;
+}
+.scene-dam__ripples {
+  fill: none;
+  stroke: var(--color-scene-dam-ripple);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.scene-dam__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 2px;
+  fill: var(--color-material-tank-lit);
+}
+
+/* Map furniture and labels */
+.scene-paper {
+  fill: var(--color-material-paper);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+.scene-ink {
+  fill: var(--color-material-ink);
+}
+.scene-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  fill: var(--color-material-ink);
+}
+.scene-label--tag {
+  font-size: 20px;
+  letter-spacing: 0.04em;
+}
+.scene-label--mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 15px;
+}
+.scene-scale path {
+  fill: none;
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+
+/* Truck */
+.scene-truck__body {
+  fill: var(--color-scene-truck-body);
+  stroke: var(--color-material-ink);
+  stroke-width: 2.5;
+}
+.scene-truck__cab {
+  fill: var(--color-scene-truck-cab);
+  stroke: var(--color-material-ink);
+  stroke-width: 2.5;
+}
+.scene-truck__bay {
+  fill: var(--color-material-galv);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+.scene-truck__hatch {
+  fill: var(--color-scene-hose-dry-canvas);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+.scene-coupling {
+  fill: var(--color-material-galv);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+.scene-coupling--capped {
+  fill: var(--color-material-ink);
+  stroke: var(--color-material-galv);
+  stroke-width: 2.5;
+}
+.scene-tank__track {
+  fill: var(--color-material-tank-unlit);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+.scene-tank__fill {
+  fill: var(--color-material-tank-lit);
+}
+.scene-tank--low .scene-tank__fill,
+.scene-tank__triangle {
+  fill: var(--color-signal-caution);
+}
+.scene-tank__triangle {
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.scene-tank--empty .scene-tank__track {
+  stroke: var(--color-signal-alarm);
+  stroke-width: 2.5;
+}
+
+/* Hose lays */
+.scene-hose,
+.scene-branch {
+  cursor: pointer;
+}
+.scene-hose path {
+  fill: none;
+  stroke-linecap: round;
+}
+.scene-hose__casing {
+  fill: none;
+  stroke: var(--color-material-ink);
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+.scene-hose__core {
+  fill: none;
+  stroke: var(--color-function-outlet);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.scene-hose__flow {
+  stroke: #fff;
+  stroke-opacity: 0.45;
+  stroke-width: 1.6;
+  stroke-dasharray: 2 16;
+}
+.scene-hose__dry {
+  fill: none;
+  stroke: var(--color-scene-canvas-hose-dry);
+  stroke-width: 3.5;
+  stroke-dasharray: 9 6;
+  stroke-linecap: round;
+}
+.scene-hose__hit {
+  stroke: transparent;
+  stroke-width: 36;
+  pointer-events: stroke;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scene-hose__flow {
+    animation: scene-hose-flow 0.6s linear infinite;
+  }
+}
+
+@keyframes scene-hose-flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+/* Highlight: the focus ring's double band, dial inside ink (Design §3), never amber. */
+.scene-highlight {
+  fill: none;
+  stroke: var(--color-focus-inner);
+  stroke-width: 21;
+  stroke-linecap: round;
+}
+.scene-highlight--outer {
+  stroke: var(--color-focus-outer);
+  stroke-width: 27;
+}
+circle.scene-highlight {
+  stroke-width: 4;
+}
+circle.scene-highlight--outer {
+  stroke-width: 8;
+}
+
+/* Branch crews */
+.scene-spray {
+  fill: var(--color-scene-spray);
+  opacity: 0.85;
+}
+.scene-spray__jet {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 4 8;
+  stroke-linecap: round;
+}
+.scene-crew__ppe {
+  fill: var(--color-scene-ppe);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.6;
+}
+.scene-crew__band {
+  fill: none;
+  stroke: var(--color-scene-hi-vis-band);
+  stroke-width: 2;
+}
+.scene-crew__helmet {
+  fill: var(--color-scene-truck-cab);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.6;
+}
+
+/* Legend: the scene's key, and the thumb-sized way to pick a line. */
+.scene-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scene-legend__row,
+.scene-legend__tank {
+  display: grid;
+  grid-template-columns: 36px auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--color-material-row-raised);
+  color: var(--color-material-steel);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.scene-legend__row {
+  border: var(--line-hairline) solid var(--color-material-rule);
+  cursor: pointer;
+}
+
+.scene-legend__row:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+}
+
+.scene-legend__row[aria-pressed='true'] {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: -4px;
+  border-color: var(--color-focus-outer);
+}
+
+.scene-legend__swatch {
+  width: 36px;
+  height: 14px;
+}
+
+.scene-legend__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scene-legend__status {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-material-steel-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scene-legend__row[data-state='charged'] .scene-legend__status {
+  color: var(--color-material-steel);
+}
+
+.scene-legend__tank {
+  grid-template-columns: minmax(0, 1fr) auto;
+  background: none;
+}
+
+.scene-legend__tank--low .scene-legend__status {
+  color: var(--color-signal-caution);
+}
+
+.scene-legend__tank--empty .scene-legend__status {
+  color: var(--color-signal-alarm-text-on-dark);
+}
+
+.scene-legend__signal {
+  width: 13px;
+  height: 13px;
+  margin-right: var(--space-1);
+  vertical-align: -1px;
+  fill: currentColor;
+}
+
+/* Narrow scene (phone): the status drops under the name so neither is truncated. */
+.scene {
+  container-type: inline-size;
+}
+
+@container (max-width: 420px) {
+  .scene-legend__row {
+    grid-template-columns: 36px auto minmax(0, 1fr);
+    row-gap: 0;
+    padding-block: var(--space-1);
+  }
+  .scene-legend__row .scene-legend__status {
+    grid-column: 3;
+  }
+}

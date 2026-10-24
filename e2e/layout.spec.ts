@@ -5,10 +5,11 @@ import { expect, gotoApp, test } from './fixtures';
 import {
   expectNoHorizontalScroll,
   expectNoOverlaps,
+  expectSceneRenderedOnce,
   expectSpecRenderedOnce,
   expectTouchTargets,
 } from './invariants';
-import { layoutFor } from './panel';
+import { activeTruckOf, getState, layoutFor } from './panel';
 
 async function panelBoxes(page: Page) {
   const scene = await page.getByRole('region', { name: 'Scene' }).boundingBox();
@@ -36,6 +37,7 @@ test.describe('app shell layout invariants', () => {
     await expectTouchTargets(page);
     await expectNoOverlaps(page);
     await expectArrangement(page, width);
+    await expectSceneRenderedOnce(page, layoutFor(activeTruckOf(await getState(page)).spec.id));
   });
 
   test('switches arrangement exactly at the breakpoint', async ({ page }, testInfo) => {
@@ -49,15 +51,18 @@ test.describe('app shell layout invariants', () => {
   });
 });
 
-// Every generated panel fixture, at every viewport (docs/TESTING.md §4 layout invariants).
-test.describe('pump panel layout invariants', () => {
+// Every generated fixture, at every viewport (docs/TESTING.md §4 layout invariants): shell
+// fixtures show both panels, scene fixtures the scene alone.
+test.describe('generated fixture layout invariants', () => {
   for (const fixture of FIXTURES.filter((f) => f.applianceId !== undefined)) {
     test(fixture.id, async ({ page }) => {
+      const layout = layoutFor(fixture.applianceId ?? '');
       await gotoApp(page, `?fixture=${encodeURIComponent(fixture.id)}`);
       await expectNoHorizontalScroll(page);
       await expectTouchTargets(page);
       await expectNoOverlaps(page);
-      await expectSpecRenderedOnce(page, layoutFor(fixture.applianceId ?? ''));
+      await expectSceneRenderedOnce(page, layout);
+      if (fixture.surface === 'shell') await expectSpecRenderedOnce(page, layout);
     });
   }
 });
