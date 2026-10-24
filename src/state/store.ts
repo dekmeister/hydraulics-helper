@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { getAppliance } from '../sim/appliances/catalogue';
 import { switchControlIds, valveControlIds } from '../sim/appliances/controls';
 import { TICK_S } from '../sim/constants';
-import { advance } from '../sim/engine';
+import { advance, switchTruck } from '../sim/engine';
 import { getScenario } from '../sim/scenarios';
 import { supports } from '../sim/scenarios/types';
 import { TANK_ATTACK } from '../sim/scenarios/tankAttack';
@@ -45,13 +45,18 @@ export type HighlightSource = 'scene' | 'panel';
 
 /** A delivery picked out on both panels (UI state only, never sim state). */
 export interface Highlight {
+  /** The truck the delivery is on: always the active one (a switch clears the highlight). */
+  truckId: string;
   deliveryId: ControlId;
   from: HighlightSource;
 }
 
 interface PumpOpsStore {
   sim: SimState;
-  /** What the player has set on the panel; applied to the active truck on every tick. */
+  /**
+   * What the player has set on the panel; applied to the active truck on every tick. Every other
+   * truck's controls live in the sim (`TruckState.inputs`), where they're held.
+   */
   inputs: PlayerInputs;
   /** Run `ticks` fixed sim steps synchronously. The only way sim time moves. */
   step: (ticks: number) => void;
@@ -68,6 +73,11 @@ interface PumpOpsStore {
   setValve: (id: ControlId, open: number) => void;
   /** Set an on/off control (primer) by spec control id. */
   setSwitch: (id: ControlId, on: boolean) => void;
+  /**
+   * Operate another truck: the controls set on this one stay held on it, the panel takes the
+   * other's. Clears the highlight and the Wake (both belong to the truck left).
+   */
+  setActiveTruck: (truckId: string) => void;
   highlight: Highlight | null;
   /** Highlight a delivery on the scene and panel, or clear it if it's already highlighted. */
   toggleHighlight: (deliveryId: ControlId, from: HighlightSource) => void;
@@ -126,12 +136,22 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
     }
     set(({ inputs }) => ({ inputs: { ...inputs, switches: { ...inputs.switches, [id]: on } } }));
   },
+  setActiveTruck: (truckId) => {
+    set(({ sim, inputs }) => {
+      const next = switchTruck(sim, truckId, inputs);
+      return { sim: next, inputs: activeTruck(next).inputs, highlight: null, wake: [] };
+    });
+  },
   toggleHighlight: (deliveryId, from) => {
-    if (!activeTruck(get().sim).spec.deliveries.some((d) => d.id === deliveryId)) {
+    const truck = activeTruck(get().sim);
+    if (!truck.spec.deliveries.some((d) => d.id === deliveryId)) {
       throw new Error(`toggleHighlight: '${deliveryId}' is not a delivery on the active appliance`);
     }
     set(({ highlight }) => ({
-      highlight: highlight?.deliveryId === deliveryId ? null : { deliveryId, from },
+      highlight:
+        highlight?.truckId === truck.id && highlight.deliveryId === deliveryId
+          ? null
+          : { truckId: truck.id, deliveryId, from },
     }));
   },
 }));

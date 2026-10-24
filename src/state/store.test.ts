@@ -55,9 +55,17 @@ describe('store', () => {
     if (a === undefined || b === undefined) throw new Error('need two deliveries');
     expect(useStore.getState().highlight).toBeNull();
     toggleHighlight(a.id, 'scene');
-    expect(useStore.getState().highlight).toEqual({ deliveryId: a.id, from: 'scene' });
+    expect(useStore.getState().highlight).toEqual({
+      truckId: sim.activeTruckId,
+      deliveryId: a.id,
+      from: 'scene',
+    });
     toggleHighlight(b.id, 'panel');
-    expect(useStore.getState().highlight).toEqual({ deliveryId: b.id, from: 'panel' });
+    expect(useStore.getState().highlight).toEqual({
+      truckId: sim.activeTruckId,
+      deliveryId: b.id,
+      from: 'panel',
+    });
     toggleHighlight(b.id, 'scene');
     expect(useStore.getState().highlight).toBeNull();
   });
