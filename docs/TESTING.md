@@ -80,7 +80,7 @@ interface Fixture {
 
 * Every instrument is `role="meter"` with an accessible name and `aria-valuenow` = displayed (damped) value in its native unit (kPa, L, rpm). Journeys assert readings with `getByRole('meter', { name: 'Discharge' })`, never by measuring needle pixels.
 * Every control is a `button`, `slider` or `switch` with an accessible name taken from the layout label (Australian terminology — rule 5, so tests double as a vocabulary check).
-* Controls use **Pointer Events only** (no separate touch/mouse handlers), so a Playwright mouse drag exercises the same code path as a finger. Taps are tested with `locator.tap()` in the touch-enabled phone project.
+* Controls use **Pointer Events only** (no separate touch/mouse handlers), so a Playwright mouse drag exercises the same code path as a finger. Taps are tested with `locator.tap()` in the touch-enabled phone project. Plain buttons that only act on a tap (scene hoses, legend rows, the panel's delivery-row locate buttons) use `onClick`, which a tap and a click both fire; anything dragged uses Pointer Events.
 * `data-testid` only where no role/name fits, keyed by spec id: scene hose lays `hose-lay-<deliveryId>` (with `data-state="charged|dry"` and `data-highlighted`), `spray-<deliveryId>`, `branch-<deliveryId>`, `coupling-<deliveryId>`, `scene-tank` (`data-level`). Journeys tap a hose at a point on its path (`e2e/scene.ts` `tapHoseLay`), since a curved path's box centre is rarely on the hose.
 * The scene map is `role="img"`; its legend buttons ("Show Delivery 1 on panel") and the panel's delivery-row buttons ("Show Delivery 1 on scene", `aria-pressed`) are the accessible route to the correspondence.
 
