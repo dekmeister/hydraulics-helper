@@ -225,7 +225,7 @@ interface ApplianceSpec {        // src/sim/types.ts is authoritative
   deliveries: DeliverySpec[];    // { id, label, sizeMm }
   primer?: PrimerSpec;           // { kind: 'rotaryVane', id, maxOnS, periodS } | { kind: 'diaphragm', id } | { kind: 'selfPriming' }
   relief?: ReliefSpec;           // { kind: 'preset', setKpa, … } | { kind: 'adjustable', id, minKpa, maxKpa, … }; dumpTo 'tank'|'inlet'
-  instruments: InstrumentSpec[]; // { id, kind: 'compound'|'discharge'|'tacho'|'tank' }
+  instruments: InstrumentSpec[]; // { id, kind: 'compound'|'discharge'|'tacho', scale: { fullScale, zones } } | { id, kind: 'tank' }
 }
 ```
 
@@ -240,7 +240,7 @@ Control ids are the inlet, delivery and adjustable-relief ids (valves, 0–1) pl
 
 ### 9.4 Panel layout as data
 
-Each appliance has a layout in `ui/appliances/<id>/layout.ts` (types in `ui/appliances/types.ts`, registered in `ui/appliances/registry.ts`): an ordered list of sections, each placing spec controls and instruments with their label, `Gauge` face, control variant and tap behaviour. Sections are `row` (wrapping) or `list` (stacked rows), and CSS container queries size the components, so one layout serves 375–1280 px; each component draws its own SVG in its own `viewBox`. Absolute positions on a drawing (`Design/layouts/layout-a.json`) belong to the later realistic bay view, not this panel. The pump panel renderer (`ui/panel-pump/PumpPanel.tsx`) iterates the layout using the generic components (`Gauge`, `TankLevel`, `ValveHandle`, `Throttle`, `PrimerControl`, `WarningStrip`). The throttle and warning strip are placed by the layout too, exactly once. Adding an appliance means adding a spec, a layout and optionally scene art; a new component is needed only for a genuinely new kind of control.
+Each appliance has a layout in `ui/appliances/<id>/layout.ts` (types in `ui/appliances/types.ts`, registered in `ui/appliances/registry.ts`): an ordered list of sections, each placing spec controls and instruments with their label, `Gauge` face, control variant and tap behaviour. The face is a template: its range and zones come from the instrument's `scale` on the spec, since gauge markings differ between trucks. Sections are `row` (wrapping) or `list` (stacked rows), and CSS container queries size the components, so one layout serves 375–1280 px; each component draws its own SVG in its own `viewBox`. Absolute positions on a drawing (`Design/layouts/layout-a.json`) belong to the later realistic bay view, not this panel. The pump panel renderer (`ui/panel-pump/PumpPanel.tsx`) iterates the layout using the generic components (`Gauge`, `TankLevel`, `ValveHandle`, `Throttle`, `PrimerControl`, `WarningStrip`). The throttle and warning strip are placed by the layout too, exactly once. Adding an appliance means adding a spec, a layout and optionally scene art; a new component is needed only for a genuinely new kind of control.
 
 * Real panels differ in arrangement, and finding the right control is part of the skill, so a layout should follow the real arrangement (generic styling, no livery).
 * Every layout must meet the mobile floor (375 px, 44 px targets). If a real panel is too dense, group the controls (e.g. a swipeable delivery bank) rather than shrink them.
