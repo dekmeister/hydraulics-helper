@@ -192,7 +192,7 @@ Work order (one commit each, `npm run verify` green at the end):
 * Vernier-knob throttle variant (Layout A, Design OPEN_DECISIONS #4); M2 ships the T-handle only.
 * Warning lamp acknowledge (tap → steady, opens a coaching card); needs coaching cards (M6).
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
-* **Inputs have two sources of truth** (before M5, multi-truck relay): the store keeps one global `inputs`, while `TruckState.inputs` is the copy last applied on a tick, and there is no action to change the active truck. Make the active truck's inputs the single source, or key `inputs` by truck id. (PR #1 review.)
+* **Inputs have two sources of truth** (before M5, multi-truck relay): the store keeps one global `inputs`, while `TruckState.inputs` is the copy last applied on a tick, and there is no action to change the active truck. Make the active truck's inputs the single source, or key `inputs` by truck id. (PR #1 review.) The UI selectors now all read the store's `inputs` (`supplyLays` used the truck's copy until the PR #3 review), so the split is only between the store and the sim.
 * **Layout vocabulary gaps** (M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button (the sim treats its switch as "stroking"); an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` shows every lamp the sim can light (temperature, cavitation, hammer), whatever the truck actually fits.
 * Scene follow-ups (M3): hydraulic section view along a line (Design sheet 06) with pump, friction, head and branch figures; elevation terrain that matches line elevations; a pressure-scaled spray throw; hose casing swelling on over-pressure and gaps on cavitation (Design §6 scene cues, with M4); a relay truck on the scene (M5).
 * **Scene off-screen on a phone while operating** (PR #2 review): below 900 px the scene stacks above the panel, so turning a delivery valve and watching its branch stop needs a scroll (the scene↔panel locate buttons scroll both ways). Candidates: a compact sticky scene or line-state HUD strip on phones, or a panel/scene tab switch. Needs a design decision before M4 adds more to watch.
@@ -203,6 +203,13 @@ Work order (one commit each, `npm run verify` green at the end):
 * M4 follow-ups: water hammer on inlet (butterfly) valves and weighted by hose size; hydrant back-fill into an open tank valve and tank fill from a hydrant, the tank-to-hydrant changeover surge (manual L1083–1098); prime-loss events (air leak at a coupling, vortex, strainer blocking) and dam level dropping the lift (M6 events); engine load droop, so losing prime shows the manual's rpm surge; pump damage from sustained cavitation or overheat as a fail state (M6); a temperature gauge where an appliance fits one.
 * On a 375 px phone the six warning lamps wrap HAMMER onto a second row, and the long scenario titles truncate in the picker. Both readable; tidy when lamps get acknowledge (M6).
 * Split `ValveHandle.tsx` (~260 lines) and `Gauge.tsx` (~250) under the ~200-line guideline; both are mostly SVG.
+* **PR #3 review follow-ups** (M5–M7):
+  * Water hammer surge depends on the tick rate (CALIBRATION "needs Dek" 21): measure the closure against the line's 2L/a, not per tick, once Dek picks the model.
+  * Priming is one `pump.primed` flag, so `validateSite` allows one static source per truck. Track priming per supply before an appliance with two suction inlets (M7).
+  * One RNG stream is drawn per truck per tick in truck order, so adding a truck changes another truck's flutter. Give each truck its own stream before M5 traces with two trucks.
+  * `Scenario.build()` scripts are hand-timed to Cat 1 (e.g. the primer released at t = 25 s). M6's data format needs triggers ("when primed") and a check that every scripted run succeeds on each eligible appliance.
+  * `SimState` has no schema version; add one before M6 persists anything.
+  * No CI workflow: `npm run verify` runs only locally, and baselines are tied to the pinned browser and OS.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 
 ## Risks

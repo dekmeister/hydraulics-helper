@@ -46,6 +46,7 @@ src/
     thermal.ts    # Churn heat vs flow-through cooling
     hammer.ts     # Water hammer (Joukowsky surge on valve closures)
     rng.ts        # Seeded PRNG step (gauge flutter)
+    site.ts       # Fireground data checks (supplies → trucks, sources, suction inlets)
     tank.ts       # Tank volume integration
     relay.ts      # Relay link logic (open & closed)
     engine.ts     # Tick loop: advance(state, inputs, dt) -> state
@@ -105,6 +106,8 @@ An appliance's inlets are *ports* (`InletKind = 'tank' | 'suction'`); what is pl
 * **Draughting** (hard suction to static water): `P_in = −10·lift − (hard suction + strainer + inlet valve)·Q²`, and only once primed (§4.6). C11: 4 m of lift reads −40 kPa.
 * **Relay inlet** (M5): a third supply kind, fed by another truck's discharge.
 
+`readings.inletCollapsed` says which inlets have their layflat pulled flat, so the scene draws a soft hose from what the sim solved rather than re-deriving it. Sites are checked when the state is created (`site.ts` `validateSite`): every supply goes to a truck, source and *suction* inlet that exist, one supply per inlet, unique ids, and at most one static source per truck, because priming is tracked per pump (§4.6). A layflat to static water is allowed but never primes: the "use hard suction" mistake is something to teach, not a data error.
+
 The pump can't pull its inlet below `pump.cavitationInletKpa` (§4.6 cavitation).
 
 ### 4.4 Pump curve
@@ -139,10 +142,10 @@ Each delivery is a series path: valve → hose segments → branch (nozzle).
 These make the model *teach*:
 
 * **Cavitation**: the pump cavitates when its inlet would fall below `pump.cavitationInletKpa` (−84 kPa reproduces Table 4's lift derate to 5 % up to 7 m). The inlet can't go lower, so the flow is capped: lift too high, suction restriction, a weak hydrant (where the layflat flattens at 0 first) or, later, outrunning a relay. Extra throttle adds no flow and no discharge ("adding RPM does nothing", the classic lesson). `readings.cavitation` (0–1) is how far past the cap the pump would go if the inlet could be pulled without limit. Gauges flutter: a seeded random walk (`SimState.rngState`, one draw per truck per tick) in `pump.flutter`, scaled by intensity and added to the *displayed* readings by the selectors, so sim readings, traces and calibration stay clean. Sustained cavitation is tallied (`tally.cavitationS`); pump damage and fail states are M6.
-* **Priming** (`priming.ts`): tank and hydrant supplies are flooded and never need it; a draught path supplies water only once primed. The primer pulls vacuum on the casing (plus the hard suction when its valve is open) towards `maxVacuumKpa`, with time constant air volume / `displacementLps`; the pump catches at `vacuum ≥ 10·lift`. An open delivery with a line is an air leak (no vacuum, L3265–3276); a casing flooded by an open tank or hydrant has no air to pull; with the suction valve shut, vacuum builds fast and holds (the vacuum test). `primer.kind`: rotary vane (switch; 1 min on in 3 duty, a cut-out that clears after the rest), hand diaphragm (switch = stroking; slower), self-priming (no control, primes whenever the suction is open), none (can't draught). Prime is lost when the static source runs dry. Air leaks and vortexing as events are M6.
+* **Priming** (`priming.ts`): tank and hydrant supplies are flooded and never need it; a draught path supplies water only once primed. The primer pulls vacuum on the casing (plus the hard suction when its valve is open) towards `maxVacuumKpa`, with time constant air volume / `displacementLps`; the pump catches at `vacuum ≥ 10·lift`, and only up hard suction (layflat flattens under vacuum). An open delivery with a line is an air leak (no vacuum, L3265–3276); a casing flooded by an open tank or hydrant has no air to pull; with the suction valve shut, vacuum builds fast and holds (the vacuum test). `primer.kind`: rotary vane (switch; 1 min on in 3 duty, a cut-out that clears after the rest), hand diaphragm (switch = stroking; slower), self-priming (no control, primes whenever the suction is open), none (can't draught). Prime is lost when the static source runs dry. Air leaks and vortexing as events are M6. `pump.primed` is one flag per pump, which is why a truck may draught from only one static source for now; per-supply priming waits for an appliance with two suction inlets (M7).
 * **Tank runs dry**: level gauge, low-water warning, then flow collapse. Firefighters on the scene panel lose water.
 * **Overheat** (`thermal.ts`): casing water temperature from churn heat `churnKw·(rpm/max)³` against flow-through cooling `Q·4.186·ΔT` (deliveries, and relief dumped to the tank; relief dumped to the inlet recirculates and doesn't cool) and a little loss to air. A dry pump doesn't heat. Lamp at 60 / 80 °C; tallied.
-* **Water hammer** (`hammer.ts`): a delivery valve that closed further this tick, with the flow drop over the tick turned into a Joukowsky surge `ρ·a·Δv` in the hose. Above `WATER_HAMMER_SURGE_KPA` it is an event: `tally.waterHammer` (the penalty, scored in M6) and `lastHammer`, which latches a lamp for 5 s. Flow lost any other way (tank dry, cavitation onset) isn't hammer. Inlet (butterfly) valves aren't checked yet.
+* **Water hammer** (`hammer.ts`): a delivery valve that closed further this tick, with the flow drop over the tick turned into a Joukowsky surge `ρ·a·Δv` in the hose. Above `WATER_HAMMER_SURGE_KPA` it is an event: `tally.waterHammer` (the penalty, scored in M6) and `lastHammer`, which latches a lamp for 5 s. A closure that stays over the threshold on consecutive ticks on the same delivery counts once. The surge is taken per tick, so it depends on the tick rate (fine at the fixed 10 Hz, but not a physical closure time; CALIBRATION "needs Dek" 21). Flow lost any other way (tank dry, cavitation onset) isn't hammer. Inlet (butterfly) valves aren't checked yet.
 * **Over-pressuring a closed relay**: receiving operator's compound gauge climbs; exceeding hose rating bursts a length (scenario event).
 
 ### 4.7 Relay pumping
@@ -277,7 +280,7 @@ Each appliance has a layout in `ui/appliances/<id>/layout.ts` (types in `ui/appl
 
 ### 9.6 Scenarios
 
-Scenarios name appliances by `id`. Where the lesson is generic (e.g. "tank attack"), a scenario declares the **capabilities** it requires (`tank`, `deliveries ≥ 2`, `suction` inlet, a `primer` of any kind) instead of a fixed appliance, so it can be played on any appliance that has them. The loader rejects a scenario whose appliances lack those capabilities. Relay scenarios may mix appliance types (e.g. bulk water carrier supplying a Cat 1).
+Scenarios name appliances by `id`. Where the lesson is generic (e.g. "tank attack"), a scenario declares the **capabilities** it requires (`tank`, `deliveries ≥ 2`, `suction` inlet, a `primer` of any kind) instead of a fixed appliance, so it can be played on any appliance that has them. The loader rejects a scenario whose appliances lack those capabilities (today `store.loadScenario` checks `supports()` and throws; the picker only offers eligible scenarios). Relay scenarios may mix appliance types (e.g. bulk water carrier supplying a Cat 1).
 
 ### 9.7 Adding an appliance — checklist
 
