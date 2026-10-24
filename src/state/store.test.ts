@@ -46,4 +46,29 @@ describe('store', () => {
       useStore.getState().setSwitch('d1', true);
     }).toThrow(/not a switch/);
   });
+
+  it('toggles the scene↔panel highlight on a delivery and remembers which side asked', () => {
+    const { sim, toggleHighlight } = useStore.getState();
+    const [a, b] = activeTruck(sim).spec.deliveries;
+    if (a === undefined || b === undefined) throw new Error('need two deliveries');
+    expect(useStore.getState().highlight).toBeNull();
+    toggleHighlight(a.id, 'scene');
+    expect(useStore.getState().highlight).toEqual({ deliveryId: a.id, from: 'scene' });
+    toggleHighlight(b.id, 'panel');
+    expect(useStore.getState().highlight).toEqual({ deliveryId: b.id, from: 'panel' });
+    toggleHighlight(b.id, 'scene');
+    expect(useStore.getState().highlight).toBeNull();
+  });
+
+  it('rejects a highlight on something that is not a delivery, and clears it on reset', () => {
+    const { sim, toggleHighlight } = useStore.getState();
+    const spec = activeTruck(sim).spec;
+    const inlet = spec.inlets[0]?.id ?? '';
+    expect(() => {
+      toggleHighlight(inlet, 'panel');
+    }).toThrow();
+    toggleHighlight(spec.deliveries[0]?.id ?? '', 'panel');
+    useStore.getState().reset();
+    expect(useStore.getState().highlight).toBeNull();
+  });
 });
