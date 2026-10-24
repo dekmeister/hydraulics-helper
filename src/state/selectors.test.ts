@@ -46,6 +46,14 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('selectors: %s', (_id
     expect(level(withTank(sim, 0), idle, 'tank')).toBe('alarm');
   });
 
+  it('keeps warning messages steady while the tank drains (the live region re-announces changes)', () => {
+    const message = (tankL: number) =>
+      selectWarnings(withTank(sim, tankL), idle).find((w) => w.id === 'tank')?.message;
+    const low = LOW_TANK_FRACTION * capacity;
+    expect(message(low)).toBe(message(low - 37));
+    expect(message(low)).not.toBe('');
+  });
+
   it('warns of no supply only when a delivery is open with every inlet shut', () => {
     const deliveryOpen = { ...idle, valves: { ...idle.valves, [firstLine.deliveryId]: 1 } };
     expect(level(sim, idle, 'supply')).toBe('off');

@@ -14,16 +14,20 @@ export function useDampedValue(target: number, span: number): number {
   const [display, setDisplay] = useState(target);
   const state = useRef<Damped>({ value: target, velocity: 0 });
   const targetRef = useRef(target);
+  // Last frame time survives a retarget (every sim tick), so the next frame integrates the real
+  // gap instead of dt = 0; cleared when the needle settles and the loop stops.
+  const lastMs = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     targetRef.current = target;
     let handle = 0;
-    let last: number | undefined;
     const frame = (nowMs: number) => {
+      const last = lastMs.current;
       const dtS = last === undefined ? 0 : Math.min((nowMs - last) / 1000, MAX_FRAME_S);
-      last = nowMs;
+      lastMs.current = nowMs;
       const next = stepDamped(state.current, target, dtS);
       if (isSettled(next, target, span)) {
+        lastMs.current = undefined;
         state.current = { value: target, velocity: 0 };
         setDisplay(target);
         return;
@@ -42,6 +46,7 @@ export function useDampedValue(target: number, span: number): number {
     () =>
       onSnap(() => {
         state.current = { value: targetRef.current, velocity: 0 };
+        lastMs.current = undefined;
         setDisplay(targetRef.current);
       }),
     [],

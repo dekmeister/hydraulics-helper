@@ -85,7 +85,9 @@ export function selectWarnings(sim: SimState, inputs: PlayerInputs): Warning[] {
         level === 'empty'
           ? 'Tank empty: the pump has no water.'
           : level === 'low'
-            ? `Tank low: ${String(Math.round(truck.tankL))} L left.`
+            ? // No litres here: this text feeds a live region, and a changing number would be
+              // re-announced every few ticks. The tank gauge carries the reading.
+              'Tank low: watch the tank gauge.'
             : '',
     });
   }
