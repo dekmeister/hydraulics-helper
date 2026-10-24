@@ -17,8 +17,12 @@ export function installTestHooks(root: Root): void {
   window.__pumpops = createTestApi();
   const fixtureId = new URLSearchParams(window.location.search).get('fixture');
   if (fixtureId !== null) {
-    const state = FIXTURE_RENDERERS[fixtureId]?.state;
-    if (state !== undefined) useStore.getState().reset(state());
+    const renderer = FIXTURE_RENDERERS[fixtureId];
+    if (renderer?.state !== undefined) useStore.getState().reset(renderer.state());
+    if (renderer?.highlight !== undefined) {
+      const { sim, toggleHighlight } = useStore.getState();
+      toggleHighlight(renderer.highlight(sim), 'panel');
+    }
     const steps = FIXTURES.find((f) => f.id === fixtureId)?.steps;
     if (steps !== undefined) useStore.getState().step(steps);
   }

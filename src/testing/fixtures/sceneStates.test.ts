@@ -1,0 +1,38 @@
+import { describe, expect, it } from 'vitest';
+import { APPLIANCES } from '../../sim/appliances/catalogue';
+import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
+import { activeTruck, deliveryLines } from '../../state/selectors';
+import { LOW_TANK_FRACTION } from '../../state/tankLevel';
+import { sceneState } from './panelStates';
+
+describe.each([...APPLIANCES, TEST_APPLIANCE].map((s) => [s.id, s] as const))(
+  'scene fixture states: %s',
+  (_id, spec) => {
+    const states = (id: Parameters<typeof sceneState>[1]) =>
+      deliveryLines(sceneState(spec, id)).filter((d) => d.state !== 'none');
+
+    it('all-charged charges every laid line', () => {
+      expect(states('all-charged').map((d) => d.state)).toEqual(
+        states('all-charged').map(() => 'charged'),
+      );
+    });
+
+    it('one-line-off has the first line dry and every other line charged', () => {
+      const first = sceneState(spec, 'one-line-off').lines[0]?.deliveryId;
+      for (const d of states('one-line-off'))
+        expect(d.state).toBe(d.deliveryId === first ? 'dry' : 'charged');
+    });
+
+    it('tank-low keeps every line charged on a tank under the low mark', () => {
+      const s = sceneState(spec, 'tank-low');
+      const t = activeTruck(s);
+      expect(t.tankL).toBeGreaterThan(0);
+      expect(t.tankL).toBeLessThanOrEqual(LOW_TANK_FRACTION * (spec.tank?.capacityL ?? 0));
+      for (const d of deliveryLines(s)) if (d.state !== 'none') expect(d.state).toBe('charged');
+    });
+
+    it('tank-empty leaves every line dry', () => {
+      for (const d of states('tank-empty')) expect(d.state).toBe('dry');
+    });
+  },
+);

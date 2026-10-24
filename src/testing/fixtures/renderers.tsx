@@ -1,13 +1,16 @@
 import type { ReactElement } from 'react';
-import type { GaugeScaleSpec, SimState } from '../../sim/types';
+import type { ControlId, GaugeScaleSpec, SimState } from '../../sim/types';
+import { SceneView } from '../../ui/panel-scene/SceneView';
 import { AppShell } from '../../ui/layout/AppShell';
-import { PANEL_FIXTURE_SETS, panelFixtureId } from './catalog';
+import { PANEL_FIXTURE_SETS, panelFixtureId, SCENE_FIXTURE_SETS, sceneFixtureId } from './catalog';
 import { GaugeGallery, TankGallery, ThrottlePrimerGallery, ValveGallery } from './galleries';
-import { panelState, type PanelStateId } from './panelStates';
+import { panelState, sceneState, type PanelStateId, type SceneStateId } from './panelStates';
 
 export interface FixtureRenderer {
   /** Sim state loaded into the store before rendering. */
   state?: () => SimState;
+  /** Delivery highlighted on the scene and panel after the state loads. */
+  highlight?: (sim: SimState) => ControlId;
   render: () => ReactElement;
 }
 
@@ -40,6 +43,43 @@ function panelRenderers(): Record<string, FixtureRenderer> {
         render: () => <AppShell />,
       };
     }
+  }
+  return out;
+}
+
+/** The scene panel on its own, framed as in the app shell. */
+function SceneAlone() {
+  return (
+    <main className="fixture-scene">
+      <section className="app-panel" aria-labelledby="scene-title">
+        <h2 id="scene-title" className="app-panel__title">
+          Scene
+        </h2>
+        <SceneView />
+      </section>
+    </main>
+  );
+}
+
+/** Generated scene renderers, one per catalogued scene fixture, plus the highlighted shell. */
+function sceneRenderers(): Record<string, FixtureRenderer> {
+  const out: Record<string, FixtureRenderer> = {};
+  for (const { spec, states } of SCENE_FIXTURE_SETS) {
+    for (const state of states) {
+      out[sceneFixtureId(spec.id, state)] = {
+        state: () => sceneState(spec, state satisfies SceneStateId),
+        render: () => <SceneAlone />,
+      };
+    }
+    out[sceneFixtureId(spec.id, 'highlighted')] = {
+      state: () => sceneState(spec, 'all-charged'),
+      highlight: (sim) => {
+        const first = sim.lines[0];
+        if (first === undefined) throw new Error(`no line laid on ${spec.id}`);
+        return first.deliveryId;
+      },
+      render: () => <AppShell />,
+    };
   }
   return out;
 }
@@ -83,4 +123,5 @@ export const FIXTURE_RENDERERS: Record<string, FixtureRenderer> = {
   'controls/valves': { render: () => <ValveGallery /> },
   'controls/throttle-primer': { render: () => <ThrottlePrimerGallery /> },
   ...panelRenderers(),
+  ...sceneRenderers(),
 };
