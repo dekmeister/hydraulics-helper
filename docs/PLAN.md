@@ -76,10 +76,10 @@ Work order (one commit each, `npm run verify` green at the end):
 
 ## M3 — Scene panel v1
 
-- [ ] Static SVG scene: truck, hose lays, branches, firefighters, dam; composed from components. Truck art chosen by appliance id; hose lays drawn from the spec's deliveries.
-- [ ] Minimal reactivity: hose "charged" styling when flowing, branch spray on/off, water source level.
-- [ ] Scene↔panel correspondence: tapping a hose lay highlights its delivery on the panel (and vice versa).
-- [ ] Scene fixtures (all charged / one line off / tank low) and a journey for the correspondence tap.
+- [x] Static SVG scene: truck, hose lays, branches, firefighters, dam; composed from components. Truck art chosen by appliance id; hose lays drawn from the spec's deliveries.
+- [x] Minimal reactivity: hose "charged" styling when flowing, branch spray on/off, water source level.
+- [x] Scene↔panel correspondence: tapping a hose lay highlights its delivery on the panel (and vice versa).
+- [x] Scene fixtures (all charged / one line off / tank low) and a journey for the correspondence tap.
 
 **Demo:** turn off a delivery and the corresponding branch stops spraying.
 
@@ -164,6 +164,8 @@ Work order (one commit each, `npm run verify` green at the end):
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
 * **Inputs have two sources of truth** (before M5, multi-truck relay): the store keeps one global `inputs`, while `TruckState.inputs` is the copy last applied on a tick, and there is no action to change the active truck. Make the active truck's inputs the single source, or key `inputs` by truck id. (PR #1 review.)
 * **Layout vocabulary gaps** (M4/M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button; an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` always shows the "not simulated" temperature and cavitation lamps, whatever instruments the truck has.
+* Scene follow-ups (M3): hydraulic section view along a line (Design sheet 06) with pump, friction, head and branch figures; elevation terrain that matches line elevations; a pressure-scaled spray throw; hose casing swelling on over-pressure and gaps on cavitation (Design §6 scene cues, with M4); a relay truck on the scene (M5).
+* The e2e + review run has grown to ~60 s + ~30 s with the scene fixtures and journeys (budget ~60 s total, docs/TESTING.md §4); trim or parallelise before adding more.
 * Split `ValveHandle.tsx` (~260 lines) and `Gauge.tsx` (~250) under the ~200-line guideline; both are mostly SVG.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 

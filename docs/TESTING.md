@@ -72,7 +72,7 @@ interface Fixture {
 ```
 
 * A renderer may supply a `state()`: the sim state loaded into the store before render (`renderers.tsx`). Panel states are built from the tank-attack scenario by pure sim calls (`panelStates.ts`); `tank-attack-700` finds its throttle by bisection so its caption holds on any appliance.
-* Panel and scene fixtures are **generated per catalogue appliance** (`panel/<applianceId>/idle`, `…/tank-attack-700`, `…/tank-low`, `…/cavitating`), so a new appliance gets them automatically.
+* Panel and scene fixtures are **generated per catalogue appliance** (`panel/<applianceId>/idle`, `…/tank-attack-700`, `…/tank-low`, `…/tank-empty`; `scene/<applianceId>/all-charged`, `…/one-line-off`, `…/tank-low`, `…/tank-empty`, `…/highlighted`), so a new appliance gets them automatically. `surface` in the catalog says whether a fixture renders the whole shell or the scene alone; a renderer may also set a `highlight` after its state loads. Scene states are built next to the panel states (`panelStates.ts`, `sceneState`).
 * The visual spec is one `describe.each` over the registry × viewports: **adding a fixture = adding a screenshot.**
 * `expect` is plain English, written for review: *"Discharge needle at ~700 kPa, compound ~0 kPa, tank gauge ~¾, delivery 1 handle fully open, others closed. No warnings."*
 
@@ -81,7 +81,8 @@ interface Fixture {
 * Every instrument is `role="meter"` with an accessible name and `aria-valuenow` = displayed (damped) value in its native unit (kPa, L, rpm). Journeys assert readings with `getByRole('meter', { name: 'Discharge' })`, never by measuring needle pixels.
 * Every control is a `button`, `slider` or `switch` with an accessible name taken from the layout label (Australian terminology — rule 5, so tests double as a vocabulary check).
 * Controls use **Pointer Events only** (no separate touch/mouse handlers), so a Playwright mouse drag exercises the same code path as a finger. Taps are tested with `locator.tap()` in the touch-enabled phone project.
-* `data-testid` only where no role/name fits (e.g. scene hose lays: `data-testid="hose-lay-d1"`, keyed by spec id).
+* `data-testid` only where no role/name fits, keyed by spec id: scene hose lays `hose-lay-<deliveryId>` (with `data-state="charged|dry"` and `data-highlighted`), `spray-<deliveryId>`, `branch-<deliveryId>`, `coupling-<deliveryId>`, `scene-tank` (`data-level`). Journeys tap a hose at a point on its path (`e2e/scene.ts` `tapHoseLay`), since a curved path's box centre is rarely on the hose.
+* The scene map is `role="img"`; its legend buttons ("Show Delivery 1 on panel") and the panel's delivery-row buttons ("Show Delivery 1 on scene", `aria-pressed`) are the accessible route to the correspondence.
 
 ## 4. Playwright setup
 
@@ -103,13 +104,14 @@ interface Fixture {
 
 ### Layout invariants (layer 6)
 
-Run in every project, over the app shell and every panel fixture:
+Run in every project, over the app shell and every generated panel and scene fixture:
 
 1. Every interactive element (`button`, `slider`, `switch`, `link`) has a bounding box ≥ 44 × 44 CSS px.
 2. `document.documentElement.scrollWidth <= window.innerWidth`, so no horizontal page scroll.
 3. No two interactive elements' boxes intersect.
 4. Every control and instrument in the appliance spec is rendered exactly once (counted by accessible name / `data-testid` from the layout data), and each is reachable: inside the viewport or inside a scroll/swipe container that can bring it in.
-5. Keyboard: tabbing visits every control; arrow keys change a focused slider.
+5. Keyboard: tabbing visits every control (including the scene↔panel locate buttons); arrow keys change a focused slider.
+6. Scene: one legend button per spec delivery and one hose lay per laid line.
 
 This turns "test layouts at 375 / 768 / 1280 px" from a manual step into a failing test.
 
@@ -121,6 +123,7 @@ Each journey plays a lesson as a player would, at the `phone` project at minimum
 
 * **Tank attack:** load scenario → tap tank-to-pump → drag delivery 1 valve open → drag throttle to ~60 % → `step(300)` → expect discharge meter within the scenario's band, tank meter lower than at start, no warnings. Open delivery 2 → `step(50)` → discharge has sagged.
 * **Runs dry:** tank attack with a small tank → `step` until empty → warning strip shows the low-tank and then empty message; discharge collapses; nothing throws.
+* **Scene (M3 demo):** open both lines → both hose lays charged and spraying; drag one delivery shut → that line goes dry and stops spraying, the other keeps going. Tank runs out → every line dry. Tap a hose → its panel row is highlighted and in view; tap a panel row's locate button → its hose is highlighted and the scene in view.
 * **Valve drag precision:** drag to half-open and assert the slider value is in 0.45–0.55 and the sim input matches (`getState()`).
 
 Assertions use tolerances that come from the calibration/scenario data, not new magic numbers in test files.
