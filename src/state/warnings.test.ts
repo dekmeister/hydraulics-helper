@@ -58,6 +58,16 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
     expect(lamp(empty, allOpen, 'supply')).toMatchObject({ level: 'alarm' });
   });
 
+  it('says layflat can’t draught when the dam is on soft hose', () => {
+    const soft: SimState = {
+      ...draught,
+      supplies: draught.supplies.map((x) => ({ ...x, segments: [{ hose: '65L', lengthM: 6 }] })),
+    };
+    const w = lamp(soft, allOpen, 'supply');
+    expect(w?.level).toBe('caution');
+    expect(w?.message).toMatch(/hard suction/i);
+  });
+
   it('lights the temperature lamp amber then red as the casing heats', () => {
     const at = (tempC: number) =>
       lamp(
@@ -83,10 +93,19 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
   });
 
   it('draws the hard suction dry until primed, then primed; the hydrant layflat soft when over-run', () => {
-    expect(supplyLays(draught).map((s) => s.state)).toEqual(['dry']);
-    expect(supplyLays(primedState(draught)).map((s) => s.state)).toEqual(['primed']);
-    expect(supplyLays(run(hydrant, inputsWith(0.3, [suction]), 20))[0]?.state).toBe('charged');
-    expect(supplyLays(run(hydrant, allOpen, 50))[0]?.state).toBe('soft');
+    const shut = inputsWith(0, []);
+    expect(supplyLays(draught, shut).map((s) => s.state)).toEqual(['dry']);
+    expect(supplyLays(primedState(draught), shut).map((s) => s.state)).toEqual(['primed']);
+    const some = inputsWith(0.3, [suction]);
+    expect(supplyLays(run(hydrant, some, 20), some)[0]?.state).toBe('charged');
+    expect(supplyLays(run(hydrant, allOpen, 50), allOpen)[0]?.state).toBe('soft');
+  });
+
+  it('reads the inlet valve from the inputs the player holds, like the lamps do', () => {
+    // The truck's own copy is last tick's; the player has just opened the inlet.
+    const opened = inputsWith(0, [suction]);
+    expect(supplyLays(hydrant, opened)[0]?.open).toBe(true);
+    expect(supplyLays(hydrant, inputsWith(0, []))[0]?.open).toBe(false);
   });
 
   it('adds flutter to the pressure gauges only while cavitating', () => {

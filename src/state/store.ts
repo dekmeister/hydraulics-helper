@@ -4,6 +4,7 @@ import { switchControlIds, valveControlIds } from '../sim/appliances/controls';
 import { TICK_S } from '../sim/constants';
 import { advance } from '../sim/engine';
 import { getScenario } from '../sim/scenarios';
+import { supports } from '../sim/scenarios/types';
 import { TANK_ATTACK } from '../sim/scenarios/tankAttack';
 import type { ControlId, InstrumentKind, PlayerInputs, SimState } from '../sim/types';
 import { activeTruck, instrumentValue } from './selectors';
@@ -58,7 +59,7 @@ interface PumpOpsStore {
   reset: (sim?: SimState, scenarioId?: string | null) => void;
   /** Scenario the sim was loaded from, if any (the header picker shows it). */
   scenarioId: string | null;
-  /** Load a scenario's initial state on the active appliance. */
+  /** Load a scenario's initial state on the active appliance; throws if it can't play it. */
   loadScenario: (id: string) => void;
   /** Displayed readings for the last `WAKE_HISTORY_S` of sim time, oldest first. */
   wake: readonly WakeSample[];
@@ -104,7 +105,9 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   },
   loadScenario: (id) => {
     const spec = activeTruck(get().sim).spec;
-    get().reset(getScenario(id).build(spec).state, id);
+    const scenario = getScenario(id);
+    if (!supports(scenario, spec)) throw new Error(`${spec.id} can’t play '${id}'`);
+    get().reset(scenario.build(spec).state, id);
   },
   setThrottle: (position) => {
     set(({ inputs }) => ({ inputs: { ...inputs, throttle: clamp01(position) } }));

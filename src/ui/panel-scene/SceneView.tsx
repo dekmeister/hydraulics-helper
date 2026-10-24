@@ -22,6 +22,7 @@ import './Scene.css';
  */
 export function SceneView() {
   const sim = useStore((s) => s.sim);
+  const inputs = useStore((s) => s.inputs);
   const highlight = useStore((s) => s.highlight);
   const toggleHighlight = useStore((s) => s.toggleHighlight);
   const ref = useRef<HTMLDivElement>(null);
@@ -31,7 +32,7 @@ export function SceneView() {
   const art = getSceneArt(spec.id);
   // Cheap enough to recompute each tick: a handful of lines.
   const identities = deliveryIdentities(getPanelLayout(spec.id));
-  const supplies = supplyLays(sim);
+  const supplies = supplyLays(sim, inputs);
   const geometry = layoutScene(
     art,
     sim.lines.filter((l) => l.truckId === sim.activeTruckId),

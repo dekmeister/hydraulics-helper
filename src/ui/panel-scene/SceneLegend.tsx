@@ -62,23 +62,28 @@ function Swatch({ state }: { state: DeliveryLine['state'] }) {
 
 /** What a supply row says: source, state and flow. */
 function supplyText(s: SupplyLay): { name: string; status: string } {
-  if (s.source.kind === 'static') {
-    const lift = `${formatWhole(s.source.liftM)} m lift`;
-    const flow = s.flowLpm >= 1 ? ` · ${formatWhole(s.flowLpm)} L/min` : '';
-    return {
-      name: `Suction · ${s.source.label}`,
-      status: s.state === 'primed' ? `Primed${flow}` : `Not primed · ${lift}`,
-    };
+  const flow = s.flowLpm >= 1 ? ` · ${formatWhole(s.flowLpm)} L/min` : '';
+  switch (s.source.kind) {
+    case 'static':
+      return {
+        name: `Suction · ${s.source.label}`,
+        status:
+          s.state === 'primed'
+            ? `Primed${flow}`
+            : `Not primed · ${formatWhole(s.source.liftM)} m lift`,
+      };
+    case 'hydrant': {
+      const status =
+        s.state === 'soft'
+          ? 'Soft: over-running the hydrant'
+          : s.flowLpm >= 1
+            ? `Charged${flow}`
+            : s.open
+              ? 'Charged'
+              : 'Charged · inlet shut';
+      return { name: s.source.label, status };
+    }
   }
-  const status =
-    s.state === 'soft'
-      ? 'Soft: over-running the hydrant'
-      : s.flowLpm >= 1
-        ? `Charged · ${formatWhole(s.flowLpm)} L/min`
-        : s.open
-          ? 'Charged'
-          : 'Charged · inlet shut';
-  return { name: s.source.label, status };
 }
 
 function SupplyRow({ supply }: { supply: SupplyLay }) {

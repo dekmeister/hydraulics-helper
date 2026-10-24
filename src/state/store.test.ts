@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { createInitialState } from '../sim/engine';
+import type { ApplianceSpec } from '../sim/types';
 import { activeTruck } from './selectors';
 import { useStore, WAKE_HISTORY_S } from './store';
 
@@ -86,6 +88,19 @@ describe('store: scenarios and the Wake', () => {
     expect(scenarioId).toBe('draughting');
     expect(activeTruck(sim).spec.id).toBe(applianceId);
     expect(sim.sources.some((s) => s.kind === 'static')).toBe(true);
+  });
+
+  it('refuses a scenario the active appliance can’t play, naming both', () => {
+    const spec = activeTruck(useStore.getState().sim).spec;
+    const noSuction: ApplianceSpec = {
+      ...spec,
+      id: 'no-suction',
+      inlets: spec.inlets.filter((i) => i.kind !== 'suction'),
+    };
+    useStore.getState().reset(createInitialState(noSuction));
+    expect(() => {
+      useStore.getState().loadScenario('draughting');
+    }).toThrow(/no-suction can’t play 'draughting'/);
   });
 
   it('a raw state reset has no scenario', () => {

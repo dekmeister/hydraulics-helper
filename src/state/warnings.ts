@@ -1,6 +1,7 @@
 // Warning lamps for the active truck (ARCHITECTURE §7 HUD). Pure functions of sim state and inputs.
 import { PUMP_TEMP_ALARM_C, PUMP_TEMP_CAUTION_C, VALVE_CLOSED_EPS } from '../sim/constants';
 import { connectedSupplies } from '../sim/engine';
+import { isRigid } from '../sim/hose';
 import { draughtSupply } from '../sim/priming';
 import type { PlayerInputs, SimState, TruckState } from '../sim/types';
 import { activeTruck } from './activeTruck';
@@ -48,34 +49,57 @@ function tankWarning(truck: TruckState): Warning[] {
   ];
 }
 
+/** A supply problem and how loud its lamp is. */
+interface SupplyProblem {
+  level: Exclude<WarningLevel, 'off'>;
+  message: string;
+}
+
+const caution = (message: string): SupplyProblem => ({ level: 'caution', message });
+
 /**
- * Why water isn't reaching the pump while a delivery is open, or '' if it is (or the tank lamp
- * already says the tank is empty).
+ * Why water isn't reaching the pump while a delivery is open, or undefined if it is (or the tank
+ * lamp already says the tank is empty). Losing prime is an alarm; the rest are cautions.
  */
-function supplyProblem(sim: SimState, truck: TruckState, inputs: PlayerInputs): string {
+function supplyProblem(
+  sim: SimState,
+  truck: TruckState,
+  inputs: PlayerInputs,
+): SupplyProblem | undefined {
   const { spec } = truck;
-  if (!spec.deliveries.some((d) => isOpen(inputs.valves[d.id]))) return '';
+  if (!spec.deliveries.some((d) => isOpen(inputs.valves[d.id]))) return undefined;
   const openInlets = spec.inlets.filter((i) => isOpen(inputs.valves[i.id]));
   if (openInlets.length === 0) {
-    return `No supply: open ${spec.inlets.map((i) => i.label.toLowerCase()).join(' or ')}.`;
+    return caution(
+      `No supply: open ${spec.inlets.map((i) => i.label.toLowerCase()).join(' or ')}.`,
+    );
   }
-  if (Object.values(truck.readings.inletFlowLpm).some((q) => q > 0)) return '';
-  if (openInlets.some((i) => i.kind === 'tank')) return '';
+  if (Object.values(truck.readings.inletFlowLpm).some((q) => q > 0)) return undefined;
+  if (openInlets.some((i) => i.kind === 'tank')) return undefined;
   const supplies = connectedSupplies(sim, truck.id);
   const draught = draughtSupply(supplies);
   if (draught !== undefined && openInlets.some((i) => i.id === draught.supply.inletId)) {
-    if (draught.source.volumeL <= 0)
-      return `Lost prime: the ${draught.source.label.toLowerCase()} is empty.`;
+    if (draught.source.volumeL <= 0) {
+      return {
+        level: 'alarm',
+        message: `Lost prime: the ${draught.source.label.toLowerCase()} is empty.`,
+      };
+    }
+    if (!isRigid(draught.supply.segments)) {
+      return caution('Layflat can’t draught: it flattens under vacuum. Use hard suction.');
+    }
     if (!truck.pump.primed) {
-      return spec.primer?.kind === 'selfPriming'
-        ? 'Not primed yet: shut the deliveries while the pump primes.'
-        : 'Not primed: shut the deliveries and run the primer.';
+      return caution(
+        spec.primer?.kind === 'selfPriming'
+          ? 'Not primed yet: shut the deliveries while the pump primes.'
+          : 'Not primed: shut the deliveries and run the primer.',
+      );
     }
   }
   if (openInlets.every((i) => !supplies.some((s) => s.supply.inletId === i.id))) {
-    return 'Nothing is connected to the open inlet.';
+    return caution('Nothing is connected to the open inlet.');
   }
-  return '';
+  return undefined;
 }
 
 function cavitationMessage(sim: SimState, truck: TruckState): string {
@@ -98,14 +122,7 @@ export function selectWarnings(sim: SimState, inputs: PlayerInputs): Warning[] {
 
   const problem = supplyProblem(sim, truck, inputs);
   warnings.push(
-    problem === ''
-      ? off('supply', 'Supply')
-      : {
-          id: 'supply',
-          label: 'Supply',
-          level: problem.startsWith('Lost prime') ? 'alarm' : 'caution',
-          message: problem,
-        },
+    problem === undefined ? off('supply', 'Supply') : { id: 'supply', label: 'Supply', ...problem },
   );
 
   if (spec.relief !== undefined) {

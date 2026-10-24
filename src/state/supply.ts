@@ -1,7 +1,14 @@
 // Derived supply-side state for the UI: primer status and the supply hoses on the scene.
 import { VALVE_CLOSED_EPS } from '../sim/constants';
 import { connectedSupplies } from '../sim/engine';
-import type { ControlId, PlayerInputs, SimState, SupplyLine, WaterSource } from '../sim/types';
+import type {
+  ControlId,
+  PlayerInputs,
+  SimState,
+  SupplyLine,
+  TruckState,
+  WaterSource,
+} from '../sim/types';
 import { activeTruck } from './activeTruck';
 
 /**
@@ -9,9 +16,6 @@ import { activeTruck } from './activeTruck';
  * not doctrine: the rotary vane's own limit is the 60 s duty.
  */
 export const CHECK_SUCTION_S = 30;
-
-/** Inlet reading under which an over-run layflat is drawn soft, kPa: "inlet zero" (Table 7). */
-const SOFT_INLET_KPA = 1;
 
 export type PrimerState = 'idle' | 'running' | 'check-suction' | 'primed' | 'cut-out';
 
@@ -52,19 +56,23 @@ export interface SupplyLay {
   open: boolean;
 }
 
-/** Every supply hose on the active truck, with its state. */
-export function supplyLays(sim: SimState): SupplyLay[] {
+function supplyState(truck: TruckState, supply: SupplyLine, source: WaterSource): SupplyState {
+  switch (source.kind) {
+    case 'static':
+      return truck.pump.primed ? 'primed' : 'dry';
+    case 'hydrant':
+      return truck.readings.inletCollapsed[supply.inletId] === true ? 'soft' : 'charged';
+  }
+}
+
+/** Every supply hose on the active truck, with its state, given the inputs the player holds. */
+export function supplyLays(sim: SimState, inputs: PlayerInputs): SupplyLay[] {
   const truck = activeTruck(sim);
-  return connectedSupplies(sim, truck.id).map(({ supply, source }) => {
-    const flowLpm = truck.readings.inletFlowLpm[supply.inletId] ?? 0;
-    const open = (truck.inputs.valves[supply.inletId] ?? 0) >= VALVE_CLOSED_EPS;
-    let state: SupplyState;
-    if (source.kind === 'static') state = truck.pump.primed ? 'primed' : 'dry';
-    else
-      state =
-        open && truck.readings.cavitation > 0 && truck.readings.compoundKpa < SOFT_INLET_KPA
-          ? 'soft'
-          : 'charged';
-    return { supply, source, state, flowLpm, open };
-  });
+  return connectedSupplies(sim, truck.id).map(({ supply, source }) => ({
+    supply,
+    source,
+    state: supplyState(truck, supply, source),
+    flowLpm: truck.readings.inletFlowLpm[supply.inletId] ?? 0,
+    open: (inputs.valves[supply.inletId] ?? 0) >= VALVE_CLOSED_EPS,
+  }));
 }

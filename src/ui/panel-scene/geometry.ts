@@ -139,7 +139,12 @@ const INLET_LEAD_U = 36;
 
 /** Where a supply from a source of `kind` ends on the map. */
 function sourcePoint(kind: WaterSource['kind']): Point {
-  return kind === 'static' ? DAM.intake : HYDRANT;
+  switch (kind) {
+    case 'static':
+      return DAM.intake;
+    case 'hydrant':
+      return HYDRANT;
+  }
 }
 
 /** A supply hose: out of its coupling along its facing, then into the source. */

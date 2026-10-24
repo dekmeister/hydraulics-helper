@@ -8,7 +8,6 @@ import { HYDRANT } from './site';
  * charged, thin dashed canvas when over-run and soft. Not interactive: the legend row describes it.
  */
 export function SupplyLay({ lay, state }: { lay: SupplyGeometry; state: SupplyState }) {
-  const hard = lay.sourceKind === 'static';
   return (
     <g
       className={`scene-supply scene-supply--${state}`}
@@ -16,7 +15,15 @@ export function SupplyLay({ lay, state }: { lay: SupplyGeometry; state: SupplySt
       data-state={state}
       aria-hidden="true"
     >
-      {hard ? (
+      <SupplyHose lay={lay} state={state} />
+    </g>
+  );
+}
+
+function SupplyHose({ lay, state }: { lay: SupplyGeometry; state: SupplyState }) {
+  switch (lay.sourceKind) {
+    case 'static':
+      return (
         <>
           <path className="scene-supply__hard-casing" d={lay.path} />
           <path className="scene-supply__hard-core" d={lay.path} />
@@ -26,16 +33,17 @@ export function SupplyLay({ lay, state }: { lay: SupplyGeometry; state: SupplySt
             <path className="scene-supply__strainer-mesh" d="M-5 -3 H5 M-5 0 H5 M-5 3 H5" />
           </g>
         </>
-      ) : state === 'soft' ? (
+      );
+    case 'hydrant':
+      return state === 'soft' ? (
         <path className="scene-supply__soft" d={lay.path} />
       ) : (
         <>
           <path className="scene-hose__casing" d={lay.path} />
           <path className="scene-supply__water scene-supply__water--layflat" d={lay.path} />
         </>
-      )}
-    </g>
-  );
+      );
+  }
 }
 
 /** A hydrant standpipe from above: a red post with two outlets (generic, no branding). */
