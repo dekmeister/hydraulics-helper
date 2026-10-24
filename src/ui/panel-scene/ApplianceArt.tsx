@@ -1,0 +1,111 @@
+import type { TankLevelState } from '../../state/tankLevel';
+import type { SceneArt } from '../appliances/types';
+import type { TruckPose } from './geometry';
+
+export interface CouplingView {
+  deliveryId: string;
+  /** No line laid: the coupling carries a blank cap. */
+  capped: boolean;
+  highlighted: boolean;
+}
+
+interface Props {
+  art: SceneArt;
+  pose: TruckPose;
+  couplings: readonly CouplingView[];
+  /** Tank fill, 0–1, and its level state; omitted for an appliance with no tank. */
+  tank?: { fraction: number; level: TankLevelState };
+}
+
+/** Length of the pump bay at the rear of the body, drawing units. */
+const BAY_U = 14;
+const BAR_H = 8;
+
+/** Tank fill bar along the body: tank-lit fill, amber with a triangle when low, red outline empty. */
+function TankBar({
+  art,
+  fraction,
+  level,
+}: {
+  art: SceneArt;
+  fraction: number;
+  level: TankLevelState;
+}) {
+  const x0 = -art.lengthU / 2 + BAY_U + 6;
+  const len = art.lengthU / 2 - art.cabU - 6 - x0;
+  const y = art.widthU / 2 - BAR_H - 5;
+  return (
+    <g className={`scene-tank scene-tank--${level}`} data-testid="scene-tank" data-level={level}>
+      <rect className="scene-tank__track" x={x0} y={y} width={len} height={BAR_H} rx="2" />
+      <rect
+        className="scene-tank__fill"
+        x={x0}
+        y={y}
+        width={len * fraction}
+        height={BAR_H}
+        rx="2"
+      />
+      {level === 'low' && (
+        <path
+          className="scene-tank__triangle"
+          d={`M${String(x0 + len / 2)} ${String(y - 15)} l7 12 h-14 Z`}
+        />
+      )}
+    </g>
+  );
+}
+
+/**
+ * A truck from above, drawn from its scene art (Design §7: plain red body, white cab, no livery):
+ * pump bay at the rear, optional tank hatch, tank fill bar, and a coupling per delivery.
+ */
+export function ApplianceArt({ art, pose, couplings, tank }: Props) {
+  const L = art.lengthU;
+  const W = art.widthU;
+  const capped = new Map(couplings.map((c) => [c.deliveryId, c]));
+  const tankStart = -L / 2 + BAY_U;
+  const tankEnd = L / 2 - art.cabU;
+  return (
+    <g
+      transform={`translate(${pose.x.toFixed(1)} ${pose.y.toFixed(1)}) rotate(${pose.headingDeg.toFixed(1)})`}
+      data-testid="scene-truck"
+    >
+      <rect className="scene-shadow" x={-L / 2 + 4} y={-W / 2 + 4} width={L} height={W} rx="5" />
+      <rect className="scene-truck__body" x={-L / 2} y={-W / 2} width={L} height={W} rx="5" />
+      <rect
+        className="scene-truck__cab"
+        x={L / 2 - art.cabU}
+        y={-W / 2}
+        width={art.cabU}
+        height={W}
+        rx="5"
+      />
+      <rect className="scene-truck__bay" x={-L / 2} y={-W / 2 + 6} width={BAY_U} height={W - 12} />
+      {art.hatch && (
+        <circle className="scene-truck__hatch" cx={(tankStart + tankEnd) / 2} cy={-6} r="9" />
+      )}
+      {tank !== undefined && <TankBar art={art} fraction={tank.fraction} level={tank.level} />}
+      {art.couplings.map((c) => {
+        const view = capped.get(c.delivery);
+        return (
+          <g key={c.delivery} data-testid={`coupling-${c.delivery}`}>
+            {view?.highlighted === true && (
+              <circle className="scene-highlight scene-highlight--outer" cx={c.x} cy={c.y} r="13" />
+            )}
+            {view?.highlighted === true && (
+              <circle className="scene-highlight" cx={c.x} cy={c.y} r="10" />
+            )}
+            <circle
+              className={
+                view?.capped === true ? 'scene-coupling scene-coupling--capped' : 'scene-coupling'
+              }
+              cx={c.x}
+              cy={c.y}
+              r="5.5"
+            />
+          </g>
+        );
+      })}
+    </g>
+  );
+}

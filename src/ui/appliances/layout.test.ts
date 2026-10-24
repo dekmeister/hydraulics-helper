@@ -7,6 +7,7 @@ import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import type { ApplianceSpec, InstrumentKind } from '../../sim/types';
 import { TEST_APPLIANCE_LAYOUT } from '../../testing/appliances/testApplianceLayout';
 import type { DialId } from '../panel-pump/gauge/dials';
+import { deliveryIdentities, deliveryIdentity } from './identity';
 import { CATALOGUE_LAYOUTS, getPanelLayout } from './registry';
 import type { PanelItem, PanelLayout } from './types';
 
@@ -85,5 +86,17 @@ describe.each(PAIRS)('panel layout ↔ spec: %s', (_id, spec, layout) => {
     expect(new Set(sections).size).toBe(sections.length);
     const names = all.flatMap((i) => ('label' in i ? [i.label] : []));
     expect(new Set(names).size).toBe(names.length);
+  });
+});
+
+describe.each(PAIRS)('delivery identity: %s', (_id, spec, layout) => {
+  it('names and marks every delivery, with distinct tags and glyphs', () => {
+    const ids = deliveryIdentities(layout);
+    expect([...ids.keys()].sort()).toEqual(spec.deliveries.map((d) => d.id).sort());
+    const tags = [...ids.values()].map((i) => i.tag);
+    expect(new Set(tags).size).toBe(tags.length);
+    const glyphs = [...ids.values()].map((i) => i.glyph);
+    expect(new Set(glyphs).size).toBe(glyphs.length);
+    for (const d of spec.deliveries) expect(deliveryIdentity(layout, d.id).label).not.toBe('');
   });
 });

@@ -92,24 +92,3 @@
   flex: 0 0 auto;
   width: 150px;
 }
-
-.delivery-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  align-self: flex-start;
-  padding: 2px 8px 2px 6px;
-  border-radius: var(--radius-plate);
-  background: var(--color-material-steel);
-  color: var(--color-material-ink);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.04em;
-}
-
-.delivery-tag__glyph {
-  width: 14px;
-  height: 14px;
-  fill: var(--color-material-ink);
-}

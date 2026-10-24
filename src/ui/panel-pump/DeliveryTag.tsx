@@ -1,5 +1,6 @@
 import { GLYPH_PATH } from '../appliances/glyphs';
 import type { DeliveryGlyph } from '../appliances/types';
+import './DeliveryTag.css';
 
 /** Delivery identity: glyph + numeral, never colour alone (Design §2, OPEN_DECISIONS #1 option B). */
 export function DeliveryTag({ tag, glyph }: { tag: string; glyph: DeliveryGlyph }) {
