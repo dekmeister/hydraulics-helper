@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { activeTruck, deliveryLines, tankFraction } from '../../state/selectors';
+import { supplyLays } from '../../state/supply';
 import { useStore } from '../../state/store';
 import { tankLevelState } from '../../state/tankLevel';
 import { deliveryIdentities } from '../appliances/identity';
@@ -10,6 +11,7 @@ import { BranchCrew } from './BranchCrew';
 import { layoutScene, SCENE_VIEW } from './geometry';
 import { HoseLay } from './HoseLay';
 import { SceneLegend } from './SceneLegend';
+import { Hydrant, SupplyLay } from './SupplyLay';
 import './Scene.css';
 
 /**
@@ -20,6 +22,7 @@ import './Scene.css';
  */
 export function SceneView() {
   const sim = useStore((s) => s.sim);
+  const inputs = useStore((s) => s.inputs);
   const highlight = useStore((s) => s.highlight);
   const toggleHighlight = useStore((s) => s.toggleHighlight);
   const ref = useRef<HTMLDivElement>(null);
@@ -29,10 +32,19 @@ export function SceneView() {
   const art = getSceneArt(spec.id);
   // Cheap enough to recompute each tick: a handful of lines.
   const identities = deliveryIdentities(getPanelLayout(spec.id));
+  const supplies = supplyLays(sim, inputs);
   const geometry = layoutScene(
     art,
     sim.lines.filter((l) => l.truckId === sim.activeTruckId),
+    supplies.map((s) => ({
+      id: s.supply.id,
+      inletId: s.supply.inletId,
+      sourceKind: s.source.kind,
+    })),
   );
+  const supplyState = new Map(supplies.map((s) => [s.supply.id, s.state]));
+  const cavitating = truck.readings.cavitation > 0;
+  const suctionInlets = spec.inlets.filter((i) => i.kind === 'suction').map((i) => i.id);
   const deliveries = deliveryLines(sim);
   const byDelivery = new Map(deliveries.map((d) => [d.deliveryId, d]));
   const capacityL = spec.tank?.capacityL;
@@ -59,9 +71,13 @@ export function SceneView() {
         className="scene__map"
         viewBox={`0 0 ${String(SCENE_VIEW.w)} ${String(SCENE_VIEW.h)}`}
         role="img"
-        aria-label={`Plan view: the ${spec.name} with its hose lays and crews.`}
+        aria-label={`Plan view: the ${spec.name} with its hose lays, crews and water supply.`}
       >
         <Backdrop />
+        {sim.sources.some((x) => x.kind === 'hydrant') && <Hydrant />}
+        {geometry.supplies.map((lay) => (
+          <SupplyLay key={lay.supplyId} lay={lay} state={supplyState.get(lay.supplyId) ?? 'dry'} />
+        ))}
         {geometry.lines.map((lay) => {
           const d = byDelivery.get(lay.deliveryId);
           return (
@@ -70,6 +86,7 @@ export function SceneView() {
               lay={lay}
               state={d?.state === 'charged' ? 'charged' : 'dry'}
               highlighted={isHighlighted(lay.deliveryId)}
+              cavitating={cavitating}
               onTap={() => {
                 tapFromScene(lay.deliveryId);
               }}
@@ -79,11 +96,18 @@ export function SceneView() {
         <ApplianceArt
           art={art}
           pose={geometry.truck}
-          couplings={deliveries.map((d) => ({
-            deliveryId: d.deliveryId,
-            capped: d.state === 'none',
-            highlighted: d.state === 'none' && isHighlighted(d.deliveryId),
-          }))}
+          couplings={[
+            ...deliveries.map((d) => ({
+              control: d.deliveryId,
+              capped: d.state === 'none',
+              highlighted: d.state === 'none' && isHighlighted(d.deliveryId),
+            })),
+            ...suctionInlets.map((id) => ({
+              control: id,
+              capped: !supplies.some((s) => s.supply.inletId === id),
+              highlighted: false,
+            })),
+          ]}
           {...(capacityL === undefined
             ? {}
             : { tank: { fraction: tankFraction(truck), level: tankLevel } })}
@@ -114,6 +138,8 @@ export function SceneView() {
         {...(capacityL === undefined
           ? {}
           : { tank: { valueL: truck.tankL, capacityL, level: tankLevel } })}
+        supplies={supplies}
+        cavitating={cavitating}
         onTap={tapFromScene}
       />
     </div>

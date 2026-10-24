@@ -55,7 +55,7 @@ interface PumpOpsTestApi {
 
 * In e2e mode the real-time `requestAnimationFrame` accumulator is **off**. Time moves only when a test calls `step()`. A journey that needs 30 s of sim time calls `step(300)`: fast and exact.
 * There is deliberately **no `setInputs`** on the API. Journeys must change inputs through the real controls; that is the point of a journey. Visual fixtures that need a particular input state get it from scenario data or a `state` blob (§3.2).
-* Randomness (cavitation gauge flutter, events) comes from a seeded RNG passed into the sim (CLAUDE.md rule 1), so `seed` makes noisy states reproducible.
+* Randomness (cavitation gauge flutter, later events) comes from a seeded RNG whose state lives in `SimState.rngState` (CLAUDE.md rule 1); `load({ seed })` sets it, so noisy states are reproducible.
 
 ### 3.2 Fixture gallery (`?fixture=<id>`)
 
@@ -72,7 +72,7 @@ interface Fixture {
 ```
 
 * A renderer may supply a `state()`: the sim state loaded into the store before render (`renderers.tsx`). Panel states are built from the tank-attack scenario by pure sim calls (`panelStates.ts`); `tank-attack-700` finds its throttle by bisection so its caption holds on any appliance.
-* Panel and scene fixtures are **generated per catalogue appliance** (`panel/<applianceId>/idle`, `…/tank-attack-700`, `…/tank-low`, `…/tank-empty`; `scene/<applianceId>/all-charged`, `…/one-line-off`, `…/tank-low`, `…/tank-empty`, `…/highlighted`), so a new appliance gets them automatically. `surface` in the catalog says whether a fixture renders the whole shell or the scene alone; a renderer may also set a `highlight` after its state loads. Scene states are built next to the panel states (`panelStates.ts`, `sceneState`).
+* Panel and scene fixtures are **generated per catalogue appliance** (`panel/<applianceId>/idle`, `…/tank-attack-700`, `…/tank-low`, `…/tank-empty`; `scene/<applianceId>/all-charged`, `…/one-line-off`, `…/tank-low`, `…/tank-empty`, `…/highlighted`), so a new appliance gets them automatically. `surface` in the catalog says whether a fixture renders the whole shell or the scene alone; a renderer may also set a `highlight` after its state loads. Scene states are built next to the panel states (`panelStates.ts`, `sceneState`). Source and fault fixtures (`panel/<applianceId>/draught-priming`, `…/draught-working`, `…/cavitating`, `…/hydrant`, `…/faults`) are generated for every catalogue appliance that can play the scenario they come from (`sourceStates.ts`); `draught-priming` needs a primer control. `cavitating` sets `steps` so the store has 3 s of history for the Wake. A renderer names its `scenario`, so the header picker shows it.
 * The visual spec is one `describe.each` over the registry × viewports: **adding a fixture = adding a screenshot.**
 * `expect` is plain English, written for review: *"Discharge needle at ~700 kPa, compound ~0 kPa, tank gauge ~¾, delivery 1 handle fully open, others closed. No warnings."*
 
@@ -81,7 +81,7 @@ interface Fixture {
 * Every instrument is `role="meter"` with an accessible name and `aria-valuenow` = displayed (damped) value in its native unit (kPa, L, rpm). Journeys assert readings with `getByRole('meter', { name: 'Discharge' })`, never by measuring needle pixels.
 * Every control is a `button`, `slider` or `switch` with an accessible name taken from the layout label (Australian terminology — rule 5, so tests double as a vocabulary check).
 * Controls use **Pointer Events only** (no separate touch/mouse handlers), so a Playwright mouse drag exercises the same code path as a finger. Taps are tested with `locator.tap()` in the touch-enabled phone project. Plain buttons that only act on a tap (scene hoses, legend rows, the panel's delivery-row locate buttons) use `onClick`, which a tap and a click both fire; anything dragged uses Pointer Events.
-* `data-testid` only where no role/name fits, keyed by spec id: scene hose lays `hose-lay-<deliveryId>` (with `data-state="charged|dry"` and `data-highlighted`), `spray-<deliveryId>`, `branch-<deliveryId>`, `coupling-<deliveryId>`, `scene-tank` (`data-level`). Journeys tap a hose at a point on its path (`e2e/scene.ts` `tapHoseLay`), since a curved path's box centre is rarely on the hose.
+* `data-testid` only where no role/name fits, keyed by spec id: scene hose lays `hose-lay-<deliveryId>` (with `data-state="charged|dry"`, `data-highlighted` and `data-cavitating`), `spray-<deliveryId>`, `branch-<deliveryId>`, `coupling-<controlId>` (deliveries and suction inlets), `supply-lay-<inletId>` (`data-state="primed|dry|charged|soft"`), `scene-hydrant`, `scene-tank` (`data-level`). Gauges carry `data-alert` (amber needle) and the primer's wrapper `data-state` (`idle|running|check-suction|primed|cut-out`). Journeys tap a hose at a point on its path (`e2e/scene.ts` `tapHoseLay`), since a curved path's box centre is rarely on the hose.
 * The scene map is `role="img"`; its legend buttons ("Show Delivery 1 on panel") and the panel's delivery-row buttons ("Show Delivery 1 on scene", `aria-pressed`) are the accessible route to the correspondence.
 
 ## 4. Playwright setup
@@ -124,6 +124,7 @@ Each journey plays a lesson as a player would, at the `phone` project at minimum
 * **Tank attack:** load scenario → tap tank-to-pump → drag delivery 1 valve open → drag throttle to ~60 % → `step(300)` → expect discharge meter within the scenario's band, tank meter lower than at start, no warnings. Open delivery 2 → `step(50)` → discharge has sagged.
 * **Runs dry:** tank attack with a small tank → `step` until empty → warning strip shows the low-tank and then empty message; discharge collapses; nothing throws.
 * **Scene (M3 demo):** open both lines → both hose lays charged and spraying; drag one delivery shut → that line goes dry and stops spraying, the other keeps going. Tank runs out → every line dry. Tap a hose → its panel row is highlighted and in view; tap a panel row's locate button → its hose is highlighted and the scene in view.
+* **Draughting (M4 demo):** open the suction inlet, hold the primer (pointer down while `step()` runs) until it shows PRIMED, compound at −10 kPa per m of lift; open a line and throttle → water and no warnings; second line, throttle wide → cavitation lamp, amber compound needle, gapped hoses; four vernier steps back → same discharge and flow at lower rpm (the throttle did nothing); drag back to 60 % → recovered. Also hydrant over-run (compound ≈ 0 within the flutter, layflat soft), churn overheat and cooling by cracking a delivery, water hammer from `Home` on an open delivery, and the vacuum test.
 * **Valve drag precision:** drag to half-open and assert the slider value is in 0.45–0.55 and the sim input matches (`getState()`).
 
 Assertions use tolerances that come from the calibration/scenario data, not new magic numbers in test files.

@@ -15,6 +15,7 @@ export function traceCsv(samples: readonly TraceSample[], lines: readonly HoseLi
   const first = samples[0];
   if (first === undefined) return '';
   const deliveryIds = first.truck.spec.deliveries.map((d) => d.id);
+  const inletIds = first.truck.spec.inlets.map((i) => i.id);
   const lineIds = lines.filter((l) => l.truckId === first.truck.id).map((l) => l.id);
   const header = [
     'timeS',
@@ -26,6 +27,11 @@ export function traceCsv(samples: readonly TraceSample[], lines: readonly HoseLi
     'reliefLpm',
     ...deliveryIds.map((id) => `flowLpm.${id}`),
     ...lineIds.map((id) => `branchKpa.${id}`),
+    ...inletIds.map((id) => `inletLpm.${id}`),
+    'primed',
+    'vacuumKpa',
+    'cavitation',
+    'pumpTempC',
   ];
   const rows = samples.map(({ tS, inputs, truck }) => {
     const r = truck.readings;
@@ -39,6 +45,11 @@ export function traceCsv(samples: readonly TraceSample[], lines: readonly HoseLi
       fmt(r.reliefFlowLpm, 1),
       ...deliveryIds.map((id) => fmt(r.deliveryFlowLpm[id] ?? 0, 1)),
       ...lineIds.map((id) => fmt(r.branchKpa[id] ?? 0, 1)),
+      ...inletIds.map((id) => fmt(r.inletFlowLpm[id] ?? 0, 1)),
+      truck.pump.primed ? '1' : '0',
+      fmt(truck.pump.vacuumKpa, 1),
+      fmt(r.cavitation, 2),
+      fmt(truck.pump.tempC, 1),
     ];
   });
   return [header, ...rows].map((row) => row.join(',')).join('\n') + '\n';

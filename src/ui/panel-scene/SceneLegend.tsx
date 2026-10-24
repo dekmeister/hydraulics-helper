@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { DeliveryLine } from '../../state/selectors';
+import type { SupplyLay } from '../../state/supply';
 import type { TankLevelState } from '../../state/tankLevel';
 import type { DeliveryIdentity } from '../appliances/identity';
 import { formatWhole } from '../format';
@@ -14,13 +15,17 @@ export interface LegendRow {
 interface Props {
   rows: readonly LegendRow[];
   tank?: { valueL: number; capacityL: number; level: TankLevelState };
+  /** Supply hoses to the truck's suction inlets. */
+  supplies?: readonly SupplyLay[];
+  /** The pump is cavitating: charged lines say so. */
+  cavitating?: boolean;
   onTap: (deliveryId: string) => void;
 }
 
-function statusText(d: DeliveryLine): string {
+function statusText(d: DeliveryLine, cavitating: boolean): string {
   switch (d.state) {
     case 'charged':
-      return `Charged · ${formatWhole(d.flowLpm)} L/min`;
+      return `Charged · ${formatWhole(d.flowLpm)} L/min${cavitating ? ' · cavitating' : ''}`;
     case 'dry':
       return 'Laid, dry';
     case 'none':
@@ -55,7 +60,54 @@ function Swatch({ state }: { state: DeliveryLine['state'] }) {
   );
 }
 
-function Row({ row, onTap }: { row: LegendRow; onTap: (deliveryId: string) => void }) {
+/** What a supply row says: source, state and flow. */
+function supplyText(s: SupplyLay): { name: string; status: string } {
+  const flow = s.flowLpm >= 1 ? ` · ${formatWhole(s.flowLpm)} L/min` : '';
+  switch (s.source.kind) {
+    case 'static':
+      return {
+        name: `Suction · ${s.source.label}`,
+        status:
+          s.state === 'primed'
+            ? `Primed${flow}`
+            : `Not primed · ${formatWhole(s.source.liftM)} m lift`,
+      };
+    case 'hydrant': {
+      const status =
+        s.state === 'soft'
+          ? 'Soft: over-running the hydrant'
+          : s.flowLpm >= 1
+            ? `Charged${flow}`
+            : s.open
+              ? 'Charged'
+              : 'Charged · inlet shut';
+      return { name: s.source.label, status };
+    }
+  }
+}
+
+function SupplyRow({ supply }: { supply: SupplyLay }) {
+  const { name, status } = supplyText(supply);
+  return (
+    <li
+      className={`scene-legend__info scene-legend__supply--${supply.state}`}
+      data-supply={supply.supply.inletId}
+    >
+      <span className="scene-legend__name">{name}</span>
+      <span className="scene-legend__status">{status}</span>
+    </li>
+  );
+}
+
+function Row({
+  row,
+  cavitating,
+  onTap,
+}: {
+  row: LegendRow;
+  cavitating: boolean;
+  onTap: (deliveryId: string) => void;
+}) {
   const statusId = useId();
   const { delivery, identity, highlighted } = row;
   return (
@@ -75,7 +127,7 @@ function Row({ row, onTap }: { row: LegendRow; onTap: (deliveryId: string) => vo
         <DeliveryTag tag={identity.tag} glyph={identity.glyph} />
         <span className="scene-legend__name">{identity.label}</span>
         <span id={statusId} className="scene-legend__status">
-          {statusText(delivery)}
+          {statusText(delivery, cavitating)}
         </span>
       </button>
     </li>
@@ -84,13 +136,16 @@ function Row({ row, onTap }: { row: LegendRow; onTap: (deliveryId: string) => vo
 
 /**
  * The scene's key and its accessible, thumb-sized equivalent: one button per delivery (tap to find
- * it on the panel) with the line's state, and the water left in the tank.
+ * it on the panel) with the line's state, the supply hoses, and the water left in the tank.
  */
-export function SceneLegend({ rows, tank, onTap }: Props) {
+export function SceneLegend({ rows, tank, supplies = [], cavitating = false, onTap }: Props) {
   return (
     <ul className="scene-legend" aria-label="Lines and water">
       {rows.map((row) => (
-        <Row key={row.delivery.deliveryId} row={row} onTap={onTap} />
+        <Row key={row.delivery.deliveryId} row={row} cavitating={cavitating} onTap={onTap} />
+      ))}
+      {supplies.map((s) => (
+        <SupplyRow key={s.supply.id} supply={s} />
       ))}
       {tank !== undefined && (
         <li className={`scene-legend__tank scene-legend__tank--${tank.level}`}>

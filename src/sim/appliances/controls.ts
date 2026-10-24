@@ -1,4 +1,4 @@
-import type { ApplianceSpec, ControlId, PlayerInputs } from '../types';
+import type { ApplianceSpec, ControlId, InletKind, PlayerInputs } from '../types';
 
 /** Ids of every 0–1 valve-type control on the spec: inlet valves, deliveries, an adjustable relief wheel. */
 export function valveControlIds(spec: ApplianceSpec): ControlId[] {
@@ -7,17 +7,34 @@ export function valveControlIds(spec: ApplianceSpec): ControlId[] {
   return ids;
 }
 
-/** Ids of every on/off control on the spec. */
-export function switchControlIds(spec: ApplianceSpec): ControlId[] {
+/** Control id of the primer's switch (or handle); undefined with no primer or a self-priming pump. */
+export function primerControlId(spec: ApplianceSpec): ControlId | undefined {
   const primer = spec.primer;
-  if (primer === undefined) return [];
+  if (primer === undefined) return undefined;
   switch (primer.kind) {
     case 'rotaryVane':
     case 'diaphragm':
-      return [primer.id];
+      return primer.id;
     case 'selfPriming':
-      return [];
+      return undefined;
   }
+}
+
+/** Ids of every on/off control on the spec. */
+export function switchControlIds(spec: ApplianceSpec): ControlId[] {
+  const primer = primerControlId(spec);
+  return primer === undefined ? [] : [primer];
+}
+
+/** The spec's first inlet of `kind`; throws (prefixed with `context`, if given) when it has none. */
+export function inletOfKind(spec: ApplianceSpec, kind: InletKind, context?: string): ControlId {
+  const inlet = spec.inlets.find((i) => i.kind === kind);
+  if (inlet === undefined) {
+    throw new Error(
+      `${context === undefined ? '' : `${context}: `}${spec.id} has no ${kind} inlet`,
+    );
+  }
+  return inlet.id;
 }
 
 export function controlIds(spec: ApplianceSpec): ControlId[] {

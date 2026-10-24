@@ -45,10 +45,6 @@
   color: var(--color-signal-alarm-text-on-dark);
 }
 
-.lamp--unavailable .lamp__glass {
-  opacity: 0.6;
-}
-
 /* Alarm lamps flash at 2 Hz, below the 3 flashes/s photosensitivity threshold (Design §9). */
 .lamp--alarm .lamp__glass {
   animation: lamp-flash 0.5s steps(1) infinite;

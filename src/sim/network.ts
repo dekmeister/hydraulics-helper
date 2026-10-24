@@ -1,5 +1,8 @@
 import { branchK, branchPressureKpa } from './branch';
 import {
+  CAVITATION_FULL_EXCESS,
+  CAVITATION_STIFFNESS,
+  COLLAPSE_TOLERANCE_KPA,
   HEAD_KPA_PER_M,
   SOLVER_ITERATIONS,
   VALVE_CLOSED_EPS,
@@ -7,15 +10,16 @@ import {
   VALVE_LOSS_REF_MM,
 } from './constants';
 import { hoseResistance } from './hose';
+import {
+  inletKpaFor,
+  inletPaths,
+  pathFlowLpm,
+  supplyLpm,
+  unlimitedInletKpaFor,
+  type ConnectedSupply,
+} from './inlets';
 import { pumpRiseKpa } from './pump';
-import type {
-  ApplianceSpec,
-  DeliverySpec,
-  HoseLine,
-  InletSpec,
-  PlayerInputs,
-  TruckReadings,
-} from './types';
+import type { ApplianceSpec, DeliverySpec, HoseLine, PlayerInputs, TruckReadings } from './types';
 
 /** Loss coefficient of a delivery valve fully open, kPa per (L/min)²: scales as 1/d⁴ (velocity²). */
 export function valveLossCoeff(sizeMm: number): number {
@@ -38,22 +42,6 @@ function lineFlowLpm(pKpa: number, resistance: number, elevationM: number): numb
   return Math.sqrt(Math.max(0, pKpa - HEAD_KPA_PER_M * elevationM) / resistance);
 }
 
-/**
- * Conductance of one inlet path in Q = c·√ΔP, or 0 if it can't supply water now.
- * Only the tank is connected in M1; hydrant, draught and relay sources arrive in M4–M5.
- */
-function inletConductance(inlet: InletSpec, open: number, tankL: number): number {
-  if (open < VALVE_CLOSED_EPS) return 0;
-  switch (inlet.kind) {
-    case 'tank':
-      return tankL > 0 ? open / Math.sqrt(inlet.lossKpaPerLpm2) : 0;
-    case 'hydrant':
-    case 'draught':
-    case 'relay':
-      return 0;
-  }
-}
-
 /** Relief valve set pressure for the current inputs, or undefined if none fitted. */
 function reliefSetKpa(spec: ApplianceSpec, inputs: PlayerInputs): number | undefined {
   const relief = spec.relief;
@@ -66,15 +54,22 @@ function reliefSetKpa(spec: ApplianceSpec, inputs: PlayerInputs): number | undef
   }
 }
 
-/** Readings of a pump with no water: everything reads zero (manual Table 6, L3529). */
-export function dryReadings(spec: ApplianceSpec, lines: readonly HoseLine[]): TruckReadings {
+/** Readings of a pump with no water: nothing flows and the discharge gauge reads zero (Table 6). */
+export function dryReadings(
+  spec: ApplianceSpec,
+  lines: readonly HoseLine[],
+  compoundKpa = 0,
+): TruckReadings {
   return {
     dischargeKpa: 0,
-    compoundKpa: 0,
+    compoundKpa,
     pumpFlowLpm: 0,
     reliefFlowLpm: 0,
     deliveryFlowLpm: Object.fromEntries(spec.deliveries.map((d) => [d.id, 0])),
     branchKpa: Object.fromEntries(lines.map((l) => [l.id, 0])),
+    inletFlowLpm: Object.fromEntries(spec.inlets.map((i) => [i.id, 0])),
+    inletCollapsed: Object.fromEntries(spec.inlets.map((i) => [i.id, false])),
+    cavitation: 0,
   };
 }
 
@@ -84,22 +79,46 @@ export interface TruckSolveInput {
   tankL: number;
   /** Sanitised inputs (every spec control present, 0–1). */
   inputs: PlayerInputs;
+  /** Whether a draught path is primed; default false. */
+  primed?: boolean;
+  /** Supplies connected to this truck's inlets; default none. */
+  supplies?: readonly ConnectedSupply[];
+  /** Primer vacuum on the casing, kPa: what the compound gauge shows while the pump is dry. */
+  vacuumKpa?: number;
+}
+
+/** Root of a decreasing function on [lo, hi] by fixed-count bisection (deterministic). */
+function bisectDecreasing(g: (x: number) => number, lo: number, hi: number): number {
+  let a = lo;
+  let b = hi;
+  for (let i = 0; i < SOLVER_ITERATIONS; i++) {
+    const mid = (a + b) / 2;
+    if (g(mid) > 0) a = mid;
+    else b = mid;
+  }
+  return (a + b) / 2;
 }
 
 /**
- * Steady-state solve for one truck: find the discharge pressure where the pump curve (less inlet
- * loss) meets the total demand of the open lines plus relief. Demand rises with pressure and supply
- * falls with flow, so bisection on discharge pressure converges monotonically. `lines` must be this
- * truck's lines, one per delivery.
+ * Steady-state solve for one truck: find the discharge pressure where inlet pressure plus pump
+ * rise meets the total demand of the open lines plus relief. Demand rises with pressure; the inlet
+ * and the pump curve both fall with flow, so bisection on discharge pressure converges. The inlet
+ * can't be pulled below the pump's cavitation pressure: there the flow the pump can draw is capped,
+ * extra rpm adds nothing, and `cavitation` says how far past that limit the pump is pushed.
+ * `lines` must be this truck's lines, one per delivery.
  */
 export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckReadings {
   const { spec, rpm, tankL, inputs } = truck;
-  const inletC = spec.inlets.reduce(
-    (c, inlet) => c + inletConductance(inlet, inputs.valves[inlet.id] ?? 0, tankL),
-    0,
-  );
-  if (inletC === 0) return dryReadings(spec, lines);
-  const inletR = 1 / (inletC * inletC);
+  const paths = inletPaths({
+    spec,
+    tankL,
+    inputs,
+    primed: truck.primed ?? false,
+    supplies: truck.supplies ?? [],
+  });
+  if (paths.length === 0) return dryReadings(spec, lines, 0 - (truck.vacuumKpa ?? 0));
+  const floorKpa = spec.pump.cavitationInletKpa;
+  const capLpm = supplyLpm(paths, floorKpa);
 
   const open = lines.flatMap((line) => {
     const delivery = spec.deliveries.find((d) => d.id === line.deliveryId);
@@ -117,23 +136,50 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
       relief === undefined || setKpa === undefined
         ? 0
         : relief.slopeLpmPerKpa * Math.max(0, pKpa - setKpa);
-    // Relief dumped to the tank is drawn back through the tank inlet; dumped to the inlet it isn't.
+    // Relief dumped to the tank is drawn back in through the inlets; dumped to the inlet it isn't.
     const inletLpm = outLpm + (relief?.dumpTo === 'tank' ? reliefLpm : 0);
     return { flows, outLpm, reliefLpm, inletLpm, pumpLpm: outLpm + reliefLpm };
   };
-  const supplyKpa = (d: ReturnType<typeof demand>) =>
-    -inletR * d.inletLpm * d.inletLpm + pumpRiseKpa(spec.pump, spec.engine, rpm, d.pumpLpm);
+  const rise = (q: number) => pumpRiseKpa(spec.pump, spec.engine, rpm, q);
+  // Past the cap the inlet pressure plunges, which pins the root at the capped flow.
+  const inletAt = (q: number) =>
+    q <= capLpm ? inletKpaFor(paths, q, floorKpa) : floorKpa - CAVITATION_STIFFNESS * (q - capLpm);
 
-  // g(P) = supply(demand(P)) − P is decreasing in P; find its root on [0, shutoff at this rpm].
-  let lo = 0;
-  let hi = Math.max(0, pumpRiseKpa(spec.pump, spec.engine, rpm, 0));
-  for (let i = 0; i < SOLVER_ITERATIONS; i++) {
-    const mid = (lo + hi) / 2;
-    if (supplyKpa(demand(mid)) > mid) lo = mid;
-    else hi = mid;
+  const maxHead = Math.max(0, ...paths.map((p) => p.headKpa));
+  const hi = maxHead + Math.max(0, rise(0));
+  let pKpa = bisectDecreasing(
+    (p) => {
+      const d = demand(p);
+      return inletAt(d.inletLpm) + rise(d.pumpLpm) - p;
+    },
+    0,
+    hi,
+  );
+  let d = demand(pKpa);
+  if (d.inletLpm > capLpm) {
+    // At the cap: the discharge is whatever the open lines take at the flow the inlet allows.
+    pKpa = bisectDecreasing((p) => capLpm - demand(p).inletLpm, 0, pKpa);
+    d = demand(pKpa);
   }
-  const pKpa = (lo + hi) / 2;
-  const d = demand(pKpa);
+  const inletLpm = Math.min(d.inletLpm, capLpm);
+  const inletKpa = inletKpaFor(paths, inletLpm, floorKpa);
+
+  let cavitation = 0;
+  if (d.inletLpm >= capLpm - 1e-6) {
+    // How much the pump would draw if the inlet could be pulled without limit.
+    const free = demand(
+      bisectDecreasing(
+        (p) => {
+          const x = demand(p);
+          return unlimitedInletKpaFor(paths, x.inletLpm) + rise(x.pumpLpm) - p;
+        },
+        0,
+        hi,
+      ),
+    ).inletLpm;
+    const excess = capLpm > 0 ? (free / capLpm - 1) / CAVITATION_FULL_EXCESS : free > 0 ? 1 : 0;
+    cavitation = Math.min(1, Math.max(0, excess));
+  }
 
   const deliveryFlowLpm: Record<string, number> = Object.fromEntries(
     spec.deliveries.map((x) => [x.id, 0]),
@@ -144,12 +190,26 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
     deliveryFlowLpm[line.deliveryId] = (deliveryFlowLpm[line.deliveryId] ?? 0) + q;
     branchKpa[line.id] = branchPressureKpa(line.branch, q);
   });
+  const inletFlowLpm: Record<string, number> = Object.fromEntries(
+    spec.inlets.map((i) => [i.id, 0]),
+  );
+  const inletCollapsed: Record<string, boolean> = Object.fromEntries(
+    spec.inlets.map((i) => [i.id, false]),
+  );
+  for (const path of paths) {
+    inletFlowLpm[path.inletId] = (inletFlowLpm[path.inletId] ?? 0) + pathFlowLpm(path, inletKpa);
+    // Pulled down to its collapse pressure, a layflat supply has gone soft.
+    if (inletKpa <= path.collapseKpa + COLLAPSE_TOLERANCE_KPA) inletCollapsed[path.inletId] = true;
+  }
   return {
     dischargeKpa: pKpa,
-    compoundKpa: -inletR * d.inletLpm * d.inletLpm,
+    compoundKpa: inletKpa,
     pumpFlowLpm: d.pumpLpm,
     reliefFlowLpm: d.reliefLpm,
     deliveryFlowLpm,
     branchKpa,
+    inletFlowLpm,
+    inletCollapsed,
+    cavitation,
   };
 }

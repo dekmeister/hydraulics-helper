@@ -38,6 +38,7 @@ export function runScript(run: ScriptedRun, sampleEveryS = 1): TraceSample[] {
         ...inputs,
         throttle: step.throttle ?? inputs.throttle,
         valves: { ...inputs.valves, ...step.valves },
+        switches: { ...inputs.switches, ...step.switches },
       };
     }
     if (tick > 0) state = advance(state, inputs, TICK_S);

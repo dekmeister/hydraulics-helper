@@ -7,7 +7,7 @@ import { TEST_APPLIANCE_SCENE_ART } from '../../testing/appliances/testAppliance
 import { getSceneArt } from '../appliances/registry';
 import type { SceneArt } from '../appliances/types';
 import { DEFAULT_UNITS_PER_M, layoutScene, SCENE_VIEW, SPRAY_REACH_U, toScene } from './geometry';
-import { DAM } from './site';
+import { DAM, HYDRANT } from './site';
 
 const PAIRS: [string, ApplianceSpec, SceneArt][] = [
   ...APPLIANCES.map((s): [string, ApplianceSpec, SceneArt] => [s.id, s, getSceneArt(s.id)]),
@@ -35,15 +35,20 @@ describe.each(PAIRS)('scene geometry: %s', (_id, spec, art) => {
   const scene = layoutScene(art, lines);
 
   it('places one coupling per delivery and one lay per line', () => {
-    expect(scene.couplings.map((c) => c.deliveryId).sort()).toEqual(
-      spec.deliveries.map((d) => d.id).sort(),
-    );
+    expect(
+      scene.couplings
+        .filter((c) => c.kind === 'delivery')
+        .map((c) => c.control)
+        .sort(),
+    ).toEqual(spec.deliveries.map((d) => d.id).sort());
     expect(scene.lines.map((l) => l.lineId).sort()).toEqual(lines.map((l) => l.id).sort());
   });
 
   it('starts every lay at its delivery’s coupling', () => {
     for (const lay of scene.lines) {
-      const coupling = scene.couplings.find((c) => c.deliveryId === lay.deliveryId);
+      const coupling = scene.couplings.find(
+        (c) => c.kind === 'delivery' && c.control === lay.deliveryId,
+      );
       if (coupling === undefined) throw new Error(`no coupling for ${lay.deliveryId}`);
       const start = pathStart(lay.path);
       expect(start.x).toBeCloseTo(coupling.x, 1);
@@ -82,6 +87,31 @@ describe.each(PAIRS)('scene geometry: %s', (_id, spec, art) => {
         p.x > x0 - BANK_U && p.x < x1 + BANK_U && p.y > y0 - BANK_U && p.y < y1 + BANK_U;
       expect(inDam, `body point ${p.x.toFixed(0)},${p.y.toFixed(0)}`).toBe(false);
     }
+  });
+
+  it('runs each supply hose from its inlet coupling to the dam or the hydrant', () => {
+    const inletId = spec.inlets.find((i) => i.kind === 'suction')?.id ?? '';
+    const withSupplies = layoutScene(art, lines, [
+      { id: 'suction-hose', inletId, sourceKind: 'static' },
+      { id: 'hydrant-line', inletId, sourceKind: 'hydrant' },
+    ]);
+    const coupling = withSupplies.couplings.find(
+      (c) => c.kind === 'inlet' && c.control === inletId,
+    );
+    if (coupling === undefined) throw new Error('no inlet coupling');
+    for (const s of withSupplies.supplies) {
+      const start = pathStart(s.path);
+      expect(start.x).toBeCloseTo(coupling.x, 0);
+      expect(start.y).toBeCloseTo(coupling.y, 0);
+      expect(inside(s.end, 0)).toBe(true);
+    }
+    const [dam, hydrant] = withSupplies.supplies;
+    expect(dam?.end).toEqual(DAM.intake);
+    expect(hydrant?.end).toEqual(HYDRANT);
+    expect(DAM.intake.x).toBeGreaterThan(DAM.box.x0);
+    expect(DAM.intake.x).toBeLessThan(DAM.box.x1);
+    expect(DAM.intake.y).toBeGreaterThan(DAM.box.y0);
+    expect(DAM.intake.y).toBeLessThan(DAM.box.y1);
   });
 
   it('is deterministic', () => {

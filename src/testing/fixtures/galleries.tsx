@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import type { GaugeScaleSpec } from '../../sim/types';
+import type { PrimerState } from '../../state/supply';
 import { PrimerControl } from '../../ui/panel-pump/controls/PrimerControl';
 import { Throttle } from '../../ui/panel-pump/controls/Throttle';
 import { ValveHandle } from '../../ui/panel-pump/controls/ValveHandle';
 import { DIALS, type DialId } from '../../ui/panel-pump/gauge/dials';
 import { Gauge } from '../../ui/panel-pump/gauge/Gauge';
 import { TankLevel } from '../../ui/panel-pump/gauge/TankLevel';
+import { computeWake, type WakePoint } from '../../ui/panel-pump/gauge/wake';
 import './galleries.css';
 
 const noop = () => undefined;
@@ -111,6 +113,15 @@ export function ValveGallery() {
   );
 }
 
+/** Every primer state, with the vacuum ring part-filled where it would be. */
+const PRIMER_STATES: readonly { state: PrimerState; on: boolean; progress: number }[] = [
+  { state: 'idle', on: false, progress: 0 },
+  { state: 'running', on: true, progress: 0.4 },
+  { state: 'check-suction', on: true, progress: 0.85 },
+  { state: 'primed', on: false, progress: 1 },
+  { state: 'cut-out', on: true, progress: 0.6 },
+];
+
 export function ThrottlePrimerGallery() {
   return (
     <Gallery>
@@ -119,11 +130,81 @@ export function ThrottlePrimerGallery() {
           <Throttle label={`Throttle ${String(v)}`} value={v} onChange={noop} vernierStep={0.01} />
         </Card>
       ))}
-      {[false, true].map((on) => (
-        <Card key={String(on)} caption={on ? 'primer held' : 'primer released'}>
-          <PrimerControl label={`Primer ${String(on)}`} on={on} onChange={noop} />
+      {PRIMER_STATES.map(({ state, on, progress }) => (
+        <Card key={state} caption={`primer ${state}`}>
+          <PrimerControl
+            label={`Primer ${state}`}
+            on={on}
+            state={state}
+            progress={progress}
+            onChange={noop}
+          />
         </Card>
       ))}
+    </Gallery>
+  );
+}
+
+/** 3.1 s of samples at 10 Hz ending at `f(3.1)`. */
+const history = (f: (tS: number) => number): WakePoint[] =>
+  Array.from({ length: 32 }, (_, i) => ({ tS: i / 10, v: f(i / 10) }));
+
+/** Seeded-looking hunting without randomness: incommensurate sines. */
+const hunting = (centre: number, amp: number) => (t: number) =>
+  centre + amp * (0.6 * Math.sin(15.1 * t) + 0.4 * Math.sin(23.7 * t + 1));
+
+/** The Wake on a dial (Design §6): steady, a surge, and hunting with the alert needle. */
+export function WakeGallery({
+  scale,
+}: {
+  scale: { discharge: GaugeScaleSpec; compound: GaugeScaleSpec };
+}) {
+  const cards: {
+    caption: string;
+    dial: DialId;
+    scale: GaugeScaleSpec;
+    f: (t: number) => number;
+    alert?: boolean;
+  }[] = [
+    { caption: 'steady 700 kPa', dial: 'discharge', scale: scale.discharge, f: () => 700 },
+    {
+      caption: 'surge 400 → 900 kPa',
+      dial: 'discharge',
+      scale: scale.discharge,
+      f: (t) => Math.min(900, 400 + 250 * t),
+    },
+    {
+      caption: 'hunting discharge',
+      dial: 'discharge',
+      scale: scale.discharge,
+      f: hunting(760, 40),
+    },
+    {
+      caption: 'hunting compound (cavitating)',
+      dial: 'compound',
+      scale: scale.compound,
+      f: hunting(-82, 6),
+      alert: true,
+    },
+  ];
+  return (
+    <Gallery>
+      {cards.map((c) => {
+        const samples = history(c.f);
+        const value = samples.at(-1)?.v ?? 0;
+        return (
+          <Card key={c.caption} caption={c.caption}>
+            <Gauge
+              dial={DIALS[c.dial](c.scale)}
+              value={value}
+              label={c.caption}
+              unit="kPa"
+              wake={computeWake(samples)}
+              alert={c.alert ?? false}
+            />
+          </Card>
+        );
+      })}
     </Gallery>
   );
 }

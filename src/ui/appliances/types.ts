@@ -66,12 +66,14 @@ export interface PanelLayout {
 // ---------------------------------------------------------------------------
 
 /**
- * A delivery coupling on the truck, in truck-local drawing units: origin at the body's centre,
- * +x towards the cab, +y towards the truck's right-hand side.
+ * A coupling on the truck, in truck-local drawing units: origin at the body's centre, +x towards
+ * the cab, +y towards the truck's right-hand side. Deliveries take hose lays; suction inlets take
+ * supply hoses (hard suction, layflat from a hydrant).
  */
 export interface SceneCoupling {
-  /** Spec delivery id. */
-  delivery: ControlId;
+  /** Spec control id: a delivery or a suction inlet. */
+  control: ControlId;
+  kind: 'delivery' | 'inlet';
   x: number;
   y: number;
   /** Way the coupling points, degrees in the same frame: 0 forward, 90 right, 180 rearward. */
@@ -91,6 +93,6 @@ export interface SceneArt {
   cabU: number;
   /** Round tank hatch on the body (tankers). */
   hatch: boolean;
-  /** One coupling per spec delivery. */
+  /** One coupling per spec delivery and per suction inlet (the tank feed is internal). */
   couplings: SceneCoupling[];
 }
