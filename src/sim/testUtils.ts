@@ -1,7 +1,9 @@
 // Test-only helpers for sim tests. Pure; never imported by app code.
 import { expect } from 'vitest';
 import { STANDARD_LENGTH_M, TICK_S } from './constants';
+import { inletOfKind } from './appliances/controls';
 import { DEFAULT_TRUCK_ID, advance, type SiteOptions } from './engine';
+import { nextRandom } from './rng';
 import type {
   ApplianceSpec,
   ControlId,
@@ -59,15 +61,13 @@ export function truckOf(state: SimState): TruckState {
   return t;
 }
 
-/** Small seeded PRNG (mulberry32) so fuzz tests are reproducible. */
+/** The sim's seeded PRNG as a stream, so fuzz tests are reproducible. */
 export function seededRandom(seed: number): () => number {
-  let a = seed >>> 0;
+  let state = seed >>> 0;
   return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    const [x, next] = nextRandom(state);
+    state = next;
+    return x;
   };
 }
 
@@ -81,9 +81,7 @@ export function expectWithinRel(actual: number, expected: number, relTol: number
 
 /** The spec's first suction inlet; throws if it has none. */
 export function suctionInletOf(spec: ApplianceSpec): ControlId {
-  const inlet = spec.inlets.find((i) => i.kind === 'suction');
-  if (inlet === undefined) throw new Error(`${spec.id} has no suction inlet`);
-  return inlet.id;
+  return inletOfKind(spec, 'suction');
 }
 
 /** A dam `liftM` below the pump on 2 × 3 m of hard suction to the spec's suction inlet. */

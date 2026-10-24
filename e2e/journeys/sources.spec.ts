@@ -1,6 +1,7 @@
 // M4 journeys (docs/TESTING.md §4): draughting and priming through the real primer, cavitation
 // induced and recovered with the throttle, hydrant over-run, churn overheat, water hammer.
 import type { Page, TestInfo } from '@playwright/test';
+import { inletOfKind, primerControlId } from '../../src/sim/appliances/controls';
 import { CAVITATION_FLUTTER_COMPOUND_KPA } from '../../src/sim/constants';
 import { getScenario } from '../../src/sim/scenarios';
 import { supports } from '../../src/sim/scenarios/types';
@@ -31,14 +32,8 @@ const load = async (page: Page, scenario: string, appliance: string) => {
   );
 };
 
-const inletOf = (spec: ApplianceSpec, kind: 'tank' | 'suction') => {
-  const id = spec.inlets.find((i) => i.kind === kind)?.id;
-  if (id === undefined) throw new Error(`${spec.id} has no ${kind} inlet`);
-  return id;
-};
-
-const primerControl = (spec: ApplianceSpec) =>
-  spec.primer !== undefined && 'id' in spec.primer ? spec.primer.id : undefined;
+const inletOf = inletOfKind;
+const primerControl = primerControlId;
 
 /** Tap an inlet valve (its tap toggles it) and check it opened. */
 async function openInlet(

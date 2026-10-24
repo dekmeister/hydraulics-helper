@@ -5,6 +5,7 @@ import {
   PUMP_TEMP_CAUTION_C,
 } from '../sim/constants';
 import { APPLIANCES } from '../sim/appliances/catalogue';
+import { primerControlId } from '../sim/appliances/controls';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { getScenario } from '../sim/scenarios';
 import { inputsWith, primedState, run, suctionInletOf } from '../sim/testUtils';
@@ -101,8 +102,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
 
 describe('primer status', () => {
   const spec = APPLIANCES[0] ?? TEST_APPLIANCE;
-  const primer = spec.primer;
-  const id = primer !== undefined && 'id' in primer ? primer.id : 'primer';
+  const id = primerControlId(spec) ?? 'primer';
   const draught = getScenario('draughting').build(spec).state;
   const held = inputsWith(0, [suctionInletOf(spec)], [id]);
 

@@ -1,7 +1,7 @@
 import { STANDARD_LENGTH_M } from '../constants';
 import { DEFAULT_TRUCK_ID } from '../engine';
 import { hoseType } from '../hose';
-import type { ApplianceSpec, ControlId, DeliverySpec, HoseLine } from '../types';
+import type { ApplianceSpec, DeliverySpec, HoseLine } from '../types';
 
 /** Line plan before it's attached to a delivery. */
 export interface PlannedLine {
@@ -32,17 +32,6 @@ export function attachLines(spec: ApplianceSpec, plans: readonly PlannedLine[]):
       branch: { tipMm: plan.tipMm },
     };
   });
-}
-
-/** The spec's first inlet of `kind`; throws naming the scenario if it has none. */
-export function inletOfKind(
-  spec: ApplianceSpec,
-  kind: 'tank' | 'suction',
-  scenario: string,
-): ControlId {
-  const inlet = spec.inlets.find((i) => i.kind === kind);
-  if (inlet === undefined) throw new Error(`${scenario}: ${spec.id} has no ${kind} inlet`);
-  return inlet.id;
 }
 
 /** The two lines of a scenario, in plan order; throws if fewer were laid. */

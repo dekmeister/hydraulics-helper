@@ -1,5 +1,6 @@
 // Sim states for the M4 source and fault fixtures (docs/TESTING.md §3.2): pure sim calls, built per
 // appliance from the hydrant, draughting and tank-attack scenarios.
+import { inletOfKind, switchControlIds } from '../../sim/appliances/controls';
 import { getScenario } from '../../sim/scenarios';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
@@ -17,15 +18,8 @@ export const SOURCE_STATE_SCENARIO: Readonly<Record<SourceStateId, string>> = {
   faults: 'tank-attack',
 };
 
-function inletOf(spec: ApplianceSpec, kind: 'tank' | 'suction'): ControlId {
-  const id = spec.inlets.find((i) => i.kind === kind)?.id;
-  if (id === undefined) throw new Error(`${spec.id} has no ${kind} inlet`);
-  return id;
-}
-
-function primerSwitch(spec: ApplianceSpec): ControlId[] {
-  return spec.primer !== undefined && 'id' in spec.primer ? [spec.primer.id] : [];
-}
+const inletOf = inletOfKind;
+const primerSwitch = switchControlIds;
 
 const inputs = (throttle: number, open: readonly ControlId[], on: readonly ControlId[] = []) =>
   ({

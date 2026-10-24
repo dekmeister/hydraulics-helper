@@ -1,6 +1,7 @@
 // Fixture metadata as plain data, so Playwright specs can enumerate fixtures without importing React.
 // Renderers live in renderers.tsx, keyed by the same ids (docs/TESTING.md §3.2).
 import { APPLIANCES } from '../../sim/appliances/catalogue';
+import { primerControlId } from '../../sim/appliances/controls';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { getScenario } from '../../sim/scenarios';
 import { supports } from '../../sim/scenarios/types';
@@ -176,7 +177,7 @@ export const SOURCE_FIXTURE_SETS: readonly {
     states: (Object.keys(SOURCE_CAPTIONS) as SourceState[]).filter(
       (state) =>
         supports(getScenario(SOURCE_STATE_SCENARIO[state]), spec) &&
-        (state !== 'draught-priming' || (spec.primer !== undefined && 'id' in spec.primer)),
+        (state !== 'draught-priming' || primerControlId(spec) !== undefined),
     ),
   })),
   { spec: TEST_APPLIANCE, states: ['draught-working'] },

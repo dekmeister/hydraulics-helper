@@ -18,7 +18,7 @@ import {
 } from '../testUtils';
 import type { ApplianceSpec, HoseLine, PlayerInputs, SimState } from '../types';
 import { APPLIANCES } from './catalogue';
-import { controlIds, validateInputs } from './controls';
+import { controlIds, switchControlIds, validateInputs } from './controls';
 import { TEST_APPLIANCE } from './testAppliance';
 
 const ALL: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
@@ -191,7 +191,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
     });
 
     const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
-    const primerIds = spec.primer !== undefined && 'id' in spec.primer ? [spec.primer.id] : [];
+    const primerIds = switchControlIds(spec);
 
     /** Prime from a dam at `liftM` with the primer (or self-priming), within `maxTicks`. */
     const primeAt = (liftM: number, volumeL = 1e6, maxTicks = 1200) => {

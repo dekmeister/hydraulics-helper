@@ -1,6 +1,7 @@
 import { STANDARD_LENGTH_M } from '../constants';
 import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
-import { attachLines, inletOfKind, twoLines, type PlannedLine } from './lay';
+import { inletOfKind } from '../appliances/controls';
+import { attachLines, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
 /**

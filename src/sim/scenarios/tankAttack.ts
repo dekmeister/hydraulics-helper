@@ -1,5 +1,6 @@
 import { createInitialState } from '../engine';
-import { attachLines, inletOfKind, twoLines, type PlannedLine } from './lay';
+import { inletOfKind } from '../appliances/controls';
+import { attachLines, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
 /**

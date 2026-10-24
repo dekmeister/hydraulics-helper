@@ -1,6 +1,7 @@
 // Priming (ARCHITECTURE §4.6): every primer kind, the vacuum test, air leaks, duty cycle, loss of
 // prime. Inline specs so placeholders elsewhere can be re-tuned without moving these.
 import { describe, expect, it } from 'vitest';
+import { switchControlIds } from './appliances/controls';
 import { TICK_S } from './constants';
 import { createInitialState } from './engine';
 import { draughtSite, inputsWith, layLine, run, truckOf } from './testUtils';
@@ -51,12 +52,7 @@ function timeToPrime(state: SimState, inputs: PlayerInputs, maxS = 300): number 
 }
 
 /** Primer held (if it has a control) with the suction valve open. */
-const priming = (spec: ApplianceSpec) =>
-  inputsWith(
-    0,
-    ['suction'],
-    spec.primer !== undefined && 'id' in spec.primer ? [spec.primer.id] : [],
-  );
+const priming = (spec: ApplianceSpec) => inputsWith(0, ['suction'], switchControlIds(spec));
 
 describe.each([
   ['rotary vane', ROTARY],

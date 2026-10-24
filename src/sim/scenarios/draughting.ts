@@ -1,5 +1,6 @@
 import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
-import { attachLines, inletOfKind, twoLines, type PlannedLine } from './lay';
+import { inletOfKind, primerControlId } from '../appliances/controls';
+import { attachLines, twoLines, type PlannedLine } from './lay';
 import type { Scenario, ScriptStep } from './types';
 
 /** The tank-attack pair (38 mm then 65 mm, Table 1 tips), now fed from the dam. */
@@ -21,8 +22,7 @@ export const DRAUGHTING: Scenario = {
     const lines = attachLines(spec, LINES);
     const suction = inletOfKind(spec, 'suction', 'draughting');
     const [a, b] = twoLines(lines, 'draughting');
-    const primer = spec.primer;
-    const primerId = primer !== undefined && 'id' in primer ? primer.id : undefined;
+    const primerId = primerControlId(spec);
     const prime = (on: boolean): ScriptStep[] =>
       primerId === undefined ? [] : [{ tS: on ? 1 : 25, switches: { [primerId]: on } }];
     const state = createInitialState(spec, lines, {
