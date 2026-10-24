@@ -11,6 +11,11 @@ export const CAT1: ApplianceSpec = {
   pump: {
     shutoffKpa: 1400, // pressure rise at zero flow, max rpm // PLACEHOLDER — needs Dek
     droopKpaPerLpm2: 4e-4, // gives 1000 kPa at 1000 L/min, max rpm // PLACEHOLDER — needs Dek
+    // Cavitates below −84 kPa at the inlet: the fit to the manual's lift derate (Table 4, L1179)
+    // for a generic pump; the Cat 1 pump's own figure is unknown. // PLACEHOLDER — needs Dek
+    cavitationInletKpa: -84,
+    casingVolumeL: 10, // PLACEHOLDER — needs Dek
+    churnKw: 10, // heat churned at max rpm, all deliveries shut // PLACEHOLDER — needs Dek
   },
   engine: {
     idleRpm: 800, // PLACEHOLDER — needs Dek
@@ -28,6 +33,15 @@ export const CAT1: ApplianceSpec = {
       // Inlet reads slightly negative on tank supply (L3529): −15 kPa at 1000 L/min. // PLACEHOLDER — needs Dek
       lossKpaPerLpm2: 15 / 1000 ** 2,
     },
+    {
+      // Layout A B3/B5: 64 mm suction inlet with a green lever valve; hard suction or a
+      // collecting head connects here. // doctrine-confirmed (photo); size PLACEHOLDER — needs Dek
+      id: 'suction',
+      label: 'Suction inlet',
+      kind: 'suction',
+      sizeMm: 64,
+      lossKpaPerLpm2: 10 / 1000 ** 2, // 10 kPa at 1000 L/min through the open valve // PLACEHOLDER — needs Dek
+    },
   ],
   deliveries: [
     { id: 'd1', label: 'Delivery 1', sizeMm: 64 }, // Layout A outlet 1 // PLACEHOLDER — needs Dek (from photo)
@@ -35,7 +49,16 @@ export const CAT1: ApplianceSpec = {
     { id: 'd3', label: 'Delivery 3', sizeMm: 38 }, // Layout A outlet 3 // PLACEHOLDER — needs Dek (from photo)
   ],
   // Electric rotary vane primer, max 1 min on in 3 (L1853–1908, L1890). // doctrine-confirmed
-  primer: { kind: 'rotaryVane', id: 'primer', maxOnS: 60, periodS: 180 },
+  primer: {
+    kind: 'rotaryVane',
+    id: 'primer',
+    maxOnS: 60,
+    periodS: 180,
+    // Pulls up to 80 kPa vacuum (primes to just under 8 m lift; manual: 7.5 m max attempted,
+    // L1162). // PLACEHOLDER — needs Dek
+    maxVacuumKpa: 80,
+    displacementLps: 1.5, // air moved, L/s: ~15 s to prime at 4 m on 6 m of hard suction // PLACEHOLDER — needs Dek
+  },
   relief: {
     kind: 'preset', // Cat 1 relief is preset, not adjustable, and dumps to tank (L2322–2336) // doctrine-confirmed
     dumpTo: 'tank',

@@ -16,6 +16,15 @@ export interface PumpSpec {
   shutoffKpa: number;
   /** Curve droop, kPa per (L/min)². */
   droopKpaPerLpm2: number;
+  /**
+   * Inlet gauge pressure below which the pump cavitates, kPa (negative: vacuum). The inlet can't
+   * be pulled lower, so it caps the flow the pump can draw from a draught or a weak supply.
+   */
+  cavitationInletKpa: number;
+  /** Water held in the pump casing, L: the air the primer must clear and the churn heat's mass. */
+  casingVolumeL: number;
+  /** Heat churned into the casing water at max rpm, kW; scales with (rpm/max)³ (affinity law). */
+  churnKw: number;
 }
 
 /** Engine driving the pump. Rpm chases the throttle with a first-order lag. */
@@ -30,7 +39,12 @@ export interface TankSpec {
   capacityL: number;
 }
 
-export type InletKind = 'tank' | 'hydrant' | 'draught' | 'relay';
+/**
+ * What an inlet is on the truck. 'tank' is the internal tank-to-pump feed. 'suction' is an external
+ * inlet: hard suction to a static source (draughting) or a collecting head and layflat from a
+ * hydrant. What is connected to it is scenario data (`SupplyLine`), not part of the appliance.
+ */
+export type InletKind = 'tank' | 'suction';
 
 export interface InletSpec {
   /** Control id of this inlet's valve, e.g. 'tank-to-pump'. */
@@ -49,9 +63,21 @@ export interface DeliverySpec {
   sizeMm: number;
 }
 
-/** How the pump is primed for draughting. Data only in M1; behaviour arrives in M4. */
+/** What any primer can pull: the vacuum it approaches and how fast it moves air. */
+export interface PrimerPerformance {
+  /** Best vacuum the primer reaches on a sealed pump, kPa (positive number). */
+  maxVacuumKpa: number;
+  /** Air it removes, L/s: with the air volume this sets how fast the vacuum builds. */
+  displacementLps: number;
+}
+
+/**
+ * How the pump is primed for draughting. 'rotaryVane' runs while its switch is held, within a duty
+ * cycle; 'diaphragm' works while the operator strokes its handle (the switch input); 'selfPriming'
+ * has no control and primes whenever the suction path is open. No primer: the pump can't draught.
+ */
 export type PrimerSpec =
-  | {
+  | ({
       kind: 'rotaryVane';
       /** Control id of the primer switch. */
       id: ControlId;
@@ -59,9 +85,12 @@ export type PrimerSpec =
       maxOnS: number;
       /** Duty period the max run applies within, s. */
       periodS: number;
-    }
-  | { kind: 'diaphragm'; /** Control id of the primer handle. */ id: ControlId }
-  | { kind: 'selfPriming' };
+    } & PrimerPerformance)
+  | ({
+      kind: 'diaphragm';
+      /** Control id of the primer handle. */ id: ControlId;
+    } & PrimerPerformance)
+  | ({ kind: 'selfPriming' } & PrimerPerformance);
 
 /**
  * Pressure relief: a bypass that opens above `setKpa` and dumps flow back to the tank or pump inlet.
@@ -142,6 +171,41 @@ export interface HoseLine {
   branch: Branch;
 }
 
+/**
+ * A water source on the fireground (scenario data; a dam's volume changes as it's drawn).
+ * 'hydrant': pressurised main, residual = static − main loss·Q² (manual L1055–1065, C14).
+ * 'static': open water (dam, tank, creek) whose surface is `liftM` below the pump inlet.
+ */
+export type WaterSource =
+  | {
+      id: string;
+      kind: 'hydrant';
+      label: string;
+      /** Pressure at the hydrant with nothing drawn, kPa. */
+      staticKpa: number;
+      /** Main and hydrant loss, kPa per (L/min)². */
+      mainLossKpaPerLpm2: number;
+    }
+  | {
+      id: string;
+      kind: 'static';
+      label: string;
+      /** Height of the pump inlet above the water surface, m. */
+      liftM: number;
+      /** Water left, L. */
+      volumeL: number;
+    };
+
+/** Hose from a source to one of a truck's suction inlets: hard suction or layflat. */
+export interface SupplyLine {
+  id: string;
+  truckId: string;
+  /** Spec inlet id (a 'suction' inlet). */
+  inletId: ControlId;
+  sourceId: string;
+  segments: HoseSegment[];
+}
+
 // ---------------------------------------------------------------------------
 // Dynamic state.
 // ---------------------------------------------------------------------------
@@ -160,6 +224,45 @@ export interface TruckReadings {
   deliveryFlowLpm: Record<ControlId, number>;
   /** Pressure at each branch, keyed by line id, kPa. */
   branchKpa: Record<string, number>;
+  /** Flow in through each inlet, keyed by inlet id, L/min. */
+  inletFlowLpm: Record<ControlId, number>;
+  /** How hard the pump is cavitating, 0 (not) to 1 (fully); clean readings carry no flutter. */
+  cavitation: number;
+}
+
+/** Slow pump states, integrated every tick. */
+export interface PumpState {
+  /** Whether the suction side is full of water from a draught source. */
+  primed: boolean;
+  /** Vacuum the primer has pulled on the casing, kPa (positive number). */
+  vacuumKpa: number;
+  /** How long the primer has run without a break, s. */
+  primerRunS: number;
+  /** Rotary vane duty used, s: rises while running, falls at the rest rate. */
+  primerDutyS: number;
+  /** Primer tripped its duty cut-out; it won't run until the duty has recovered. */
+  primerCutOut: boolean;
+  /** Casing water temperature, °C. */
+  tempC: number;
+  /** Gauge flutter noise, −1…1: a smoothed seeded random walk, scaled by cavitation for display. */
+  flutter: number;
+}
+
+/** A water hammer event on a delivery. */
+export interface HammerEvent {
+  /** Sim time it happened, s. */
+  atS: number;
+  deliveryId: ControlId;
+  /** Estimated pressure surge, kPa. */
+  surgeKpa: number;
+}
+
+/** Fault counters for the debrief (M6 scores them). */
+export interface FaultTally {
+  cavitationS: number;
+  overheatS: number;
+  waterHammer: number;
+  worstSurgeKpa: number;
 }
 
 export interface TruckState {
@@ -172,6 +275,10 @@ export interface TruckState {
   /** Inputs last applied to this truck. */
   inputs: PlayerInputs;
   readings: TruckReadings;
+  pump: PumpState;
+  tally: FaultTally;
+  /** Most recent water hammer, if any. */
+  lastHammer?: HammerEvent;
 }
 
 export interface SimState {
@@ -181,6 +288,10 @@ export interface SimState {
   activeTruckId: string;
   trucks: TruckState[];
   lines: HoseLine[];
+  sources: WaterSource[];
+  supplies: SupplyLine[];
+  /** Seeded PRNG state (mulberry32), so noisy behaviour replays exactly. */
+  rngState: number;
 }
 
 /** Everything the player can change, keyed by spec control id (ARCHITECTURE §9.3). */

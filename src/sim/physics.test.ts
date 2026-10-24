@@ -5,7 +5,13 @@ import { hoseFrictionKpa, hoseType } from './hose';
 import { lagRpm, pumpRiseKpa, targetRpm } from './pump';
 import { drainTankL } from './tank';
 
-const PUMP = { shutoffKpa: 1400, droopKpaPerLpm2: 4e-4 };
+const PUMP = {
+  shutoffKpa: 1400,
+  droopKpaPerLpm2: 4e-4,
+  cavitationInletKpa: -84,
+  casingVolumeL: 10,
+  churnKw: 10,
+};
 const ENGINE = { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5 };
 
 describe('hose friction', () => {

@@ -57,6 +57,7 @@ export const TEST_APPLIANCE_LAYOUT: PanelLayout = {
           function: 'inlet',
           tap: 'toggle',
         },
+        { kind: 'valve', control: 'intake', label: 'Intake', function: 'inlet', tap: 'toggle' },
         { kind: 'throttle', variant: 't-handle', label: 'Throttle' },
       ],
     },

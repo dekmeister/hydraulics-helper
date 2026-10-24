@@ -14,6 +14,8 @@ export const STANDARD_LENGTH_M = 30;
 export interface HoseType {
   sizeMm: number;
   lined: boolean;
+  /** Hard (rigid) suction hose: holds a vacuum. Layflat collapses below `LAYFLAT_COLLAPSE_KPA`. */
+  hardSuction?: true;
   /** Friction coefficient k_m in ΔP = k_m·L·Q², kPa per (L/min)² per metre. */
   kPerM: number;
 }
@@ -34,7 +36,60 @@ export const HOSES: Readonly<Record<string, HoseType>> = {
   '70U': { sizeMm: 70, lined: false, kPerM: 7.0e-6 }, // 1000 L/min → 200 kPa per length
   '70L': { sizeMm: 70, lined: true, kPerM: 2.56e-6 }, // 1000 L/min → 75 kPa per length
   '90U': { sizeMm: 90, lined: false, kPerM: 2.17e-6 }, // 1000 L/min → 65 kPa per length (L1039)
+  // Hard suction, smooth bore: taken as 65 mm lined (manual gives no figure). // PLACEHOLDER — needs Dek
+  '65H': { sizeMm: 65, lined: true, hardSuction: true, kPerM: 4.07e-6 },
 };
+
+/**
+ * Inlet gauge pressure below which layflat supply hose flattens, kPa: soft hose can't hold a
+ * vacuum, so an over-run hydrant reads "inlet zero, supply hose soft" (Table 7). // doctrine-confirmed
+ */
+export const LAYFLAT_COLLAPSE_KPA = 0;
+
+/** Loss through a suction strainer, kPa per (L/min)²: 15 kPa at 1000 L/min. // PLACEHOLDER — needs Dek */
+export const STRAINER_LOSS_KPA_PER_LPM2 = 15 / 1000 ** 2;
+
+/**
+ * Time constant a primed-but-idle pump's vacuum decays with when nothing is leaking, s: a sound
+ * pump "holds" the vacuum test. // PLACEHOLDER — needs Dek
+ */
+export const VACUUM_HOLD_TAU_S = 120;
+
+/**
+ * How far past the cavitation limit the pump must be pushed to count as fully cavitating, as a
+ * fraction of the flow it can draw (sets the 0–1 intensity). Display/scoring scale, not doctrine.
+ */
+export const CAVITATION_FULL_EXCESS = 0.25;
+
+/** Discharge gauge flutter at full cavitation, ± kPa (Design §6: ±2–5° of needle). // PLACEHOLDER — needs Dek */
+export const CAVITATION_FLUTTER_DISCHARGE_KPA = 40;
+/** Compound gauge flutter at full cavitation, ± kPa. // PLACEHOLDER — needs Dek */
+export const CAVITATION_FLUTTER_COMPOUND_KPA = 6;
+
+/** Heat to warm 1 L of water by 1 °C, kJ. Physics. */
+export const WATER_KJ_PER_L_K = 4.186;
+
+/** Temperature of source water and the pump at rest, °C. // PLACEHOLDER — needs Dek */
+export const AMBIENT_C = 20;
+
+/** Heat the pump casing sheds to the air, kW per °C above ambient. // PLACEHOLDER — needs Dek */
+export const CASING_HEAT_LOSS_KW_PER_K = 0.02;
+
+/** Pump water temperature that lights the temperature lamp amber / red, °C. // PLACEHOLDER — needs Dek */
+export const PUMP_TEMP_CAUTION_C = 60;
+export const PUMP_TEMP_ALARM_C = 80;
+
+/** Density of water, kg/m³. Physics. */
+export const WATER_DENSITY_KG_M3 = 1000;
+
+/**
+ * Pressure wave speed in charged fire hose, m/s; far below steel pipe (~1200) because the wall
+ * stretches. Sets the Joukowsky surge ρ·a·Δv. // PLACEHOLDER — needs Dek
+ */
+export const HOSE_WAVE_SPEED_M_S = 250;
+
+/** Surge above which a valve closure counts as water hammer, kPa. // PLACEHOLDER — needs Dek */
+export const WATER_HAMMER_SURGE_KPA = 500;
 
 /**
  * Branch orifice law Q = BRANCH_FLOW_COEFF · d² · √(P / 100), Q in L/min, d in mm, P in kPa.

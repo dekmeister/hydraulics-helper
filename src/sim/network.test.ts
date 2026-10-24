@@ -11,7 +11,13 @@ import type { ApplianceSpec, PlayerInputs, ReliefSpec } from './types';
 const SPEC: ApplianceSpec = {
   id: 'solver-test',
   name: 'Solver test',
-  pump: { shutoffKpa: 1400, droopKpaPerLpm2: 4e-4 },
+  pump: {
+    shutoffKpa: 1400,
+    droopKpaPerLpm2: 4e-4,
+    cavitationInletKpa: -84,
+    casingVolumeL: 10,
+    churnKw: 10,
+  },
   engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5 },
   tank: { capacityL: 3000 },
   inlets: [{ id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 1e-4 }],
@@ -120,7 +126,7 @@ describe('pressure relief', () => {
     const toTank = solve({ tank: 1 }, undefined, 3000, withRelief(preset));
     const toInlet = solve({ tank: 1 }, undefined, 3000, withRelief({ ...preset, dumpTo: 'inlet' }));
     expect(toTank.compoundKpa).toBeLessThan(0);
-    expect(toInlet.compoundKpa).toBe(-0);
+    expect(toInlet.compoundKpa).toBe(0);
   });
 
   it('an adjustable relief takes its set pressure from its control', () => {
