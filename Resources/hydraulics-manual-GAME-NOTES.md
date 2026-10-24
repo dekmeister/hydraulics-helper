@@ -13,7 +13,8 @@ Reviewed against `ARCHITECTURE.md`, `PLAN.md`, `DESIGN_BRIEF.md`. Companion to `
 
 1. **Head = 10 kPa per metre** (not 9.8). Matches the manual and what operators are taught.
 2. **Friction is specified per metre**, `ΔP = k_m · Q² · L_m` (k_m in kPa per (L/min)² per m). Hose lengths in scenarios are still multiples of 30 m (the manual's unit), but `sim/constants.ts` stores per-metre coefficients (§3).
-3. **First tutorial: two lines of 25 mm hose.** Worked numbers and implications in §4a. Note this is a change from `PLAN.md` M1 / `ARCHITECTURE.md` §5, which assume 38/65 mm and a 38 mm first scenario.
+3. **Reference appliance: Cat 1 tanker.** First (and v1-only) appliance spec. Others follow via `ARCHITECTURE.md` §9.
+4. **First tutorial: two lines of 25 mm hose.** Worked numbers and implications in §4a. Note this is a change from `PLAN.md` M1 / `ARCHITECTURE.md` §5, which assume 38/65 mm and a 38 mm first scenario.
 
 ---
 
@@ -282,7 +283,7 @@ Manual-backed behaviours the game can measure:
 ## 11. Suggested next steps (not done — for Dek's decision)
 
 1. **Decisions:** made — see §0. Still open: number of 30 m lengths per tutorial line (suggest 2, §4a).
-2. **Supply from Dek (GAPs):** pump curve (shutoff pressure, rated flow at 3 m lift and 700 kPa?), engine idle/priming/max rpm, tank capacities and reserve %, tank-pump inlet reading at flow, pump temp thresholds, hydrant static pressure ranges, series/parallel relevance for the target appliance (Cat 1 vs Cat 7/9).
+2. **Supply from Dek (GAPs):** pump curve (shutoff pressure, rated flow at 3 m lift and 700 kPa?), engine idle/priming/max rpm, tank capacities and reserve %, tank-pump inlet reading at flow, pump temp thresholds, hydrant static pressure ranges, series/parallel relevance for the Cat 1 (target appliance decided, §0).
 3. **Visually verify Table 3 on PDF p32** and lift Table 4 on p38 before locking calibration tests.
 4. **Docs to update when M0/M1 starts** (not edited now): ARCHITECTURE §4.2, §4.4 (relief valve model), §4.5 (units, auto-branch), §4.3 (hydrant model, tank inlet sign), §4.6 (recirc valve in `PlayerInputs`), §6 (calibration example). Create `docs/CALIBRATION.md` from §4 above.
 5. **PLAN impact (minor):** M1 "Calibration tests ≥ 5" is easily met by C1–C10. M2 gains a recirculation valve + relief lamp. M4's cavitation/overheat/water-hammer items now have manual-backed symptoms. M5 relay spec is concrete (C12, C13, shutdown sequence). Suggest adding a "tank→hydrant changeover surge" lesson to the scenario 3 spec.

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Exported from canvas artboard BayLayoutA.dc.html. Text uses Barlow Condensed / IBM Plex Mono / IBM Plex Sans. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="860" viewBox="0 0 1440 860" aria-hidden="true">
+    <g fill="none" stroke="#16191B" stroke-width="1.3">
+      <path d="M58 300 L290 300"></path>
+      <path d="M58 552 L170 552"></path>
+      <path d="M1382 300 L1150 300"></path>
+      <path d="M1382 552 L1270 552"></path>
+      <path d="M470 42 L470 150"></path>
+      <path d="M540 42 L520 330"></path>
+      <path d="M610 42 L610 97"></path>
+      <path d="M826 42 L826 184"></path>
+      <path d="M392 768 L392 644"></path>
+      <path d="M470 768 L468 532"></path>
+      <path d="M560 768 L612 489"></path>
+      <path d="M650 768 L652 560"></path>
+      <path d="M740 768 L740 662"></path>
+      <path d="M841 768 L841 653"></path>
+      <path d="M931 768 L931 653"></path>
+      <path d="M1010 768 L994 560"></path>
+    </g>
+    <g fill="#16191B">
+      <circle cx="290" cy="300" r="3.5"></circle><circle cx="170" cy="552" r="3.5"></circle><circle cx="1150" cy="300" r="3.5"></circle><circle cx="1270" cy="552" r="3.5"></circle>
+      <circle cx="470" cy="150" r="3.5"></circle><circle cx="520" cy="330" r="3.5"></circle><circle cx="610" cy="97" r="3.5"></circle><circle cx="826" cy="184" r="3.5"></circle>
+      <circle cx="392" cy="644" r="3.5"></circle><circle cx="468" cy="532" r="3.5"></circle><circle cx="612" cy="489" r="3.5"></circle><circle cx="652" cy="560" r="3.5"></circle><circle cx="740" cy="662" r="3.5"></circle><circle cx="841" cy="653" r="3.5"></circle><circle cx="931" cy="653" r="3.5"></circle><circle cx="994" cy="560" r="3.5"></circle>
+    </g>
+    <g font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" text-anchor="middle" fill="#16191B">
+      <g stroke="#16191B" stroke-width="1.6" fill="#F3EFE4">
+        <circle cx="40" cy="300" r="17"></circle><circle cx="40" cy="552" r="17"></circle>
+        <circle cx="1400" cy="300" r="17"></circle><circle cx="1400" cy="552" r="17"></circle>
+        <circle cx="470" cy="42" r="17"></circle><circle cx="540" cy="42" r="17"></circle><circle cx="610" cy="42" r="17"></circle><circle cx="826" cy="42" r="17"></circle>
+        <circle cx="392" cy="786" r="17"></circle><circle cx="470" cy="786" r="17"></circle><circle cx="560" cy="786" r="17"></circle><circle cx="650" cy="786" r="17"></circle><circle cx="740" cy="786" r="17"></circle><circle cx="841" cy="786" r="17"></circle><circle cx="931" cy="786" r="17"></circle><circle cx="1010" cy="786" r="17"></circle>
+      </g>
+      <text x="40" y="304.5">A1</text><text x="40" y="556.5">A2</text>
+      <text x="1400" y="304.5">E1</text><text x="1400" y="556.5">E2</text>
+      <text x="470" y="46.5">B4</text><text x="540" y="46.5">B1</text><text x="610" y="46.5">B2</text><text x="826" y="46.5">C</text>
+      <text x="392" y="790.5">B3</text><text x="470" y="790.5">B5</text><text x="560" y="790.5">D1</text><text x="650" y="790.5">D5</text><text x="740" y="790.5">D2</text><text x="841" y="790.5">D3</text><text x="931" y="790.5">D4</text><text x="1010" y="790.5">D6</text>
+    </g>
+  </svg>

@@ -1,0 +1,30 @@
+/* Gauge motion (sheet 04). The Wake itself is static data and is never animated away. */
+
+.gauge--flutter {
+  /* transform-origin is the dial centre: the SVG viewBox is centred on (0,0). */
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: gauge-flutter 0.42s linear infinite;
+}
+@keyframes gauge-flutter {
+  0%   { transform: rotate(0deg); }
+  18%  { transform: rotate(3.5deg); }
+  36%  { transform: rotate(-2deg); }
+  55%  { transform: rotate(4.5deg); }
+  74%  { transform: rotate(-3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Optional: flicker the wake while hunting. */
+.gauge__wake--hunting { animation: gauge-wake-flicker 0.9s steps(1) infinite; }
+@keyframes gauge-wake-flicker { 0% { opacity: 1 } 30% { opacity: .55 } 55% { opacity: .9 } 80% { opacity: .65 } }
+
+/* Alarm lamps flash at 2 Hz (below the 3 Hz photosensitivity threshold). */
+.lamp--alarm { animation: lamp-flash 0.5s steps(1) infinite; }
+@keyframes lamp-flash { 50% { opacity: .22 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge--flutter, .gauge__wake--hunting, .lamp--alarm { animation: none; }
+  /* Alarm lamps hold steady and gain a doubled ring instead of flashing. */
+  .lamp--alarm { outline: 2px solid currentColor; outline-offset: 3px; }
+}

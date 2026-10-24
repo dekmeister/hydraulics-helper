@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Controls — valve, throttle, primer, lamps</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2470C2}a:hover{color:#16191B}
+.c3-flash{animation:c3-flash 0.5s steps(1) infinite}
+@keyframes c3-flash{50%{opacity:0.22}}
+@media (prefers-reduced-motion: reduce){.c3-flash{animation:none}}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1300px; box-sizing: border-box; padding: 48px 56px; background: #F3EFE4; color: #16191B; font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px; position: relative">
+
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="c3-pipe" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#EEF1F2"></stop>
+        <stop offset="0.4" stop-color="#B9C0C4"></stop>
+        <stop offset="1" stop-color="#6F777C"></stop>
+      </linearGradient>
+      <linearGradient id="c3-galv" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
+        <stop offset="0" stop-color="#F4F6F7"></stop>
+        <stop offset="0.4" stop-color="#BCC3C7"></stop>
+        <stop offset="1" stop-color="#6A7277"></stop>
+      </linearGradient>
+      <g id="c3-valvebase">
+        <rect x="0" y="108" width="240" height="24" fill="url(#c3-pipe)" stroke="#4A5156" stroke-width="1"></rect>
+        <rect x="42" y="102" width="9" height="36" rx="1.5" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1"></rect>
+        <rect x="141" y="102" width="9" height="36" rx="1.5" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1"></rect>
+        <rect x="60" y="97" width="72" height="46" rx="7" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+        <circle cx="96" cy="120" r="15" fill="#8E969B" stroke="#4A5156" stroke-width="1.2"></circle>
+        <g font-family="IBM Plex Mono, monospace" font-size="9" fill="#7D868C">
+          <text x="40" y="20">CLOSED</text>
+          <text x="214" y="100">OPEN</text>
+        </g>
+      </g>
+      <g id="c3-throttlebase">
+        <polygon points="6,36 26,36 32,42 32,58 26,64 6,64" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></polygon>
+        <rect x="0" y="30" width="6" height="40" fill="#2F3438"></rect>
+        <rect x="8" y="100" width="48" height="46" rx="6" fill="#272B2F" stroke="#4A5156" stroke-width="1.2"></rect>
+        <rect x="184" y="100" width="48" height="46" rx="6" fill="#272B2F" stroke="#4A5156" stroke-width="1.2"></rect>
+        <path d="M23 123 h18" stroke="#C9CFD3" stroke-width="2.5" stroke-linecap="round"></path>
+        <path d="M199 123 h18 M208 114 v18" stroke="#C9CFD3" stroke-width="2.5" stroke-linecap="round"></path>
+      </g>
+      <g id="c3-thandle">
+        <rect x="0" y="12" width="20" height="76" rx="10" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+        <g stroke="#3A4046" stroke-opacity="0.45" stroke-width="1.2"><line x1="4" y1="24" x2="16" y2="24"></line><line x1="4" y1="29" x2="16" y2="29"></line><line x1="4" y1="34" x2="16" y2="34"></line><line x1="4" y1="66" x2="16" y2="66"></line><line x1="4" y1="71" x2="16" y2="71"></line><line x1="4" y1="76" x2="16" y2="76"></line></g>
+        <circle cx="10" cy="50" r="5.5" fill="#2F3438"></circle>
+      </g>
+      <g id="c3-lampbezel">
+        <circle cx="120" cy="64" r="38" fill="url(#c3-galv)"></circle>
+        <circle cx="120" cy="64" r="32.5" fill="#16191B"></circle>
+      </g>
+    </defs>
+  </svg>
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px; padding-bottom: 16px; border-bottom: 2.5px solid #16191B">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; color: #5B6166">PUMP OPERATOR TRAINING · VISUAL LANGUAGE</div>
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 56px; line-height: 0.92; text-transform: uppercase">Controls &amp; states</h1>
+    </div>
+    <p style="margin: 0; max-width: 560px; font-size: 15px; line-height: 1.5; color: #2E3337; text-wrap: pretty">Drag controls always draw their travel path; tap controls always show a raised cap. A player should know which gesture a part wants before touching it.</p>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; border: 1.5px solid #16191B; padding: 8px 12px">SHEET 03 / 08</div>
+  </header>
+
+  <div style="display: grid; grid-template-columns: 300px repeat(4, minmax(0, 1fr)); gap: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase; color: #5B6166">
+    <span></span><span style="padding-left: 4px">Default</span><span style="padding-left: 4px">Active</span><span style="padding-left: 4px">Disabled</span><span style="padding-left: 4px">Warning</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px">
+
+    <div style="display: grid; grid-template-columns: 300px repeat(4, minmax(0, 1fr)); gap: 8px">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding-right: 20px">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6166">3.1</span><h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; text-transform: uppercase">Delivery valve</h2></div>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #2E3337; text-wrap: pretty">Quarter-turn lever. Drag the coloured grip through 90°; detents at closed and open, holds anywhere between. Across the pipe = closed. A tap does nothing, so a stray thumb never charges a line.</p>
+        <p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #5B6166">input[type=range] 0–100 under the SVG · ←/→ 10 % · Home/End</p>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Delivery 1 valve closed">
+          <use href="#c3-valvebase"></use>
+          <path d="M96 8 A112 112 0 0 1 208 120" fill="none" stroke="#6B737A" stroke-width="1.5" stroke-dasharray="3 5"></path>
+          <path d="M201 110 L208 120 L215 110" fill="none" stroke="#6B737A" stroke-width="1.5"></path>
+          <g transform="translate(96 120)">
+            <g transform="translate(2 3) rotate(-90)"><rect x="-8" y="-10" width="108" height="20" rx="10" fill="#000000" opacity="0.32"></rect></g>
+            <g transform="rotate(-90)">
+              <rect x="-8" y="-8" width="104" height="16" rx="8" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+              <rect x="40" y="-10" width="60" height="20" rx="10" fill="#2470C2" stroke="#0E2E52" stroke-width="1.5"></rect>
+              <g stroke="#0E2E52" stroke-opacity="0.5" stroke-width="1.5"><line x1="74" y1="-6" x2="74" y2="6"></line><line x1="81" y1="-6" x2="81" y2="6"></line><line x1="88" y1="-6" x2="88" y2="6"></line></g>
+            </g>
+            <circle r="8" fill="#2F3438"></circle><circle r="3" fill="#AEB5BA"></circle>
+          </g>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">closed · travel arc dotted</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Delivery 1 valve being dragged, 60 percent open">
+          <use href="#c3-valvebase"></use>
+          <path d="M96 8 A112 112 0 0 1 208 120" fill="none" stroke="#6B737A" stroke-width="1.5" stroke-dasharray="3 5"></path>
+          <path d="M96 8 A112 112 0 0 1 186.61 54.17" fill="none" stroke="#2470C2" stroke-width="4" stroke-linecap="round"></path>
+          <g transform="translate(96 120)">
+            <g transform="translate(5 8) rotate(-36)"><rect x="-8" y="-10" width="108" height="20" rx="10" fill="#000000" opacity="0.4"></rect></g>
+            <g transform="rotate(-36)">
+              <rect x="-8" y="-8" width="104" height="16" rx="8" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+              <rect x="40" y="-10" width="60" height="20" rx="10" fill="#2470C2" stroke="#0E2E52" stroke-width="1.5"></rect>
+              <g stroke="#0E2E52" stroke-opacity="0.5" stroke-width="1.5"><line x1="74" y1="-6" x2="74" y2="6"></line><line x1="81" y1="-6" x2="81" y2="6"></line><line x1="88" y1="-6" x2="88" y2="6"></line></g>
+              <rect x="34" y="-16" width="72" height="32" rx="16" fill="none" stroke="#F5F2EA" stroke-width="2"></rect>
+            </g>
+            <circle r="8" fill="#2F3438"></circle><circle r="3" fill="#AEB5BA"></circle>
+          </g>
+          <text x="232" y="26" text-anchor="end" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="15" fill="#F5F2EA">60 %</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">dragging · lifted shadow +5/+8 · arc fills</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Delivery 4 valve disabled, no line connected">
+          <g opacity="0.5">
+            <use href="#c3-valvebase"></use>
+            <g transform="translate(96 120)">
+              <g transform="rotate(-90)">
+                <rect x="-8" y="-8" width="104" height="16" rx="8" fill="#7D868C" stroke="#4A5156" stroke-width="1.2"></rect>
+                <rect x="40" y="-10" width="60" height="20" rx="10" fill="#4A5054" stroke="#2F3438" stroke-width="1.5"></rect>
+              </g>
+              <circle r="8" fill="#2F3438"></circle>
+            </g>
+          </g>
+          <rect x="150" y="18" width="80" height="24" rx="3" fill="none" stroke="#9AA3A9" stroke-width="1.2" stroke-dasharray="3 3"></rect>
+          <text x="190" y="34.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="1" fill="#C9CFD3">NO LINE</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">50 % opacity · sleeve loses colour · no arc</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Delivery 1 valve open with caution: branch shut, pressure rising">
+          <use href="#c3-valvebase"></use>
+          <rect x="52" y="89" width="88" height="62" rx="12" fill="none" stroke="#F2A900" stroke-width="9" opacity="0.25"></rect>
+          <rect x="54" y="91" width="84" height="58" rx="10" fill="none" stroke="#F2A900" stroke-width="3"></rect>
+          <g transform="translate(96 120)">
+            <g transform="translate(2 3)"><rect x="-8" y="-10" width="108" height="20" rx="10" fill="#000000" opacity="0.32"></rect></g>
+            <rect x="-8" y="-8" width="104" height="16" rx="8" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+            <rect x="40" y="-10" width="60" height="20" rx="10" fill="#2470C2" stroke="#0E2E52" stroke-width="1.5"></rect>
+            <g stroke="#0E2E52" stroke-opacity="0.5" stroke-width="1.5"><line x1="74" y1="-6" x2="74" y2="6"></line><line x1="81" y1="-6" x2="81" y2="6"></line><line x1="88" y1="-6" x2="88" y2="6"></line></g>
+            <circle r="8" fill="#2F3438"></circle><circle r="3" fill="#AEB5BA"></circle>
+          </g>
+          <path d="M44 22 L60 50 L28 50 Z" fill="#F2A900" stroke="#16191B" stroke-width="1.5" stroke-linejoin="round"></path>
+          <path d="M44 31 v9 M44 44 v1.5" stroke="#16191B" stroke-width="2.5" stroke-linecap="round"></path>
+          <text x="232" y="40" text-anchor="end" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="15" fill="#F2A900">1 320 kPa</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">open into a shut branch · amber collar</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px repeat(4, minmax(0, 1fr)); gap: 8px">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding-right: 20px">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6166">3.2</span><h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; text-transform: uppercase">Tank-to-pump</h2></div>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #2E3337; text-wrap: pretty">Same mechanism, different silhouette: a ball-knob lever with no delivery colour. It is the one valve that feeds the pump rather than a line, so it must never be mistaken for a fifth delivery.</p>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Tank to pump valve closed">
+          <use href="#c3-valvebase"></use>
+          <path d="M96 8 A112 112 0 0 1 208 120" fill="none" stroke="#6B737A" stroke-width="1.5" stroke-dasharray="3 5"></path>
+          <path d="M201 110 L208 120 L215 110" fill="none" stroke="#6B737A" stroke-width="1.5"></path>
+          <g transform="translate(96 120)">
+            <g transform="translate(2 3) rotate(-90)"><rect x="-8" y="-7" width="96" height="14" rx="7" fill="#000000" opacity="0.32"></rect><circle cx="92" r="14" fill="#000000" opacity="0.32"></circle></g>
+            <g transform="rotate(-90)">
+              <rect x="-8" y="-7" width="96" height="14" rx="7" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+              <circle cx="92" r="14" fill="#E9EDEF" stroke="#16191B" stroke-width="2"></circle>
+              <circle cx="92" r="6" fill="none" stroke="#16191B" stroke-width="1.5"></circle>
+            </g>
+            <circle r="8" fill="#2F3438"></circle><circle r="3" fill="#AEB5BA"></circle>
+          </g>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">closed · knob end, neutral</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Tank to pump valve being dragged, 40 percent open">
+          <use href="#c3-valvebase"></use>
+          <path d="M96 8 A112 112 0 0 1 208 120" fill="none" stroke="#6B737A" stroke-width="1.5" stroke-dasharray="3 5"></path>
+          <path d="M96 8 A112 112 0 0 1 161.83 29.39" fill="none" stroke="#E9EDEF" stroke-width="4" stroke-linecap="round"></path>
+          <g transform="translate(96 120)">
+            <g transform="translate(5 8) rotate(-54)"><rect x="-8" y="-7" width="96" height="14" rx="7" fill="#000000" opacity="0.4"></rect><circle cx="92" r="14" fill="#000000" opacity="0.4"></circle></g>
+            <g transform="rotate(-54)">
+              <rect x="-8" y="-7" width="96" height="14" rx="7" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+              <circle cx="92" r="14" fill="#E9EDEF" stroke="#16191B" stroke-width="2"></circle>
+              <circle cx="92" r="6" fill="none" stroke="#16191B" stroke-width="1.5"></circle>
+              <circle cx="92" r="20" fill="none" stroke="#F5F2EA" stroke-width="2"></circle>
+            </g>
+            <circle r="8" fill="#2F3438"></circle><circle r="3" fill="#AEB5BA"></circle>
+          </g>
+          <text x="232" y="26" text-anchor="end" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="15" fill="#F5F2EA">40 %</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">dragging · arc in steel white</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Tank to pump valve locked while drafting">
+          <g opacity="0.5">
+            <use href="#c3-valvebase"></use>
+            <g transform="translate(96 120) rotate(-90)">
+              <rect x="-8" y="-7" width="96" height="14" rx="7" fill="#7D868C" stroke="#4A5156" stroke-width="1.2"></rect>
+              <circle cx="92" r="14" fill="#5A6166" stroke="#2F3438" stroke-width="2"></circle>
+            </g>
+          </g>
+          <rect x="136" y="18" width="96" height="24" rx="3" fill="none" stroke="#9AA3A9" stroke-width="1.2" stroke-dasharray="3 3"></rect>
+          <text x="184" y="34.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="1" fill="#C9CFD3">DRAFTING</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">scenario lock · same dimming rule</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Tank to pump valve closed while pump runs with no supply: caution">
+          <use href="#c3-valvebase"></use>
+          <rect x="52" y="89" width="88" height="62" rx="12" fill="none" stroke="#F2A900" stroke-width="9" opacity="0.25"></rect>
+          <rect x="54" y="91" width="84" height="58" rx="10" fill="none" stroke="#F2A900" stroke-width="3"></rect>
+          <g transform="translate(96 120)">
+            <g transform="translate(2 3) rotate(-90)"><rect x="-8" y="-7" width="96" height="14" rx="7" fill="#000000" opacity="0.32"></rect></g>
+            <g transform="rotate(-90)">
+              <rect x="-8" y="-7" width="96" height="14" rx="7" fill="url(#c3-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+              <circle cx="92" r="14" fill="#E9EDEF" stroke="#16191B" stroke-width="2"></circle>
+              <circle cx="92" r="6" fill="none" stroke="#16191B" stroke-width="1.5"></circle>
+            </g>
+            <circle r="8" fill="#2F3438"></circle><circle r="3" fill="#AEB5BA"></circle>
+          </g>
+          <path d="M184 22 L200 50 L168 50 Z" fill="#F2A900" stroke="#16191B" stroke-width="1.5" stroke-linejoin="round"></path>
+          <path d="M184 31 v9 M184 44 v1.5" stroke="#16191B" stroke-width="2.5" stroke-linecap="round"></path>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">closed, pump running, no supply</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px repeat(4, minmax(0, 1fr)); gap: 8px">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding-right: 20px">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6166">3.3</span><h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; text-transform: uppercase">Throttle · vernier</h2></div>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #2E3337; text-wrap: pretty">Side view of a push-pull T-handle. Drag it out for coarse travel; the graduated shaft is revealed as you pull. − / + are the vernier twist, 25 rpm a step. Released, it stays put: a cable, not a spring.</p>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Throttle at idle">
+          <use href="#c3-throttlebase"></use>
+          <g transform="translate(34 0)"><use href="#c3-thandle"></use></g>
+          <path d="M68 42 l8 8 l-8 8 M80 42 l8 8 l-8 8 M92 42 l8 8 l-8 8" fill="none" stroke="#6B737A" stroke-width="1.8"></path>
+          <text x="120" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="15" fill="#F5F2EA">800 rpm</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">idle · chevrons show pull direction</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Throttle being pulled, 2200 rpm">
+          <use href="#c3-throttlebase"></use>
+          <rect x="32" y="46" width="94" height="8" fill="url(#c3-pipe)" stroke="#4A5156" stroke-width="0.8"></rect>
+          <g stroke="#16191B" stroke-width="1"><line x1="42" y1="46" x2="42" y2="54"></line><line x1="52" y1="46" x2="52" y2="51"></line><line x1="62" y1="46" x2="62" y2="54"></line><line x1="72" y1="46" x2="72" y2="51"></line><line x1="82" y1="46" x2="82" y2="54"></line><line x1="92" y1="46" x2="92" y2="51"></line><line x1="102" y1="46" x2="102" y2="54"></line><line x1="112" y1="46" x2="112" y2="51"></line><line x1="122" y1="46" x2="122" y2="54"></line></g>
+          <g transform="translate(130 8)"><rect x="0" y="12" width="20" height="76" rx="10" fill="#000000" opacity="0.4"></rect></g>
+          <g transform="translate(126 0)"><use href="#c3-thandle"></use><rect x="-6" y="6" width="32" height="88" rx="16" fill="none" stroke="#F5F2EA" stroke-width="2"></rect></g>
+          <text x="120" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="15" fill="#F5F2EA">2 200 rpm</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">pulled · graduations every 250 rpm</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Throttle disabled, pump not engaged">
+          <g opacity="0.5">
+            <use href="#c3-throttlebase"></use>
+            <g transform="translate(34 0)"><use href="#c3-thandle"></use></g>
+          </g>
+          <rect x="84" y="38" width="140" height="24" rx="3" fill="none" stroke="#9AA3A9" stroke-width="1.2" stroke-dasharray="3 3"></rect>
+          <text x="154" y="54.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="1" fill="#C9CFD3">PUMP NOT ENGAGED</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">± buttons dim with the handle</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Throttle over-revving, 3700 rpm, alarm">
+          <use href="#c3-throttlebase"></use>
+          <rect x="32" y="46" width="160" height="8" fill="url(#c3-pipe)" stroke="#4A5156" stroke-width="0.8"></rect>
+          <rect x="172" y="46" width="20" height="8" fill="#E5362B"></rect>
+          <g stroke="#16191B" stroke-width="1"><line x1="42" y1="46" x2="42" y2="54"></line><line x1="52" y1="46" x2="52" y2="51"></line><line x1="62" y1="46" x2="62" y2="54"></line><line x1="72" y1="46" x2="72" y2="51"></line><line x1="82" y1="46" x2="82" y2="54"></line><line x1="92" y1="46" x2="92" y2="51"></line><line x1="102" y1="46" x2="102" y2="54"></line><line x1="112" y1="46" x2="112" y2="51"></line><line x1="122" y1="46" x2="122" y2="54"></line><line x1="132" y1="46" x2="132" y2="51"></line><line x1="142" y1="46" x2="142" y2="54"></line><line x1="152" y1="46" x2="152" y2="51"></line><line x1="162" y1="46" x2="162" y2="54"></line></g>
+          <g transform="translate(192 0)"><use href="#c3-thandle"></use></g>
+          <path d="M120 2 L134 16 L120 30 L106 16 Z" fill="#FF5A44" stroke="#16191B" stroke-width="1.5"></path>
+          <path d="M120 10 v8 M120 21.5 v1" stroke="#16191B" stroke-width="2.4" stroke-linecap="round"></path>
+          <text x="120" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="15" fill="#FF6A55">3 700 rpm</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">over-rev · red shaft band exposed</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px repeat(4, minmax(0, 1fr)); gap: 8px">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding-right: 20px">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6166">3.4</span><h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; text-transform: uppercase">Primer</h2></div>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #2E3337; text-wrap: pretty">Press and hold. The ring fills as vacuum builds and the cap sinks 2 px. Lets go on its own when the pump catches, or after 30 s, the point at which a real operator would suspect an air leak.</p>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Primer button, ready">
+          <circle cx="120" cy="70" r="50" fill="none" stroke="#2F3438" stroke-width="7"></circle>
+          <circle cx="122" cy="73" r="38" fill="#000000" opacity="0.35"></circle>
+          <circle cx="120" cy="70" r="38" fill="url(#c3-galv)"></circle>
+          <circle cx="120" cy="70" r="31" fill="#2A2F33" stroke="#4A5156" stroke-width="1"></circle>
+          <ellipse cx="112" cy="58" rx="14" ry="6" fill="#FFFFFF" opacity="0.08"></ellipse>
+          <text x="120" y="75" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="15" letter-spacing="1.5" fill="#F5F2EA">PRIME</text>
+          <text x="120" y="142" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#9AA3A9">HOLD</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">raised cap · empty ring</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Primer held, 70 percent primed">
+          <circle cx="120" cy="70" r="50" fill="none" stroke="#2F3438" stroke-width="7"></circle>
+          <circle cx="120" cy="70" r="50" fill="none" stroke="#DCEFF5" stroke-width="7" stroke-dasharray="219.9 314.16" stroke-linecap="round" transform="rotate(-90 120 70)"></circle>
+          <circle cx="121" cy="71.5" r="38" fill="#000000" opacity="0.25"></circle>
+          <circle cx="120" cy="70" r="38" fill="url(#c3-galv)"></circle>
+          <circle cx="120" cy="72" r="30" fill="#202427" stroke="#16191B" stroke-width="1.5"></circle>
+          <text x="120" y="77" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="15" letter-spacing="1.5" fill="#F5F2EA">PRIME</text>
+          <text x="120" y="142" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#DCEFF5">−62 kPa · 11 s</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">held · cap sinks, ring fills</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Primer disabled, pump already primed">
+          <g opacity="0.5">
+            <circle cx="120" cy="70" r="50" fill="none" stroke="#2F3438" stroke-width="7"></circle>
+            <circle cx="120" cy="70" r="38" fill="#7D868C"></circle>
+            <circle cx="120" cy="70" r="31" fill="#2A2F33"></circle>
+          </g>
+          <path d="M106 70 l9 9 l17 -19" fill="none" stroke="#C9CFD3" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          <text x="120" y="142" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#C9CFD3">PRIMED</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">water at the pump · nothing to do</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Primer timed out after 30 seconds, possible air leak: caution">
+          <circle cx="120" cy="70" r="50" fill="none" stroke="#F2A900" stroke-width="7"></circle>
+          <circle cx="122" cy="73" r="38" fill="#000000" opacity="0.35"></circle>
+          <circle cx="120" cy="70" r="38" fill="url(#c3-galv)"></circle>
+          <circle cx="120" cy="70" r="31" fill="#2A2F33" stroke="#4A5156" stroke-width="1"></circle>
+          <path d="M120 52 L138 84 L102 84 Z" fill="#F2A900" stroke="#16191B" stroke-width="1.5" stroke-linejoin="round"></path>
+          <path d="M120 63 v10 M120 78 v1.5" stroke="#16191B" stroke-width="2.6" stroke-linecap="round"></path>
+          <text x="120" y="142" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#F2A900">30 s · CHECK SUCTION</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">timed out · ring and badge amber</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px repeat(4, minmax(0, 1fr)); gap: 8px">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding-right: 20px">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6166">3.5</span><h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; text-transform: uppercase">Warning lamp</h2></div>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #2E3337; text-wrap: pretty">Glass lens in a galv bezel. The severity shape appears only when lit: triangle = caution, steady; diamond = alarm, flashing 2 Hz. Tap a lit lamp to acknowledge: it stops flashing and opens the coaching card.</p>
+        <p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #5B6166">reduced motion: alarm lamps hold steady with a doubled ring</p>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Engine temperature lamp, unlit">
+          <use href="#c3-lampbezel"></use>
+          <circle cx="120" cy="64" r="31" fill="#262A26"></circle>
+          <path d="M117 46 a3 3 0 0 1 6 0 v20 a6.5 6.5 0 1 1 -6 0 Z" fill="none" stroke="#4F5650" stroke-width="2.4"></path>
+          <path d="M104 86 q4 -3 8 0 t8 0 t8 0 t8 0" fill="none" stroke="#4F5650" stroke-width="2.2"></path>
+          <text x="120" y="130" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="1.2" fill="#C9CFD3">ENG TEMP</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">unlit · icon ghosted in the glass</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Engine temperature lamp lit amber, caution">
+          <circle cx="120" cy="64" r="48" fill="#F2A900" opacity="0.2"></circle>
+          <use href="#c3-lampbezel"></use>
+          <circle cx="120" cy="64" r="31" fill="#F2A900"></circle>
+          <circle cx="111" cy="54" r="10" fill="#FFFFFF" opacity="0.25"></circle>
+          <path d="M120 38 L145 84 L95 84 Z" fill="none" stroke="#16191B" stroke-width="2.4" stroke-linejoin="round"></path>
+          <path d="M118 56 a2 2 0 0 1 4 0 v13 a4.5 4.5 0 1 1 -4 0 Z" fill="#16191B"></path>
+          <text x="120" y="130" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="1.2" fill="#F2A900">ENG TEMP · 96 °C</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">caution · steady · triangle</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Engine temperature lamp not in this scenario">
+          <g opacity="0.45">
+            <use href="#c3-lampbezel"></use>
+            <circle cx="120" cy="64" r="31" fill="#262A26"></circle>
+          </g>
+          <circle cx="120" cy="64" r="31" fill="none" stroke="#9AA3A9" stroke-width="1.2" stroke-dasharray="3 3"></circle>
+          <path d="M104 80 L136 48" stroke="#9AA3A9" stroke-width="1.5"></path>
+          <text x="120" y="130" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="1.2" fill="#9AA3A9">NOT IN SCENARIO</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">system not simulated yet</span>
+      </div>
+      <div style="background: #1B1E21; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px">
+        <svg width="100%" viewBox="0 0 240 150" role="img" aria-label="Engine temperature lamp flashing red, alarm">
+          <use href="#c3-lampbezel"></use>
+          <circle cx="120" cy="64" r="31" fill="#4A1F1A"></circle>
+          <g class="c3-flash">
+            <circle cx="120" cy="64" r="50" fill="#E5362B" opacity="0.28"></circle>
+            <circle cx="120" cy="64" r="31" fill="#FF5A44"></circle>
+            <circle cx="111" cy="54" r="10" fill="#FFFFFF" opacity="0.25"></circle>
+          </g>
+          <path d="M120 38 L146 64 L120 90 L94 64 Z" fill="none" stroke="#16191B" stroke-width="2.4" stroke-linejoin="round"></path>
+          <path d="M118 54 a2 2 0 0 1 4 0 v13 a4.5 4.5 0 1 1 -4 0 Z" fill="#16191B"></path>
+          <text x="120" y="130" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="1.2" fill="#FF6A55">ENG TEMP · 106 °C</text>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #9AA3A9">alarm · 2 Hz · diamond</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

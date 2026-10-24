@@ -1,0 +1,378 @@
+// Generated from tokens.json — do not edit by hand.
+/* eslint-disable */
+export const tokens = {
+  "$description": "Design tokens for the pump operator training game. Source of truth; tokens.css and tokens.ts are generated from this file. Values are final unless marked status: 'under-review' (see OPEN_DECISIONS.md).",
+  "color": {
+    "function": {
+      "$description": "Real-truck convention: outlet valve handles blue, inlet valve handles green. Applies to the realistic layouts (sheets 07-08) and, once OPEN_DECISIONS #1 is settled, to the simplified panel too.",
+      "outlet": {
+        "value": "#2470C2",
+        "onColor": "#FFFFFF",
+        "note": "white text 5.0:1"
+      },
+      "outletStroke": {
+        "value": "#0E2E52"
+      },
+      "inlet": {
+        "value": "#14A37F",
+        "onColor": "#16191B",
+        "note": "ink text 5.5:1"
+      },
+      "inletStroke": {
+        "value": "#0A4A3A"
+      }
+    },
+    "delivery": {
+      "$description": "Per-delivery identity colours used on sheets 01, 03-06. status under-review: d1 and d2 collide with function.outlet / function.inlet. Glyph + numeral always carry identity regardless of colour.",
+      "status": "under-review",
+      "d1": {
+        "name": "Cobalt",
+        "value": "#2470C2",
+        "onColor": "#FFFFFF",
+        "stroke": "#0E2E52",
+        "glyph": "circle"
+      },
+      "d2": {
+        "name": "Gum",
+        "value": "#14A37F",
+        "onColor": "#16191B",
+        "stroke": "#0A4A3A",
+        "glyph": "square"
+      },
+      "d3": {
+        "name": "Sky",
+        "value": "#79CBF2",
+        "onColor": "#16191B",
+        "stroke": "#2B5A72",
+        "glyph": "bar"
+      },
+      "d4": {
+        "name": "Galah",
+        "value": "#E08FBE",
+        "onColor": "#16191B",
+        "stroke": "#6A3556",
+        "glyph": "hexagon"
+      }
+    },
+    "signal": {
+      "$description": "Triangle = caution (steady). Diamond = alarm (flashing 2 Hz). These two shapes are reserved for signals and never used as delivery glyphs.",
+      "caution": {
+        "value": "#F2A900",
+        "unlit": "#3A3220",
+        "onColor": "#16191B",
+        "glyph": "triangle"
+      },
+      "alarm": {
+        "value": "#E5362B",
+        "litCore": "#FF5A44",
+        "unlit": "#3A2220",
+        "textOnDark": "#FF6A55",
+        "glyph": "diamond"
+      }
+    },
+    "material": {
+      "ironbark": {
+        "value": "#1B1E21",
+        "use": "panel background"
+      },
+      "raised": {
+        "value": "#272B2F",
+        "use": "raised plate, buttons on panel"
+      },
+      "rowRaised": {
+        "value": "#22262A",
+        "use": "delivery rows on phone panel"
+      },
+      "rule": {
+        "value": "#2C3135",
+        "use": "dividers on panel"
+      },
+      "steel": {
+        "value": "#C9CFD3",
+        "use": "primary text on dark"
+      },
+      "steelDim": {
+        "value": "#9AA3A9",
+        "use": "secondary text on dark, 6.5:1 on ironbark"
+      },
+      "galv": {
+        "value": "#AEB5BA",
+        "use": "fittings, pipes (flat fill)"
+      },
+      "galvLight": {
+        "value": "#F4F6F7"
+      },
+      "galvMid": {
+        "value": "#BCC3C7"
+      },
+      "galvDark": {
+        "value": "#6A7277"
+      },
+      "galvEdge": {
+        "value": "#4A5156"
+      },
+      "dial": {
+        "value": "#F5F2EA",
+        "use": "gauge face"
+      },
+      "ink": {
+        "value": "#16191B",
+        "use": "line, text on light"
+      },
+      "paper": {
+        "value": "#F3EFE4",
+        "use": "manual / coaching surfaces"
+      },
+      "pencil": {
+        "value": "#5B6166",
+        "use": "secondary text on paper, 5.5:1"
+      },
+      "tankLit": {
+        "value": "#DCEFF5",
+        "use": "lit tank-level segment, primer progress ring"
+      },
+      "tankUnlit": {
+        "value": "#2A2F33"
+      },
+      "lampGlassUnlit": {
+        "value": "#262A26"
+      },
+      "lampIconUnlit": {
+        "value": "#5A615B"
+      },
+      "plateRed": {
+        "value": "#A8251E",
+        "use": "red label plates with white text (7:1)"
+      },
+      "pumpRed": {
+        "value": "#C23A2A",
+        "use": "pump casing, nozzle bodies, throttle knob"
+      },
+      "compartmentRed": {
+        "value": "#B8402C",
+        "use": "pump compartment back wall"
+      },
+      "reelHose": {
+        "value": "#DCC452",
+        "stroke": "#7E6C22",
+        "use": "hose-reel hose only"
+      }
+    },
+    "scene": {
+      "dust": {
+        "value": "#E8DCC0"
+      },
+      "dustLow": {
+        "value": "#E3D6B6"
+      },
+      "dustHigh1": {
+        "value": "#ECE2C9"
+      },
+      "dustHigh2": {
+        "value": "#F0E8D2"
+      },
+      "contour": {
+        "value": "#C9B98F"
+      },
+      "contourLabel": {
+        "value": "#8C7D57"
+      },
+      "track": {
+        "value": "#DCCDA6"
+      },
+      "scrub": {
+        "value": "#7F8E5C",
+        "stroke": "#56653F",
+        "highlight": "#9AA874"
+      },
+      "dam": {
+        "value": "#5F8A8B",
+        "bank": "#B8A67A",
+        "ripple": "#8FB3B3"
+      },
+      "canvasHoseDry": {
+        "value": "#B8A67A",
+        "note": "dry laid hose, 3-3.5 wide, 7-9/4-6 dash"
+      },
+      "hoseDryCanvas": {
+        "value": "#D9CBA6"
+      },
+      "truckBody": {
+        "value": "#A8251E",
+        "note": "duller than signal.alarm on purpose"
+      },
+      "truckCab": {
+        "value": "#F2F2EE"
+      },
+      "ppe": {
+        "value": "#C8B98A"
+      },
+      "hiVisBand": {
+        "value": "#DDE86A"
+      },
+      "spray": {
+        "value": "#DCEFF5"
+      },
+      "ash": {
+        "value": "#C9B994"
+      },
+      "smoke": {
+        "value": "#8E9292"
+      }
+    },
+    "focus": {
+      "inner": "#F5F2EA",
+      "outer": "#16191B",
+      "note": "double ring: 2px inner + 2px outer; never amber"
+    }
+  },
+  "font": {
+    "display": {
+      "family": "'Barlow Condensed', 'Arial Narrow', sans-serif",
+      "weights": [
+        500,
+        600,
+        700
+      ],
+      "use": "gauge numerals, labels, headings"
+    },
+    "mono": {
+      "family": "'IBM Plex Mono', ui-monospace, monospace",
+      "weights": [
+        400,
+        500
+      ],
+      "use": "live readouts (tabular-nums), spec callouts"
+    },
+    "body": {
+      "family": "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif",
+      "weights": [
+        400,
+        500,
+        600
+      ],
+      "use": "tutorial and coaching text"
+    },
+    "rules": {
+      "labelMinPx": 11,
+      "labelTrackingEm": [
+        0.06,
+        0.08
+      ],
+      "gaugeNumeralCapHeightOfDiameter": 0.07,
+      "gaugeNumeralMinPx": 12,
+      "thousandsSeparator": "thin space (U+2009) or space: '1 180 kPa'"
+    }
+  },
+  "line": {
+    "$description": "One pen, two scales. Panel uses hairline..primary; scene uses detail..heavy (one step heavier).",
+    "hairline": 1,
+    "detail": 1.5,
+    "primary": 2.5,
+    "heavy": 4
+  },
+  "space": {
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "6": 24,
+    "8": 32,
+    "12": 48
+  },
+  "radius": {
+    "plate": 3,
+    "card": 6,
+    "round": "50%"
+  },
+  "touch": {
+    "min": 44,
+    "preferred": 48
+  },
+  "light": {
+    "angleDeg": 315,
+    "shadowPanel": {
+      "x": 2,
+      "y": 3
+    },
+    "shadowLifted": {
+      "x": 5,
+      "y": 8
+    },
+    "shadowScene": {
+      "x": 4,
+      "y": 4
+    }
+  },
+  "motion": {
+    "alarmFlashHz": 2,
+    "needleFlutter": {
+      "amplitudeDeg": [
+        2,
+        5
+      ],
+      "hz": 2.4,
+      "only": "while hunting/cavitating"
+    },
+    "hoseFlowDash": {
+      "dasharray": "2 16",
+      "periodS": 0.6
+    },
+    "reducedMotion": "disable all animation; the Wake and steady lamps carry the information"
+  },
+  "hose": {
+    "charged": {
+      "casing": {
+        "color": "ink",
+        "width": 9
+      },
+      "core": {
+        "width": 5
+      },
+      "caps": "round"
+    },
+    "chargedScene": {
+      "casing": 11,
+      "core": 6,
+      "flowHighlight": "#FFFFFF @ 45%, 1.6 wide"
+    },
+    "dry": {
+      "color": "scene.canvasHoseDry",
+      "width": 3,
+      "dash": [
+        7,
+        5
+      ]
+    },
+    "overPressure": {
+      "casing": 13,
+      "core": 8,
+      "halo": {
+        "color": "signal.alarm",
+        "width": 24,
+        "opacity": [
+          0.15,
+          0.5
+        ]
+      }
+    },
+    "cavitation": {
+      "coreDash": [
+        18,
+        5,
+        7,
+        4,
+        22,
+        5
+      ],
+      "animate": "dashoffset"
+    },
+    "hardSuction": {
+      "casing": 14,
+      "core": 9,
+      "color": "material.galv"
+    }
+  }
+} as const;
+
+export type Tokens = typeof tokens;

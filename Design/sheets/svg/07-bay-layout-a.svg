@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Exported from canvas artboard BayLayoutA.dc.html. Text uses Barlow Condensed / IBM Plex Mono / IBM Plex Sans. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="860" viewBox="0 0 1440 860" role="img" aria-label="Rear elevation of the pump bay: hose reels left and right, pump and inlets left of centre, instrument panel right of centre, discharge manifold with three outlets below the panel" style="display: block">
+    <defs>
+      <linearGradient id="b7-galv" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
+        <stop offset="0" stop-color="#F4F6F7"></stop>
+        <stop offset="0.4" stop-color="#BCC3C7"></stop>
+        <stop offset="1" stop-color="#6A7277"></stop>
+      </linearGradient>
+      <linearGradient id="b7-pipeh" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#EEF1F2"></stop>
+        <stop offset="0.35" stop-color="#C3C9CD"></stop>
+        <stop offset="1" stop-color="#6F777C"></stop>
+      </linearGradient>
+      <linearGradient id="b7-pipev" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#EEF1F2"></stop>
+        <stop offset="0.35" stop-color="#C3C9CD"></stop>
+        <stop offset="1" stop-color="#6F777C"></stop>
+      </linearGradient>
+      <linearGradient id="b7-cyl" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#000000" stop-opacity="0.15"></stop>
+        <stop offset="0.14" stop-color="#FFFFFF" stop-opacity="0.32"></stop>
+        <stop offset="0.42" stop-color="#FFFFFF" stop-opacity="0"></stop>
+        <stop offset="0.6" stop-color="#000000" stop-opacity="0"></stop>
+        <stop offset="1" stop-color="#000000" stop-opacity="0.42"></stop>
+      </linearGradient>
+      <radialGradient id="b7-face" cx="0.4" cy="0.35" r="0.75">
+        <stop offset="0" stop-color="#FCFAF5"></stop>
+        <stop offset="0.6" stop-color="#F5F2EA"></stop>
+        <stop offset="1" stop-color="#E6E1D3"></stop>
+      </radialGradient>
+      <pattern id="b7-coil" patternUnits="userSpaceOnUse" x="14" y="6" width="262" height="21.6">
+        <rect x="0" y="0.8" width="262" height="20" rx="10" fill="#DCC452" stroke="#7E6C22" stroke-width="1.2"></rect>
+      </pattern>
+      <pattern id="b7-mesh" patternUnits="userSpaceOnUse" width="9" height="9">
+        <rect width="9" height="9" fill="#2A2D30"></rect>
+        <path d="M0 4.5 L4.5 0 L9 4.5 L4.5 9 Z" fill="none" stroke="#9AA1A6" stroke-width="1"></path>
+      </pattern>
+      <pattern id="b7-tread" patternUnits="userSpaceOnUse" width="14" height="14">
+        <rect width="14" height="14" fill="#B9C0C4"></rect>
+        <rect x="2" y="5.5" width="8" height="3" rx="1.5" fill="#E2E6E8" stroke="#8E969B" stroke-width="0.6" transform="rotate(45 6 7)"></rect>
+      </pattern>
+      <g id="b7-shell">
+        <circle cx="3" cy="4" r="100" fill="#000000" opacity="0.35"></circle>
+        <circle r="100" fill="url(#b7-galv)"></circle>
+        <circle r="93" fill="none" stroke="#4A5156" stroke-width="1.2"></circle>
+        <circle r="92" fill="url(#b7-face)"></circle>
+      </g>
+      <g id="b7-dial-p">
+        <use href="#b7-shell"></use>
+        <circle r="84" fill="none" stroke="#F2A900" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(-22.5)"></circle>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="5"><line y1="-88" y2="-68" transform="rotate(-135)"></line><line y1="-88" y2="-68" transform="rotate(-67.5)"></line><line y1="-88" y2="-68" transform="rotate(0)"></line><line y1="-88" y2="-68" transform="rotate(67.5)"></line><line y1="-88" y2="-68" transform="rotate(135)"></line></g>
+      </g>
+      <g id="b7-dial-c">
+        <use href="#b7-shell"></use>
+        <circle r="46" fill="none" stroke="#E1E6E8" stroke-width="92" stroke-dasharray="48.17 289.03" transform="rotate(-225)"></circle>
+        <circle r="84" fill="none" stroke="#F2A900" stroke-width="7" stroke-dasharray="13.19 527.79" transform="rotate(-216)"></circle>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="13.19 527.79" transform="rotate(-225)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="5"><line y1="-88" y2="-68" transform="rotate(-135)"></line><line y1="-91" y2="-62" transform="rotate(-75)"></line><line y1="-88" y2="-68" transform="rotate(-22.5)"></line><line y1="-88" y2="-68" transform="rotate(30)"></line><line y1="-88" y2="-68" transform="rotate(82.5)"></line><line y1="-88" y2="-68" transform="rotate(135)"></line></g>
+      </g>
+      <g id="b7-dial-t">
+        <use href="#b7-shell"></use>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="5"><line y1="-88" y2="-68" transform="rotate(-135)"></line><line y1="-88" y2="-68" transform="rotate(-67.5)"></line><line y1="-88" y2="-68" transform="rotate(0)"></line><line y1="-88" y2="-68" transform="rotate(67.5)"></line><line y1="-88" y2="-68" transform="rotate(135)"></line></g>
+      </g>
+      <g id="b7-needle">
+        <path d="M0 -84 L6 -6 L4 20 L-4 20 L-6 -6 Z" fill="#16191B"></path>
+      </g>
+      <g id="b7-hub"><circle r="12" fill="#16191B"></circle></g>
+      <g id="b7-reel">
+        <rect x="14" y="4" width="262" height="436" fill="#3A3420"></rect>
+        <rect x="14" y="6" width="262" height="432" fill="url(#b7-coil)"></rect>
+        <rect x="14" y="4" width="262" height="436" fill="url(#b7-cyl)"></rect>
+        <rect x="0" y="0" width="14" height="444" rx="7" fill="url(#b7-pipev)" stroke="#4A5156" stroke-width="1.2"></rect>
+        <rect x="276" y="0" width="14" height="444" rx="7" fill="url(#b7-pipev)" stroke="#4A5156" stroke-width="1.2"></rect>
+      </g>
+      <g id="b7-vb">
+        <rect x="-15" y="-13" width="30" height="26" rx="5" fill="url(#b7-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+        <circle r="6" fill="#8E969B" stroke="#4A5156" stroke-width="1"></circle>
+      </g>
+      <g id="b7-lev-b">
+        <rect x="-3" y="-4" width="74" height="13" rx="6.5" fill="#000000" opacity="0.3"></rect>
+        <rect x="-5" y="-6" width="72" height="12" rx="6" fill="#2470C2" stroke="#0E2E52" stroke-width="1.4"></rect>
+        <g stroke="#0E2E52" stroke-opacity="0.5" stroke-width="1.3"><line x1="48" y1="-4" x2="48" y2="4"></line><line x1="54" y1="-4" x2="54" y2="4"></line><line x1="60" y1="-4" x2="60" y2="4"></line></g>
+        <circle r="6.5" fill="url(#b7-galv)" stroke="#4A5156" stroke-width="1"></circle>
+        <circle r="2.4" fill="#2F3438"></circle>
+      </g>
+      <g id="b7-lev-g">
+        <rect x="-3" y="-4" width="74" height="13" rx="6.5" fill="#000000" opacity="0.3"></rect>
+        <rect x="-5" y="-6" width="72" height="12" rx="6" fill="#14A37F" stroke="#0A4A3A" stroke-width="1.4"></rect>
+        <g stroke="#0A4A3A" stroke-opacity="0.5" stroke-width="1.3"><line x1="48" y1="-4" x2="48" y2="4"></line><line x1="54" y1="-4" x2="54" y2="4"></line><line x1="60" y1="-4" x2="60" y2="4"></line></g>
+        <circle r="6.5" fill="url(#b7-galv)" stroke="#4A5156" stroke-width="1"></circle>
+        <circle r="2.4" fill="#2F3438"></circle>
+      </g>
+      <g id="b7-coup">
+        <circle cx="3" cy="4" r="27" fill="#000000" opacity="0.25"></circle>
+        <rect x="-31" y="-5" width="11" height="10" rx="2" fill="url(#b7-galv)" stroke="#4A5156" stroke-width="1"></rect>
+        <rect x="20" y="-5" width="11" height="10" rx="2" fill="url(#b7-galv)" stroke="#4A5156" stroke-width="1"></rect>
+        <circle r="26" fill="url(#b7-galv)" stroke="#16191B" stroke-width="1.5"></circle>
+        <circle r="20" fill="none" stroke="#4A5156" stroke-width="1.2"></circle>
+        <circle r="15" fill="#DDE2E5" stroke="#4A5156" stroke-width="1"></circle>
+        <circle r="3" fill="#4A5156"></circle>
+        <path d="M0 15 C 4 30, -4 40, 2 52" fill="none" stroke="#6A7277" stroke-width="2" stroke-dasharray="3 2"></path>
+      </g>
+    </defs>
+
+    <rect width="1440" height="860" fill="#E9E1CC"></rect>
+    <rect y="822" width="1440" height="38" fill="#D9CBA6"></rect>
+    <ellipse cx="720" cy="824" rx="680" ry="10" fill="#000000" opacity="0.14"></ellipse>
+
+    <rect x="560" y="690" width="340" height="134" rx="28" fill="#1F2224"></rect>
+    <g stroke="#34383B" stroke-width="3"><line x1="580" y1="700" x2="580" y2="814"></line><line x1="600" y1="700" x2="600" y2="814"></line><line x1="620" y1="700" x2="620" y2="814"></line><line x1="640" y1="700" x2="640" y2="814"></line><line x1="660" y1="700" x2="660" y2="814"></line><line x1="680" y1="700" x2="680" y2="814"></line><line x1="700" y1="700" x2="700" y2="814"></line><line x1="720" y1="700" x2="720" y2="814"></line><line x1="740" y1="700" x2="740" y2="814"></line><line x1="760" y1="700" x2="760" y2="814"></line><line x1="780" y1="700" x2="780" y2="814"></line><line x1="800" y1="700" x2="800" y2="814"></line><line x1="820" y1="700" x2="820" y2="814"></line><line x1="840" y1="700" x2="840" y2="814"></line><line x1="860" y1="700" x2="860" y2="814"></line><line x1="880" y1="700" x2="880" y2="814"></line></g>
+    <rect x="700" y="700" width="60" height="122" fill="#16191B" opacity="0.5"></rect>
+
+    <rect x="136" y="64" width="314" height="540" fill="#2E3134"></rect>
+    <rect x="990" y="64" width="314" height="540" fill="#2E3134"></rect>
+    <rect x="450" y="64" width="540" height="540" fill="#B8402C" stroke="#16191B" stroke-width="1.5"></rect>
+    <line x1="656" y1="64" x2="656" y2="186" stroke="#93321F" stroke-width="2"></line>
+    <rect x="770" y="100" width="58" height="22" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1.2"></rect>
+    <text x="799" y="116" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" letter-spacing="0.8" fill="#16191B">NO STEP</text>
+    <rect x="852" y="84" width="40" height="48" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1.2"></rect>
+    <g stroke="#9AA3A9" stroke-width="2"><line x1="858" y1="94" x2="886" y2="94"></line><line x1="858" y1="102" x2="882" y2="102"></line><line x1="858" y1="110" x2="886" y2="110"></line><line x1="858" y1="118" x2="878" y2="118"></line></g>
+    <rect x="680" y="96" width="70" height="66" rx="4" fill="#2A2D30" stroke="#16191B" stroke-width="1.5"></rect>
+    <rect x="690" y="106" width="50" height="8" rx="2" fill="#3A4046"></rect>
+
+    <rect x="104" y="18" width="1232" height="48" fill="#A8251E" stroke="#16191B" stroke-width="2.5"></rect>
+    <rect x="104" y="54" width="1232" height="6" fill="#F2F2EE"></rect>
+    <rect x="104" y="18" width="32" height="642" fill="#A8251E" stroke="#16191B" stroke-width="2"></rect>
+    <rect x="113" y="70" width="6" height="580" fill="#F2F2EE"></rect>
+    <rect x="1304" y="18" width="32" height="642" fill="#A8251E" stroke="#16191B" stroke-width="2"></rect>
+    <rect x="1321" y="70" width="6" height="580" fill="#F2F2EE"></rect>
+
+    <use href="#b7-reel" transform="translate(148 80)"></use>
+    <use href="#b7-reel" transform="translate(1004 80)"></use>
+
+    <g fill="url(#b7-pipeh)" stroke="#4A5156" stroke-width="1.2">
+      <rect x="116" y="168" width="220" height="12" rx="6"></rect>
+      <rect x="116" y="272" width="220" height="12" rx="6"></rect>
+      <rect x="1104" y="168" width="220" height="12" rx="6"></rect>
+      <rect x="1104" y="272" width="220" height="12" rx="6"></rect>
+    </g>
+    <g fill="url(#b7-pipev)" stroke="#4A5156" stroke-width="1.2">
+      <rect x="116" y="160" width="12" height="132" rx="6"></rect>
+      <rect x="324" y="160" width="12" height="132" rx="6"></rect>
+      <rect x="1104" y="160" width="12" height="132" rx="6"></rect>
+      <rect x="1312" y="160" width="12" height="132" rx="6"></rect>
+    </g>
+
+    <rect x="104" y="600" width="1232" height="14" fill="url(#b7-pipeh)" stroke="#16191B" stroke-width="1.5"></rect>
+    <rect x="104" y="650" width="1232" height="50" fill="#2E3134" stroke="#16191B" stroke-width="2"></rect>
+    <rect x="140" y="657" width="1160" height="36" fill="#A8251E"></rect>
+    <rect x="140" y="671" width="1160" height="5" fill="#F2F2EE"></rect>
+    <g stroke="#16191B" stroke-width="1.5">
+      <rect x="142" y="612" width="128" height="36" rx="4" fill="#2A2D30"></rect>
+      <rect x="148" y="618" width="36" height="24" rx="2" fill="#6E5A2E"></rect>
+      <rect x="188" y="618" width="36" height="24" rx="2" fill="#6A2C26"></rect>
+      <rect x="228" y="618" width="36" height="24" rx="2" fill="#8A8E90"></rect>
+      <rect x="1170" y="612" width="128" height="36" rx="4" fill="#2A2D30"></rect>
+      <rect x="1176" y="618" width="36" height="24" rx="2" fill="#8A8E90"></rect>
+      <rect x="1216" y="618" width="36" height="24" rx="2" fill="#6A2C26"></rect>
+      <rect x="1256" y="618" width="36" height="24" rx="2" fill="#6E5A2E"></rect>
+    </g>
+
+    <path d="M232 524 C 232 540, 214 548, 196 552" fill="none" stroke="#16191B" stroke-width="13" stroke-linecap="round"></path>
+    <path d="M232 524 C 232 540, 214 548, 196 552" fill="none" stroke="#DCC452" stroke-width="9" stroke-linecap="round"></path>
+    <rect x="150" y="561" width="92" height="7" fill="url(#b7-pipeh)" stroke="#4A5156" stroke-width="1"></rect>
+    <rect x="140" y="543" width="62" height="18" rx="4" fill="#C23A2A" stroke="#16191B" stroke-width="1.5"></rect>
+    <rect x="126" y="546" width="16" height="12" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1.2"></rect>
+    <path d="M1208 524 C 1208 540, 1226 548, 1244 552" fill="none" stroke="#16191B" stroke-width="13" stroke-linecap="round"></path>
+    <path d="M1208 524 C 1208 540, 1226 548, 1244 552" fill="none" stroke="#DCC452" stroke-width="9" stroke-linecap="round"></path>
+    <rect x="1198" y="561" width="92" height="7" fill="url(#b7-pipeh)" stroke="#4A5156" stroke-width="1"></rect>
+    <rect x="1238" y="543" width="62" height="18" rx="4" fill="#C23A2A" stroke="#16191B" stroke-width="1.5"></rect>
+    <rect x="1298" y="546" width="16" height="12" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1.2"></rect>
+
+    <rect x="508" y="64" width="24" height="230" fill="url(#b7-pipev)" stroke="#4A5156" stroke-width="1.2"></rect>
+    <rect x="502" y="88" width="36" height="10" rx="2" fill="url(#b7-galv)" stroke="#4A5156" stroke-width="1"></rect>
+    <g transform="translate(520 150)"><use href="#b7-vb"></use><g transform="rotate(180)"><use href="#b7-lev-g"></use></g></g>
+
+    <rect x="560" y="158" width="96" height="244" rx="12" fill="#C23A2A" stroke="#16191B" stroke-width="2"></rect>
+    <rect x="566" y="164" width="84" height="10" rx="5" fill="#E05A44" opacity="0.6"></rect>
+    <rect x="574" y="186" width="70" height="86" rx="4" fill="url(#b7-mesh)" stroke="#16191B" stroke-width="1.5"></rect>
+    <circle cx="608" cy="318" r="12" fill="#2A2D30" stroke="#16191B" stroke-width="1.5"></circle>
+    <rect x="574" y="350" width="66" height="30" rx="3" fill="#9A2C20"></rect>
+
+    <rect x="456" y="330" width="24" height="276" fill="url(#b7-pipev)" stroke="#4A5156" stroke-width="1.2"></rect>
+    <rect x="404" y="604" width="76" height="26" rx="4" fill="url(#b7-pipeh)" stroke="#4A5156" stroke-width="1.2"></rect>
+    <circle cx="520" cy="330" r="46" fill="#B8352A" stroke="#16191B" stroke-width="2"></circle>
+    <circle cx="520" cy="330" r="30" fill="none" stroke="#8E2A20" stroke-width="2"></circle>
+    <circle cx="514" cy="322" r="10" fill="#E05A44" opacity="0.35"></circle>
+    <rect x="460" y="294" width="20" height="74" rx="5" fill="url(#b7-galv)" stroke="#16191B" stroke-width="1.5"></rect>
+    <g fill="#4A5156"><circle cx="470" cy="302" r="2"></circle><circle cx="470" cy="331" r="2"></circle><circle cx="470" cy="360" r="2"></circle></g>
+    <g transform="translate(468 520)"><use href="#b7-vb"></use><use href="#b7-lev-g"></use></g>
+    <g transform="translate(392 617)"><use href="#b7-coup"></use></g>
+
+    <path d="M548 368 L548 402 L676 576" fill="none" stroke="#16191B" stroke-width="30" stroke-linejoin="round"></path>
+    <path d="M548 368 L548 402 L676 576" fill="none" stroke="#B9C0C4" stroke-width="26" stroke-linejoin="round"></path>
+    <path d="M541 368 L541 404 L668 578" fill="none" stroke="#EEF1F2" stroke-width="5" stroke-linejoin="round" opacity="0.8"></path>
+    <g transform="translate(612 489) rotate(53.7)"><rect x="-20" y="-18" width="40" height="36" rx="6" fill="url(#b7-galv)" stroke="#16191B" stroke-width="1.4"></rect></g>
+    <g transform="translate(606 482) rotate(-126.3) scale(1.25)"><use href="#b7-lev-b"></use></g>
+
+    <path d="M652 540 C 640 470, 560 470, 520 430 S 450 330, 440 300" fill="none" stroke="#16191B" stroke-width="13" stroke-linecap="round"></path>
+    <path d="M652 540 C 640 470, 560 470, 520 430 S 450 330, 440 300" fill="none" stroke="#DCC452" stroke-width="9" stroke-linecap="round"></path>
+    <path d="M996 540 C 1004 470, 1012 360, 1006 300" fill="none" stroke="#16191B" stroke-width="13" stroke-linecap="round"></path>
+    <path d="M996 540 C 1004 470, 1012 360, 1006 300" fill="none" stroke="#DCC452" stroke-width="9" stroke-linecap="round"></path>
+
+    <rect x="656" y="184" width="338" height="290" rx="6" fill="url(#b7-galv)" stroke="#16191B" stroke-width="2"></rect>
+    <rect x="662" y="190" width="326" height="278" rx="3" fill="#1B1E21"></rect>
+    <rect x="668" y="196" width="22" height="30" rx="2" fill="#F2F2EE"></rect>
+    <g fill="#A8251E"><rect x="700" y="198" width="60" height="16" rx="2"></rect><rect x="776" y="198" width="84" height="16" rx="2"></rect><rect x="876" y="198" width="100" height="16" rx="2"></rect></g>
+    <g stroke="#F2F2EE" stroke-width="2"><line x1="706" y1="206" x2="754" y2="206"></line><line x1="782" y1="206" x2="854" y2="206"></line><line x1="882" y1="206" x2="970" y2="206"></line></g>
+    <g transform="translate(712 290) scale(0.44)"><use href="#b7-dial-c"></use><g transform="rotate(-91.8)"><use href="#b7-needle"></use></g><use href="#b7-hub"></use></g>
+    <g transform="translate(812 290) scale(0.44)"><use href="#b7-dial-p"></use><g transform="rotate(42.19)"><use href="#b7-needle"></use></g><use href="#b7-hub"></use></g>
+    <g transform="translate(898 290) scale(0.32)"><use href="#b7-dial-t"></use><g transform="rotate(27)"><use href="#b7-needle"></use></g><use href="#b7-hub"></use></g>
+    <g transform="translate(960 258) scale(0.18)"><use href="#b7-dial-t"></use><g transform="rotate(0)"><use href="#b7-needle"></use></g><use href="#b7-hub"></use></g>
+    <g transform="translate(960 316) scale(0.18)"><use href="#b7-dial-t"></use><g transform="rotate(-20)"><use href="#b7-needle"></use></g><use href="#b7-hub"></use></g>
+    <g fill="#A8251E"><rect x="684" y="346" width="56" height="12" rx="2"></rect><rect x="784" y="346" width="56" height="12" rx="2"></rect><rect x="874" y="332" width="48" height="12" rx="2"></rect></g>
+    <g stroke="#F2F2EE" stroke-width="1.6"><line x1="690" y1="352" x2="734" y2="352"></line><line x1="790" y1="352" x2="834" y2="352"></line><line x1="880" y1="338" x2="916" y2="338"></line></g>
+    <circle cx="684" cy="420" r="13" fill="url(#b7-galv)" stroke="#16191B" stroke-width="1.2"></circle>
+    <rect x="682" y="410" width="4" height="20" rx="1.5" fill="#2F3438" transform="rotate(30 684 420)"></rect>
+    <circle cx="714" cy="420" r="11" fill="#2A2D30" stroke="#C9CFD3" stroke-width="2"></circle>
+    <g stroke="#8E969B" stroke-width="2" fill="#262A26"><circle cx="746" cy="420" r="8"></circle><circle cx="768" cy="420" r="8"></circle><circle cx="790" cy="420" r="8"></circle></g>
+    <rect x="818" y="402" width="34" height="34" rx="4" fill="#2A2F33" stroke="url(#b7-galv)" stroke-width="4"></rect>
+    <rect x="870" y="390" width="68" height="62" rx="3" fill="#A8251E"></rect>
+    <g stroke="#F2F2EE" stroke-width="1.8"><line x1="876" y1="400" x2="930" y2="400"></line><line x1="876" y1="410" x2="924" y2="410"></line><line x1="876" y1="420" x2="930" y2="420"></line><line x1="876" y1="430" x2="918" y2="430"></line><line x1="876" y1="440" x2="926" y2="440"></line></g>
+    <circle cx="964" cy="430" r="18" fill="url(#b7-galv)" stroke="#16191B" stroke-width="1.2"></circle>
+    <circle cx="964" cy="430" r="13" fill="#C23A2A" stroke="#16191B" stroke-width="1.2"></circle>
+    <circle cx="960" cy="425" r="4" fill="#FFFFFF" opacity="0.3"></circle>
+
+    <rect x="662" y="474" width="332" height="26" fill="url(#b7-tread)" stroke="#16191B" stroke-width="1.2"></rect>
+
+    <circle cx="610" cy="114" r="17" fill="url(#b7-galv)" stroke="#16191B" stroke-width="1.5"></circle>
+    <circle cx="610" cy="114" r="12.5" fill="#D8352A" stroke="#16191B" stroke-width="1.2"></circle>
+    <circle cx="606" cy="110" r="4" fill="#FFFFFF" opacity="0.35"></circle>
+
+    <rect x="640" y="560" width="366" height="28" rx="4" fill="url(#b7-pipeh)" stroke="#16191B" stroke-width="1.5"></rect>
+    <g fill="url(#b7-pipev)" stroke="#4A5156" stroke-width="1.2">
+      <rect x="726" y="586" width="28" height="30"></rect>
+      <rect x="830" y="586" width="22" height="30"></rect>
+      <rect x="920" y="586" width="22" height="30"></rect>
+    </g>
+    <g transform="translate(652 548)"><use href="#b7-vb"></use><g transform="rotate(-150)"><use href="#b7-lev-b"></use></g></g>
+    <g transform="translate(994 548)"><use href="#b7-vb"></use><g transform="rotate(-30)"><use href="#b7-lev-b"></use></g></g>
+    <g transform="translate(740 600)"><use href="#b7-vb"></use><g transform="rotate(-128)"><use href="#b7-lev-b"></use></g></g>
+    <g transform="translate(841 600)"><use href="#b7-vb"></use><g transform="rotate(-128)"><use href="#b7-lev-b"></use></g></g>
+    <g transform="translate(931 600)"><use href="#b7-vb"></use><g transform="rotate(-128)"><use href="#b7-lev-b"></use></g></g>
+    <g transform="translate(740 636)"><use href="#b7-coup"></use></g>
+    <g transform="translate(841 634) scale(0.72)"><use href="#b7-coup"></use></g>
+    <g transform="translate(931 634) scale(0.72)"><use href="#b7-coup"></use></g>
+    <g font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="11" fill="#16191B" text-anchor="middle">
+      <rect x="762" y="628" width="18" height="16" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1"></rect><text x="771" y="640">1</text>
+      <rect x="856" y="628" width="18" height="16" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1"></rect><text x="865" y="640">2</text>
+      <rect x="946" y="628" width="18" height="16" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1"></rect><text x="955" y="640">3</text>
+    </g>
+  </svg>

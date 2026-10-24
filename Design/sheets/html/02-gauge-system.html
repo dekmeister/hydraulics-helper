@@ -1,0 +1,362 @@
+<!-- Standalone export of canvas artboard Gauge.dc.html — '02 Gauge system — anatomy & variants'. Fonts load from Google Fonts. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gauge system — anatomy and variants</title>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2470C2}a:hover{color:#16191B}
+</style>
+
+</head>
+<body>
+
+
+<div style="width: 1440px; height: 1340px; box-sizing: border-box; padding: 48px 56px; background: #F3EFE4; color: #16191B; font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px; position: relative">
+
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g2-galv" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
+        <stop offset="0" stop-color="#F4F6F7"></stop>
+        <stop offset="0.35" stop-color="#C3C9CD"></stop>
+        <stop offset="0.7" stop-color="#8E969B"></stop>
+        <stop offset="1" stop-color="#5E666C"></stop>
+      </linearGradient>
+      <radialGradient id="g2-face" cx="0.4" cy="0.35" r="0.75">
+        <stop offset="0" stop-color="#FCFAF5"></stop>
+        <stop offset="0.6" stop-color="#F5F2EA"></stop>
+        <stop offset="1" stop-color="#E6E1D3"></stop>
+      </radialGradient>
+      <g id="g2-shell">
+        <circle cx="3" cy="4" r="100" fill="#16191B" opacity="0.28"></circle>
+        <circle r="100" fill="url(#g2-galv)"></circle>
+        <circle r="93" fill="none" stroke="#4A5156" stroke-width="1.2"></circle>
+        <circle r="92" fill="url(#g2-face)"></circle>
+      </g>
+      <g id="g2-dial-p">
+        <use href="#g2-shell"></use>
+        <circle r="84" fill="none" stroke="#F2A900" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(-22.5)"></circle>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="1.2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="1.2"><line y1="-88" y2="-80" transform="rotate(-126.5625)"></line><line y1="-88" y2="-80" transform="rotate(-118.125)"></line><line y1="-88" y2="-80" transform="rotate(-109.6875)"></line><line y1="-88" y2="-80" transform="rotate(-92.8125)"></line><line y1="-88" y2="-80" transform="rotate(-84.375)"></line><line y1="-88" y2="-80" transform="rotate(-75.9375)"></line><line y1="-88" y2="-80" transform="rotate(-59.0625)"></line><line y1="-88" y2="-80" transform="rotate(-50.625)"></line><line y1="-88" y2="-80" transform="rotate(-42.1875)"></line><line y1="-88" y2="-80" transform="rotate(-25.3125)"></line><line y1="-88" y2="-80" transform="rotate(-16.875)"></line><line y1="-88" y2="-80" transform="rotate(-8.4375)"></line><line y1="-88" y2="-80" transform="rotate(8.4375)"></line><line y1="-88" y2="-80" transform="rotate(16.875)"></line><line y1="-88" y2="-80" transform="rotate(25.3125)"></line><line y1="-88" y2="-80" transform="rotate(42.1875)"></line><line y1="-88" y2="-80" transform="rotate(50.625)"></line><line y1="-88" y2="-80" transform="rotate(59.0625)"></line><line y1="-88" y2="-80" transform="rotate(75.9375)"></line><line y1="-88" y2="-80" transform="rotate(84.375)"></line><line y1="-88" y2="-80" transform="rotate(92.8125)"></line><line y1="-88" y2="-80" transform="rotate(109.6875)"></line><line y1="-88" y2="-80" transform="rotate(118.125)"></line><line y1="-88" y2="-80" transform="rotate(126.5625)"></line></g>
+        <g stroke="#16191B" stroke-width="2.5"><line y1="-88" y2="-72" transform="rotate(-135)"></line><line y1="-88" y2="-72" transform="rotate(-101.25)"></line><line y1="-88" y2="-72" transform="rotate(-67.5)"></line><line y1="-88" y2="-72" transform="rotate(-33.75)"></line><line y1="-88" y2="-72" transform="rotate(0)"></line><line y1="-88" y2="-72" transform="rotate(33.75)"></line><line y1="-88" y2="-72" transform="rotate(67.5)"></line><line y1="-88" y2="-72" transform="rotate(101.25)"></line><line y1="-88" y2="-72" transform="rotate(135)"></line></g>
+        <g font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="20" fill="#16191B" text-anchor="middle">
+          <text transform="rotate(-135) translate(0 -61) rotate(135)" dy="7">0</text>
+          <text transform="rotate(-101.25) translate(0 -61) rotate(101.25)" dy="7">2</text>
+          <text transform="rotate(-67.5) translate(0 -61) rotate(67.5)" dy="7">4</text>
+          <text transform="rotate(-33.75) translate(0 -61) rotate(33.75)" dy="7">6</text>
+          <text transform="translate(0 -61)" dy="7">8</text>
+          <text transform="rotate(33.75) translate(0 -61) rotate(-33.75)" dy="7">10</text>
+          <text transform="rotate(67.5) translate(0 -61) rotate(-67.5)" dy="7">12</text>
+          <text transform="rotate(101.25) translate(0 -61) rotate(-101.25)" dy="7">14</text>
+          <text transform="rotate(135) translate(0 -61) rotate(-135)" dy="7">16</text>
+        </g>
+        <text y="33" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="10" letter-spacing="1" fill="#3E4448">kPa ×100</text>
+      </g>
+      <g id="g2-dial-c">
+        <use href="#g2-shell"></use>
+        <circle r="46" fill="none" stroke="#E1E6E8" stroke-width="92" stroke-dasharray="48.17 289.03" transform="rotate(-225)"></circle>
+        <circle r="84" fill="none" stroke="#F2A900" stroke-width="7" stroke-dasharray="13.19 527.79" transform="rotate(-216)"></circle>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="13.19 527.79" transform="rotate(-225)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="1.2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="1.2"><line y1="-88" y2="-80" transform="rotate(-129)"></line><line y1="-88" y2="-80" transform="rotate(-123)"></line><line y1="-88" y2="-80" transform="rotate(-117)"></line><line y1="-88" y2="-80" transform="rotate(-111)"></line><line y1="-88" y2="-80" transform="rotate(-99)"></line><line y1="-88" y2="-80" transform="rotate(-93)"></line><line y1="-88" y2="-80" transform="rotate(-87)"></line><line y1="-88" y2="-80" transform="rotate(-81)"></line><line y1="-88" y2="-80" transform="rotate(-61.875)"></line><line y1="-88" y2="-80" transform="rotate(-48.75)"></line><line y1="-88" y2="-80" transform="rotate(-35.625)"></line><line y1="-88" y2="-80" transform="rotate(-9.375)"></line><line y1="-88" y2="-80" transform="rotate(3.75)"></line><line y1="-88" y2="-80" transform="rotate(16.875)"></line><line y1="-88" y2="-80" transform="rotate(43.125)"></line><line y1="-88" y2="-80" transform="rotate(56.25)"></line><line y1="-88" y2="-80" transform="rotate(69.375)"></line><line y1="-88" y2="-80" transform="rotate(95.625)"></line><line y1="-88" y2="-80" transform="rotate(108.75)"></line><line y1="-88" y2="-80" transform="rotate(121.875)"></line></g>
+        <g stroke="#16191B" stroke-width="2.5"><line y1="-88" y2="-72" transform="rotate(-135)"></line><line y1="-88" y2="-72" transform="rotate(-105)"></line><line y1="-88" y2="-72" transform="rotate(-22.5)"></line><line y1="-88" y2="-72" transform="rotate(30)"></line><line y1="-88" y2="-72" transform="rotate(82.5)"></line><line y1="-88" y2="-72" transform="rotate(135)"></line></g>
+        <line y1="-91" y2="-66" stroke="#16191B" stroke-width="3.4" transform="rotate(-75)"></line>
+        <g font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" text-anchor="middle">
+          <text transform="rotate(-135) translate(0 -61) rotate(135)" dy="5" font-size="15" fill="#3E4448">−100</text>
+          <text transform="rotate(-105) translate(0 -61) rotate(105)" dy="5" font-size="15" fill="#3E4448">−50</text>
+          <text transform="rotate(-75) translate(0 -61) rotate(75)" dy="7" font-size="20" fill="#16191B">0</text>
+          <text transform="rotate(-22.5) translate(0 -61) rotate(22.5)" dy="7" font-size="20" fill="#16191B">4</text>
+          <text transform="rotate(30) translate(0 -61) rotate(-30)" dy="7" font-size="20" fill="#16191B">8</text>
+          <text transform="rotate(82.5) translate(0 -61) rotate(-82.5)" dy="7" font-size="20" fill="#16191B">12</text>
+          <text transform="rotate(135) translate(0 -61) rotate(-135)" dy="7" font-size="20" fill="#16191B">16</text>
+          <text transform="rotate(-105) translate(0 -28) rotate(105)" dy="3" font-size="9" letter-spacing="1" fill="#3E4448">VAC kPa</text>
+        </g>
+        <text y="33" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="10" letter-spacing="1" fill="#3E4448">kPa ×100</text>
+      </g>
+      <g id="g2-dial-t">
+        <use href="#g2-shell"></use>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="1.2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="1.2"><line y1="-88" y2="-80" transform="rotate(-118.125)"></line><line y1="-88" y2="-80" transform="rotate(-101.25)"></line><line y1="-88" y2="-80" transform="rotate(-84.375)"></line><line y1="-88" y2="-80" transform="rotate(-50.625)"></line><line y1="-88" y2="-80" transform="rotate(-33.75)"></line><line y1="-88" y2="-80" transform="rotate(-16.875)"></line><line y1="-88" y2="-80" transform="rotate(16.875)"></line><line y1="-88" y2="-80" transform="rotate(33.75)"></line><line y1="-88" y2="-80" transform="rotate(50.625)"></line><line y1="-88" y2="-80" transform="rotate(84.375)"></line><line y1="-88" y2="-80" transform="rotate(101.25)"></line><line y1="-88" y2="-80" transform="rotate(118.125)"></line></g>
+        <g stroke="#16191B" stroke-width="2.5"><line y1="-88" y2="-72" transform="rotate(-135)"></line><line y1="-88" y2="-72" transform="rotate(-67.5)"></line><line y1="-88" y2="-72" transform="rotate(0)"></line><line y1="-88" y2="-72" transform="rotate(67.5)"></line><line y1="-88" y2="-72" transform="rotate(135)"></line></g>
+        <g font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="22" fill="#16191B" text-anchor="middle">
+          <text transform="rotate(-135) translate(0 -60) rotate(135)" dy="8">0</text>
+          <text transform="rotate(-67.5) translate(0 -60) rotate(67.5)" dy="8">1</text>
+          <text transform="translate(0 -60)" dy="8">2</text>
+          <text transform="rotate(67.5) translate(0 -60) rotate(-67.5)" dy="8">3</text>
+          <text transform="rotate(135) translate(0 -60) rotate(-135)" dy="8">4</text>
+        </g>
+        <text y="33" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="10" letter-spacing="1" fill="#3E4448">RPM ×1000</text>
+      </g>
+      <g id="g2-dial-mini">
+        <use href="#g2-shell"></use>
+        <circle r="82" fill="none" stroke="#F2A900" stroke-width="12" stroke-dasharray="48.31 515.22" transform="rotate(-22.5)"></circle>
+        <circle r="82" fill="none" stroke="#E5362B" stroke-width="12" stroke-dasharray="48.31 515.22" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="5"><line y1="-88" y2="-66" transform="rotate(-135)"></line><line y1="-88" y2="-66" transform="rotate(-67.5)"></line><line y1="-88" y2="-66" transform="rotate(0)"></line><line y1="-88" y2="-66" transform="rotate(67.5)"></line><line y1="-88" y2="-66" transform="rotate(135)"></line></g>
+      </g>
+    </defs>
+  </svg>
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px; padding-bottom: 16px; border-bottom: 2.5px solid #16191B">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; color: #5B6166">PUMP OPERATOR TRAINING · VISUAL LANGUAGE</div>
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 56px; line-height: 0.92; text-transform: uppercase">Gauge system</h1>
+    </div>
+    <p style="margin: 0; max-width: 520px; font-size: 15px; line-height: 1.5; color: #2E3337; text-wrap: pretty">One parameterised component. Face, bezel and scale are static per dial type; needle, wake and plate are the only parts that change at runtime.</p>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; border: 1.5px solid #16191B; padding: 8px 12px">SHEET 02 / 08</div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: 900px minmax(0, 1fr); gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">2.1</span>
+        <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Anatomy — discharge gauge, 1 050 kPa</h2>
+      </div>
+      <svg width="900" viewBox="0 0 960 600" role="img" aria-label="Annotated discharge pressure gauge showing bezel, face, scale, ticks, zones, numerals, needle, wake, hub and label plate">
+        <g transform="translate(470 300) scale(2.5)">
+          <use href="#g2-dial-p"></use>
+          <path d="M0 -92.5 L-4.5 -100 L4.5 -100 Z" fill="#16191B" transform="rotate(-16.875)"></path>
+          <circle r="79" fill="none" stroke="#16191B" stroke-opacity="0.16" stroke-width="22" stroke-dasharray="30.25 496.37" transform="rotate(-59.625)"></circle>
+          <line y1="-90" y2="-68" stroke="#16191B" stroke-opacity="0.45" stroke-width="0.8" transform="rotate(30.375)"></line>
+          <line y1="-90" y2="-68" stroke="#16191B" stroke-opacity="0.45" stroke-width="0.8" transform="rotate(52.31)"></line>
+          <rect x="-38" y="54" width="76" height="18" rx="2" fill="#16191B"></rect>
+          <text y="66.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="11" letter-spacing="1.2" fill="#F5F2EA">DISCHARGE</text>
+          <g transform="translate(1.6 2.2)"><path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#16191B" opacity="0.2" transform="rotate(42.19)"></path></g>
+          <g transform="rotate(42.19)">
+            <path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#16191B"></path>
+            <line x1="0" y1="-74" x2="0" y2="-14" stroke="#F5F2EA" stroke-width="0.9"></line>
+            <circle cy="15" r="6.2" fill="#16191B"></circle>
+            <circle cy="15" r="3.4" fill="#AEB5BA"></circle>
+          </g>
+          <circle r="8.5" fill="#16191B"></circle>
+          <circle r="3.4" fill="url(#g2-galv)"></circle>
+        </g>
+        <g fill="none" stroke="#16191B" stroke-width="1">
+          <polyline points="559.8,110.2 734,50 744,50"></polyline>
+          <polyline points="599.6,150.9 734,120 744,120"></polyline>
+          <polyline points="553.9,207.4 734,190 744,190"></polyline>
+          <polyline points="610.9,241.6 734,260 744,260"></polyline>
+          <polyline points="666.1,339 734,350 744,350"></polyline>
+          <polyline points="655.4,398.6 734,420 744,420"></polyline>
+          <polyline points="400.3,70.3 216,50 206,50"></polyline>
+          <polyline points="279.5,190 216,130 206,130"></polyline>
+          <polyline points="233.6,258.3 216,210 206,210"></polyline>
+          <polyline points="357.5,337.5 216,290 206,290"></polyline>
+          <polyline points="452.5,312.5 216,370 206,370"></polyline>
+          <polyline points="410,367.5 216,440 206,440"></polyline>
+          <polyline points="345,457.5 216,510 206,510"></polyline>
+        </g>
+        <g fill="#16191B">
+          <circle cx="559.8" cy="110.2" r="3"></circle><circle cx="599.6" cy="150.9" r="3"></circle><circle cx="553.9" cy="207.4" r="3"></circle><circle cx="610.9" cy="241.6" r="3"></circle><circle cx="666.1" cy="339" r="3"></circle><circle cx="655.4" cy="398.6" r="3"></circle>
+          <circle cx="400.3" cy="70.3" r="3"></circle><circle cx="279.5" cy="190" r="3"></circle><circle cx="233.6" cy="258.3" r="3"></circle><circle cx="357.5" cy="337.5" r="3"></circle><circle cx="452.5" cy="312.5" r="3"></circle><circle cx="410" cy="367.5" r="3"></circle><circle cx="345" cy="457.5" r="3"></circle>
+        </g>
+        <g font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="17" letter-spacing="0.6" fill="#16191B">
+          <text x="750" y="48">MINOR TICK</text>
+          <text x="750" y="118">WAKE · SHEET 04</text>
+          <text x="750" y="188">NEEDLE</text>
+          <text x="750" y="258">NUMERAL</text>
+          <text x="750" y="348">MAJOR TICK</text>
+          <text x="750" y="418">ZONE BAND</text>
+          <g text-anchor="end">
+            <text x="200" y="48">TARGET NOTCH</text>
+            <text x="200" y="128">SCALE ARC</text>
+            <text x="200" y="208">BEZEL</text>
+            <text x="200" y="288">FACE</text>
+            <text x="200" y="368">HUB + COUNTERWEIGHT</text>
+            <text x="200" y="438">UNITS</text>
+            <text x="200" y="508">LABEL PLATE</text>
+          </g>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#4A5056">
+          <text x="750" y="66">r 88→80 · 1.2 · per 50 kPa</text>
+          <text x="750" y="136">r 68–90 · ink 16% · last 3 s</text>
+          <text x="750" y="206">tip r 82 · tail 18 · w 6.4</text>
+          <text x="750" y="276">r 61 · 600 · 20 = 7% of D</text>
+          <text x="750" y="366">r 88→72 · 2.5 · labelled</text>
+          <text x="750" y="436">r 84 · w 7 · caution/alarm</text>
+          <g text-anchor="end">
+            <text x="200" y="66">optional · setpoint</text>
+            <text x="200" y="146">r 88 · 1.2 · 270°</text>
+            <text x="200" y="226">R 100→92 · galv</text>
+            <text x="200" y="306">r 92 · Dial #F5F2EA</text>
+            <text x="200" y="386">r 8.5 · tail in tag colour</text>
+            <text x="200" y="456">y +33 · 10 / 600</text>
+            <text x="200" y="526">76×18 · ink or tag</text>
+          </g>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#5B6166">
+          <line x1="220" y1="580" x2="720" y2="580" stroke="#5B6166" stroke-width="1"></line>
+          <line x1="220" y1="572" x2="220" y2="588" stroke="#5B6166" stroke-width="1"></line>
+          <line x1="720" y1="572" x2="720" y2="588" stroke="#5B6166" stroke-width="1"></line>
+          <rect x="420" y="570" width="100" height="20" fill="#F3EFE4"></rect>
+          <text x="470" y="584" text-anchor="middle">D = 200 u</text>
+        </g>
+      </svg>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; gap: 14px">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">2.2</span>
+          <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">One component</h2>
+        </div>
+        <pre style="margin: 0; padding: 14px 16px; background: #1B1E21; color: #C9CFD3; border-radius: 3px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; line-height: 1.6; white-space: pre">gauge({
+  scale:  [{ v: [0, 1600], a: [-135, 135] }],
+  major:  200,   minor: 50,
+  label:  v =&gt; v / 100,
+  zones:  [{ v: [1200, 1400], tone: 'caution' },
+           { v: [1400, 1600], tone: 'alarm' }],
+  units:  'kPa ×100',
+  plate:  'DISCHARGE',   tag: null,
+  value:  1050,
+  wake:   { lo: 980, hi: 1110 },
+  target: 700
+})</pre>
+        <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #2E3337; text-wrap: pretty">Angle = a0 + (v − v0)·(a1 − a0)/(v1 − v0) within a segment. A compound gauge is simply two segments. Ticks are one <code style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">rotate(θ)</code> line template; zones and the wake are dashed circles rotated to their start angle, so the markup needs no trigonometry.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; gap: 14px">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">2.3</span>
+          <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Rendered sizes</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px 70px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1; border-top: 1.5px solid #16191B">
+          <span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0; color: #5B6166">dial</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0; color: #5B6166">phone</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0; color: #5B6166">desktop</span>
+          <span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">Discharge, compound</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">160</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">220</span>
+          <span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">Tachometer</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">112</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">150</span>
+          <span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">Delivery mini</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">60</span><span style="padding: 9px 0; border-bottom: 1px solid #D9D2C0">76</span>
+        </div>
+        <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #2E3337; text-wrap: pretty">Below 100 px the numerals drop out and the mini dial takes over: majors at 5 width, zone band at 12, the value moves to a mono readout under the dial.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px; padding-top: 22px; border-top: 1px solid #C9C1AC">
+    <div style="display: flex; align-items: baseline; gap: 14px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">2.4</span>
+      <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Variants</h2>
+    </div>
+    <div style="display: flex; gap: 40px; align-items: flex-start">
+
+      <div style="display: flex; flex-direction: column; gap: 10px; width: 300px">
+        <svg width="220" height="220" viewBox="-106 -106 214 214" role="img" aria-label="Compound gauge reading minus 40 kilopascals">
+          <use href="#g2-dial-c"></use>
+          <circle r="79" fill="none" stroke="#16191B" stroke-opacity="0.16" stroke-width="22" stroke-dasharray="7.45 496.37" transform="rotate(-192)"></circle>
+          <rect x="-38" y="54" width="76" height="18" rx="2" fill="#16191B"></rect>
+          <text y="66.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="11" letter-spacing="1.2" fill="#F5F2EA">COMPOUND</text>
+          <g transform="translate(1.6 2.2)"><path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#16191B" opacity="0.2" transform="rotate(-99)"></path></g>
+          <g transform="rotate(-99)">
+            <path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#16191B"></path>
+            <line x1="0" y1="-74" x2="0" y2="-14" stroke="#F5F2EA" stroke-width="0.9"></line>
+            <circle cy="15" r="6.2" fill="#16191B"></circle>
+            <circle cy="15" r="3.4" fill="#AEB5BA"></circle>
+          </g>
+          <circle r="8.5" fill="#16191B"></circle>
+          <circle r="3.4" fill="url(#g2-galv)"></circle>
+        </svg>
+        <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: 0.04em">Compound · two segments</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">vac −100…0 kPa → −135…−75°<br>press 0…1600 kPa → −75…135°<br>vac sector tinted #E1E6E8, break tick 3.4<br>caution −70…−85 · alarm −85…−100</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; width: 220px">
+        <svg width="160" height="160" viewBox="-106 -106 214 214" role="img" aria-label="Tachometer reading 2200 rpm">
+          <use href="#g2-dial-t"></use>
+          <rect x="-38" y="54" width="76" height="18" rx="2" fill="#16191B"></rect>
+          <text y="66.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="11" letter-spacing="1.2" fill="#F5F2EA">ENGINE</text>
+          <g transform="translate(1.6 2.2)"><path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#16191B" opacity="0.2" transform="rotate(13.5)"></path></g>
+          <g transform="rotate(13.5)">
+            <path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#16191B"></path>
+            <circle cy="15" r="6.2" fill="#16191B"></circle>
+            <circle cy="15" r="3.4" fill="#AEB5BA"></circle>
+          </g>
+          <circle r="8.5" fill="#16191B"></circle>
+          <circle r="3.4" fill="url(#g2-galv)"></circle>
+        </svg>
+        <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: 0.04em">Tachometer</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">0…4000 rpm · major 1000<br>numerals 22 (fewer, larger)<br>alarm 3500…4000</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; width: 260px">
+        <div style="display: flex; gap: 16px; background: #1B1E21; border-radius: 6px; padding: 14px">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <svg width="76" height="76" viewBox="-106 -106 214 214" role="img" aria-label="Delivery 1 mini gauge at 680 kilopascals">
+              <use href="#g2-dial-mini"></use>
+              <g transform="rotate(-20.25)">
+                <path d="M0 -84 L6 -6 L4 20 L-4 20 L-6 -6 Z" fill="#16191B"></path>
+                <circle cy="16" r="9" fill="#2470C2" stroke="#16191B" stroke-width="3"></circle>
+              </g>
+              <circle r="12" fill="#16191B"></circle>
+            </svg>
+            <div style="display: flex; align-items: center; gap: 6px; background: #2470C2; color: #FFFFFF; border-radius: 3px; padding: 3px 7px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#FFFFFF"></circle></svg>D1</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #F5F2EA; font-variant-numeric: tabular-nums">680 kPa</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <svg width="76" height="76" viewBox="-106 -106 214 214" role="img" aria-label="Delivery 2 mini gauge at 1300 kilopascals, caution">
+              <use href="#g2-dial-mini"></use>
+              <g transform="rotate(84.375)">
+                <path d="M0 -84 L6 -6 L4 20 L-4 20 L-6 -6 Z" fill="#16191B"></path>
+                <circle cy="16" r="9" fill="#14A37F" stroke="#16191B" stroke-width="3"></circle>
+              </g>
+              <circle r="12" fill="#16191B"></circle>
+            </svg>
+            <div style="display: flex; align-items: center; gap: 6px; background: #14A37F; color: #16191B; border-radius: 3px; padding: 3px 7px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1" y="1" width="8" height="8" fill="#16191B"></rect></svg>D2</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #F2A900; font-variant-numeric: tabular-nums">1 300 kPa</div>
+          </div>
+        </div>
+        <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: 0.04em">Delivery mini</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">no numerals · counterweight + tag<br>carry the delivery identity<br>readout turns amber/red with zone</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; flex: 1">
+        <div style="display: flex; gap: 22px; background: #1B1E21; border-radius: 6px; padding: 14px 18px; color: #C9CFD3; align-items: flex-end">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+            <svg width="54" height="132" viewBox="0 0 54 132" role="img" aria-label="Tank level four of five segments lit">
+              <g font-family="Barlow Condensed, sans-serif" font-weight="600" font-size="9" fill="#9AA3A9"><text x="0" y="16">F</text><text x="0" y="128">E</text></g>
+              <rect x="12" y="4" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="12" y="30" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+              <rect x="12" y="56" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+              <rect x="12" y="82" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+              <rect x="12" y="108" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+            </svg>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #F5F2EA; font-variant-numeric: tabular-nums">2 400 L</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+            <svg width="54" height="132" viewBox="0 0 54 132" role="img" aria-label="Tank level two of five segments lit">
+              <g font-family="Barlow Condensed, sans-serif" font-weight="600" font-size="9" fill="#9AA3A9"><text x="0" y="16">F</text><text x="0" y="128">E</text></g>
+              <rect x="12" y="4" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="12" y="30" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="12" y="56" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="12" y="82" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+              <rect x="12" y="108" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+            </svg>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #F5F2EA; font-variant-numeric: tabular-nums">1 150 L</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+            <svg width="54" height="132" viewBox="0 0 54 132" role="img" aria-label="Tank level low, one amber segment lit">
+              <g font-family="Barlow Condensed, sans-serif" font-weight="600" font-size="9" fill="#9AA3A9"><text x="0" y="16">F</text><text x="0" y="128">E</text></g>
+              <rect x="12" y="4" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="12" y="30" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="12" y="56" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="12" y="82" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+              <rect x="8" y="104" width="48" height="28" rx="4" fill="#F2A900" opacity="0.25"></rect>
+              <rect x="12" y="108" width="40" height="20" rx="2" fill="#F2A900"></rect>
+              <path d="M32 111 L37 125 L27 125 Z" fill="none" stroke="#16191B" stroke-width="1.8" stroke-linejoin="round"></path>
+            </svg>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #F2A900; font-variant-numeric: tabular-nums">380 L</span>
+          </div>
+        </div>
+        <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: 0.04em">Tank level · five-segment column</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">lit #DCEFF5 on ironbark · unlit #2A2F33<br>≤ ¼: last segment amber + triangle<br>empty: outline flashes alarm, 2 Hz</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+</body>
+</html>

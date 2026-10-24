@@ -1,0 +1,49 @@
+{
+  "id": "layout-a",
+  "name": "Layout A — rear-mount pump, twin reels",
+  "description": "Rear pump bay: hose reels left and right, pump and inlets left of centre, instrument panel right of centre above a tread-plate shelf, discharge manifold with three outlets below the panel.",
+  "source": "Derived from the user's reference photo of a rear-mounted rural tanker pump bay (brief/reference-photo-pump-bay.png). Items marked assumed:true were not visible in the photo or their function was inferred.",
+  "drawing": { "bayViewBox": [0, 0, 1440, 860], "closeUpViewBox": [0, 0, 960, 820] },
+  "zones": [
+    { "id": "A", "name": "Left reel", "bounds": { "x": 136, "y": 64, "w": 314, "h": 540 } },
+    { "id": "B", "name": "Pump & inlets", "bounds": { "x": 360, "y": 64, "w": 296, "h": 596 }, "note": "Overlaps zone A at the bottom: the suction inlet (B3) sits below the left reel. Zones are logical groups and may overlap." },
+    { "id": "C", "name": "Instrument panel", "bounds": { "x": 656, "y": 184, "w": 338, "h": 290 } },
+    { "id": "D", "name": "Discharge", "bounds": { "x": 590, "y": 470, "w": 420, "h": 200 } },
+    { "id": "E", "name": "Right reel", "bounds": { "x": 990, "y": 64, "w": 314, "h": 540 } }
+  ],
+  "items": [
+    { "id": "A1", "zone": "A", "kind": "reel", "role": "hose-reel-left", "label": "Hose reel, left", "function": null, "interaction": "none", "bay": { "x": 293, "y": 302 }, "bounds": { "x": 148, "y": 80, "w": 290, "h": 444 }, "sim": "reel.left" },
+    { "id": "A2", "zone": "A", "kind": "nozzle", "role": "reel-branch-left", "label": "Reel branch in holder, left", "function": null, "interaction": "tap", "bay": { "x": 171, "y": 552 }, "sim": "reel.left.branch" },
+
+    { "id": "B1", "zone": "B", "kind": "pump", "role": "pump", "label": "Pump and engine", "function": null, "interaction": "none", "bay": { "x": 560, "y": 300 }, "bounds": { "x": 460, "y": 158, "w": 196, "h": 244 }, "sim": "pump" },
+    { "id": "B2", "zone": "B", "kind": "estop", "role": "engine-stop", "label": "Engine stop", "function": null, "interaction": "tap", "bay": { "x": 610, "y": 114 }, "radius": 17, "sim": "engine.stop" },
+    { "id": "B3", "zone": "B", "kind": "coupling", "role": "suction-inlet", "label": "Suction inlet, 64 mm", "function": "inlet", "interaction": "tap", "bay": { "x": 392, "y": 617 }, "radius": 26, "sizeMm": 64, "sim": "inlet.suction.coupling", "notes": "Hard suction connects here when drafting." },
+    { "id": "B4", "zone": "B", "kind": "valve", "role": "tank-to-pump", "label": "Tank-to-pump valve", "function": "inlet", "interaction": "drag-rotate", "bay": { "x": 520, "y": 150 }, "sim": "valve.tankToPump", "assumed": true, "notes": "Not visible in the photo; placed on the tank feed above the pump. Confirm position." },
+    { "id": "B5", "zone": "B", "kind": "valve", "role": "suction-inlet-valve", "label": "Suction inlet valve", "function": "inlet", "interaction": "drag-rotate", "bay": { "x": 468, "y": 520 }, "sim": "valve.suction", "notes": "Green-tagged lever in the photo." },
+
+    { "id": "C1", "zone": "C", "kind": "gauge", "role": "compound-gauge", "label": "Compound gauge", "function": null, "interaction": "read", "gauge": "compound", "bay": { "x": 712, "y": 290 }, "closeUp": { "x": 172, "y": 326 }, "radius": 120, "sim": "pump.inlet_kPa" },
+    { "id": "C2", "zone": "C", "kind": "gauge", "role": "discharge-gauge", "label": "Pressure gauge (discharge)", "function": null, "interaction": "read", "gauge": "pressure", "bay": { "x": 812, "y": 290 }, "closeUp": { "x": 444, "y": 326 }, "radius": 120, "sim": "pump.discharge_kPa" },
+    { "id": "C3", "zone": "C", "kind": "gauge", "role": "tachometer", "label": "Engine rpm", "function": null, "interaction": "read", "gauge": "tachometer", "bay": { "x": 898, "y": 290 }, "closeUp": { "x": 678, "y": 326 }, "radius": 86, "sim": "engine.rpm" },
+    { "id": "C4", "zone": "C", "kind": "gauge", "role": "engine-temp-gauge", "label": "Engine temperature", "function": null, "interaction": "read", "gauge": "small", "bay": { "x": 960, "y": 258 }, "closeUp": { "x": 838, "y": 248 }, "radius": 46, "sim": "engine.temp_C", "assumed": true, "notes": "Two small dials at the right of the photo's panel; functions inferred." },
+    { "id": "C5", "zone": "C", "kind": "gauge", "role": "oil-pressure-gauge", "label": "Oil pressure", "function": null, "interaction": "read", "gauge": "small", "bay": { "x": 960, "y": 316 }, "closeUp": { "x": 838, "y": 410 }, "radius": 46, "sim": "engine.oil_kPa", "assumed": true },
+    { "id": "C6", "zone": "C", "kind": "key-switch", "role": "ignition", "label": "Key switch: off, run, start", "function": null, "interaction": "rotate", "bay": { "x": 684, "y": 420 }, "closeUp": { "x": 96, "y": 636 }, "radius": 36, "sim": "engine.key", "assumed": true },
+    { "id": "C7a", "zone": "C", "kind": "lamp", "role": "lamp-tank-low", "label": "Tank low lamp", "function": null, "interaction": "tap", "bay": { "x": 746, "y": 420 }, "closeUp": { "x": 206, "y": 630 }, "radius": 26, "sim": "alarm.tankLow" },
+    { "id": "C7b", "zone": "C", "kind": "lamp", "role": "lamp-engine-temp", "label": "Engine temperature lamp", "function": null, "interaction": "tap", "bay": { "x": 768, "y": 420 }, "closeUp": { "x": 272, "y": 630 }, "radius": 26, "sim": "alarm.engineTemp" },
+    { "id": "C7c", "zone": "C", "kind": "lamp", "role": "lamp-oil", "label": "Oil pressure lamp", "function": null, "interaction": "tap", "bay": { "x": 790, "y": 420 }, "closeUp": { "x": 338, "y": 630 }, "radius": 26, "sim": "alarm.oil" },
+    { "id": "C7d", "zone": "C", "kind": "lamp", "role": "lamp-over-pressure", "label": "Over-pressure lamp", "function": null, "interaction": "tap", "bay": { "x": 812, "y": 420 }, "closeUp": { "x": 404, "y": 630 }, "radius": 26, "sim": "alarm.overPressure", "assumed": true, "notes": "Game addition; not confirmed on the real panel." },
+    { "id": "C8", "zone": "C", "kind": "button", "role": "primer", "label": "Primer (press and hold)", "function": null, "interaction": "hold", "bay": { "x": 835, "y": 419 }, "closeUp": { "x": 514, "y": 638 }, "radius": 42, "sim": "primer", "assumed": true, "notes": "Square button in the photo; function inferred." },
+    { "id": "C9", "zone": "C", "kind": "placard", "role": "operating-placard", "label": "Operating sequence placard", "function": null, "interaction": "none", "bay": { "x": 904, "y": 421 }, "closeUp": { "x": 693, "y": 663 }, "notes": "Placeholder sequence text; replace with the procedure being taught." },
+    { "id": "C10", "zone": "C", "kind": "knob", "role": "throttle", "label": "Throttle (vernier knob)", "function": null, "interaction": "rotate", "throttle": "vernier-knob", "bay": { "x": 964, "y": 430 }, "closeUp": { "x": 866, "y": 680 }, "radius": 50, "sim": "engine.throttle", "notes": "Turn = fine, press centre = coarse. Sheet 03 shows the t-handle variant for other truck types." },
+    { "id": "C11", "zone": "C", "kind": "placard", "role": "info-placards", "label": "Information placards", "function": null, "interaction": "none", "bay": { "x": 838, "y": 206 }, "closeUp": { "x": 498, "y": 67 } },
+
+    { "id": "D1", "zone": "D", "kind": "valve", "role": "discharge-master", "label": "Discharge master valve", "function": "outlet", "interaction": "drag-rotate", "bay": { "x": 612, "y": 489 }, "sim": "valve.dischargeMaster", "assumed": true, "notes": "Large blue lever on the diagonal pipe in the photo; function inferred." },
+    { "id": "D2", "zone": "D", "kind": "valve", "role": "outlet-1", "label": "Outlet 1, 64 mm", "function": "outlet", "interaction": "drag-rotate", "bay": { "x": 740, "y": 600 }, "sizeMm": 64, "sim": "valve.outlet1", "notes": "Coupling face at (740, 636)." },
+    { "id": "D3", "zone": "D", "kind": "valve", "role": "outlet-2", "label": "Outlet 2, 38 mm", "function": "outlet", "interaction": "drag-rotate", "bay": { "x": 841, "y": 600 }, "sizeMm": 38, "sim": "valve.outlet2", "notes": "Coupling face at (841, 634)." },
+    { "id": "D4", "zone": "D", "kind": "valve", "role": "outlet-3", "label": "Outlet 3, 38 mm", "function": "outlet", "interaction": "drag-rotate", "bay": { "x": 931, "y": 600 }, "sizeMm": 38, "sim": "valve.outlet3", "notes": "Coupling face at (931, 634)." },
+    { "id": "D5", "zone": "D", "kind": "valve", "role": "reel-valve-left", "label": "Reel valve, left", "function": "outlet", "interaction": "drag-rotate", "bay": { "x": 652, "y": 548 }, "sim": "valve.reelLeft", "assumed": true },
+    { "id": "D6", "zone": "D", "kind": "valve", "role": "reel-valve-right", "label": "Reel valve, right", "function": "outlet", "interaction": "drag-rotate", "bay": { "x": 994, "y": 548 }, "sim": "valve.reelRight", "assumed": true },
+
+    { "id": "E1", "zone": "E", "kind": "reel", "role": "hose-reel-right", "label": "Hose reel, right", "function": null, "interaction": "none", "bay": { "x": 1149, "y": 302 }, "bounds": { "x": 1004, "y": 80, "w": 290, "h": 444 }, "sim": "reel.right" },
+    { "id": "E2", "zone": "E", "kind": "nozzle", "role": "reel-branch-right", "label": "Reel branch in holder, right", "function": null, "interaction": "tap", "bay": { "x": 1269, "y": 552 }, "sim": "reel.right.branch" }
+  ]
+}

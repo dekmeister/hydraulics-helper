@@ -1,0 +1,24 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-24T09:00:00Z"},
+  "title": "Pump Operator — Visual Language",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 1520, "title": "01 Foundations — tokens, type, line & light"},
+    "Gauge.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 1340, "title": "02 Gauge system — anatomy & variants"},
+    "Controls.dc.html": {"x": 0, "y": 1640, "w": 1440, "h": 1300, "title": "03 Controls — valve, throttle, primer, lamps"},
+    "Signature.dc.html": {"x": 1520, "y": 1640, "w": 1440, "h": 1300, "title": "04 Signature: the Wake + fault states"},
+    "PanelPhone.dc.html": {"x": 0, "y": 3360, "w": 375, "h": 1460, "title": "05 Comp — pump panel, 375 px phone"},
+    "SceneTablet.dc.html": {"x": 455, "y": 3360, "w": 1024, "h": 768, "title": "06 Comp — scene view, 1024 px tablet"},
+    "BayLayoutA.dc.html": {"x": 0, "y": 5240, "w": 1440, "h": 1110, "title": "07 Rear pump bay — realistic layout A"},
+    "PanelLayoutA.dc.html": {"x": 1520, "y": 5240, "w": 1440, "h": 900, "title": "08 Instrument panel — layout A close-up"}
+  },
+  "order": ["Main.dc.html", "Gauge.dc.html", "Controls.dc.html", "Signature.dc.html", "PanelPhone.dc.html", "SceneTablet.dc.html", "BayLayoutA.dc.html", "PanelLayoutA.dc.html"],
+  "notes": {
+    "t-system": {"x": 0, "y": -300, "text": "Pump operator training — visual language", "kind": "title1", "maxW": 2960},
+    "t-comps": {"x": 0, "y": 3060, "text": "Comps", "kind": "title1", "maxW": 1480},
+    "t-real": {"x": 0, "y": 4940, "text": "Realistic layout — truck type A", "kind": "title1", "maxW": 2960}
+  },
+  "designSystems": []
+}

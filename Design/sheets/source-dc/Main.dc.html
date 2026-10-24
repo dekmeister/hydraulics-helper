@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foundations — tokens, type, line and light</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2470C2}a:hover{color:#16191B}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1520px; box-sizing: border-box; padding: 48px 56px; background: #F3EFE4; color: #16191B; font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; gap: 36px">
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px; padding-bottom: 20px; border-bottom: 2.5px solid #16191B">
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 760px">
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; color: #5B6166">PUMP OPERATOR TRAINING · VISUAL LANGUAGE</div>
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 72px; line-height: 0.92; letter-spacing: -0.01em; text-transform: uppercase">Foundations</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.5; color: #2E3337; text-wrap: pretty">A beautifully drawn equipment manual that came alive. Instructions sit on paper in ink; the instrument is dark ironbark metal; the subject is always water and machinery.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1.5px solid #16191B; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; min-width: 460px">
+      <div style="padding: 8px 10px; border-right: 1px solid #16191B; display: flex; flex-direction: column; gap: 4px"><span style="color: #5B6166">SHEET</span><span style="font-size: 15px; font-weight: 500">01 / 08</span></div>
+      <div style="padding: 8px 10px; border-right: 1px solid #16191B; display: flex; flex-direction: column; gap: 4px"><span style="color: #5B6166">REV</span><span style="font-size: 15px; font-weight: 500">A</span></div>
+      <div style="padding: 8px 10px; border-right: 1px solid #16191B; display: flex; flex-direction: column; gap: 4px"><span style="color: #5B6166">UNITS</span><span style="font-size: 15px; font-weight: 500">kPa · L/min</span></div>
+      <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 4px"><span style="color: #5B6166">DATE</span><span style="font-size: 15px; font-weight: 500">24.10.26</span></div>
+    </div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: 880px minmax(0, 1fr); gap: 48px">
+    <div style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">1.1</span>
+        <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Named colours — four deliveries, two signals</h2>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="height: 112px; background: #2470C2; border-radius: 3px; display: flex; align-items: flex-end; justify-content: space-between; padding: 12px 14px; box-sizing: border-box; color: #FFFFFF">
+            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="#FFFFFF"></circle></svg>
+            <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 56px; line-height: 0.8">1</span>
+          </div>
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.03em">Cobalt · circle</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">--d1 #2470C2<br>text on: white 5.0:1<br>vs ironbark: 3.3:1</div>
+          <div style="display: flex; gap: 6px; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B6166"><span style="width: 22px; height: 14px; background: #4777C5; border-radius: 2px"></span>P<span style="width: 22px; height: 14px; background: #2A68C0; border-radius: 2px; margin-left: 6px"></span>D</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="height: 112px; background: #14A37F; border-radius: 3px; display: flex; align-items: flex-end; justify-content: space-between; padding: 12px 14px; box-sizing: border-box; color: #16191B">
+            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="5" y="5" width="20" height="20" fill="#16191B"></rect></svg>
+            <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 56px; line-height: 0.8">2</span>
+          </div>
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.03em">Gum · square</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">--d2 #14A37F<br>text on: ink 5.5:1<br>vs ironbark: 5.2:1</div>
+          <div style="display: flex; gap: 6px; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B6166"><span style="width: 22px; height: 14px; background: #9E977D; border-radius: 2px"></span>P<span style="width: 22px; height: 14px; background: #8E8B81; border-radius: 2px; margin-left: 6px"></span>D</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="height: 112px; background: #79CBF2; border-radius: 3px; display: flex; align-items: flex-end; justify-content: space-between; padding: 12px 14px; box-sizing: border-box; color: #16191B">
+            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="10" width="26" height="10" rx="5" fill="#16191B"></rect></svg>
+            <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 56px; line-height: 0.8">3</span>
+          </div>
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.03em">Sky · bar</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">--d3 #79CBF2<br>text on: ink 9.8:1<br>vs ironbark: 9.3:1</div>
+          <div style="display: flex; gap: 6px; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B6166"><span style="width: 22px; height: 14px; background: #B7C8F4; border-radius: 2px"></span>P<span style="width: 22px; height: 14px; background: #A6BBF1; border-radius: 2px; margin-left: 6px"></span>D</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="height: 112px; background: #E08FBE; border-radius: 3px; display: flex; align-items: flex-end; justify-content: space-between; padding: 12px 14px; box-sizing: border-box; color: #16191B">
+            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 2 L26.3 8.5 L26.3 21.5 L15 28 L3.7 21.5 L3.7 8.5 Z" fill="#16191B"></path></svg>
+            <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 56px; line-height: 0.8">4</span>
+          </div>
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.03em">Galah · hexagon</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: #2E3337">--d4 #E08FBE<br>text on: ink 7.4:1<br>vs ironbark: 7.1:1</div>
+          <div style="display: flex; gap: 6px; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B6166"><span style="width: 22px; height: 14px; background: #94A0C0; border-radius: 2px"></span>P<span style="width: 22px; height: 14px; background: #A8ADBC; border-radius: 2px; margin-left: 6px"></span>D</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 6px">
+        <div style="display: flex; gap: 16px; align-items: center; background: #1B1E21; border-radius: 3px; padding: 14px 16px; color: #C9CFD3">
+          <svg width="88" height="44" viewBox="0 0 88 44" aria-hidden="true">
+            <circle cx="20" cy="22" r="16" fill="#3A3220" stroke="#5A5F64" stroke-width="2"></circle>
+            <path d="M20 13 L28 28 L12 28 Z" fill="none" stroke="#6E5E2E" stroke-width="2" stroke-linejoin="round"></path>
+            <circle cx="64" cy="22" r="20" fill="#F2A900" opacity="0.25"></circle>
+            <circle cx="64" cy="22" r="16" fill="#F2A900" stroke="#FFE3A0" stroke-width="2"></circle>
+            <path d="M64 13 L72 28 L56 28 Z" fill="none" stroke="#16191B" stroke-width="2.5" stroke-linejoin="round"></path>
+          </svg>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.03em; color: #F2A900">Hi-vis amber · caution</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6">--caution #F2A900 · unlit #3A3220<br>Triangle lamp. Steady. Act soon.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center; background: #1B1E21; border-radius: 3px; padding: 14px 16px; color: #C9CFD3">
+          <svg width="88" height="44" viewBox="0 0 88 44" aria-hidden="true">
+            <circle cx="20" cy="22" r="16" fill="#3A2220" stroke="#5A5F64" stroke-width="2"></circle>
+            <rect x="12" y="14" width="16" height="16" rx="1" fill="none" stroke="#6E3A34" stroke-width="2" transform="rotate(45 20 22)"></rect>
+            <circle cx="64" cy="22" r="21" fill="#E5362B" opacity="0.3"></circle>
+            <circle cx="64" cy="22" r="16" fill="#FF5A44" stroke="#FFC2B8" stroke-width="2"></circle>
+            <rect x="56.5" y="14.5" width="15" height="15" rx="1" fill="none" stroke="#16191B" stroke-width="2.5" transform="rotate(45 64 22)"></rect>
+          </svg>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.03em; color: #FF6A55">Flare red · alarm</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6">--alarm #E5362B · lit core #FF5A44<br>Diamond lamp. Flashes 2 Hz. Act now.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px">
+        <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: #5B6166">Materials — supporting neutrals, never used to carry meaning</div>
+        <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.45">
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #1B1E21; border-radius: 2px"></span><span><b style="font-weight: 500">Ironbark</b><br>#1B1E21 panel</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #272B2F; border-radius: 2px"></span><span><b style="font-weight: 500">Raised</b><br>#272B2F plate</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #C9CFD3; border-radius: 2px"></span><span><b style="font-weight: 500">Steel</b><br>#C9CFD3 text on dark</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #AEB5BA; border-radius: 2px"></span><span><b style="font-weight: 500">Galv</b><br>#AEB5BA fittings</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #F5F2EA; border-radius: 2px; box-shadow: inset 0 0 0 1px #D9D2C0"></span><span><b style="font-weight: 500">Dial</b><br>#F5F2EA gauge face</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #16191B; border-radius: 2px"></span><span><b style="font-weight: 500">Ink</b><br>#16191B line, text</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #F3EFE4; border-radius: 2px; box-shadow: inset 0 0 0 1px #D9D2C0"></span><span><b style="font-weight: 500">Paper</b><br>#F3EFE4 manual</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #D9CBA6; border-radius: 2px"></span><span><b style="font-weight: 500">Canvas</b><br>#D9CBA6 dry hose</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #E8DCC0; border-radius: 2px"></span><span><b style="font-weight: 500">Dust</b><br>#E8DCC0 ground</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #7F8E5C; border-radius: 2px"></span><span><b style="font-weight: 500">Scrub</b><br>#7F8E5C euc. canopy</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #5F8A8B; border-radius: 2px"></span><span><b style="font-weight: 500">Dam</b><br>#5F8A8B open water</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 36px; background: #A8251E; border-radius: 2px"></span><span><b style="font-weight: 500">Body</b><br>#A8251E truck only</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">1.2</span>
+        <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">One delivery, three places</h2>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #2E3337; text-wrap: pretty">Colour lets a sighted player trace panel to scene in one glance. Glyph and numeral carry the same identity for everyone else: under protan/deutan simulation, Gum and Galah converge in hue, so the shape is what separates them. Triangle and diamond are never delivery glyphs: they belong to the caution and alarm signals.</p>
+      <div style="background: #1B1E21; border-radius: 3px; padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 4px">
+        <div style="display: grid; grid-template-columns: 76px 92px minmax(0, 1fr); gap: 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA3A9; padding-bottom: 6px; border-bottom: 1px solid #3A4046">
+          <span>Gauge tag</span><span>Valve handle</span><span>Hose lay (scene)</span>
+        </div>
+        <svg width="100%" viewBox="0 0 368 272" role="img" aria-label="Four deliveries shown as matching tag, valve handle and hose line">
+          <g font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="17">
+            <g transform="translate(0 14)">
+              <rect x="0" y="4" width="60" height="30" rx="3" fill="#2470C2"></rect>
+              <circle cx="16" cy="19" r="7" fill="#FFFFFF"></circle>
+              <text x="40" y="25.5" fill="#FFFFFF">D1</text>
+              <g transform="translate(88 0)">
+                <rect x="0" y="14" width="76" height="10" fill="#8E969B"></rect>
+                <circle cx="22" cy="19" r="10" fill="#AEB5BA" stroke="#5A5F64" stroke-width="1.5"></circle>
+                <rect x="20" y="15" width="56" height="8" rx="3" fill="#2470C2" stroke="#0E2E52" stroke-width="1.5"></rect>
+                <circle cx="22" cy="19" r="3.5" fill="#5A5F64"></circle>
+              </g>
+              <path d="M184 19 C 220 -4, 250 42, 290 18 S 340 8, 350 20" fill="none" stroke="#0B0D0E" stroke-width="9" stroke-linecap="round"></path>
+              <path d="M184 19 C 220 -4, 250 42, 290 18 S 340 8, 350 20" fill="none" stroke="#2470C2" stroke-width="5" stroke-linecap="round"></path>
+              <circle cx="350" cy="20" r="8" fill="#2470C2" stroke="#0B0D0E" stroke-width="2"></circle>
+              <circle cx="350" cy="20" r="3" fill="#FFFFFF"></circle>
+            </g>
+            <g transform="translate(0 82)">
+              <rect x="0" y="4" width="60" height="30" rx="3" fill="#14A37F"></rect>
+              <rect x="10" y="13" width="12" height="12" fill="#16191B"></rect>
+              <text x="40" y="25.5" fill="#16191B">D2</text>
+              <g transform="translate(88 0)">
+                <rect x="0" y="14" width="76" height="10" fill="#8E969B"></rect>
+                <circle cx="22" cy="19" r="10" fill="#AEB5BA" stroke="#5A5F64" stroke-width="1.5"></circle>
+                <rect x="20" y="15" width="56" height="8" rx="3" fill="#14A37F" stroke="#0A4A3A" stroke-width="1.5"></rect>
+                <circle cx="22" cy="19" r="3.5" fill="#5A5F64"></circle>
+              </g>
+              <path d="M184 19 C 214 40, 246 0, 286 22 S 336 30, 350 18" fill="none" stroke="#0B0D0E" stroke-width="9" stroke-linecap="round"></path>
+              <path d="M184 19 C 214 40, 246 0, 286 22 S 336 30, 350 18" fill="none" stroke="#14A37F" stroke-width="5" stroke-linecap="round"></path>
+              <rect x="342" y="11" width="16" height="16" fill="#14A37F" stroke="#0B0D0E" stroke-width="2"></rect>
+            </g>
+            <g transform="translate(0 150)">
+              <rect x="0" y="4" width="60" height="30" rx="3" fill="#79CBF2"></rect>
+              <rect x="7" y="15" width="18" height="8" rx="4" fill="#16191B"></rect>
+              <text x="40" y="25.5" fill="#16191B">D3</text>
+              <g transform="translate(88 0)">
+                <rect x="0" y="14" width="76" height="10" fill="#8E969B"></rect>
+                <rect x="17" y="-9" width="10" height="34" rx="3" fill="#79CBF2" stroke="#2B5A72" stroke-width="1.5" transform="rotate(0)"></rect>
+                <circle cx="22" cy="19" r="10" fill="#AEB5BA" stroke="#5A5F64" stroke-width="1.5"></circle>
+                <circle cx="22" cy="19" r="3.5" fill="#5A5F64"></circle>
+              </g>
+              <path d="M184 19 C 220 6, 250 32, 290 19 S 336 12, 350 19" fill="none" stroke="#D9CBA6" stroke-width="3" stroke-dasharray="7 5" stroke-linecap="round"></path>
+              <rect x="338" y="13" width="24" height="12" rx="6" fill="#79CBF2" stroke="#0B0D0E" stroke-width="2"></rect>
+            </g>
+            <g transform="translate(0 218)">
+              <rect x="0" y="4" width="60" height="30" rx="3" fill="#E08FBE"></rect>
+              <path d="M16 11 L23 15 L23 23 L16 27 L9 23 L9 15 Z" fill="#16191B"></path>
+              <text x="40" y="25.5" fill="#16191B">D4</text>
+              <g transform="translate(88 0)">
+                <rect x="0" y="14" width="76" height="10" fill="#8E969B"></rect>
+                <rect x="17" y="-9" width="10" height="34" rx="3" fill="#E08FBE" stroke="#6A3556" stroke-width="1.5"></rect>
+                <circle cx="22" cy="19" r="10" fill="#AEB5BA" stroke="#5A5F64" stroke-width="1.5"></circle>
+                <circle cx="22" cy="19" r="3.5" fill="#5A5F64"></circle>
+              </g>
+              <text x="186" y="25" fill="#9AA3A9" font-family="IBM Plex Mono, monospace" font-weight="400" font-size="12">not laid</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; font-size: 13px; line-height: 1.45; color: #2E3337">
+        <div><b style="font-family: 'Barlow Condensed', sans-serif; font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em">Charged</b><br>Ink casing 9 + colour core 5, round caps. Handle parallel to pipe.</div>
+        <div><b style="font-family: 'Barlow Condensed', sans-serif; font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em">Laid, dry</b><br>Canvas colour, 3 wide, 7–5 dash: a flat hose. Colour only on the end glyph.</div>
+        <div><b style="font-family: 'Barlow Condensed', sans-serif; font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em">Closed</b><br>Handle across the pipe. The rule a real operator reads.</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: 640px minmax(0, 1fr); gap: 48px; padding-top: 28px; border-top: 1px solid #C9C1AC">
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">1.3</span>
+        <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Type — three faces, three jobs</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px 20px; align-items: baseline">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #5B6166">BARLOW CONDENSED<br>600 / 700 · gauge numerals, labels, headings</div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <div style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 40px; line-height: 1; letter-spacing: 0.01em">0 2 4 6 8 10 12 14 16</div>
+          <div style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase">Discharge · Compound · Tank to pump · Primer</div>
+        </div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #5B6166">IBM PLEX MONO<br>400 / 500 · live readouts, spec callouts</div>
+        <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 500; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums">1 180 kPa  ·  742 L/min</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #5B6166">IBM PLEX SANS<br>400 / 600 · tutorial and coaching text</div>
+        <p style="margin: 0; font-size: 16px; line-height: 1.55; text-wrap: pretty">Open the tank-to-pump valve before you throttle up. If the compound needle drops past −70 kPa and its wake starts to fan out, the pump is cavitating: ease the throttle.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; font-size: 13px; line-height: 1.5; color: #2E3337; padding-top: 10px; border-top: 1px solid #D9D2C0">
+        <div>Gauge numerals: cap height ≥ 7% of dial diameter, never under 12 px rendered.</div>
+        <div>Live numbers: tabular figures, thin-space thousands (1 180), units after a space.</div>
+        <div>Labels: uppercase, +0.06–0.08 em tracking, 11 px floor, weight 600 on dark.</div>
+        <div>Fallbacks: Arial Narrow · ui-monospace · system-ui, metrics checked at 12 px.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5B6166">1.4</span>
+        <h2 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Line, light, spacing, touch</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: #5B6166">One pen, two scales</div>
+          <svg width="100%" viewBox="0 0 300 132" role="img" aria-label="Line weight ladder of 1, 1.5, 2.5 and 4 pixels">
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#2E3337">
+              <line x1="0" y1="12" x2="120" y2="12" stroke="#16191B" stroke-width="1"></line><text x="132" y="16">1 · hairline: minor ticks</text>
+              <line x1="0" y1="44" x2="120" y2="44" stroke="#16191B" stroke-width="1.5"></line><text x="132" y="48">1.5 · detail: fittings</text>
+              <line x1="0" y1="76" x2="120" y2="76" stroke="#16191B" stroke-width="2.5"></line><text x="132" y="80">2.5 · primary: bezels</text>
+              <line x1="0" y1="110" x2="120" y2="110" stroke="#16191B" stroke-width="4"></line><text x="132" y="114">4 · heavy: scene</text>
+            </g>
+          </svg>
+          <div style="font-size: 13px; line-height: 1.5; color: #2E3337">Panel draws on steps 1–3. The scene draws one step heavier (1.5–4) so both read as the same pen at their own size.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: #5B6166">Light from upper left</div>
+          <svg width="100%" viewBox="0 0 300 132" role="img" aria-label="A bezel lit from the upper left with a shadow to the lower right">
+            <defs>
+              <linearGradient id="m-bezel" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#F1F4F5"></stop>
+                <stop offset="0.45" stop-color="#AEB5BA"></stop>
+                <stop offset="1" stop-color="#5E666C"></stop>
+              </linearGradient>
+            </defs>
+            <path d="M14 14 L44 44" stroke="#16191B" stroke-width="1.5" marker-end="none"></path>
+            <path d="M44 44 L36 43 M44 44 L43 36" stroke="#16191B" stroke-width="1.5" fill="none"></path>
+            <text x="8" y="10" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5B6166">315°</text>
+            <circle cx="104" cy="74" r="46" fill="#16191B" opacity="0.22"></circle>
+            <circle cx="100" cy="70" r="46" fill="url(#m-bezel)"></circle>
+            <circle cx="100" cy="70" r="38" fill="#F5F2EA" stroke="#5E666C" stroke-width="1"></circle>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#2E3337">
+              <text x="168" y="52">highlight: top-left</text>
+              <text x="168" y="72">shadow: +2 px panel</text>
+              <text x="168" y="92">          +4 px scene</text>
+            </g>
+          </svg>
+          <div style="font-size: 13px; line-height: 1.5; color: #2E3337">Same sun on bezel, valve body and truck roof. No second light source, no ambient glow except lamps.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: #5B6166">Spacing · 4 px base</div>
+          <div style="display: flex; align-items: flex-end; gap: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B6166">
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span style="width: 14px; height: 4px; background: #16191B"></span>4</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span style="width: 14px; height: 8px; background: #16191B"></span>8</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span style="width: 14px; height: 12px; background: #16191B"></span>12</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span style="width: 14px; height: 16px; background: #16191B"></span>16</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span style="width: 14px; height: 24px; background: #16191B"></span>24</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span style="width: 14px; height: 32px; background: #16191B"></span>32</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span style="width: 14px; height: 48px; background: #16191B"></span>48</div>
+          </div>
+          <div style="font-size: 13px; line-height: 1.5; color: #2E3337">Radii: plates 3, cards 6, lamps and knobs round. No other radii.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: #5B6166">Touch · focus</div>
+          <div style="display: flex; gap: 20px; align-items: center">
+            <div style="width: 48px; height: 48px; box-sizing: border-box; border: 1px dashed #5B6166; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B6166">48</div>
+            <div style="width: 60px; height: 48px; background: #1B1E21; border-radius: 6px; display: flex; align-items: center; justify-content: center">
+              <div style="width: 36px; height: 28px; border-radius: 3px; background: #272B2F; box-shadow: 0 0 0 2px #F5F2EA, 0 0 0 4px #16191B"></div>
+            </div>
+            <div style="width: 60px; height: 48px; border-radius: 6px; display: flex; align-items: center; justify-content: center">
+              <div style="width: 36px; height: 28px; border-radius: 3px; background: #E8DCC0; box-shadow: 0 0 0 2px #F5F2EA, 0 0 0 4px #16191B"></div>
+            </div>
+          </div>
+          <div style="font-size: 13px; line-height: 1.5; color: #2E3337">Targets 44 min, 48 preferred. Focus is a double ring, 2 px Dial inside 2 px Ink, so it reads on ironbark and on paper and never borrows amber.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

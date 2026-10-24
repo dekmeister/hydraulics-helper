@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Exported from canvas artboard PanelLayoutA.dc.html. Text uses Barlow Condensed / IBM Plex Mono / IBM Plex Sans. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="820" viewBox="0 0 960 820" aria-hidden="true">
+        <g stroke="#16191B" stroke-width="1.6" fill="#F5F2EA">
+          <circle cx="60" cy="196" r="17"></circle><circle cx="334" cy="196" r="17"></circle><circle cx="598" cy="232" r="17"></circle><circle cx="784" cy="200" r="17"></circle><circle cx="784" cy="362" r="17"></circle>
+          <circle cx="44" cy="690" r="17"></circle><circle cx="176" cy="580" r="17"></circle><circle cx="466" cy="584" r="17"></circle><circle cx="584" cy="548" r="17"></circle><circle cx="806" cy="622" r="17"></circle><circle cx="296" cy="112" r="17"></circle>
+        </g>
+        <g font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" text-anchor="middle" fill="#16191B">
+          <text x="60" y="200.5">C1</text><text x="334" y="200.5">C2</text><text x="598" y="236.5">C3</text><text x="784" y="204.5">C4</text><text x="784" y="366.5">C5</text>
+          <text x="44" y="694.5">C6</text><text x="176" y="584.5">C7</text><text x="466" y="588.5">C8</text><text x="584" y="552.5">C9</text><text x="806" y="626.5">C10</text><text x="296" y="116.5">C11</text>
+        </g>
+      </svg>

@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pump panel — phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#79CBF2}a:hover{color:#F5F2EA}
+</style>
+</helmet>
+<div style="width: 375px; height: 1460px; box-sizing: border-box; background: #1B1E21; color: #C9CFD3; font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
+
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="p5-galv" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
+        <stop offset="0" stop-color="#F4F6F7"></stop>
+        <stop offset="0.35" stop-color="#C3C9CD"></stop>
+        <stop offset="0.7" stop-color="#8E969B"></stop>
+        <stop offset="1" stop-color="#5E666C"></stop>
+      </linearGradient>
+      <linearGradient id="p5-pipe" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#EEF1F2"></stop>
+        <stop offset="0.4" stop-color="#B9C0C4"></stop>
+        <stop offset="1" stop-color="#6F777C"></stop>
+      </linearGradient>
+      <radialGradient id="p5-face" cx="0.4" cy="0.35" r="0.75">
+        <stop offset="0" stop-color="#FCFAF5"></stop>
+        <stop offset="0.6" stop-color="#F5F2EA"></stop>
+        <stop offset="1" stop-color="#E6E1D3"></stop>
+      </radialGradient>
+      <radialGradient id="p5-fire" cx="1" cy="0" r="1">
+        <stop offset="0" stop-color="#E5362B" stop-opacity="0.55"></stop>
+        <stop offset="0.35" stop-color="#F2A900" stop-opacity="0.25"></stop>
+        <stop offset="1" stop-color="#F2A900" stop-opacity="0"></stop>
+      </radialGradient>
+      <g id="p5-shell">
+        <circle cx="3" cy="4" r="100" fill="#000000" opacity="0.35"></circle>
+        <circle r="100" fill="url(#p5-galv)"></circle>
+        <circle r="93" fill="none" stroke="#4A5156" stroke-width="1.2"></circle>
+        <circle r="92" fill="url(#p5-face)"></circle>
+      </g>
+      <g id="p5-dial-p">
+        <use href="#p5-shell"></use>
+        <circle r="84" fill="none" stroke="#F2A900" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(-22.5)"></circle>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="1.2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="1.2"><line y1="-88" y2="-80" transform="rotate(-126.5625)"></line><line y1="-88" y2="-80" transform="rotate(-118.125)"></line><line y1="-88" y2="-80" transform="rotate(-109.6875)"></line><line y1="-88" y2="-80" transform="rotate(-92.8125)"></line><line y1="-88" y2="-80" transform="rotate(-84.375)"></line><line y1="-88" y2="-80" transform="rotate(-75.9375)"></line><line y1="-88" y2="-80" transform="rotate(-59.0625)"></line><line y1="-88" y2="-80" transform="rotate(-50.625)"></line><line y1="-88" y2="-80" transform="rotate(-42.1875)"></line><line y1="-88" y2="-80" transform="rotate(-25.3125)"></line><line y1="-88" y2="-80" transform="rotate(-16.875)"></line><line y1="-88" y2="-80" transform="rotate(-8.4375)"></line><line y1="-88" y2="-80" transform="rotate(8.4375)"></line><line y1="-88" y2="-80" transform="rotate(16.875)"></line><line y1="-88" y2="-80" transform="rotate(25.3125)"></line><line y1="-88" y2="-80" transform="rotate(42.1875)"></line><line y1="-88" y2="-80" transform="rotate(50.625)"></line><line y1="-88" y2="-80" transform="rotate(59.0625)"></line><line y1="-88" y2="-80" transform="rotate(75.9375)"></line><line y1="-88" y2="-80" transform="rotate(84.375)"></line><line y1="-88" y2="-80" transform="rotate(92.8125)"></line><line y1="-88" y2="-80" transform="rotate(109.6875)"></line><line y1="-88" y2="-80" transform="rotate(118.125)"></line><line y1="-88" y2="-80" transform="rotate(126.5625)"></line></g>
+        <g stroke="#16191B" stroke-width="2.5"><line y1="-88" y2="-72" transform="rotate(-135)"></line><line y1="-88" y2="-72" transform="rotate(-101.25)"></line><line y1="-88" y2="-72" transform="rotate(-67.5)"></line><line y1="-88" y2="-72" transform="rotate(-33.75)"></line><line y1="-88" y2="-72" transform="rotate(0)"></line><line y1="-88" y2="-72" transform="rotate(33.75)"></line><line y1="-88" y2="-72" transform="rotate(67.5)"></line><line y1="-88" y2="-72" transform="rotate(101.25)"></line><line y1="-88" y2="-72" transform="rotate(135)"></line></g>
+        <g font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="20" fill="#16191B" text-anchor="middle">
+          <text transform="rotate(-135) translate(0 -61) rotate(135)" dy="7">0</text>
+          <text transform="rotate(-101.25) translate(0 -61) rotate(101.25)" dy="7">2</text>
+          <text transform="rotate(-67.5) translate(0 -61) rotate(67.5)" dy="7">4</text>
+          <text transform="rotate(-33.75) translate(0 -61) rotate(33.75)" dy="7">6</text>
+          <text transform="translate(0 -61)" dy="7">8</text>
+          <text transform="rotate(33.75) translate(0 -61) rotate(-33.75)" dy="7">10</text>
+          <text transform="rotate(67.5) translate(0 -61) rotate(-67.5)" dy="7">12</text>
+          <text transform="rotate(101.25) translate(0 -61) rotate(-101.25)" dy="7">14</text>
+          <text transform="rotate(135) translate(0 -61) rotate(-135)" dy="7">16</text>
+        </g>
+        <text y="33" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="10" letter-spacing="1" fill="#3E4448">kPa ×100</text>
+        <rect x="-38" y="54" width="76" height="18" rx="2" fill="#16191B"></rect>
+        <text y="66.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="11" letter-spacing="1.2" fill="#F5F2EA">DISCHARGE</text>
+      </g>
+      <g id="p5-dial-c">
+        <use href="#p5-shell"></use>
+        <circle r="46" fill="none" stroke="#E1E6E8" stroke-width="92" stroke-dasharray="48.17 289.03" transform="rotate(-225)"></circle>
+        <circle r="84" fill="none" stroke="#F2A900" stroke-width="7" stroke-dasharray="13.19 527.79" transform="rotate(-216)"></circle>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="13.19 527.79" transform="rotate(-225)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="1.2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="1.2"><line y1="-88" y2="-80" transform="rotate(-129)"></line><line y1="-88" y2="-80" transform="rotate(-123)"></line><line y1="-88" y2="-80" transform="rotate(-117)"></line><line y1="-88" y2="-80" transform="rotate(-111)"></line><line y1="-88" y2="-80" transform="rotate(-99)"></line><line y1="-88" y2="-80" transform="rotate(-93)"></line><line y1="-88" y2="-80" transform="rotate(-87)"></line><line y1="-88" y2="-80" transform="rotate(-81)"></line><line y1="-88" y2="-80" transform="rotate(-61.875)"></line><line y1="-88" y2="-80" transform="rotate(-48.75)"></line><line y1="-88" y2="-80" transform="rotate(-35.625)"></line><line y1="-88" y2="-80" transform="rotate(-9.375)"></line><line y1="-88" y2="-80" transform="rotate(3.75)"></line><line y1="-88" y2="-80" transform="rotate(16.875)"></line><line y1="-88" y2="-80" transform="rotate(43.125)"></line><line y1="-88" y2="-80" transform="rotate(56.25)"></line><line y1="-88" y2="-80" transform="rotate(69.375)"></line><line y1="-88" y2="-80" transform="rotate(95.625)"></line><line y1="-88" y2="-80" transform="rotate(108.75)"></line><line y1="-88" y2="-80" transform="rotate(121.875)"></line></g>
+        <g stroke="#16191B" stroke-width="2.5"><line y1="-88" y2="-72" transform="rotate(-135)"></line><line y1="-88" y2="-72" transform="rotate(-105)"></line><line y1="-88" y2="-72" transform="rotate(-22.5)"></line><line y1="-88" y2="-72" transform="rotate(30)"></line><line y1="-88" y2="-72" transform="rotate(82.5)"></line><line y1="-88" y2="-72" transform="rotate(135)"></line></g>
+        <line y1="-91" y2="-66" stroke="#16191B" stroke-width="3.4" transform="rotate(-75)"></line>
+        <g font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" text-anchor="middle">
+          <text transform="rotate(-135) translate(0 -61) rotate(135)" dy="5" font-size="15" fill="#3E4448">−100</text>
+          <text transform="rotate(-105) translate(0 -61) rotate(105)" dy="5" font-size="15" fill="#3E4448">−50</text>
+          <text transform="rotate(-75) translate(0 -61) rotate(75)" dy="7" font-size="20" fill="#16191B">0</text>
+          <text transform="rotate(-22.5) translate(0 -61) rotate(22.5)" dy="7" font-size="20" fill="#16191B">4</text>
+          <text transform="rotate(30) translate(0 -61) rotate(-30)" dy="7" font-size="20" fill="#16191B">8</text>
+          <text transform="rotate(82.5) translate(0 -61) rotate(-82.5)" dy="7" font-size="20" fill="#16191B">12</text>
+          <text transform="rotate(135) translate(0 -61) rotate(-135)" dy="7" font-size="20" fill="#16191B">16</text>
+        </g>
+        <text y="33" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="10" letter-spacing="1" fill="#3E4448">kPa ×100</text>
+        <rect x="-38" y="54" width="76" height="18" rx="2" fill="#16191B"></rect>
+        <text y="66.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="11" letter-spacing="1.2" fill="#F5F2EA">COMPOUND</text>
+      </g>
+      <g id="p5-dial-t">
+        <use href="#p5-shell"></use>
+        <circle r="84" fill="none" stroke="#E5362B" stroke-width="7" stroke-dasharray="49.48 527.79" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="1.2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="1.2"><line y1="-88" y2="-80" transform="rotate(-118.125)"></line><line y1="-88" y2="-80" transform="rotate(-101.25)"></line><line y1="-88" y2="-80" transform="rotate(-84.375)"></line><line y1="-88" y2="-80" transform="rotate(-50.625)"></line><line y1="-88" y2="-80" transform="rotate(-33.75)"></line><line y1="-88" y2="-80" transform="rotate(-16.875)"></line><line y1="-88" y2="-80" transform="rotate(16.875)"></line><line y1="-88" y2="-80" transform="rotate(33.75)"></line><line y1="-88" y2="-80" transform="rotate(50.625)"></line><line y1="-88" y2="-80" transform="rotate(84.375)"></line><line y1="-88" y2="-80" transform="rotate(101.25)"></line><line y1="-88" y2="-80" transform="rotate(118.125)"></line></g>
+        <g stroke="#16191B" stroke-width="2.5"><line y1="-88" y2="-72" transform="rotate(-135)"></line><line y1="-88" y2="-72" transform="rotate(-67.5)"></line><line y1="-88" y2="-72" transform="rotate(0)"></line><line y1="-88" y2="-72" transform="rotate(67.5)"></line><line y1="-88" y2="-72" transform="rotate(135)"></line></g>
+        <g font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="24" fill="#16191B" text-anchor="middle">
+          <text transform="rotate(-135) translate(0 -58) rotate(135)" dy="8">0</text>
+          <text transform="rotate(-67.5) translate(0 -58) rotate(67.5)" dy="8">1</text>
+          <text transform="translate(0 -58)" dy="8">2</text>
+          <text transform="rotate(67.5) translate(0 -58) rotate(-67.5)" dy="8">3</text>
+          <text transform="rotate(135) translate(0 -58) rotate(-135)" dy="8">4</text>
+        </g>
+        <text y="33" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="600" font-size="12" letter-spacing="1" fill="#3E4448">RPM ×1000</text>
+      </g>
+      <g id="p5-dial-mini">
+        <use href="#p5-shell"></use>
+        <circle r="82" fill="none" stroke="#F2A900" stroke-width="12" stroke-dasharray="48.31 515.22" transform="rotate(-22.5)"></circle>
+        <circle r="82" fill="none" stroke="#E5362B" stroke-width="12" stroke-dasharray="48.31 515.22" transform="rotate(11.25)"></circle>
+        <circle r="88" fill="none" stroke="#16191B" stroke-width="2" stroke-dasharray="414.69 552.92" transform="rotate(-225)"></circle>
+        <g stroke="#16191B" stroke-width="5"><line y1="-88" y2="-66" transform="rotate(-135)"></line><line y1="-88" y2="-66" transform="rotate(-67.5)"></line><line y1="-88" y2="-66" transform="rotate(0)"></line><line y1="-88" y2="-66" transform="rotate(67.5)"></line><line y1="-88" y2="-66" transform="rotate(135)"></line></g>
+      </g>
+      <g id="p5-needle">
+        <path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#16191B"></path>
+        <line x1="0" y1="-74" x2="0" y2="-14" stroke="#F5F2EA" stroke-width="0.9"></line>
+        <circle cy="15" r="6.2" fill="#16191B"></circle>
+        <circle cy="15" r="3.4" fill="#AEB5BA"></circle>
+      </g>
+      <g id="p5-hub">
+        <circle r="8.5" fill="#16191B"></circle>
+        <circle r="3.4" fill="url(#p5-galv)"></circle>
+      </g>
+      <g id="p5-valvebase">
+        <rect x="0" y="60" width="140" height="14" fill="url(#p5-pipe)" stroke="#4A5156" stroke-width="1"></rect>
+        <rect x="22" y="53" width="40" height="28" rx="5" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+        <circle cx="42" cy="67" r="9" fill="#8E969B" stroke="#4A5156" stroke-width="1"></circle>
+        <rect x="128" y="55" width="12" height="24" rx="2" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1"></rect>
+      </g>
+      <g id="p5-arc">
+        <path d="M42 3 A64 64 0 0 1 106 67" fill="none" stroke="#6B737A" stroke-width="1.5" stroke-dasharray="3 5"></path>
+      </g>
+      <g id="p5-thandle">
+        <rect x="0" y="10" width="20" height="72" rx="10" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+        <g stroke="#3A4046" stroke-opacity="0.45" stroke-width="1.2"><line x1="4" y1="22" x2="16" y2="22"></line><line x1="4" y1="27" x2="16" y2="27"></line><line x1="4" y1="32" x2="16" y2="32"></line><line x1="4" y1="60" x2="16" y2="60"></line><line x1="4" y1="65" x2="16" y2="65"></line><line x1="4" y1="70" x2="16" y2="70"></line></g>
+        <circle cx="10" cy="46" r="5.5" fill="#2F3438"></circle>
+      </g>
+      <g id="p5-lamp">
+        <circle r="22" fill="url(#p5-galv)"></circle>
+        <circle r="18.5" fill="#16191B"></circle>
+        <circle r="17.5" fill="#262A26"></circle>
+      </g>
+    </defs>
+  </svg>
+
+  <div style="height: 52px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; background: #121416; border-bottom: 1px solid #2C3135">
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; color: #F5F2EA">Dam draft · two lines</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9AA3A9">Scenario 3 · 04:12</span>
+    </div>
+    <button aria-label="Pause" style="width: 44px; height: 44px; border-radius: 6px; border: 1px solid #3A4046; background: #1B1E21; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="#C9CFD3"></rect><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="#C9CFD3"></rect></svg>
+    </button>
+  </div>
+
+  <svg width="375" height="196" viewBox="0 0 375 196" role="img" aria-label="Scene: the truck drafts from a dam; two charged lines run uphill to branches; a relay truck waits on the track; fire glows at the top right" style="display: block; flex: none">
+    <rect width="375" height="196" fill="#E8DCC0"></rect>
+    <g fill="none" stroke="#CBBB93" stroke-width="1.2">
+      <path d="M0 150 C 80 128, 170 150, 260 126 S 350 110, 375 116"></path>
+      <path d="M0 104 C 90 90, 180 108, 270 84 S 345 70, 375 74"></path>
+      <path d="M40 62 C 120 50, 200 66, 280 44 S 350 30, 375 34"></path>
+      <path d="M120 22 C 190 14, 260 26, 330 8"></path>
+    </g>
+    <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#8C7D57"><text x="6" y="146">+0</text><text x="6" y="100">+5</text><text x="44" y="58">+10</text></g>
+    <path d="M0 26 C 30 18, 60 30, 96 22" fill="none" stroke="#B8A67A" stroke-width="10" stroke-linecap="round" opacity="0.6"></path>
+    <rect width="375" height="196" fill="url(#p5-fire)"></rect>
+    <g fill="#9AA0A0" opacity="0.35"><circle cx="352" cy="14" r="22"></circle><circle cx="330" cy="4" r="16"></circle><circle cx="372" cy="40" r="18"></circle></g>
+    <g fill="#7F8E5C" stroke="#56653F" stroke-width="1.5">
+      <path d="M224 176 c-6 -12 8 -20 18 -14 c6 -10 22 -6 22 6 c12 0 14 16 2 20 c-8 8 -22 6 -26 0 c-10 4 -20 -4 -16 -12 Z"></path>
+      <path d="M302 150 c-4 -10 8 -16 16 -11 c6 -8 18 -4 18 5 c10 1 10 13 1 15 c-6 6 -18 5 -21 0 c-8 2 -16 -3 -14 -9 Z"></path>
+      <path d="M146 50 c-4 -9 6 -14 13 -10 c5 -7 16 -4 16 4 c8 1 8 11 0 13 c-5 5 -15 4 -18 0 c-7 2 -13 -3 -11 -7 Z"></path>
+    </g>
+    <path d="M18 158 C 14 132, 54 118, 92 126 C 128 132, 138 158, 118 174 C 96 192, 30 190, 18 158 Z" fill="#5F8A8B" stroke="#B8A67A" stroke-width="3"></path>
+    <g fill="none" stroke="#8FB3B3" stroke-width="1.2" stroke-linecap="round"><path d="M44 150 q8 -3 16 0"></path><path d="M70 164 q8 -3 16 0"></path><path d="M56 176 q6 -2 12 0"></path></g>
+    <path d="M150 152 C 136 158, 118 156, 98 152" fill="none" stroke="#16191B" stroke-width="8" stroke-linecap="round"></path>
+    <path d="M150 152 C 136 158, 118 156, 98 152" fill="none" stroke="#AEB5BA" stroke-width="5" stroke-linecap="round"></path>
+    <path d="M156 146 C 190 120, 220 132, 250 104 S 290 70, 304 56" fill="none" stroke="#16191B" stroke-width="7" stroke-linecap="round"></path>
+    <path d="M156 146 C 190 120, 220 132, 250 104 S 290 70, 304 56" fill="none" stroke="#2470C2" stroke-width="4" stroke-linecap="round"></path>
+    <path d="M158 156 C 210 160, 250 136, 290 126 S 324 110, 336 100" fill="none" stroke="#16191B" stroke-width="7" stroke-linecap="round"></path>
+    <path d="M158 156 C 210 160, 250 136, 290 126 S 324 110, 336 100" fill="none" stroke="#14A37F" stroke-width="4" stroke-linecap="round"></path>
+    <path d="M154 140 C 140 110, 110 92, 92 70" fill="none" stroke="#B8A67A" stroke-width="2.4" stroke-dasharray="6 4" stroke-linecap="round"></path>
+    <rect x="80" y="62" width="20" height="10" rx="5" fill="#79CBF2" stroke="#16191B" stroke-width="1.8"></rect>
+    <path d="M304 56 L332 36 L322 30 Z" fill="#DCEFF5" opacity="0.85"></path>
+    <path d="M336 100 L366 88 L360 78 Z" fill="#DCEFF5" opacity="0.85"></path>
+    <g transform="translate(300 60)"><ellipse cx="0" cy="2" rx="7" ry="4.5" fill="#C8B98A" stroke="#16191B" stroke-width="1.2"></ellipse><circle r="3.2" fill="#F2F2EE" stroke="#16191B" stroke-width="1.2"></circle></g>
+    <g transform="translate(332 104)"><ellipse cx="0" cy="2" rx="7" ry="4.5" fill="#C8B98A" stroke="#16191B" stroke-width="1.2"></ellipse><circle r="3.2" fill="#F2F2EE" stroke="#16191B" stroke-width="1.2"></circle></g>
+    <circle cx="292" cy="48" r="6" fill="#2470C2" stroke="#16191B" stroke-width="1.5"></circle><circle cx="292" cy="48" r="2.2" fill="#FFFFFF"></circle>
+    <rect x="335" y="111" width="11" height="11" fill="#14A37F" stroke="#16191B" stroke-width="1.5"></rect>
+    <g transform="translate(150 140) rotate(-8)">
+      <rect x="3" y="3" width="58" height="22" rx="3" fill="#000000" opacity="0.2"></rect>
+      <rect x="0" y="0" width="58" height="22" rx="3" fill="#A8251E" stroke="#16191B" stroke-width="2"></rect>
+      <rect x="42" y="0" width="16" height="22" rx="3" fill="#F2F2EE" stroke="#16191B" stroke-width="2"></rect>
+      <rect x="0" y="4" width="8" height="14" fill="#AEB5BA" stroke="#16191B" stroke-width="1.2"></rect>
+    </g>
+    <g transform="translate(40 16) rotate(-6)" opacity="0.85">
+      <rect x="2" y="2" width="40" height="16" rx="2.5" fill="#000000" opacity="0.2"></rect>
+      <rect x="0" y="0" width="40" height="16" rx="2.5" fill="#A8251E" stroke="#16191B" stroke-width="1.6"></rect>
+      <rect x="29" y="0" width="11" height="16" rx="2.5" fill="#F2F2EE" stroke="#16191B" stroke-width="1.6"></rect>
+    </g>
+    <text x="104" y="30" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5B5038">relay</text>
+    <text x="312" y="76" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5B5038">+14 m</text>
+  </svg>
+
+  <div style="flex: none; background: #F3EFE4; color: #16191B; padding: 10px 16px 12px; display: flex; gap: 10px; align-items: flex-start; border-bottom: 1px solid #2C3135">
+    <span style="flex: none; margin-top: 2px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; background: #16191B; color: #F3EFE4; padding: 2px 6px; border-radius: 2px">Coach</span>
+    <p style="margin: 0; font-size: 14px; line-height: 1.45; text-wrap: pretty">Both lines charged. Hold 1 000–1 100 kPa at the pump; the branches are 14 m uphill.</p>
+  </div>
+
+  <div style="flex: 1; padding: 16px 16px 24px; display: flex; flex-direction: column; gap: 14px">
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+        <svg width="160" height="160" viewBox="-106 -106 214 214" role="img" aria-label="Compound gauge, minus 28 kilopascals, steady">
+          <use href="#p5-dial-c"></use>
+          <circle r="79" fill="none" stroke="#16191B" stroke-opacity="0.14" stroke-width="22" stroke-dasharray="6.62 496.37" transform="rotate(-184.2)"></circle>
+          <g transform="translate(1.6 2.2)"><path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#000000" opacity="0.2" transform="rotate(-91.8)"></path></g>
+          <g transform="rotate(-91.8)"><use href="#p5-needle"></use></g>
+          <use href="#p5-hub"></use>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 15px; color: #F5F2EA; font-variant-numeric: tabular-nums">−28 kPa</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+        <svg width="160" height="160" viewBox="-106 -106 214 214" role="img" aria-label="Discharge gauge, 1050 kilopascals, steady">
+          <use href="#p5-dial-p"></use>
+          <circle r="79" fill="none" stroke="#16191B" stroke-opacity="0.14" stroke-width="22" stroke-dasharray="9.31 496.37" transform="rotate(-51.19)"></circle>
+          <g transform="translate(1.6 2.2)"><path d="M0 -82 L3.2 -8 L2.4 18 L-2.4 18 L-3.2 -8 Z" fill="#000000" opacity="0.2" transform="rotate(42.19)"></path></g>
+          <g transform="rotate(42.19)"><use href="#p5-needle"></use></g>
+          <use href="#p5-hub"></use>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 15px; color: #F5F2EA; font-variant-numeric: tabular-nums">1 050 kPa</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AA3A9; font-variant-numeric: tabular-nums">790 L/min total</span>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-top: 12px; border-top: 1px solid #2C3135">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+        <svg width="112" height="112" viewBox="-106 -106 214 214" role="img" aria-label="Tachometer, 2400 rpm">
+          <use href="#p5-dial-t"></use>
+          <g transform="rotate(27)"><use href="#p5-needle"></use></g>
+          <use href="#p5-hub"></use>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #F5F2EA; font-variant-numeric: tabular-nums">2 400 rpm</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+        <svg width="46" height="112" viewBox="0 0 54 132" role="img" aria-label="Tank level, four of five segments">
+          <g font-family="Barlow Condensed, sans-serif" font-weight="600" font-size="11" fill="#9AA3A9"><text x="0" y="18">F</text><text x="0" y="126">E</text></g>
+          <rect x="12" y="4" width="40" height="20" rx="2" fill="#2A2F33" stroke="#3A4046"></rect>
+          <rect x="12" y="30" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+          <rect x="12" y="56" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+          <rect x="12" y="82" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+          <rect x="12" y="108" width="40" height="20" rx="2" fill="#DCEFF5"></rect>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #F5F2EA; font-variant-numeric: tabular-nums">2 400 L</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 64px); gap: 6px 4px">
+        <button aria-label="Tank low lamp, off" style="width: 64px; height: 62px; padding: 0; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer">
+          <svg width="46" height="46" viewBox="-23 -23 46 46" aria-hidden="true"><use href="#p5-lamp"></use><path d="M0 -10 C 3 -5, 6 -2, 6 2 a6 6 0 0 1 -12 0 c0 -4 3 -7 6 -12 Z" fill="none" stroke="#5A615B" stroke-width="1.8"></path></svg>
+          <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.08em; color: #9AA3A9">TANK</span>
+        </button>
+        <button aria-label="Engine temperature lamp, off" style="width: 64px; height: 62px; padding: 0; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer">
+          <svg width="46" height="46" viewBox="-23 -23 46 46" aria-hidden="true"><use href="#p5-lamp"></use><path d="M-2 -10 a2 2 0 0 1 4 0 v12 a4.5 4.5 0 1 1 -4 0 Z" fill="none" stroke="#5A615B" stroke-width="1.8"></path></svg>
+          <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.08em; color: #9AA3A9">TEMP</span>
+        </button>
+        <button aria-label="Oil pressure lamp, off" style="width: 64px; height: 62px; padding: 0; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer">
+          <svg width="46" height="46" viewBox="-23 -23 46 46" aria-hidden="true"><use href="#p5-lamp"></use><path d="M-10 -1 h11 l7 -5 M-10 -1 v7 h13 l5 -7 M-6 -1 v-3 h4 v3" fill="none" stroke="#5A615B" stroke-width="1.8" stroke-linejoin="round"></path><path d="M10 2 v3" stroke="#5A615B" stroke-width="1.8" stroke-linecap="round"></path></svg>
+          <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.08em; color: #9AA3A9">OIL</span>
+        </button>
+        <button aria-label="Over-pressure lamp, off" style="width: 64px; height: 62px; padding: 0; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer">
+          <svg width="46" height="46" viewBox="-23 -23 46 46" aria-hidden="true"><use href="#p5-lamp"></use><path d="M-8 5 A9 9 0 1 1 8 5" fill="none" stroke="#5A615B" stroke-width="1.8"></path><path d="M0 1 L6 -6" stroke="#5A615B" stroke-width="1.8" stroke-linecap="round"></path></svg>
+          <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.08em; color: #9AA3A9">PRESS</span>
+        </button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid #2C3135">
+      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #9AA3A9">Throttle</span>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <svg width="235" height="92" viewBox="0 0 235 92" role="img" aria-label="Throttle T-handle pulled halfway, drag right for more">
+          <polygon points="6,32 26,32 32,38 32,54 26,60 6,60" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1.2"></polygon>
+          <rect x="0" y="26" width="6" height="40" fill="#2F3438"></rect>
+          <rect x="32" y="42" width="108" height="8" fill="url(#p5-pipe)" stroke="#4A5156" stroke-width="0.8"></rect>
+          <g stroke="#16191B" stroke-width="1"><line x1="42" y1="42" x2="42" y2="50"></line><line x1="52" y1="42" x2="52" y2="47"></line><line x1="62" y1="42" x2="62" y2="50"></line><line x1="72" y1="42" x2="72" y2="47"></line><line x1="82" y1="42" x2="82" y2="50"></line><line x1="92" y1="42" x2="92" y2="47"></line><line x1="102" y1="42" x2="102" y2="50"></line><line x1="112" y1="42" x2="112" y2="47"></line><line x1="122" y1="42" x2="122" y2="50"></line><line x1="132" y1="42" x2="132" y2="47"></line></g>
+          <path d="M174 38 l7 8 l-7 8 M186 38 l7 8 l-7 8" fill="none" stroke="#4F575D" stroke-width="1.6"></path>
+          <rect x="215" y="40" width="20" height="12" rx="2" fill="#E5362B" opacity="0.7"></rect>
+          <line x1="40" y1="88" x2="230" y2="88" stroke="#3A4046" stroke-width="1"></line>
+          <rect x="144" y="12" width="20" height="72" rx="10" fill="#000000" opacity="0.32"></rect>
+          <g transform="translate(140 0)"><use href="#p5-thandle"></use></g>
+        </svg>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: stretch">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 14px; color: #F5F2EA; text-align: center; font-variant-numeric: tabular-nums">50 %</span>
+          <div style="display: flex; gap: 4px">
+            <button aria-label="Throttle down 25 rpm" style="flex: 1; height: 44px; border-radius: 6px; border: 1px solid #4A5156; background: #272B2F; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8 h10" stroke="#C9CFD3" stroke-width="2.2" stroke-linecap="round"></path></svg></button>
+            <button aria-label="Throttle up 25 rpm" style="flex: 1; height: 44px; border-radius: 6px; border: 1px solid #4A5156; background: #272B2F; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8 h10 M8 3 v10" stroke="#C9CFD3" stroke-width="2.2" stroke-linecap="round"></path></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding-top: 12px; border-top: 1px solid #2C3135">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #9AA3A9">Primer</span>
+        <button aria-label="Primer, already primed" style="width: 112px; height: 96px; padding: 0; border: 0; background: transparent; cursor: pointer">
+          <svg width="112" height="96" viewBox="0 0 112 96" aria-hidden="true">
+            <g opacity="0.5">
+              <circle cx="56" cy="44" r="40" fill="none" stroke="#2F3438" stroke-width="6"></circle>
+              <circle cx="56" cy="44" r="30" fill="#7D868C"></circle>
+              <circle cx="56" cy="44" r="24" fill="#2A2F33"></circle>
+            </g>
+            <path d="M45 44 l7 7 l14 -15" fill="none" stroke="#C9CFD3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            <text x="56" y="94" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#C9CFD3">PRIMED</text>
+          </svg>
+        </button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #9AA3A9">Tank to pump</span>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <svg width="140" height="84" viewBox="0 0 140 84" role="img" aria-label="Tank to pump valve closed, drag to open">
+            <use href="#p5-valvebase"></use>
+            <use href="#p5-arc"></use>
+            <g transform="translate(42 67)">
+              <g transform="translate(2 3) rotate(-90)"><rect x="-6" y="-6" width="56" height="12" rx="6" fill="#000000" opacity="0.32"></rect><circle cx="52" r="11" fill="#000000" opacity="0.32"></circle></g>
+              <g transform="rotate(-90)">
+                <rect x="-6" y="-5" width="56" height="10" rx="5" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+                <circle cx="52" r="11" fill="#E9EDEF" stroke="#16191B" stroke-width="2"></circle>
+                <circle cx="52" r="4.5" fill="none" stroke="#16191B" stroke-width="1.5"></circle>
+              </g>
+              <circle r="6" fill="#2F3438"></circle><circle r="2.4" fill="#AEB5BA"></circle>
+            </g>
+          </svg>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; color: #C9CFD3">closed<br><span style="color: #9AA3A9">drafting from dam</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid #2C3135">
+      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #9AA3A9">Deliveries</span>
+
+      <div style="display: flex; align-items: center; gap: 8px; background: #22262A; border-radius: 6px; padding: 4px 6px 4px 8px">
+        <svg width="58" height="58" viewBox="-106 -106 214 214" role="img" aria-label="Delivery 1 pressure 720 kilopascals">
+          <use href="#p5-dial-mini"></use>
+          <g transform="rotate(-13.5)"><path d="M0 -84 L6 -6 L4 20 L-4 20 L-6 -6 Z" fill="#16191B"></path><circle cy="16" r="9" fill="#2470C2" stroke="#16191B" stroke-width="3"></circle></g>
+          <circle r="12" fill="#16191B"></circle>
+        </svg>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+          <span style="align-self: flex-start; display: flex; align-items: center; gap: 5px; background: #2470C2; color: #FFFFFF; border-radius: 3px; padding: 1px 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#FFFFFF"></circle></svg>D1</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; color: #F5F2EA; font-variant-numeric: tabular-nums">720 kPa</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AA3A9; font-variant-numeric: tabular-nums">410 L/min</span>
+        </div>
+        <svg width="140" height="84" viewBox="0 0 140 84" role="img" aria-label="Delivery 1 valve open">
+          <use href="#p5-valvebase"></use>
+          <g transform="translate(42 67)">
+            <g transform="translate(2 3)"><rect x="-6" y="-8" width="70" height="16" rx="8" fill="#000000" opacity="0.32"></rect></g>
+            <rect x="-6" y="-6" width="68" height="12" rx="6" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+            <rect x="26" y="-8" width="38" height="16" rx="8" fill="#2470C2" stroke="#0E2E52" stroke-width="1.5"></rect>
+            <g stroke="#0E2E52" stroke-opacity="0.5" stroke-width="1.4"><line x1="44" y1="-5" x2="44" y2="5"></line><line x1="50" y1="-5" x2="50" y2="5"></line><line x1="56" y1="-5" x2="56" y2="5"></line></g>
+            <circle r="6" fill="#2F3438"></circle><circle r="2.4" fill="#AEB5BA"></circle>
+          </g>
+          <text x="134" y="16" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="#C9CFD3">OPEN</text>
+        </svg>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; background: #22262A; border-radius: 6px; padding: 4px 6px 4px 8px">
+        <svg width="58" height="58" viewBox="-106 -106 214 214" role="img" aria-label="Delivery 2 pressure 690 kilopascals">
+          <use href="#p5-dial-mini"></use>
+          <g transform="rotate(-18.56)"><path d="M0 -84 L6 -6 L4 20 L-4 20 L-6 -6 Z" fill="#16191B"></path><circle cy="16" r="9" fill="#14A37F" stroke="#16191B" stroke-width="3"></circle></g>
+          <circle r="12" fill="#16191B"></circle>
+        </svg>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+          <span style="align-self: flex-start; display: flex; align-items: center; gap: 5px; background: #14A37F; color: #16191B; border-radius: 3px; padding: 1px 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1" y="1" width="8" height="8" fill="#16191B"></rect></svg>D2</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; color: #F5F2EA; font-variant-numeric: tabular-nums">690 kPa</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AA3A9; font-variant-numeric: tabular-nums">380 L/min</span>
+        </div>
+        <svg width="140" height="84" viewBox="0 0 140 84" role="img" aria-label="Delivery 2 valve open">
+          <use href="#p5-valvebase"></use>
+          <g transform="translate(42 67)">
+            <g transform="translate(2 3)"><rect x="-6" y="-8" width="70" height="16" rx="8" fill="#000000" opacity="0.32"></rect></g>
+            <rect x="-6" y="-6" width="68" height="12" rx="6" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+            <rect x="26" y="-8" width="38" height="16" rx="8" fill="#14A37F" stroke="#0A4A3A" stroke-width="1.5"></rect>
+            <g stroke="#0A4A3A" stroke-opacity="0.5" stroke-width="1.4"><line x1="44" y1="-5" x2="44" y2="5"></line><line x1="50" y1="-5" x2="50" y2="5"></line><line x1="56" y1="-5" x2="56" y2="5"></line></g>
+            <circle r="6" fill="#2F3438"></circle><circle r="2.4" fill="#AEB5BA"></circle>
+          </g>
+          <text x="134" y="16" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="#C9CFD3">OPEN</text>
+        </svg>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; background: #22262A; border-radius: 6px; padding: 4px 6px 4px 8px">
+        <svg width="58" height="58" viewBox="-106 -106 214 214" role="img" aria-label="Delivery 3 pressure zero">
+          <use href="#p5-dial-mini"></use>
+          <g transform="rotate(-135)"><path d="M0 -84 L6 -6 L4 20 L-4 20 L-6 -6 Z" fill="#16191B"></path><circle cy="16" r="9" fill="#79CBF2" stroke="#16191B" stroke-width="3"></circle></g>
+          <circle r="12" fill="#16191B"></circle>
+        </svg>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+          <span style="align-self: flex-start; display: flex; align-items: center; gap: 5px; background: #79CBF2; color: #16191B; border-radius: 3px; padding: 1px 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><rect x="0.5" y="2" width="11" height="6" rx="3" fill="#16191B"></rect></svg>D3</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; color: #C9CFD3; font-variant-numeric: tabular-nums">0 kPa</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AA3A9">laid, dry</span>
+        </div>
+        <svg width="140" height="84" viewBox="0 0 140 84" role="img" aria-label="Delivery 3 valve closed, drag to open">
+          <use href="#p5-valvebase"></use>
+          <use href="#p5-arc"></use>
+          <g transform="translate(42 67)">
+            <g transform="translate(2 3) rotate(-90)"><rect x="-6" y="-8" width="70" height="16" rx="8" fill="#000000" opacity="0.32"></rect></g>
+            <g transform="rotate(-90)">
+              <rect x="-6" y="-6" width="68" height="12" rx="6" fill="url(#p5-galv)" stroke="#4A5156" stroke-width="1.2"></rect>
+              <rect x="26" y="-8" width="38" height="16" rx="8" fill="#79CBF2" stroke="#2B5A72" stroke-width="1.5"></rect>
+              <g stroke="#2B5A72" stroke-opacity="0.5" stroke-width="1.4"><line x1="44" y1="-5" x2="44" y2="5"></line><line x1="50" y1="-5" x2="50" y2="5"></line><line x1="56" y1="-5" x2="56" y2="5"></line></g>
+            </g>
+            <circle r="6" fill="#2F3438"></circle><circle r="2.4" fill="#AEB5BA"></circle>
+          </g>
+        </svg>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; background: #22262A; border-radius: 6px; padding: 4px 6px 4px 8px">
+        <svg width="58" height="58" viewBox="-106 -106 214 214" role="img" aria-label="Delivery 4, no line connected" style="opacity: 0.5">
+          <use href="#p5-dial-mini"></use>
+          <g transform="rotate(-135)"><path d="M0 -84 L6 -6 L4 20 L-4 20 L-6 -6 Z" fill="#16191B"></path><circle cy="16" r="9" fill="#E08FBE" stroke="#16191B" stroke-width="3"></circle></g>
+          <circle r="12" fill="#16191B"></circle>
+        </svg>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+          <span style="align-self: flex-start; display: flex; align-items: center; gap: 5px; background: #E08FBE; color: #16191B; border-radius: 3px; padding: 1px 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.5 L9 2.8 L9 7.2 L5 9.5 L1 7.2 L1 2.8 Z" fill="#16191B"></path></svg>D4</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AA3A9">no line</span>
+        </div>
+        <svg width="140" height="84" viewBox="0 0 140 84" role="img" aria-label="Delivery 4 valve disabled">
+          <g opacity="0.5">
+            <use href="#p5-valvebase"></use>
+            <g transform="translate(42 67) rotate(-90)">
+              <rect x="-6" y="-6" width="68" height="12" rx="6" fill="#7D868C" stroke="#4A5156" stroke-width="1.2"></rect>
+              <rect x="26" y="-8" width="38" height="16" rx="8" fill="#4A5054" stroke="#2F3438" stroke-width="1.5"></rect>
+            </g>
+            <circle cx="42" cy="67" r="6" fill="#2F3438"></circle>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":1460}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

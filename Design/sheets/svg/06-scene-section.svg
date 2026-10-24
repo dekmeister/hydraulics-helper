@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Exported from canvas artboard SceneTablet.dc.html. Text uses Barlow Condensed / IBM Plex Mono / IBM Plex Sans. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="168" viewBox="0 0 1024 168" role="img" aria-label="Section A–A along line 1: 14 metres of rise and 120 metres of 38 millimetre hose take the pump's 1050 kilopascals down to about 700 at the branch" style="display: block; flex: none">
+    <rect width="1024" height="168" fill="#F3EFE4"></rect>
+    <line x1="0" y1="1.25" x2="1024" y2="1.25" stroke="#16191B" stroke-width="2.5"></line>
+    <g font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="16" letter-spacing="1" fill="#16191B"><text x="16" y="26">SECTION A–A · D1</text></g>
+    <text x="16" y="44" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5B6166">vertical ×5</text>
+    <path d="M80 149 L136 149 L150 140 L178 137 L290 128 L430 110 L570 92 L710 74 L850 62 L920 56 L990 53 L990 160 L80 160 Z" fill="#E3D6B6" stroke="#8C7D57" stroke-width="1.5"></path>
+    <rect x="80" y="149" width="64" height="11" fill="#5F8A8B"></rect>
+    <path d="M178 132 L290 123 L430 105 L570 87 L710 69 L850 57 L920 51" fill="none" stroke="#16191B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M178 132 L290 123 L430 105 L570 87 L710 69 L850 57 L920 51" fill="none" stroke="#2470C2" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+    <rect x="158" y="124" width="30" height="13" rx="2" fill="#A8251E" stroke="#16191B" stroke-width="1.5"></rect>
+    <rect x="180" y="124" width="10" height="13" rx="2" fill="#F2F2EE" stroke="#16191B" stroke-width="1.5"></rect>
+    <g transform="translate(926 40)"><circle r="4.5" fill="#F2F2EE" stroke="#16191B" stroke-width="1.4"></circle><rect x="-4" y="4.5" width="8" height="11" rx="2" fill="#C8B98A" stroke="#16191B" stroke-width="1.4"></rect></g>
+    <g stroke="#16191B" stroke-width="1" fill="none">
+      <path d="M970 137 L1000 137 M970 56 L1000 56 M992 137 L992 56"></path>
+      <path d="M988 131 L992 137 L996 131 M988 62 L992 56 L996 62"></path>
+      <path d="M178 116 L178 104 M920 40 L920 28"></path>
+    </g>
+    <g font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#16191B">
+      <text x="186" y="100">pump 1 050 kPa</text>
+      <text x="906" y="24" text-anchor="end">branch ≈ 700 kPa</text>
+      <text x="984" y="100" text-anchor="end">14 m · −137 kPa</text>
+      <text x="300" y="148">120 m of 38 mm at 410 L/min · −213 kPa friction</text>
+    </g>
+  </svg>
