@@ -17,8 +17,11 @@ for (const spec of JOURNEY_APPLIANCES) {
         case 'valve':
         case 'primer':
           return [i.label];
-        case 'delivery':
-          return laid.has(i.control) ? [i.label] : []; // NO LINE valves are disabled
+        case 'delivery': {
+          // Every delivery can be found on the scene and back; NO LINE valves are disabled.
+          const locate = [`Show ${i.label} on scene`, `Show ${i.label} on panel`];
+          return laid.has(i.control) ? [i.label, ...locate] : locate;
+        }
         case 'throttle':
           return [i.label, `${i.label} down`, `${i.label} up`];
         default:
