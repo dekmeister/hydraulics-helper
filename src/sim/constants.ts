@@ -61,10 +61,13 @@ export const VACUUM_HOLD_TAU_S = 120;
  */
 export const CAVITATION_FULL_EXCESS = 0.25;
 
-/** Discharge gauge flutter at full cavitation, ± kPa (Design §6: ±2–5° of needle). // PLACEHOLDER — needs Dek */
-export const CAVITATION_FLUTTER_DISCHARGE_KPA = 40;
-/** Compound gauge flutter at full cavitation, ± kPa. // PLACEHOLDER — needs Dek */
-export const CAVITATION_FLUTTER_COMPOUND_KPA = 6;
+/**
+ * Discharge gauge flutter at full cavitation, ± kPa: about ±12° on a 0–1600 dial, so a third of
+ * full cavitation already swings the needle the ±2–5° Design §6 asks for. // PLACEHOLDER — needs Dek
+ */
+export const CAVITATION_FLUTTER_DISCHARGE_KPA = 100;
+/** Compound gauge flutter at full cavitation, ± kPa (±9° in the vacuum sector). // PLACEHOLDER — needs Dek */
+export const CAVITATION_FLUTTER_COMPOUND_KPA = 15;
 
 /** Heat to warm 1 L of water by 1 °C, kJ. Physics. */
 export const WATER_KJ_PER_L_K = 4.186;

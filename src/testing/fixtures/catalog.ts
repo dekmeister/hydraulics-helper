@@ -2,7 +2,10 @@
 // Renderers live in renderers.tsx, keyed by the same ids (docs/TESTING.md §3.2).
 import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
+import { getScenario } from '../../sim/scenarios';
+import { supports } from '../../sim/scenarios/types';
 import type { ApplianceSpec } from '../../sim/types';
+import { SOURCE_STATE_SCENARIO, type SourceStateId } from './sourceStates';
 
 export type ViewportName = 'phone' | 'tablet' | 'desktop';
 
@@ -25,8 +28,9 @@ const PANEL_CAPTIONS = {
   idle:
     'Pump panel at rest with the tank-attack lines laid: every needle at its zero stop except ' +
     'engine rpm at idle; tank full (all segments lit). Every valve closed; deliveries with no ' +
-    'line read NO LINE and are dimmed. Throttle at idle with chevrons. All lamps unlit except ' +
-    'the "not simulated" ones (dashed). "No warnings."',
+    'line read NO LINE and are dimmed. Throttle at idle with chevrons. Supply section: tank to pump ' +
+    'and suction inlet (green knobs, closed) and the primer (HOLD). Every lamp unlit, HAMMER ' +
+    'last. "No warnings."',
   'tank-attack-700':
     'Tank to pump open, the first line’s delivery fully open (lever along the pipe, travel arc ' +
     'filled), throttle part-way out. Discharge needle at ~700 kPa (a little under half sweep), ' +
@@ -127,6 +131,73 @@ const SCENE_FIXTURES: FixtureMeta[] = SCENE_FIXTURE_SETS.flatMap(({ spec, states
   },
 ]);
 
+const SOURCE_CAPTIONS: Readonly<Record<SourceStateId, string>> = {
+  'draught-priming':
+    'Draughting scenario, primer held for 8 s with the suction inlet valve open: compound needle ' +
+    'pulled into the grey vacuum sector (~−25 kPa), discharge and flow zero, rpm idle. Primer ' +
+    'RUNNING with its ring about a third lit. Scene: hard suction (ink and galvanised, no green ' +
+    'core) from the green suction coupling to a strainer in the dam; lines dry; legend "Suction · ' +
+    'Dam  Not primed · 4 m lift". No lamps lit.',
+  'draught-working':
+    'Draughting, primed: primer PRIMED with a green check and full green ring; suction inlet ' +
+    'open; the first line’s delivery open at ~700 kPa discharge, compound ~−60 kPa (vacuum ' +
+    'sector). Scene: hard suction with a green water core into the dam, first line charged and ' +
+    'spraying; legend "Primed · ~630 L/min". No lamps lit.',
+  cavitating:
+    'Draughting at full throttle with both lines open, run 3 s so the Wake fills: compound needle ' +
+    'amber near −85 kPa (readout red: alarm band) with a small Wake fan; discharge ~760 kPa with a band either side; rpm at ' +
+    'max. CAVITATION lamp amber with a triangle, message about the lift and easing the throttle. ' +
+    'Scene: charged hoses broken into gaps; legend lines "· cavitating".',
+  hydrant:
+    'Hydrant supply: suction inlet open, the first line open at ~700 kPa discharge; compound ' +
+    'positive (~+150 kPa, right of the 0 break tick). Scene: red hydrant on the track below the ' +
+    'truck, green layflat from it to the suction coupling; legend "Hydrant  Charged · ~860 L/min". ' +
+    'Tank stays full. No lamps lit.',
+  faults:
+    'Tank attack, every delivery just slammed shut with the throttle still up: discharge ~700 kPa ' +
+    'with no flow (churning), TEMP lamp red with a diamond (steady with a ring: reduced motion), ' +
+    'HAMMER lamp amber with a triangle; messages "Pump hot…" and "Water hammer: Delivery 2 was ' +
+    'shut too fast…". Scene lines all dry.',
+} as const;
+
+export type SourceState = SourceStateId;
+
+/**
+ * Appliances that get generated source fixtures: every catalogue appliance in each state its
+ * scenario allows (a primer it can hold, for 'draught-priming'), plus the self-priming test
+ * appliance draughting, to prove the panel and scene are generic.
+ */
+export const SOURCE_FIXTURE_SETS: readonly {
+  spec: ApplianceSpec;
+  states: readonly SourceState[];
+}[] = [
+  ...APPLIANCES.map((spec) => ({
+    spec,
+    states: (Object.keys(SOURCE_CAPTIONS) as SourceState[]).filter(
+      (state) =>
+        supports(getScenario(SOURCE_STATE_SCENARIO[state]), spec) &&
+        (state !== 'draught-priming' || (spec.primer !== undefined && 'id' in spec.primer)),
+    ),
+  })),
+  { spec: TEST_APPLIANCE, states: ['draught-working'] },
+];
+
+/** Sim ticks a source fixture runs in the store before capture, so the Wake has history. */
+const SOURCE_STEPS: Partial<Record<SourceState, number>> = { cavitating: 30 };
+
+const SOURCE_FIXTURES: FixtureMeta[] = SOURCE_FIXTURE_SETS.flatMap(({ spec, states }) =>
+  states.map((state) => {
+    const steps = SOURCE_STEPS[state];
+    return {
+      id: panelFixtureId(spec.id, state),
+      expect: SOURCE_CAPTIONS[state],
+      applianceId: spec.id,
+      surface: 'shell' as const,
+      ...(steps === undefined ? {} : { steps }),
+    };
+  }),
+);
+
 export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'shell/default',
@@ -190,6 +261,7 @@ export const FIXTURES: readonly FixtureMeta[] = [
       'full ring, green check mark), COOLING (duty cut-out, ring 60 %).',
   },
   ...PANEL_FIXTURES,
+  ...SOURCE_FIXTURES,
   ...SCENE_FIXTURES,
 ];
 

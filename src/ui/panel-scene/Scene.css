@@ -237,6 +237,8 @@
 /* Cavitation (Design §6): the charged core breaks into gaps; the gaps travel only with motion. */
 .scene-hose--gapped .scene-hose__core {
   stroke-dasharray: 18 5 7 4 22 5;
+  /* Round caps would close 5-unit gaps on a 6-wide core. */
+  stroke-linecap: butt;
 }
 .scene-hose--gapped .scene-hose__flow {
   display: none;
@@ -436,7 +438,8 @@ circle.scene-highlight--outer {
   font-size: 13px;
   color: var(--color-material-steel-dim);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  /* Wraps between words on a phone ("Charged · 654 L/min · cavitating") rather than overflowing. */
+  min-width: 0;
 }
 
 .scene-legend__row[data-state='charged'] .scene-legend__status {

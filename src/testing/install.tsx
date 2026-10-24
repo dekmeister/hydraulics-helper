@@ -18,7 +18,9 @@ export function installTestHooks(root: Root): void {
   const fixtureId = new URLSearchParams(window.location.search).get('fixture');
   if (fixtureId !== null) {
     const renderer = FIXTURE_RENDERERS[fixtureId];
-    if (renderer?.state !== undefined) useStore.getState().reset(renderer.state());
+    if (renderer?.state !== undefined) {
+      useStore.getState().reset(renderer.state(), renderer.scenario ?? null);
+    }
     if (renderer?.highlight !== undefined) {
       const { sim, toggleHighlight } = useStore.getState();
       toggleHighlight(renderer.highlight(sim), 'panel');

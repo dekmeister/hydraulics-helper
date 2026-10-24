@@ -58,14 +58,16 @@ export function PrimerControl({
       <div className="primer__dial">
         <svg className="primer__ring" viewBox="0 0 88 88" aria-hidden="true">
           <circle className="primer__ring-track" cx={44} cy={44} r={RING_R} />
-          <circle
-            className="primer__ring-fill"
-            cx={44}
-            cy={44}
-            r={RING_R}
-            strokeDasharray={`${(RING_C * Math.min(1, Math.max(0, progress))).toFixed(1)} ${RING_C.toFixed(1)}`}
-            transform="rotate(-90 44 44)"
-          />
+          {progress > 0 && (
+            <circle
+              className="primer__ring-fill"
+              cx={44}
+              cy={44}
+              r={RING_R}
+              strokeDasharray={`${(RING_C * Math.min(1, Math.max(0, progress))).toFixed(1)} ${RING_C.toFixed(1)}`}
+              transform="rotate(-90 44 44)"
+            />
+          )}
         </svg>
         <button
           type="button"
