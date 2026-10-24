@@ -1,0 +1,51 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--color-material-ironbark);
+  color: var(--color-material-steel);
+  font-family: var(--font-body);
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(40vh, auto) minmax(50vh, auto);
+  gap: var(--space-2);
+  padding: var(--space-2);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Must equal SIDE_BY_SIDE_MIN_PX (breakpoints.ts); e2e/layout.spec.ts checks both sides of it. */
+@media (min-width: 900px) {
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+.app-panel {
+  min-width: 0;
+  border: var(--line-hairline) solid var(--color-material-rule);
+  border-radius: var(--radius-card);
+  background: var(--color-material-raised);
+  padding: var(--space-3) var(--space-4);
+}
+
+.app-panel__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-material-steel-dim);
+}

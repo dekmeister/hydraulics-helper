@@ -14,3 +14,9 @@ coverage/
 # Source manual: third-party material, kept locally only
 Resources/*.pdf
 Resources/hydraulics-manual.txt
+
+# Test and review output
+dist-e2e/
+review/
+test-results/
+playwright-report/

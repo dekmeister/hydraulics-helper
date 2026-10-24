@@ -36,7 +36,7 @@ A trace test runs a scenario with a scripted input timeline (`t=0 open tank-to-p
 
 ## 3. Test hooks in the app
 
-Rendered tests need determinism and a way in. Both live in `src/testing/`, which is **only bundled in the `e2e` build mode** (`vite build --mode e2e` sets `VITE_E2E=true`; production builds tree-shake it out).
+Rendered tests need determinism and a way in. Both live in `src/testing/`, which is **only bundled in the `e2e` build mode** (`npm run build:e2e` = `vite build --mode e2e --outDir dist-e2e`; `vite.config.ts` statically defines `import.meta.env.VITE_E2E` from the mode, so production builds tree-shake it out). `npm run build` runs `scripts/check-prod-bundle.mjs`, which fails if `__pumpops` or fixture code appears in `dist/`.
 
 ### 3.1 `window.__pumpops`
 
@@ -59,7 +59,7 @@ interface PumpOpsTestApi {
 
 ### 3.2 Fixture gallery (`?fixture=<id>`)
 
-A dependency-free "storybook": `src/testing/fixtures/` holds a registry of named render states. `/?fixture=gauge/compound-vacuum` renders just that state, full-screen, nothing else.
+A dependency-free "storybook": `src/testing/fixtures/` holds a registry of named render states. Metadata (`id`, `expect`, `steps`, `viewports`) lives in `catalog.ts` as plain data so Playwright specs can enumerate fixtures without importing React; the render functions live in `renderers.tsx`, keyed by the same ids (a Vitest test keeps the two one-to-one). `/?fixture=gauge/compound-vacuum` renders just that state, full-screen, nothing else.
 
 ```ts
 interface Fixture {
@@ -85,7 +85,8 @@ interface Fixture {
 ## 4. Playwright setup
 
 * **One browser: Chromium**, from Playwright's pinned download (`npx playwright install chromium`, no sudo; if system libraries are missing, Dek runs `sudo npx playwright install-deps chromium`). Baselines are only valid for that pinned browser and this OS; `@playwright/test` is pinned to an exact version and upgraded deliberately (that upgrade will refresh baselines).
-* **Target:** `vite build --mode e2e` + `vite preview` on a fixed port, started by Playwright's `webServer`. Testing the built app catches production-only issues and avoids HMR noise. `reuseExistingServer` keeps the local loop fast.
+* **Target:** `npm run build:e2e` + `vite preview --outDir dist-e2e` on fixed port 4317 (`--strictPort`), started by Playwright's `webServer`. Testing the built app catches production-only issues and avoids HMR noise. The server is always rebuilt (`reuseExistingServer: false`): the e2e build takes under a second, and reusing a running server risks testing a stale bundle.
+* **Configs:** `playwright.base.ts` holds the shared server and projects; `playwright.config.ts` (`test:e2e`) runs everything except `e2e/visual/`; `playwright.review.config.ts` (`review`) runs only `e2e/visual/` with the review reporter and `updateSnapshots: 'none'`, so a missing baseline fails as **New** instead of being written silently.
 * **Projects (viewports):**
 
   | Project | Viewport | Notes |
@@ -95,7 +96,8 @@ interface Fixture {
   | `desktop` | 1280 × 800 | mouse + keyboard |
 
 * **Stability settings for screenshots:** `deviceScaleFactor: 1`, `reducedMotion: 'reduce'`, `toHaveScreenshot({ animations: 'disabled', caret: 'hide' })`, a self-hosted font file in the repo (no network fonts), `await document.fonts.ready`, then `__pumpops.settle()` before capture. Default tolerance `maxDiffPixelRatio: 0.002`; tighten per test if needed, never loosen to make a test pass.
-* **Shared test fixture** (`e2e/fixtures.ts`): every test fails on any `console.error`, `pageerror` or failed request. It also attaches the page's ARIA snapshot and the `__pumpops.getState()` readouts to the test result for the review bundle.
+* **Shared test fixture** (`e2e/fixtures.ts`): every test fails on any `console.error`, `pageerror` or failed request (a smoke test proves this with `test.fail()` on an unknown fixture). It also attaches the page's ARIA snapshot and the `__pumpops.getState()` readouts to the test result for the review bundle.
+* Layout invariant helpers are in `e2e/invariants.ts`; the side-by-side breakpoint comes from `src/ui/layout/breakpoints.ts` (`SIDE_BY_SIDE_MIN_PX`) and is checked at exactly that width and one pixel below.
 * `fullyParallel: true`. Budget: the whole Playwright run (`test:e2e` + `review`) under ~60 s locally. If it gets slower, trim fixtures before adding hardware.
 
 ### Layout invariants (layer 6)
@@ -124,6 +126,7 @@ Assertions use tolerances that come from the calibration/scenario data, not new 
 
 * Baselines live in `e2e/visual/__screenshots__/` and **are committed**: they are the visual spec.
 * A screenshot diff fails `npm run review` (and therefore `verify`). Playwright writes `expected`, `actual` and `diff` PNGs.
+* `maxDiffPixelRatio: 0.002` is relative to the whole page, so a small change (e.g. one heading's font size) can stay under it at 1280 px while failing at 375 px. If a change *should* show at every viewport and the report says unchanged there, treat that as a finding (§6 step 4).
 * **Updating baselines** (`npm run review -- --update-snapshots`, scoped with `-g <fixture>` where possible) is allowed only after Claude has looked at the new image (§6) and can say why the change is intended. The session summary lists every baseline that changed and why. Dek sees the PNG changes in `git diff --stat` / their git client before committing.
 * Baselines go stale for legitimate reasons, such as Dek supplying a doctrine figure that moves a needle. Regenerate in the same session as the change, never as a separate "fix the tests" step.
 
