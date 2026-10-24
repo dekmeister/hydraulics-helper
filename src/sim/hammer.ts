@@ -13,7 +13,8 @@ export function surgeKpa(dropLpm: number, boreMm: number): number {
 }
 
 export interface HammerContext {
-  lines: readonly HoseLine[];
+  /** Hoses on this truck's deliveries: lays and relays. */
+  lines: readonly Pick<HoseLine, 'deliveryId' | 'segments'>[];
   /** Delivery valve openings last tick and this tick. */
   valvesBefore: Record<ControlId, number>;
   valvesNow: Record<ControlId, number>;

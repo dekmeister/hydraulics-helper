@@ -10,14 +10,8 @@ import {
   reseed,
   switchTruck,
 } from './engine';
-import { draughtSite, inputsWith, layLine, primedState, run, truckOf } from './testUtils';
-import type { SimState, TruckState } from './types';
-
-const truck = (s: SimState, id: string): TruckState => {
-  const t = s.trucks.find((x) => x.id === id);
-  if (t === undefined) throw new Error(`no truck ${id}`);
-  return t;
-};
+import { draughtSite, inputsWith, layLine, primedState, run, truck, truckOf } from './testUtils';
+import type { SimState } from './types';
 
 /** A base pump of the test appliance with a line on 'right', tank and that delivery held open. */
 const BASE = {

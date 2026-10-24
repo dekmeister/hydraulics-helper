@@ -142,3 +142,38 @@ export const COLLAPSE_TOLERANCE_KPA = 1e-6;
  */
 export const FLUTTER_MEMORY = 0.5;
 export const FLUTTER_KICK = 0.87;
+
+/**
+ * Relay design pressures (manual L3794–3796): a pump in a relay delivers 700 kPa and the next pump
+ * keeps at least 100 kPa residual at its inlet, so 600 kPa is spent on friction and head between
+ * them (C12, C13). // doctrine-confirmed
+ */
+export const RELAY_DELIVERY_KPA = 700;
+export const RELAY_MIN_RESIDUAL_KPA = 100;
+
+/**
+ * Most a charged delivery or relay hose should run at, kPa: a quarter of the ~4000 kPa rated burst
+ * of new short lengths (L945–948). The receiving pump is warned above it. // doctrine-confirmed
+ */
+export const HOSE_WORKING_KPA = 1000;
+
+/**
+ * Pressure at which a length of charged layflat in service bursts, kPa: well under the rated
+ * figure for new hose (L945–948), since hose in service is worn. With the Joukowsky surge of a
+ * relay shut off fast at the far end, this reproduces the manual's shutdown burst (L3865–3873)
+ * while a relay eased down slowly survives. // PLACEHOLDER — needs Dek
+ */
+export const HOSE_BURST_KPA = 1500;
+
+/**
+ * Smallest relay flow the supplying pump's equivalent source is fitted at, L/min, when the relay
+ * was dry last tick. Numerical, not doctrine: any flow inside the pump's range gives a fit that
+ * the next tick refines at the real flow.
+ */
+export const RELAY_FIT_PROBE_LPM = 100;
+
+/**
+ * Smallest internal resistance the equivalent source is given, kPa per (L/min)²: keeps the fit
+ * finite when the supplying pump's discharge doesn't fall with flow. Numerical, not doctrine.
+ */
+export const RELAY_FIT_MIN_R = 1e-9;

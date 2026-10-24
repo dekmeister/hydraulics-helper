@@ -5,6 +5,7 @@ import { BRANCH_OPTIMUM_KPA, HOSES } from '../constants';
 import { createIdleInputs, createInitialState } from '../engine';
 import {
   draughtSite,
+  expectSane,
   hydrantSite,
   inputsWith,
   layLine,
@@ -16,42 +17,13 @@ import {
   tankAttackInputs,
   truckOf,
 } from '../testUtils';
-import type { ApplianceSpec, HoseLine, PlayerInputs, SimState } from '../types';
+import type { ApplianceSpec, HoseLine, PlayerInputs } from '../types';
 import { APPLIANCES } from './catalogue';
 import { controlIds, switchControlIds, validateInputs } from './controls';
 import { TEST_APPLIANCE } from './testAppliance';
 
 const ALL: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
 const allDeliveries = (spec: ApplianceSpec) => spec.deliveries.map((d) => d.id);
-
-function expectSaneReadings(state: SimState) {
-  const t = truckOf(state);
-  const r = t.readings;
-  const numbers = [
-    t.rpm,
-    t.tankL,
-    r.dischargeKpa,
-    r.compoundKpa,
-    r.pumpFlowLpm,
-    r.reliefFlowLpm,
-    ...Object.values(r.deliveryFlowLpm),
-    ...Object.values(r.branchKpa),
-  ];
-  numbers.push(t.pump.tempC, t.pump.vacuumKpa, t.pump.flutter, r.cavitation);
-  numbers.push(...Object.values(r.inletFlowLpm));
-  for (const n of numbers) expect(Number.isFinite(n)).toBe(true);
-  expect(r.compoundKpa).toBeGreaterThanOrEqual(-100);
-  expect(r.cavitation).toBeGreaterThanOrEqual(0);
-  expect(r.cavitation).toBeLessThanOrEqual(1);
-  expect(t.pump.vacuumKpa).toBeGreaterThanOrEqual(0);
-  for (const q of Object.values(r.inletFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
-  expect(r.dischargeKpa).toBeGreaterThanOrEqual(0);
-  for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
-  expect(t.tankL).toBeGreaterThanOrEqual(0);
-  expect(t.tankL).toBeLessThanOrEqual(t.spec.tank?.capacityL ?? 0);
-  expect(t.rpm).toBeGreaterThanOrEqual(t.spec.engine.idleRpm - 1e-9);
-  expect(t.rpm).toBeLessThanOrEqual(t.spec.engine.maxRpm + 1e-9);
-}
 
 describe('appliance catalogue', () => {
   it('has unique ids and never registers the test appliance', () => {
@@ -140,7 +112,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         tankAttackInputs(spec, 0.6, allDeliveries(spec)),
         50,
       );
-      expectSaneReadings(s);
+      expectSane(s);
       expect(truckOf(s).readings.pumpFlowLpm).toBeGreaterThan(0);
       expect(truckOf(s).readings.dischargeKpa).toBeGreaterThan(0);
     });
@@ -165,7 +137,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
             switches: Object.fromEntries(controlIds(spec).map((id) => [id, rand() < 0.5])),
           };
           s = run(s, inputs, 10);
-          expectSaneReadings(s);
+          expectSane(s);
         }
       }
     });
@@ -187,7 +159,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
       expect(r.dischargeKpa).toBe(0);
       expect(r.pumpFlowLpm).toBe(0);
       for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBe(0);
-      expectSaneReadings(s);
+      expectSane(s);
     });
 
     const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
@@ -213,7 +185,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         let s = primeAt(4);
         expect(truckOf(s).pump.primed).toBe(true);
         s = run(s, inputsWith(0.6, [suctionInletOf(spec), ...allDeliveries(spec)]), 50);
-        expectSaneReadings(s);
+        expectSane(s);
         expect(truckOf(s).readings.pumpFlowLpm).toBeGreaterThan(0);
         expect(truckOf(s).readings.compoundKpa).toBeLessThan(-40);
       },
@@ -240,7 +212,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         s = run(s, inputsWith(1, [suctionInletOf(spec), ...allDeliveries(spec)]), 600);
         expect(truckOf(s).pump.primed).toBe(false);
         expect(truckOf(s).readings.pumpFlowLpm).toBe(0);
-        expectSaneReadings(s);
+        expectSane(s);
       },
     );
 
@@ -257,7 +229,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
             switches: Object.fromEntries(controlIds(spec).map((id) => [id, rand() < 0.5])),
           };
           s = run(s, inputs, 10);
-          expectSaneReadings(s);
+          expectSane(s);
         }
       }
     });

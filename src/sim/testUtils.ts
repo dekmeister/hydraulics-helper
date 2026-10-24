@@ -55,6 +55,59 @@ export function run(state: SimState, inputs: PlayerInputs, ticks: number): SimSt
   return s;
 }
 
+/** The truck with `id`; throws if there is none. */
+export function truck(state: SimState, id: string): TruckState {
+  const t = state.trucks.find((x) => x.id === id);
+  if (t === undefined) throw new Error(`state has no truck '${id}'`);
+  return t;
+}
+
+/** Every reading on `t` finite and in range: no NaN, no negative flow, gauges within their stops. */
+export function expectSaneTruck(t: TruckState): void {
+  const r = t.readings;
+  const numbers = [
+    t.rpm,
+    t.tankL,
+    r.dischargeKpa,
+    r.compoundKpa,
+    r.pumpFlowLpm,
+    r.reliefFlowLpm,
+    ...Object.values(r.deliveryFlowLpm),
+    ...Object.values(r.branchKpa),
+    t.pump.tempC,
+    t.pump.vacuumKpa,
+    t.pump.flutter,
+    r.cavitation,
+    ...Object.values(r.inletFlowLpm),
+  ];
+  for (const n of numbers) expect(Number.isFinite(n)).toBe(true);
+  expect(r.compoundKpa).toBeGreaterThanOrEqual(-100);
+  expect(r.cavitation).toBeGreaterThanOrEqual(0);
+  expect(r.cavitation).toBeLessThanOrEqual(1);
+  expect(t.pump.vacuumKpa).toBeGreaterThanOrEqual(0);
+  for (const q of Object.values(r.inletFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
+  expect(r.dischargeKpa).toBeGreaterThanOrEqual(0);
+  for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
+  expect(t.tankL).toBeGreaterThanOrEqual(0);
+  expect(t.tankL).toBeLessThanOrEqual(t.spec.tank?.capacityL ?? 0);
+  expect(t.rpm).toBeGreaterThanOrEqual(t.spec.engine.idleRpm - 1e-9);
+  expect(t.rpm).toBeLessThanOrEqual(t.spec.engine.maxRpm + 1e-9);
+}
+
+/** Every truck, relay reading and source in `state` sane (see `expectSaneTruck`). */
+export function expectSane(state: SimState): void {
+  for (const t of state.trucks) expectSaneTruck(t);
+  for (const r of Object.values(state.linkReadings)) {
+    for (const n of [r.flowLpm, r.startKpa, r.endKpa]) expect(Number.isFinite(n)).toBe(true);
+    expect(r.flowLpm).toBeGreaterThanOrEqual(0);
+  }
+  for (const s of state.sources) {
+    if (s.kind !== 'static') continue;
+    expect(s.volumeL).toBeGreaterThanOrEqual(0);
+    expect(s.volumeL).toBeLessThanOrEqual(s.capacityL ?? Number.POSITIVE_INFINITY);
+  }
+}
+
 export function truckOf(state: SimState): TruckState {
   const t = state.trucks[0];
   if (t === undefined) throw new Error('state has no truck');
