@@ -1,18 +1,12 @@
 import { idleInputs, sanitiseInputs } from './appliances/controls';
-import {
-  AMBIENT_C,
-  FLUTTER_KICK,
-  FLUTTER_MEMORY,
-  PUMP_TEMP_CAUTION_C,
-  VALVE_CLOSED_EPS,
-} from './constants';
+import { DEFAULT_TRUCK_ID, siteState, type SiteOptions, type TruckSetup } from './create';
+import { FLUTTER_KICK, FLUTTER_MEMORY, PUMP_TEMP_CAUTION_C, VALVE_CLOSED_EPS } from './constants';
 import { detectHammer } from './hammer';
 import { inletPaths, type ConnectedSupply } from './inlets';
 import { solveTruck } from './network';
 import { stepPrime } from './priming';
 import { lagRpm } from './pump';
-import { DEFAULT_SEED, nextRandom } from './rng';
-import { validateSite } from './site';
+import { nextRandom } from './rng';
 import { stepTankL } from './tank';
 import { stepTempC } from './thermal';
 import type {
@@ -21,35 +15,18 @@ import type {
   PlayerInputs,
   PumpState,
   SimState,
-  SupplyLine,
   TruckState,
   WaterSource,
 } from './types';
 
-/** Id given to the truck in a single-truck state. */
-export const DEFAULT_TRUCK_ID = 'truck-1';
-
-export interface SiteOptions {
-  /** Water sources on the fireground (hydrants, dams). */
-  sources?: readonly WaterSource[];
-  /** Supply hoses from those sources to truck inlets. */
-  supplies?: readonly SupplyLine[];
-  /** PRNG seed for noisy behaviour (gauge flutter). */
-  seed?: number;
-}
-
-/** A pump at rest: not primed, no vacuum, primer rested, casing at ambient. */
-export function restingPump(): PumpState {
-  return {
-    primed: false,
-    vacuumKpa: 0,
-    primerRunS: 0,
-    primerDutyS: 0,
-    primerCutOut: false,
-    tempC: AMBIENT_C,
-    flutter: 0,
-  };
-}
+export {
+  DEFAULT_TRUCK_ID,
+  reseed,
+  restingPump,
+  switchTruck,
+  type SiteOptions,
+  type TruckSetup,
+} from './create';
 
 /** This truck's supplies, each joined to its source; supplies to unknown sources are a data error. */
 export function connectedSupplies(
@@ -67,45 +44,42 @@ export function connectedSupplies(
 }
 
 /**
- * Fresh state at t = 0: one truck of `spec`, engine at idle, tank full, all controls shut, plus
- * whatever sources and supply hoses the scenario sets out (checked by `validateSite`). The spec is
- * copied in so the state stays self-contained (ARCHITECTURE §9.2).
+ * Fresh state at t = 0 with any number of trucks (`TruckSetup`: spec, label, held inputs), their
+ * lays, and whatever sources, supply hoses and relays the scenario sets out (checked by
+ * `validateSite`). Specs are copied in so the state stays self-contained (ARCHITECTURE §9.2).
  */
+export function createSiteState(
+  trucks: readonly TruckSetup[],
+  lines: readonly HoseLine[] = [],
+  site: SiteOptions & { activeTruckId?: string } = {},
+): SimState {
+  const state = siteState(trucks, lines, site);
+  return {
+    ...state,
+    trucks: state.trucks.map((truck) => ({
+      ...truck,
+      readings: solveTruck(
+        {
+          spec: truck.spec,
+          rpm: truck.rpm,
+          tankL: truck.tankL,
+          inputs: truck.inputs,
+          primed: truck.pump.primed,
+          supplies: connectedSupplies(state, truck.id),
+        },
+        state.lines.filter((l) => l.truckId === truck.id),
+      ),
+    })),
+  };
+}
+
+/** Fresh state with one truck of `spec` (`DEFAULT_TRUCK_ID`), engine at idle, every control shut. */
 export function createInitialState(
   spec: ApplianceSpec,
   lines: readonly HoseLine[] = [],
   site: SiteOptions = {},
 ): SimState {
-  const inputs = idleInputs(spec);
-  const sources = structuredClone([...(site.sources ?? [])]);
-  const supplies = structuredClone([...(site.supplies ?? [])]);
-  const base = {
-    id: DEFAULT_TRUCK_ID,
-    spec: structuredClone(spec),
-    rpm: spec.engine.idleRpm,
-    tankL: spec.tank?.capacityL ?? 0,
-    inputs,
-  };
-  validateSite([{ id: DEFAULT_TRUCK_ID, spec }], sources, supplies);
-  const ownLines = lines.filter((l) => l.truckId === DEFAULT_TRUCK_ID);
-  const truck: TruckState = {
-    ...base,
-    readings: solveTruck(
-      { ...base, supplies: connectedSupplies({ sources, supplies }, DEFAULT_TRUCK_ID) },
-      ownLines,
-    ),
-    pump: restingPump(),
-    tally: { cavitationS: 0, overheatS: 0, waterHammer: 0, worstSurgeKpa: 0 },
-  };
-  return {
-    timeS: 0,
-    activeTruckId: DEFAULT_TRUCK_ID,
-    trucks: [truck],
-    lines: structuredClone([...lines]),
-    sources,
-    supplies,
-    rngState: (site.seed ?? DEFAULT_SEED) >>> 0,
-  };
+  return createSiteState([{ id: DEFAULT_TRUCK_ID, spec }], lines, site);
 }
 
 /** Neutral inputs for a spec: throttle idle, every valve shut, every switch off. */
@@ -129,7 +103,6 @@ function advanceTruck(
   supplies: readonly ConnectedSupply[],
   prevTimeS: number,
   timeS: number,
-  uniform: number,
   dtS: number,
 ): TruckState {
   const { spec } = truck;
@@ -166,6 +139,7 @@ function advanceTruck(
     { spec, rpm, wet, throughLpm: outLpm + reliefToTankLpm },
     dtS,
   );
+  const [uniform, rngState] = nextRandom(truck.rngState);
   const pump: PumpState = {
     ...primed,
     tempC,
@@ -191,6 +165,7 @@ function advanceTruck(
     overheatS: t.overheatS + (tempC >= PUMP_TEMP_CAUTION_C ? dtS : 0),
     waterHammer: t.waterHammer + (hammer === undefined || continuing ? 0 : 1),
     worstSurgeKpa: Math.max(t.worstSurgeKpa, hammer?.surgeKpa ?? 0),
+    hoseBursts: t.hoseBursts,
   };
 
   return {
@@ -201,6 +176,7 @@ function advanceTruck(
     pump,
     tally,
     tankL: stepTankL(truck.tankL, spec.tank?.capacityL ?? 0, tankDrawLpm, reliefToTankLpm, dtS),
+    rngState,
     ...(hammer === undefined ? {} : { lastHammer: hammer }),
   };
 }
@@ -221,25 +197,21 @@ function drainSources(state: SimState, trucks: readonly TruckState[], dtS: numbe
 
 /**
  * Advance the sim by `dtS` seconds. Pure and deterministic: returns new state, never mutates.
- * `inputs` apply to the active truck; other trucks keep their last inputs. Noise comes from the
- * seeded PRNG in the state, one draw per truck per tick.
+ * `inputs` apply to the active truck; other trucks keep their held inputs. Noise comes from each
+ * truck's own seeded PRNG stream, one draw per tick.
  */
 export function advance(state: SimState, inputs: PlayerInputs, dtS: number): SimState {
   const timeS = state.timeS + dtS;
-  let rngState = state.rngState;
-  const trucks = state.trucks.map((truck) => {
-    const [uniform, next] = nextRandom(rngState);
-    rngState = next;
-    return advanceTruck(
+  const trucks = state.trucks.map((truck) =>
+    advanceTruck(
       truck,
       truck.id === state.activeTruckId ? inputs : truck.inputs,
       state.lines.filter((l) => l.truckId === truck.id),
       connectedSupplies(state, truck.id),
       state.timeS,
       timeS,
-      uniform,
       dtS,
-    );
-  });
-  return { ...state, timeS, trucks, sources: drainSources(state, trucks, dtS), rngState };
+    ),
+  );
+  return { ...state, timeS, trucks, sources: drainSources(state, trucks, dtS) };
 }
