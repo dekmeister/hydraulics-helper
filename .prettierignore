@@ -1,0 +1,10 @@
+Design/
+Resources/
+dist/
+dist-e2e/
+review/
+test-results/
+playwright-report/
+e2e/visual/__screenshots__/
+package-lock.json
+*.md

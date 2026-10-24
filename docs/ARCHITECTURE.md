@@ -13,7 +13,7 @@ Two panels:
 
 **Multiple appliances.** The game is built to train on several vehicle types (tankers of different categories, bulk water, urban pumpers), each with its own pump, plumbing and panel layout. The physics is shared; each appliance is a data definition. v1 ships one reference appliance. See §9.
 
-Layout: side-by-side on tablet/desktop (≥ ~900 px), stacked (scene above panel) on phones. Portrait phone is the baseline constraint — all controls must be operable with a thumb.
+Layout: side-by-side at ≥ 900 px (`SIDE_BY_SIDE_MIN_PX`, `ui/layout/breakpoints.ts`), stacked (scene above panel) below that, so a 768 px portrait tablet stacks and a 1024 px landscape tablet is side by side. (`Design/DESIGN_SPEC.md` §7 says "tablet side by side" without a width; this doc and `docs/TESTING.md` are what's implemented — open question for Dek.) Portrait phone is the baseline constraint — all controls must be operable with a thumb.
 
 ## 2. Stack
 
@@ -47,6 +47,7 @@ src/
   state/
     store.ts      # Zustand store; owns SimState; dispatches player inputs
     selectors.ts  # Derived values for UI (gauge angles, warnings)
+    loop.ts       # requestAnimationFrame accumulator → fixed 10 Hz ticks (not started in the e2e build)
   ui/
     panel-pump/   # Generic controls (Gauge, ValveHandle, Throttle, Primer) + layout-driven renderer
     panel-scene/  # SceneView, Appliance, HoseLay, Branch, WaterSource
@@ -55,7 +56,8 @@ src/
     tutorial/     # Coach marks / guided steps
   audio/          # Engine note, priming whine, cavitation rattle (later)
   testing/        # e2e build mode only: window.__pumpops test API, fixture gallery (docs/TESTING.md §3)
-e2e/              # Playwright: journeys/, visual/ (+ committed __screenshots__), layout.spec.ts, review/ reporter
+e2e/              # Playwright: journeys/, visual/ (+ committed __screenshots__), layout.spec.ts, invariants.ts, fixtures.ts, review/ reporter
+scripts/          # Node build helpers (check-prod-bundle.mjs)
 ```
 
 **The hard rule:** `sim/` is a pure, deterministic library. `advance(state, inputs, dt)` takes plain data and returns new plain data. Every hydraulics behaviour must be demonstrable in a Vitest test without rendering anything. UI reads sim state through selectors and writes only through a small `PlayerInputs` interface (valve positions 0–1, throttle 0–1, primer engaged, etc.), keyed by the control ids the appliance spec defines (§9.3).
