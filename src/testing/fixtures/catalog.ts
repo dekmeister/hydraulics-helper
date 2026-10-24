@@ -157,6 +157,15 @@ export const FIXTURES: readonly FixtureMeta[] = [
       '3 700 rpm (in the red, red readout).',
   },
   {
+    id: 'gauge/wake',
+    expect:
+      'The Wake (Design §6) on four dials, never coloured: steady 700 kPa (a thin ink sliver at ' +
+      'the needle, ghosts stacked under it); a surge from 400 to 900 kPa (band trailing on the ' +
+      'low side, five ghosts fanned back towards 400, fading); hunting discharge (band fanned both ' +
+      'sides of ~760); hunting compound near −82 with an amber needle, band across the vacuum ' +
+      'caution/alarm zones.',
+  },
+  {
     id: 'gauge/tank',
     expect:
       'Four tank columns of five segments for a 3 000 L tank: full (5 lit), 2 000 L (4 lit), ' +
@@ -175,8 +184,10 @@ export const FIXTURES: readonly FixtureMeta[] = [
     id: 'controls/throttle-primer',
     expect:
       'Two T-handle throttles: idle (handle against the housing, chevrons, "0 %") and 60 % ' +
-      '(handle pulled out over a graduated shaft, "60 %"), each with − and + buttons. Two ' +
-      'primer buttons: HOLD (raised) and RUNNING (cap sunk, light ring).',
+      '(handle pulled out over a graduated shaft, "60 %"), each with − and + buttons. Five ' +
+      'primer buttons, each in a thin ring that fills with vacuum: HOLD (raised, empty ring), ' +
+      'RUNNING (cap sunk, ring 40 % lit), CHECK SUCTION (amber ring and caption), PRIMED (green ' +
+      'full ring, green check mark), COOLING (duty cut-out, ring 60 %).',
   },
   ...PANEL_FIXTURES,
   ...SCENE_FIXTURES,

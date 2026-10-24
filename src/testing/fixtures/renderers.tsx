@@ -3,7 +3,13 @@ import type { ControlId, GaugeScaleSpec, SimState } from '../../sim/types';
 import { SceneView } from '../../ui/panel-scene/SceneView';
 import { AppShell } from '../../ui/layout/AppShell';
 import { PANEL_FIXTURE_SETS, panelFixtureId, SCENE_FIXTURE_SETS, sceneFixtureId } from './catalog';
-import { GaugeGallery, TankGallery, ThrottlePrimerGallery, ValveGallery } from './galleries';
+import {
+  GaugeGallery,
+  TankGallery,
+  ThrottlePrimerGallery,
+  ValveGallery,
+  WakeGallery,
+} from './galleries';
 import { panelState, sceneState, type PanelStateId, type SceneStateId } from './panelStates';
 
 export interface FixtureRenderer {
@@ -119,6 +125,7 @@ export const FIXTURE_RENDERERS: Record<string, FixtureRenderer> = {
       />
     ),
   },
+  'gauge/wake': { render: () => <WakeGallery scale={SHEET_02} /> },
   'gauge/tank': { render: () => <TankGallery capacityL={3000} values={[3000, 2000, 600, 0]} /> },
   'controls/valves': { render: () => <ValveGallery /> },
   'controls/throttle-primer': { render: () => <ThrottlePrimerGallery /> },
