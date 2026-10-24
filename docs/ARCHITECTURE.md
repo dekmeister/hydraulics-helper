@@ -13,7 +13,7 @@ Two panels:
 
 **Multiple appliances.** The game is built to train on several vehicle types (tankers of different categories, bulk water, urban pumpers), each with its own pump, plumbing and panel layout. The physics is shared; each appliance is a data definition. v1 ships one reference appliance. See §9.
 
-Layout: side-by-side at ≥ 900 px (`SIDE_BY_SIDE_MIN_PX`, `ui/layout/breakpoints.ts`), stacked (scene above panel) below that, so a 768 px portrait tablet stacks and a 1024 px landscape tablet is side by side. (`Design/DESIGN_SPEC.md` §7 says "tablet side by side" without a width; this doc and `docs/TESTING.md` are what's implemented — open question for Dek.) Portrait phone is the baseline constraint — all controls must be operable with a thumb.
+Layout: side-by-side at ≥ 900 px (`SIDE_BY_SIDE_MIN_PX`, `ui/layout/breakpoints.ts`), stacked (scene above panel) below that, so a 768 px portrait tablet stacks and a 1024 px landscape tablet is side by side. (`Design/DESIGN_SPEC.md` §7 says "tablet side by side" without a width; this doc and `docs/TESTING.md` are what's implemented — open question for Dek.) Portrait phone is the baseline constraint — all controls must be operable with a thumb. Side by side, the page scrolls the pump panel while the scene stays in view (sticky).
 
 ## 2. Stack
 
@@ -178,7 +178,9 @@ All physical constants live in `sim/constants.ts` with a comment citing the inte
 
 * **The pump panel is rendered from the appliance's layout data** (§9.4), not hand-composed per truck. Components are generic; the layout places them.
 * **Gauges** are one parameterised SVG component (face, ticks, needle, red zones) — discharge, compound, tacho, tank all reuse it. Compound gauge face spans −100…+1600 kPa style dual scale.
-* **Controls** must work by drag *and* tap (tap a valve = toggle open/closed with animated travel; drag = fine control). Hit targets ≥ 44 px.
+* **Controls** are driven by drag; what a tap does is layout data per control (`tap: 'toggle' | 'none'`). Tank-to-pump toggles on a tap; deliveries ignore taps so a stray thumb never charges a line (Design §5). Hit targets ≥ 44 px.
+* **Needles** chase the sim reading with a critically damped spring on `requestAnimationFrame` (`ui/panel-pump/damping.ts`); `aria-valuenow` is the displayed value, and `__pumpops.settle()` snaps them.
+* **Handle colour by function** (inlets green, outlets blue); delivery identity is a glyph + tag, never colour alone (Design OPEN_DECISIONS #1, option B — pending Dek).
 * **Scene panel v1** is a static SVG composition with a few state-driven bits (hose highlight when flowing, branch spray on/off, tank fill bar). Structure it as components from day one so reactivity is added incrementally, not rebuilt.
 * **Warnings/telemetry HUD**: small strip surfacing what a real operator would hear/feel (engine note, cavitation rattle) as text/icons until audio exists.
 * Accessibility floor: keyboard operable controls, ARIA labels with live gauge values, respects `prefers-reduced-motion`.
@@ -238,11 +240,11 @@ Control ids are the inlet, delivery and adjustable-relief ids (valves, 0–1) pl
 
 ### 9.4 Panel layout as data
 
-Each appliance has a layout in `ui/appliances/<id>/layout.ts` that places each spec control and instrument on the panel's `viewBox`: position, orientation, label, and which `Gauge` face to use. The pump panel renderer iterates the layout using the generic components (`Gauge`, `ValveHandle`, `Throttle`, `PrimerControl`, `Lever`). Adding an appliance means adding a spec, a layout and optionally scene art; a new component is needed only for a genuinely new kind of control.
+Each appliance has a layout in `ui/appliances/<id>/layout.ts` (types in `ui/appliances/types.ts`, registered in `ui/appliances/registry.ts`): an ordered list of sections, each placing spec controls and instruments with their label, `Gauge` face, control variant and tap behaviour. Sections are `row` (wrapping) or `list` (stacked rows), and CSS container queries size the components, so one layout serves 375–1280 px; each component draws its own SVG in its own `viewBox`. Absolute positions on a drawing (`Design/layouts/layout-a.json`) belong to the later realistic bay view, not this panel. The pump panel renderer (`ui/panel-pump/PumpPanel.tsx`) iterates the layout using the generic components (`Gauge`, `TankLevel`, `ValveHandle`, `Throttle`, `PrimerControl`, `WarningStrip`). The throttle and warning strip are placed by the layout too, exactly once. Adding an appliance means adding a spec, a layout and optionally scene art; a new component is needed only for a genuinely new kind of control.
 
 * Real panels differ in arrangement, and finding the right control is part of the skill, so a layout should follow the real arrangement (generic styling, no livery).
 * Every layout must meet the mobile floor (375 px, 44 px targets). If a real panel is too dense, group the controls (e.g. a swipeable delivery bank) rather than shrink them.
-* A test checks that the layout and spec match one-to-one: every control is placed, and nothing is placed that the spec doesn't have.
+* A test (`ui/appliances/layout.test.ts`) checks that the layout and spec match one-to-one: every control and instrument is placed once on a face that can show it, and nothing is placed that the spec doesn't have. It covers the test-only appliance too, whose layout lives in `src/testing/appliances/` and is registered only in the e2e build.
 
 ### 9.5 Calibration and tests per appliance
 

@@ -121,3 +121,8 @@ The tank runs dry at t = 250 s, and every gauge then drops to zero.
 6. **Dry-pump behaviour.** At the moment, tank-to-pump shut or tank empty means every gauge reads 0 at once. Real behaviour, such as a brief run-down or a full casing holding pressure with the inlet shut, is for M4, alongside cavitation.
 7. **Trace branch choice**: 15 mm on the 38 mm line and 20 mm on the 65 mm line, both from Table 1. Is that representative of what a Cat 1 crew would run?
 8. **Cat 1 delivery sizes** (64/38/38 mm), which were read from the Layout A photo.
+9. **Gauge faces** (UI, `ui/panel-pump/gauge/dials.ts`): discharge 0–1600 kPa with caution 1200–1400 and alarm 1400–1600; compound −100…1600 kPa with caution −70…−85 and alarm −85…−100; tacho 0–4000 rpm with alarm 3500+. These are the design comps' figures (Design OPEN_DECISIONS #5). What do the Cat 1 gauges actually read, and where should the zones sit relative to the 1100 kPa relief?
+10. **Low-tank warning** at ≤ ¼ tank (`state/tankLevel.ts`, from the Design spec). Is there a doctrine crew-protection reserve to warn at instead?
+11. **Panel conventions** (Design OPEN_DECISIONS #1, #4): handles coloured by function (outlets blue, inlets green) with delivery identity by glyph and tag; push-pull T-handle throttle; tank-to-pump toggles on a tap while deliveries are drag-only. Confirm, or say what a Cat 1 actually has.
+12. **Needle response**: damped to settle in about 0.7 s (`NEEDLE_OMEGA`). Is a real discharge gauge noticeably faster or slower?
+

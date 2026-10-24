@@ -37,13 +37,13 @@ Companion to `ARCHITECTURE.md`. Milestones are sized so a Claude Code session ca
 
 ## M2 — Pump panel UI
 
-- [ ] Parameterised SVG `Gauge` (discharge, compound dual-scale, tacho, tank level).
-- [ ] `ValveHandle` (drag + tap), `Throttle`, tank-to-pump control; ≥ 44 px hit targets; keyboard operable.
-- [ ] Panel rendered from the reference appliance's layout data (`ui/appliances/<id>/layout.ts`); layout↔spec consistency test.
-- [ ] Wire to store: inputs → sim @ 10 Hz → damped needle rendering.
-- [ ] Warning strip (low tank, overheat placeholder, cavitation placeholder).
-- [ ] Fixtures: each gauge face at key values (zero, mid, red zone, compound vacuum); generated per-appliance panel fixtures (`idle`, `tank-attack-700`, `tank-low`). Contact sheets reviewed, baselines committed.
-- [ ] Journeys: tank attack, second line sag, runs dry, valve drag precision; layout invariants over every panel fixture; keyboard pass.
+- [x] Parameterised SVG `Gauge` (discharge, compound dual-scale, tacho, tank level).
+- [x] `ValveHandle` (drag + tap), `Throttle`, tank-to-pump control; ≥ 44 px hit targets; keyboard operable.
+- [x] Panel rendered from the reference appliance's layout data (`ui/appliances/<id>/layout.ts`); layout↔spec consistency test.
+- [x] Wire to store: inputs → sim @ 10 Hz → damped needle rendering.
+- [x] Warning strip (low tank, overheat placeholder, cavitation placeholder).
+- [x] Fixtures: each gauge face at key values (zero, mid, red zone, compound vacuum); generated per-appliance panel fixtures (`idle`, `tank-attack-700`, `tank-low`). Contact sheets reviewed, baselines committed.
+- [x] Journeys: tank attack, second line sag, runs dry, valve drag precision; layout invariants over every panel fixture; keyboard pass.
 
 **Demo:** playable tank attack — open tank-to-pump, open delivery, throttle up, watch discharge gauge and tank fall; sag when a second line opens.
 
@@ -131,6 +131,11 @@ Work order (one commit each, `npm run verify` green at the end):
 * Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event.
 * Unlined hose in scenarios (the catalogue already has it); hose carried per appliance.
 * Multiple independent pumps on one appliance (`pumps: PumpSpec[]`, e.g. separate high-pressure reel pump) — deferred, see `ARCHITECTURE.md` §9.2.
+* The Wake (needle afterimage, Design §6) and needle flutter: geometry is ported; wire it with cavitation in M4, driven by sim time.
+* Realistic bay view and zone C close-up (Design sheets 07–08, `Design/layouts/layout-a.json`) as a second view over the panel layout data.
+* Vernier-knob throttle variant (Layout A, Design OPEN_DECISIONS #4); M2 ships the T-handle only.
+* Warning lamp acknowledge (tap → steady, opens a coaching card); needs coaching cards (M6).
+* `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 
 ## Risks
