@@ -111,11 +111,11 @@ Work order (one commit each, `npm run verify` green at the end):
 
 ## M4 — Sources, priming, failure behaviours
 
-- [ ] Hydrant/collector inlet source.
-- [ ] Draughting: suction lift, primer interaction, prime/lose-prime states, compound gauge vacuum. Primer behaviour switches on `primer.kind` (rotary vane duty cycle / hand diaphragm / self-priming), each kind tested.
-- [ ] Cavitation model + gauge flutter + throttle-does-nothing behaviour.
-- [ ] Overheat on churn; water hammer detection + penalty.
-- [ ] Tests for each behaviour (e.g. "lift 8 m ⇒ cannot achieve rated flow").
+- [x] Hydrant/collector inlet source.
+- [x] Draughting: suction lift, primer interaction, prime/lose-prime states, compound gauge vacuum. Primer behaviour switches on `primer.kind` (rotary vane duty cycle / hand diaphragm / self-priming), each kind tested.
+- [x] Cavitation model + gauge flutter + throttle-does-nothing behaviour.
+- [x] Overheat on churn; water hammer detection + penalty.
+- [x] Tests for each behaviour (e.g. "lift 8 m ⇒ cannot achieve rated flow").
 
 **Demo:** successfully draught from the dam; then induce and recover from cavitation.
 
@@ -188,19 +188,20 @@ Work order (one commit each, `npm run verify` green at the end):
 * Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event.
 * Unlined hose in scenarios (the catalogue already has it); hose carried per appliance.
 * Multiple independent pumps on one appliance (`pumps: PumpSpec[]`, e.g. separate high-pressure reel pump) — deferred, see `ARCHITECTURE.md` §9.2.
-* The Wake (needle afterimage, Design §6) and needle flutter: geometry is ported; wire it with cavitation in M4, driven by sim time.
 * Realistic bay view and zone C close-up (Design sheets 07–08, `Design/layouts/layout-a.json`) as a second view over the panel layout data.
 * Vernier-knob throttle variant (Layout A, Design OPEN_DECISIONS #4); M2 ships the T-handle only.
 * Warning lamp acknowledge (tap → steady, opens a coaching card); needs coaching cards (M6).
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
 * **Inputs have two sources of truth** (before M5, multi-truck relay): the store keeps one global `inputs`, while `TruckState.inputs` is the copy last applied on a tick, and there is no action to change the active truck. Make the active truck's inputs the single source, or key `inputs` by truck id. (PR #1 review.)
-* **Layout vocabulary gaps** (M4/M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button; an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` always shows the "not simulated" temperature and cavitation lamps, whatever instruments the truck has.
+* **Layout vocabulary gaps** (M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button (the sim treats its switch as "stroking"); an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` shows every lamp the sim can light (temperature, cavitation, hammer), whatever the truck actually fits.
 * Scene follow-ups (M3): hydraulic section view along a line (Design sheet 06) with pump, friction, head and branch figures; elevation terrain that matches line elevations; a pressure-scaled spray throw; hose casing swelling on over-pressure and gaps on cavitation (Design §6 scene cues, with M4); a relay truck on the scene (M5).
 * **Scene off-screen on a phone while operating** (PR #2 review): below 900 px the scene stacks above the panel, so turning a delivery valve and watching its branch stop needs a scroll (the scene↔panel locate buttons scroll both ways). Candidates: a compact sticky scene or line-state HUD strip on phones, or a panel/scene tab switch. Needs a design decision before M4 adds more to watch.
-* **Scene model for M4/M5** (PR #2 review): `layoutScene` lays out one truck at a fixed anchor (`ui/panel-scene/site.ts`) and `SceneArt` couplings are deliveries only. M4 needs inlet couplings (suction hose to the dam, hydrant/collector) and M5 several trucks with truck-to-truck links: key couplings by control id with a `kind` (`delivery | inlet`), grow a scene model (trucks, sources, links) with this fan layout as the per-truck piece, and key `highlight` by truck as well as delivery.
+* **Scene model for M5** (PR #2 review): couplings are now keyed by control id with a `kind` (M4), and supplies end at the dam or one hydrant from `site.ts`. M5 needs several trucks with truck-to-truck links: grow a scene model (trucks, sources, links) with this fan layout as the per-truck piece, place more than one source of a kind, and key `highlight` by truck as well as delivery.
 * **Pressurised vs flowing** (with branch shut-off above, CALIBRATION row 13): `LineState` `charged` is "delivery flows"; once a branch can be shut, split it so the hose follows pressure (`DeliveryLine.branchKpa`) and the spray follows flow.
 * Fan layout with many lines: spread is capped (38°, 16° per step), so 5–6 lines at short reach would crowd the branch markers. Fine for v1 (≤ 3 deliveries); revisit with a bigger truck (M7).
-* The e2e + review run has grown to ~60 s + ~30 s with the scene fixtures and journeys (budget ~60 s total, docs/TESTING.md §4); trim or parallelise before adding more.
+* The e2e + review run is now ~2 min + ~1 min with the M4 fixtures and journeys (budget ~60 s total, docs/TESTING.md §4): the overheat journey steps 400 s of sim and the shell fixtures are full-page at three widths. Trim (e.g. scene-alone fixtures that the shell fixtures now cover) or parallelise before adding more.
+* M4 follow-ups: water hammer on inlet (butterfly) valves and weighted by hose size; hydrant back-fill into an open tank valve and tank fill from a hydrant, the tank-to-hydrant changeover surge (manual L1083–1098); prime-loss events (air leak at a coupling, vortex, strainer blocking) and dam level dropping the lift (M6 events); engine load droop, so losing prime shows the manual's rpm surge; pump damage from sustained cavitation or overheat as a fail state (M6); a temperature gauge where an appliance fits one.
+* On a 375 px phone the six warning lamps wrap HAMMER onto a second row, and the long scenario titles truncate in the picker. Both readable; tidy when lamps get acknowledge (M6).
 * Split `ValveHandle.tsx` (~260 lines) and `Gauge.tsx` (~250) under the ~200-line guideline; both are mostly SVG.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 

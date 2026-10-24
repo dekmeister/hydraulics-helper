@@ -39,16 +39,23 @@ src/
     constants.ts  # Tunable physical constants (see §6)
     hose.ts       # Hose friction from the shared hose catalogue
     branch.ts     # Branch orifice law
-    pump.ts       # Pump curve, engine rpm lag (priming, cavitation, overheat from M4)
+    pump.ts       # Pump curve, engine rpm lag
+    inlets.ts     # Inlet paths (tank, hydrant, draught) in parallel; cavitation floor, layflat collapse
     network.ts    # Per-truck steady-state solver (bisection on discharge pressure)
-    tank.ts       # Tank / dam volume integration
+    priming.ts    # Primer vacuum, catching, duty cycle, loss of prime (switches on primer.kind)
+    thermal.ts    # Churn heat vs flow-through cooling
+    hammer.ts     # Water hammer (Joukowsky surge on valve closures)
+    rng.ts        # Seeded PRNG step (gauge flutter)
+    tank.ts       # Tank volume integration
     relay.ts      # Relay link logic (open & closed)
     engine.ts     # Tick loop: advance(state, inputs, dt) -> state
     appliances/   # ApplianceSpec per vehicle type + catalogue (see §9)
     scenarios/    # Scenario definitions as data (JSON-like TS); scripted runs + golden traces (__traces__/)
   state/
     store.ts      # Zustand store; owns SimState; dispatches player inputs
-    selectors.ts  # Derived values for UI (gauge angles, warnings)
+    selectors.ts  # Derived values for UI (displayed readings, delivery lines)
+    warnings.ts   # Warning lamps
+    supply.ts     # Primer status, supply hoses for the scene
     loop.ts       # requestAnimationFrame accumulator → fixed 10 Hz ticks (not started in the e2e build)
   ui/
     panel-pump/   # Generic controls (Gauge, ValveHandle, Throttle, Primer) + layout-driven renderer
@@ -91,10 +98,14 @@ The number and size of inlets and deliveries come from the appliance spec (§9).
 
 Sources (which ones exist, and whether they can be combined, is set by the appliance spec):
 
-* **Tank** (tank-to-pump valve): the compound gauge reads slightly *negative*, more so with flow (manual L3529): `P_in = −k_inlet·Q²/open²`, limited by tank volume. With tank-to-pump shut or the tank empty, the pump is dry and every gauge reads 0 (Table 6). Smarter starvation behaviour arrives with cavitation in M4.
-* **Hydrant/collector**: fixed positive inlet pressure (scenario parameter, e.g. 300–700 kPa), effectively unlimited volume.
-* **Draughting** (static source via suction hose): inlet pressure is *negative* — lift converts to vacuum. Requires priming. Max practical lift ~7 m; performance degrades well before that.
-* **Relay inlet**: pressure supplied by another truck's discharge (closed relay).
+An appliance's inlets are *ports* (`InletKind = 'tank' | 'suction'`); what is plugged into a suction inlet is scenario data: `SimState.sources` (water sources: hydrants and static water such as a dam, whose volume changes) and `SimState.supplies` (`SupplyLine`: inlet → source over hose segments, hard suction or layflat). Every open inlet path that can deliver water is a source head behind a resistance (`inlets.ts`), and the paths combine in parallel at the pump inlet:
+
+* **Tank** (tank-to-pump valve): head 0, `P_in = −k_inlet·Q²/open²`: the compound gauge reads slightly *negative*, more so with flow (manual L3529). With tank-to-pump shut or the tank empty, the pump is dry: the discharge reads 0 (Table 6) and the compound shows any primer vacuum.
+* **Hydrant** (layflat to a collecting head on the suction inlet): `P_in = static − (main + layflat + inlet valve)·Q²`, the square law behind the manual's reserve-flow rule (C14). Layflat collapses below 0 kPa (`LAYFLAT_COLLAPSE_KPA`), so over-running the hydrant reads "inlet zero, hose soft" (Table 7). A hydrant at higher pressure than the tank means the tank feed gives nothing (no back-fill modelled).
+* **Draughting** (hard suction to static water): `P_in = −10·lift − (hard suction + strainer + inlet valve)·Q²`, and only once primed (§4.6). C11: 4 m of lift reads −40 kPa.
+* **Relay inlet** (M5): a third supply kind, fed by another truck's discharge.
+
+The pump can't pull its inlet below `pump.cavitationInletKpa` (§4.6 cavitation).
 
 ### 4.4 Pump curve
 
@@ -121,17 +132,17 @@ Each delivery is a series path: valve → hose segments → branch (nozzle).
 * **Elevation**: `ΔP_elev = 10 · Δh` (uphill positive).
 * **Branch**: orifice law, `Q = k_branch · √P_nozzle`. Branch types as data: 38 mm attack branch, 65 mm branch, fog/jet setting affecting `k`. Target teaching point: branches want ~700 kPa at the nozzle.
 
-**Solver** (`network.ts`): for a given discharge pressure `P_d`, each open line's flow has a closed form, `Q = √((P_d − 10·Δh)/R)`, where `R` = valve + hose + `1/k_branch²`. Total demand (lines + relief) rises with `P_d`; the supply (pump curve less inlet loss) falls with flow. So bisect `P_d` on `[0, shutoff at current rpm]` for a fixed `SOLVER_ITERATIONS`, which keeps it deterministic. No matrix solvers, no external libs. One line per delivery.
+**Solver** (`network.ts`): for a given discharge pressure `P_d`, each open line's flow has a closed form, `Q = √((P_d − 10·Δh)/R)`, where `R` = valve + hose + `1/k_branch²`. Total demand (lines + relief) rises with `P_d`; the supply (inlet pressure at that flow plus the pump rise) falls with flow. So bisect `P_d` on `[0, highest source head + shutoff at current rpm]` for a fixed `SOLVER_ITERATIONS`, which keeps it deterministic. The inlet pressure for a given inlet flow is itself a bisection over the parallel paths, down to the cavitation floor. Past the flow the paths can give at the floor, the inlet pressure is taken to plunge, which pins the root at the capped flow; the discharge is then whatever the open lines take at that flow. No matrix solvers, no external libs. One line per delivery.
 
 ### 4.6 Failure & realism behaviours (the fun part)
 
 These make the model *teach*:
 
-* **Cavitation**: when demanded flow exceeds what the inlet can supply (draughting lift too high, suction strainer restriction, or outrunning a relay), inlet pressure collapses. Symptoms: discharge pressure sags and fluctuates (add noise to gauge), rattling audio, throttle stops responding ("adding RPM does nothing" — the classic lesson). Sustained cavitation damages the pump (scenario fail state).
-* **Priming**: draughting requires running the primer until the compound gauge pulls vacuum and the pump catches. Losing prime (air leak event, running the source dry) forces re-priming.
+* **Cavitation**: the pump cavitates when its inlet would fall below `pump.cavitationInletKpa` (−84 kPa reproduces Table 4's lift derate to 5 % up to 7 m). The inlet can't go lower, so the flow is capped: lift too high, suction restriction, a weak hydrant (where the layflat flattens at 0 first) or, later, outrunning a relay. Extra throttle adds no flow and no discharge ("adding RPM does nothing", the classic lesson). `readings.cavitation` (0–1) is how far past the cap the pump would go if the inlet could be pulled without limit. Gauges flutter: a seeded random walk (`SimState.rngState`, one draw per truck per tick) in `pump.flutter`, scaled by intensity and added to the *displayed* readings by the selectors, so sim readings, traces and calibration stay clean. Sustained cavitation is tallied (`tally.cavitationS`); pump damage and fail states are M6.
+* **Priming** (`priming.ts`): tank and hydrant supplies are flooded and never need it; a draught path supplies water only once primed. The primer pulls vacuum on the casing (plus the hard suction when its valve is open) towards `maxVacuumKpa`, with time constant air volume / `displacementLps`; the pump catches at `vacuum ≥ 10·lift`. An open delivery with a line is an air leak (no vacuum, L3265–3276); a casing flooded by an open tank or hydrant has no air to pull; with the suction valve shut, vacuum builds fast and holds (the vacuum test). `primer.kind`: rotary vane (switch; 1 min on in 3 duty, a cut-out that clears after the rest), hand diaphragm (switch = stroking; slower), self-priming (no control, primes whenever the suction is open), none (can't draught). Prime is lost when the static source runs dry. Air leaks and vortexing as events are M6.
 * **Tank runs dry**: level gauge, low-water warning, then flow collapse. Firefighters on the scene panel lose water.
-* **Overheat**: pump running at pressure with zero flow heats up; recirculation/relief line or cracking a delivery fixes it.
-* **Water hammer**: slamming a valve from high flow to closed too fast scores damage; teaches smooth valve operation. (Detect via dQ/dt threshold — no transient sim needed.)
+* **Overheat** (`thermal.ts`): casing water temperature from churn heat `churnKw·(rpm/max)³` against flow-through cooling `Q·4.186·ΔT` (deliveries, and relief dumped to the tank; relief dumped to the inlet recirculates and doesn't cool) and a little loss to air. A dry pump doesn't heat. Lamp at 60 / 80 °C; tallied.
+* **Water hammer** (`hammer.ts`): a delivery valve that closed further this tick, with the flow drop over the tick turned into a Joukowsky surge `ρ·a·Δv` in the hose. Above `WATER_HAMMER_SURGE_KPA` it is an event: `tally.waterHammer` (the penalty, scored in M6) and `lastHammer`, which latches a lamp for 5 s. Flow lost any other way (tank dry, cavitation onset) isn't hammer. Inlet (butterfly) valves aren't checked yet.
 * **Over-pressuring a closed relay**: receiving operator's compound gauge climbs; exceeding hose rating bursts a length (scenario event).
 
 ### 4.7 Relay pumping
@@ -144,14 +155,16 @@ A scenario can contain multiple trucks; the player operates one panel at a time 
 ### 4.8 State shape (sketch)
 
 ```ts
-interface SimState {
-  time: number;
-  trucks: TruckState[];      // spec (copied ApplianceSpec, §9.2) + dynamic pump/tank/engine/valve state
-  links: RelayLink[];        // truck->truck or truck->dam connections
-  sources: WaterSource[];    // dam, hydrant, portable dam
-  lines: HoseLine[];         // segments, elevation profile, branch
-  events: SimEvent[];        // burst hose, air leak, etc.
-  score: ScoreState;
+interface SimState {                 // src/sim/types.ts is authoritative
+  timeS: number;
+  activeTruckId: string;
+  trucks: TruckState[];      // spec copy, rpm, tank, inputs, readings, pump (primed, vacuum, primer duty,
+                             // temperature, flutter), tally (cavitation s, overheat s, hammer), lastHammer
+  lines: HoseLine[];         // delivery lays: segments, elevation, branch
+  sources: WaterSource[];    // hydrants, static water (dam volume changes)
+  supplies: SupplyLine[];    // inlet ← source hoses (hard suction, layflat)
+  rngState: number;          // seeded PRNG (flutter)
+  // later: links: RelayLink[] (M5), events: SimEvent[] and score (M6)
 }
 ```
 
@@ -181,12 +194,16 @@ All physical constants live in `sim/constants.ts` with a comment citing the inte
 * **Controls** are driven by drag; what a tap does is layout data per control (`tap: 'toggle' | 'none'`). Tank-to-pump toggles on a tap; deliveries ignore taps so a stray thumb never charges a line (Design §5). Hit targets ≥ 44 px.
 * **Needles** chase the sim reading with a critically damped spring on `requestAnimationFrame` (`ui/panel-pump/damping.ts`); `aria-valuenow` is the displayed value, and `__pumpops.settle()` snaps them.
 * **Handle colour by function** (inlets green, outlets blue); delivery identity is a glyph + tag, never colour alone (Design OPEN_DECISIONS #1, option B — pending Dek).
-* **Scene panel v1** (`ui/panel-scene/`) is a plan-view SVG composed from components: static scenery (`Backdrop`), the truck drawn from its scene art (`ApplianceArt`), one `HoseLay` per line and a `BranchCrew` at each branch. State-driven bits: a line is drawn charged when its delivery flows (`deliveryLines` in `state/selectors.ts`; branches can't be shut yet, so pressurised means flowing), the branch sprays while charged, the truck's tank bar shows the water left (amber + triangle at ≤ ¼, red outline empty). The dam is scenery until draughting (M4).
+* **Scene panel v1** (`ui/panel-scene/`) is a plan-view SVG composed from components: static scenery (`Backdrop`), the truck drawn from its scene art (`ApplianceArt`), one `HoseLay` per line and a `BranchCrew` at each branch. State-driven bits: a line is drawn charged when its delivery flows (`deliveryLines` in `state/selectors.ts`; branches can't be shut yet, so pressurised means flowing), the branch sprays while charged, the truck's tank bar shows the water left (amber + triangle at ≤ ¼, red outline empty). The dam and a hydrant are where supply hoses end (see Scene supplies below).
   * **Geometry is UI data.** `HoseLine` has no coordinates; `geometry.ts` lays the scene out as a pure function of the scene art and the lines: the truck parks with its couplings facing the fireground, lines fan out from their couplings, each branch sits ~85 % of its hose length from the truck, and the map scale shrinks so the longest lay fits (the scale bar is drawn from it). Trucks, crews and the dam are map symbols, larger than scale. Where the truck parks, the fire heading, the dam, the track and the fire front are one definition (`ui/panel-scene/site.ts`), and a geometry test keeps every registered truck's body clear of the dam. One line per delivery is assumed by the scene and panel rows, and checked for every scenario in `sim/scenarios/scenarios.test.ts`. Contours are decorative; a branch's elevation is a label beside it.
   * **Identity:** delivery tag, glyph and label come from the panel layout (`ui/appliances/identity.ts`), so scene and panel can't disagree. Charged hoses are outlet blue for every line.
   * **Accessibility:** the map is `role="img"`; the HTML legend under it is the accessible, 44 px equivalent (a button per delivery with its state as description, plus the tank). Hoses on the map also take taps through a wide invisible hit stroke.
   * **Scene↔panel correspondence** is UI state in the store (`highlight: { deliveryId, from }`, never sim state). Tapping a hose, its branch or its legend row ("Show Delivery 1 on panel") highlights that delivery's panel row and scrolls it into view; the panel row's text is a button ("Show Delivery 1 on scene") that highlights the hose and legend row (its visible size and lay text is the button's accessible description). Tapping again clears it. The highlight is the focus ring's double band (dial inside ink), never amber.
-* **Warnings/telemetry HUD**: small strip surfacing what a real operator would hear/feel (engine note, cavitation rattle) as text/icons until audio exists.
+* **Warnings/telemetry HUD**: small strip surfacing what a real operator would hear/feel (engine note, cavitation rattle) as text/icons until audio exists. Lamps (`state/warnings.ts`): tank, supply (why no water reaches the pump: inlets shut, not primed, dam empty, nothing connected), relief, temperature, cavitation (naming the lift or a hydrant over-run, and to ease the throttle), hammer (latched 5 s).
+* **The Wake** (Design §6): the store keeps the last 3 s of *sim-time* displayed readings (`wake`), and each dial draws their min–max band and five fading ghosts (`gauge/wake.ts`, `WakeMarks`), so hunting shows as a fan even through needle damping and in a `step(300)` test. The compound needle turns amber while the pump cavitates.
+* **Primer control**: hold to run; a ring fills with vacuum (fraction of the primer's best); captions RUNNING, CHECK SUCTION (30 s without catching, amber), PRIMED (check mark), COOLING (duty cut-out).
+* **Scenario picker**: a native select at the top of the scene loads any scenario the active appliance can play (`store.loadScenario`). A stand-in for scenario selection (M6).
+* **Scene supplies**: a supply hose runs from its inlet coupling to the dam (hard suction, strainer, green water core once primed) or to a hydrant on the track (green layflat, dashed when soft). While cavitating, charged delivery hoses break into gaps. The legend adds a non-interactive row per supply.
 * Accessibility floor: keyboard operable controls, ARIA labels with live gauge values, respects `prefers-reduced-motion`.
 * **Testability is a UI requirement** (`docs/TESTING.md` §3): instruments are `role="meter"` with `aria-valuenow` in native units, controls use Pointer Events only, and in the `e2e` build the real-time loop is replaced by explicit `__pumpops.step()` so rendered tests are deterministic.
 
@@ -203,10 +220,10 @@ The game will grow to cover several vehicle types (Cat 1 / Cat 7 / Cat 9 tankers
 
 | Shared — engine code + `sim/constants.ts` | Varies — `ApplianceSpec` (`sim/appliances/<id>.ts`) |
 |---|---|
-| Physics: 10 kPa/m head, hose friction per size, orifice law, lift-derate table, atmospheric pressure | Pump: shutoff pressure, droop, rated flow, rpm idle/priming/max, stages, series/parallel (pressure/volume) mode if fitted |
+| Physics: 10 kPa/m head, hose friction per size, orifice law, layflat collapse, strainer loss, water heat capacity, Joukowsky surge | Pump: shutoff pressure, droop, rated flow, rpm idle/priming/max, stages, series/parallel (pressure/volume) mode if fitted |
 | Hose and branch catalogue (25/38/65 mm …): the physics of a 38 mm length doesn't change by truck | Equipment carried: which hose sizes/lengths and branches are stowed |
 | Failure behaviours: cavitation, loss of prime, churn overheat, water hammer | Tank: capacity, crew-protection reserve, tank-to-pump valve type; absent on a portable pump |
-| Network solver, tick loop, relay logic | Inlets available (tank, hydrant/collector, draught suction, relay) and their sizes |
+| Network solver, tick loop, relay logic | Inlets fitted (tank feed, suction inlets that take hard suction or a collecting head) and their sizes; pump cavitation pressure, casing volume, churn heat |
 | | Deliveries: count, size, valve type; hose reels |
 | | Primer: electric rotary vane (duty cycle) / hand diaphragm / self-priming / none |
 | | Pressure relief: adjustable with lamp / preset / none; recirculation to tank or inlet |
@@ -222,12 +239,13 @@ Differences are expressed as **fields and enums on the spec, never as `if (appli
 interface ApplianceSpec {        // src/sim/types.ts is authoritative
   id: string;                    // 'cat1-generic' — stable, used in saves/scenarios
   name: string;                  // UI copy; generic, no branding
-  pump: PumpSpec;                // { shutoffKpa, droopKpaPerLpm2 }
+  pump: PumpSpec;                // { shutoffKpa, droopKpaPerLpm2, cavitationInletKpa, casingVolumeL, churnKw }
   engine: EngineSpec;            // { idleRpm, maxRpm, rpmLagS }
   tank?: TankSpec;               // { capacityL }
-  inlets: InletSpec[];           // { id, label, kind: 'tank'|'hydrant'|'draught'|'relay', lossKpaPerLpm2, sizeMm? }
+  inlets: InletSpec[];           // { id, label, kind: 'tank'|'suction', lossKpaPerLpm2, sizeMm? }
   deliveries: DeliverySpec[];    // { id, label, sizeMm }
-  primer?: PrimerSpec;           // { kind: 'rotaryVane', id, maxOnS, periodS } | { kind: 'diaphragm', id } | { kind: 'selfPriming' }
+  primer?: PrimerSpec;           // { kind: 'rotaryVane', id, maxOnS, periodS } | { kind: 'diaphragm', id } | { kind: 'selfPriming' },
+                                 // each with { maxVacuumKpa, displacementLps }
   relief?: ReliefSpec;           // { kind: 'preset', setKpa, … } | { kind: 'adjustable', id, minKpa, maxKpa, … }; dumpTo 'tank'|'inlet'
   instruments: InstrumentSpec[]; // { id, kind: 'compound'|'discharge'|'tacho', scale: { fullScale, zones } } | { id, kind: 'tank' }
 }
@@ -246,7 +264,7 @@ Control ids are the inlet, delivery and adjustable-relief ids (valves, 0–1) pl
 
 Each appliance has a layout in `ui/appliances/<id>/layout.ts` (types in `ui/appliances/types.ts`, registered in `ui/appliances/registry.ts`): an ordered list of sections, each placing spec controls and instruments with their label, `Gauge` face, control variant and tap behaviour. The face is a template: its range and zones come from the instrument's `scale` on the spec, since gauge markings differ between trucks. Sections are `row` (wrapping) or `list` (stacked rows), and CSS container queries size the components, so one layout serves 375–1280 px; each component draws its own SVG in its own `viewBox`. Absolute positions on a drawing (`Design/layouts/layout-a.json`) belong to the later realistic bay view, not this panel. The pump panel renderer (`ui/panel-pump/PumpPanel.tsx`) iterates the layout using the generic components (`Gauge`, `TankLevel`, `ValveHandle`, `Throttle`, `PrimerControl`, `WarningStrip`). The throttle and warning strip are placed by the layout too, exactly once. Adding an appliance means adding a spec, a layout and scene art; a new component is needed only for a genuinely new kind of control.
 
-**Scene art** (`ui/appliances/<id>/scene.ts`, type `SceneArt`, registered in the same registry) describes the truck from above in drawing units: body length and width, cab length, whether it has a tank hatch, and one coupling per delivery (truck-local position and the way it faces), keyed by spec delivery id. One generic `ApplianceArt` draws it. `ui/appliances/scene.test.ts` checks art ↔ spec one-to-one, as for the layout; the test appliance's art lives in `src/testing/appliances/`.
+**Scene art** (`ui/appliances/<id>/scene.ts`, type `SceneArt`, registered in the same registry) describes the truck from above in drawing units: body length and width, cab length, whether it has a tank hatch, and one coupling per delivery and per suction inlet (truck-local position and the way it faces), keyed by spec control id with a `kind` (`delivery | inlet`); the tank feed is internal and has none. One generic `ApplianceArt` draws it. `ui/appliances/scene.test.ts` checks art ↔ spec one-to-one, as for the layout; the test appliance's art lives in `src/testing/appliances/`.
 
 * Real panels differ in arrangement, and finding the right control is part of the skill, so a layout should follow the real arrangement (generic styling, no livery).
 * Every layout must meet the mobile floor (375 px, 44 px targets). If a real panel is too dense, group the controls (e.g. a swipeable delivery bank) rather than shrink them.
@@ -255,11 +273,11 @@ Each appliance has a layout in `ui/appliances/<id>/layout.ts` (types in `ui/appl
 ### 9.5 Calibration and tests per appliance
 
 * `docs/CALIBRATION.md` has a **shared physics** section (friction, branches, lift, head) and **one section per appliance** (pump curve, tank, rated flow, rpm). Every spec number carries the same `// doctrine-confirmed` / `// PLACEHOLDER — needs Dek` comment as `constants.ts`.
-* A **contract suite** runs `describe.each` over all registered appliances: determinism, NaN/edge fuzz, tank runs dry without crashing, cavitation onset, prime/lose-prime where a primer exists. A new appliance gets these for free; appliance-specific worked examples go alongside.
+* A **contract suite** runs `describe.each` over all registered appliances: determinism, NaN/edge fuzz (on tank, hydrant and draught supplies), tank runs dry without crashing, and where a suction inlet and a primer exist: prime and draw, cavitation onset with throttle adding no flow, lose prime on an empty dam. A new appliance gets these for free; appliance-specific worked examples go alongside.
 
 ### 9.6 Scenarios
 
-Scenarios name appliances by `id`. Where the lesson is generic (e.g. "tank attack"), a scenario declares the **capabilities** it requires (`tank`, `deliveries ≥ 2`, `draught inlet`) instead of a fixed appliance, so it can be played on any appliance that has them. The loader rejects a scenario whose appliances lack those capabilities. Relay scenarios may mix appliance types (e.g. bulk water carrier supplying a Cat 1).
+Scenarios name appliances by `id`. Where the lesson is generic (e.g. "tank attack"), a scenario declares the **capabilities** it requires (`tank`, `deliveries ≥ 2`, `suction` inlet, a `primer` of any kind) instead of a fixed appliance, so it can be played on any appliance that has them. The loader rejects a scenario whose appliances lack those capabilities. Relay scenarios may mix appliance types (e.g. bulk water carrier supplying a Cat 1).
 
 ### 9.7 Adding an appliance — checklist
 
