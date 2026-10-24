@@ -21,7 +21,10 @@ interface Props {
 const BAY_U = 14;
 const BAR_H = 8;
 
-/** Tank fill bar along the body: tank-lit fill, amber with a triangle when low, red outline empty. */
+/**
+ * Tank fill bar along the body: tank-lit fill, amber with a triangle (on the empty end of the bar,
+ * clear of the hatch) when low, red outline when empty.
+ */
 function TankBar({
   art,
   fraction,
@@ -48,7 +51,7 @@ function TankBar({
       {level === 'low' && (
         <path
           className="scene-tank__triangle"
-          d={`M${String(x0 + len / 2)} ${String(y - 15)} l7 12 h-14 Z`}
+          d={`M${String(x0 + len - 9)} ${String(y - 3)} l7 12 h-14 Z`}
         />
       )}
     </g>
