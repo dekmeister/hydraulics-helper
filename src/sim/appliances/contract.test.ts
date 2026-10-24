@@ -4,10 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { BRANCH_OPTIMUM_KPA, HOSES } from '../constants';
 import { createIdleInputs, createInitialState } from '../engine';
 import {
+  draughtSite,
+  hydrantSite,
+  inputsWith,
   layLine,
   lineOnEveryDelivery,
+  primedState,
   run,
   seededRandom,
+  suctionInletOf,
   tankAttackInputs,
   truckOf,
 } from '../testUtils';
@@ -32,7 +37,14 @@ function expectSaneReadings(state: SimState) {
     ...Object.values(r.deliveryFlowLpm),
     ...Object.values(r.branchKpa),
   ];
+  numbers.push(t.pump.tempC, t.pump.vacuumKpa, t.pump.flutter, r.cavitation);
+  numbers.push(...Object.values(r.inletFlowLpm));
   for (const n of numbers) expect(Number.isFinite(n)).toBe(true);
+  expect(r.compoundKpa).toBeGreaterThanOrEqual(-100);
+  expect(r.cavitation).toBeGreaterThanOrEqual(0);
+  expect(r.cavitation).toBeLessThanOrEqual(1);
+  expect(t.pump.vacuumKpa).toBeGreaterThanOrEqual(0);
+  for (const q of Object.values(r.inletFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
   expect(r.dischargeKpa).toBeGreaterThanOrEqual(0);
   for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
   expect(t.tankL).toBeGreaterThanOrEqual(0);
@@ -67,6 +79,16 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(spec.tank?.capacityL).toBeGreaterThan(0);
       if (spec.primer?.kind === 'rotaryVane')
         expect(spec.primer.maxOnS).toBeLessThan(spec.primer.periodS);
+      if (spec.primer !== undefined) {
+        expect(spec.primer.maxVacuumKpa).toBeGreaterThan(0);
+        expect(spec.primer.maxVacuumKpa).toBeLessThan(100);
+        expect(spec.primer.displacementLps).toBeGreaterThan(0);
+      }
+      expect(spec.pump.cavitationInletKpa).toBeLessThan(0);
+      expect(spec.pump.cavitationInletKpa).toBeGreaterThan(-100);
+      expect(spec.pump.casingVolumeL).toBeGreaterThan(0);
+      expect(spec.pump.churnKw).toBeGreaterThan(0);
+      for (const i of spec.inlets) if (i.kind === 'suction') expect(i.sizeMm).toBeGreaterThan(0);
     });
 
     it('has dial scales that cover what its pump and engine can reach', () => {
@@ -166,6 +188,78 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
       expect(r.pumpFlowLpm).toBe(0);
       for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBe(0);
       expectSaneReadings(s);
+    });
+
+    const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
+    const primerIds = spec.primer !== undefined && 'id' in spec.primer ? [spec.primer.id] : [];
+
+    /** Prime from a dam at `liftM` with the primer (or self-priming), within `maxTicks`. */
+    const primeAt = (liftM: number, volumeL = 1e6, maxTicks = 1200) => {
+      const suction = suctionInletOf(spec);
+      let s = createInitialState(
+        spec,
+        lineOnEveryDelivery(spec),
+        draughtSite(spec, liftM, volumeL),
+      );
+      for (let i = 0; i < maxTicks && !truckOf(s).pump.primed; i++) {
+        s = run(s, inputsWith(0, [suction], primerIds), 1);
+      }
+      return s;
+    };
+
+    it.runIf(hasSuction && spec.primer !== undefined)(
+      'primes from a dam at 4 m, then draws water with the compound in vacuum',
+      () => {
+        let s = primeAt(4);
+        expect(truckOf(s).pump.primed).toBe(true);
+        s = run(s, inputsWith(0.6, [suctionInletOf(spec), ...allDeliveries(spec)]), 50);
+        expectSaneReadings(s);
+        expect(truckOf(s).readings.pumpFlowLpm).toBeGreaterThan(0);
+        expect(truckOf(s).readings.compoundKpa).toBeLessThan(-40);
+      },
+    );
+
+    it.runIf(hasSuction && spec.primer !== undefined)(
+      'cavitates when pushed past what the lift allows, and throttle then adds no flow',
+      () => {
+        const open = [suctionInletOf(spec), ...allDeliveries(spec)];
+        const big = spec.deliveries.map((d) => layLine(d.id, '65L', 1, 32));
+        const s0 = primedState(createInitialState(spec, big, draughtSite(spec, 6)));
+        const r90 = truckOf(run(s0, inputsWith(0.9, open), 50)).readings;
+        const r100 = truckOf(run(s0, inputsWith(1, open), 50)).readings;
+        expect(r100.cavitation).toBeGreaterThan(0);
+        expect(r100.compoundKpa).toBeCloseTo(spec.pump.cavitationInletKpa, 3);
+        expect(r100.pumpFlowLpm).toBeCloseTo(r90.pumpFlowLpm, 3);
+      },
+    );
+
+    it.runIf(hasSuction && spec.primer !== undefined)(
+      'loses prime when the dam runs dry, without NaN or a crash',
+      () => {
+        let s = primeAt(3, 300);
+        s = run(s, inputsWith(1, [suctionInletOf(spec), ...allDeliveries(spec)]), 600);
+        expect(truckOf(s).pump.primed).toBe(false);
+        expect(truckOf(s).readings.pumpFlowLpm).toBe(0);
+        expectSaneReadings(s);
+      },
+    );
+
+    it.runIf(hasSuction)('survives fuzzed inputs on hydrant and draught supplies', () => {
+      const rand = seededRandom(0xbeef);
+      const wild = () => [rand(), 0, 1, -1, Number.NaN, 1e-9][Math.floor(rand() * 6)] ?? 0;
+      for (const site of [hydrantSite(spec), draughtSite(spec, 1 + rand() * 9, 500)]) {
+        let s = createInitialState(spec, lineOnEveryDelivery(spec), site);
+        if (rand() < 0.5) s = primedState(s);
+        for (let burst = 0; burst < 20; burst++) {
+          const inputs: PlayerInputs = {
+            throttle: wild(),
+            valves: Object.fromEntries(controlIds(spec).map((id) => [id, wild()])),
+            switches: Object.fromEntries(controlIds(spec).map((id) => [id, rand() < 0.5])),
+          };
+          s = run(s, inputs, 10);
+          expectSaneReadings(s);
+        }
+      }
     });
   },
 );

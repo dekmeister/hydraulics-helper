@@ -1,6 +1,8 @@
 import { APPLIANCES } from '../appliances/catalogue';
 import type { ApplianceSpec } from '../types';
 import { runScript } from './run';
+import { DRAUGHTING } from './draughting';
+import { HYDRANT_SUPPLY } from './hydrantSupply';
 import { TANK_ATTACK } from './tankAttack';
 import { traceCsv } from './trace';
 import { supports, type Scenario } from './types';
@@ -8,7 +10,7 @@ import { supports, type Scenario } from './types';
 export { APPLIANCES };
 
 /** Every scripted scenario. Grows into the full scenario ladder in M6. */
-export const SCENARIOS: readonly Scenario[] = [TANK_ATTACK];
+export const SCENARIOS: readonly Scenario[] = [TANK_ATTACK, HYDRANT_SUPPLY, DRAUGHTING];
 
 export function getScenario(id: string): Scenario {
   const scenario = SCENARIOS.find((s) => s.id === id);
