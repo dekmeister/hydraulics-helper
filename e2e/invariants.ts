@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import type {} from '../src/testing/types'; // window.__pumpops typing
 import type { PanelLayout } from '../src/ui/appliances/types';
 
 /** Minimum touch target edge in CSS px (CLAUDE.md mobile floor; Design token touch.min). */
@@ -86,4 +87,27 @@ export async function expectSpecRenderedOnce(page: Page, layout: PanelLayout): P
     await expect(found, `${role} "${name}" reachable`).toBeInViewport();
   }
   await expect(page.getByRole('status')).toHaveCount(1);
+}
+
+/**
+ * Scene invariant: one legend button per spec delivery, by the name the layout gives it, and one
+ * hose lay per laid line, each reachable.
+ */
+export async function expectSceneRenderedOnce(page: Page, layout: PanelLayout): Promise<void> {
+  const state = await page.evaluate(() => window.__pumpops?.getState());
+  if (state === undefined) throw new Error('__pumpops missing');
+  const deliveries = layout.sections
+    .flatMap((s) => s.items)
+    .flatMap((i) => (i.kind === 'delivery' ? [i] : []));
+  for (const d of deliveries) {
+    const row = page.getByRole('button', { name: `Show ${d.label} on panel`, exact: true });
+    await expect(row, `legend row for ${d.label}`).toHaveCount(1);
+    await row.scrollIntoViewIfNeeded();
+    await expect(row, `legend row for ${d.label} reachable`).toBeInViewport();
+  }
+  const laid = state.lines.filter((l) => l.truckId === state.activeTruckId);
+  for (const line of laid) {
+    await expect(page.getByTestId(`hose-lay-${line.deliveryId}`)).toHaveCount(1);
+  }
+  await expect(page.locator('[data-testid^="hose-lay-"]')).toHaveCount(laid.length);
 }

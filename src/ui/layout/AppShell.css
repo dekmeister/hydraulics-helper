@@ -31,11 +31,12 @@ body {
   }
 
   /* The page scrolls the pump panel; the scene stays in view beside it. */
-  .app-panel:first-child {
+  .app-shell > .app-panel:first-child {
     position: sticky;
     top: var(--space-2);
     height: calc(100vh - 2 * var(--space-2));
     height: calc(100dvh - 2 * var(--space-2));
+    overflow-y: auto;
   }
 
   .app-panel--pump {

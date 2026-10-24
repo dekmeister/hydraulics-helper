@@ -19,6 +19,15 @@ function clamp01(x: number): number {
   return Number.isFinite(x) ? Math.min(1, Math.max(0, x)) : 0;
 }
 
+/** Which side of the scene↔panel correspondence asked for a highlight. */
+export type HighlightSource = 'scene' | 'panel';
+
+/** A delivery picked out on both panels (UI state only, never sim state). */
+export interface Highlight {
+  deliveryId: ControlId;
+  from: HighlightSource;
+}
+
 interface PumpOpsStore {
   sim: SimState;
   /** What the player has set on the panel; applied to the active truck on every tick. */
@@ -32,6 +41,9 @@ interface PumpOpsStore {
   setValve: (id: ControlId, open: number) => void;
   /** Set an on/off control (primer) by spec control id. */
   setSwitch: (id: ControlId, on: boolean) => void;
+  highlight: Highlight | null;
+  /** Highlight a delivery on the scene and panel, or clear it if it's already highlighted. */
+  toggleHighlight: (deliveryId: ControlId, from: HighlightSource) => void;
 }
 
 const initialSim = defaultSim();
@@ -39,6 +51,7 @@ const initialSim = defaultSim();
 export const useStore = create<PumpOpsStore>()((set, get) => ({
   sim: initialSim,
   inputs: activeTruck(initialSim).inputs,
+  highlight: null,
   step: (ticks) => {
     set(({ sim, inputs }) => {
       let next = sim;
@@ -47,7 +60,7 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
     });
   },
   reset: (sim = defaultSim()) => {
-    set({ sim, inputs: activeTruck(sim).inputs });
+    set({ sim, inputs: activeTruck(sim).inputs, highlight: null });
   },
   setThrottle: (position) => {
     set(({ inputs }) => ({ inputs: { ...inputs, throttle: clamp01(position) } }));
@@ -65,5 +78,13 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
       throw new Error(`setSwitch: '${id}' is not a switch on the active appliance`);
     }
     set(({ inputs }) => ({ inputs: { ...inputs, switches: { ...inputs.switches, [id]: on } } }));
+  },
+  toggleHighlight: (deliveryId, from) => {
+    if (!activeTruck(get().sim).spec.deliveries.some((d) => d.id === deliveryId)) {
+      throw new Error(`toggleHighlight: '${deliveryId}' is not a delivery on the active appliance`);
+    }
+    set(({ highlight }) => ({
+      highlight: highlight?.deliveryId === deliveryId ? null : { deliveryId, from },
+    }));
   },
 }));

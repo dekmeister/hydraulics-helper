@@ -15,8 +15,10 @@ export interface FixtureMeta {
   steps?: number;
   /** Default: all three. */
   viewports?: ViewportName[];
-  /** Panel fixtures: the appliance shown, so layout specs can check its controls. */
+  /** Generated fixtures: the appliance shown, so layout specs can check its controls. */
   applianceId?: string;
+  /** What a generated fixture renders: the whole app shell, or the scene panel alone. */
+  surface?: 'shell' | 'scene';
 }
 
 const PANEL_CAPTIONS = {
@@ -66,14 +68,71 @@ const PANEL_FIXTURES: FixtureMeta[] = PANEL_FIXTURE_SETS.flatMap(({ spec, states
     id: panelFixtureId(spec.id, state),
     expect: PANEL_CAPTIONS[state],
     applianceId: spec.id,
+    surface: 'shell' as const,
   })),
 );
+
+const SCENE_CAPTIONS = {
+  'all-charged':
+    'Scene panel alone. Plan view: red truck with white cab near the dam (lower left), every ' +
+    'laid line charged (ink casing, blue core) from a coupling on the truck to a crew figure ' +
+    'whose branch sprays a pale fan towards the fire glow (upper right); each branch has its ' +
+    'delivery glyph and tag on a paper disc. A delivery with no line shows a dark blank cap. ' +
+    'North arrow, scale bar. Legend: laid deliveries "Charged · N L/min", others "No line"; ' +
+    'tank water just under full.',
+  'one-line-off':
+    'As all-charged, but the first line’s delivery is shut: that hose is thin dashed canvas ' +
+    'and its crew has no spray; every other line is still charged and spraying. Legend: first ' +
+    'line "Laid, dry".',
+  'tank-low':
+    'As all-charged, with the tank under a quarter: the tank bar on the truck has a short ' +
+    'amber fill and an amber triangle; legend "Tank water" status amber with a triangle, ' +
+    'ending "· low".',
+  'tank-empty':
+    'As all-charged, but the tank is empty: every hose is dashed canvas (dry), no sprays, the ' +
+    'tank bar is dark with a red outline; legend says "Laid, dry" on every line and the tank ' +
+    'status is red with a diamond, "0 L of … · empty".',
+} as const;
+
+export type SceneState = keyof typeof SCENE_CAPTIONS;
+
+const HIGHLIGHT_CAPTION =
+  'Whole app, every laid line charged, the first line highlighted on both panels: on the scene ' +
+  'that hose has a white band edged in ink and its legend row a white ring (pressed); on the ' +
+  'pump panel its delivery row has an inset ink-and-white ring. No amber anywhere.';
+
+/** Appliances that get generated scene fixtures, as for the panel. */
+export const SCENE_FIXTURE_SETS: readonly { spec: ApplianceSpec; states: readonly SceneState[] }[] =
+  [
+    ...APPLIANCES.map((spec) => ({ spec, states: Object.keys(SCENE_CAPTIONS) as SceneState[] })),
+    { spec: TEST_APPLIANCE, states: ['all-charged', 'one-line-off'] },
+  ];
+
+export function sceneFixtureId(applianceId: string, state: string): string {
+  return `scene/${applianceId}/${state}`;
+}
+
+const SCENE_FIXTURES: FixtureMeta[] = SCENE_FIXTURE_SETS.flatMap(({ spec, states }) => [
+  ...states.map((state) => ({
+    id: sceneFixtureId(spec.id, state),
+    expect: SCENE_CAPTIONS[state],
+    applianceId: spec.id,
+    surface: 'scene' as const,
+  })),
+  {
+    id: sceneFixtureId(spec.id, 'highlighted'),
+    expect: HIGHLIGHT_CAPTION,
+    applianceId: spec.id,
+    surface: 'shell' as const,
+  },
+]);
 
 export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'shell/default',
     expect:
-      'App shell: SCENE placeholder (empty) and PUMP PANEL with the default appliance at rest. ' +
+      'App shell: SCENE (plan view, tank-attack lines laid dry, legend) and PUMP PANEL with the ' +
+      'default appliance at rest. ' +
       'At 375 and 768 px stacked, Scene above. At 1280 px side by side, Scene left, the pump ' +
       'panel scrolling inside its card. No horizontal scroll.',
   },
@@ -120,6 +179,7 @@ export const FIXTURES: readonly FixtureMeta[] = [
       'primer buttons: HOLD (raised) and RUNNING (cap sunk, light ring).',
   },
   ...PANEL_FIXTURES,
+  ...SCENE_FIXTURES,
 ];
 
 /** File-safe name for screenshots and contact sheets: 'shell/default' → 'shell-default'. */

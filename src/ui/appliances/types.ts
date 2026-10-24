@@ -60,3 +60,37 @@ export interface PanelLayout {
   applianceId: string;
   sections: PanelSection[];
 }
+
+// ---------------------------------------------------------------------------
+// Scene art (ARCHITECTURE §9.4): how the appliance is drawn on the plan-view scene.
+// ---------------------------------------------------------------------------
+
+/**
+ * A delivery coupling on the truck, in truck-local drawing units: origin at the body's centre,
+ * +x towards the cab, +y towards the truck's right-hand side.
+ */
+export interface SceneCoupling {
+  /** Spec delivery id. */
+  delivery: ControlId;
+  x: number;
+  y: number;
+  /** Way the coupling points, degrees in the same frame: 0 forward, 90 right, 180 rearward. */
+  facingDeg: number;
+}
+
+/**
+ * Top-down truck art. Units are scene drawing units: the truck is a map symbol drawn larger than
+ * the hose scale, so these are not metres.
+ */
+export interface SceneArt {
+  applianceId: string;
+  /** Body length, cab included, and width. */
+  lengthU: number;
+  widthU: number;
+  /** Cab length at the front of the body. */
+  cabU: number;
+  /** Round tank hatch on the body (tankers). */
+  hatch: boolean;
+  /** One coupling per spec delivery. */
+  couplings: SceneCoupling[];
+}

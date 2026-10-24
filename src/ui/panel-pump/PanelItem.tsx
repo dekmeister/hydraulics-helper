@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useId, useMemo, useRef } from 'react';
 import { vernierStep } from './controls/controlMath';
 import {
   activeTruck,
@@ -68,19 +68,46 @@ function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> 
   const line = useStore((s) => lineOnDelivery(s.sim, item.control));
   const open = useStore((s) => s.inputs.valves[item.control] ?? 0);
   const setValve = useStore((s) => s.setValve);
+  const highlight = useStore((s) =>
+    s.highlight?.deliveryId === item.control ? s.highlight.from : null,
+  );
+  const toggleHighlight = useStore((s) => s.toggleHighlight);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const textId = useId();
   const delivery = spec.deliveries.find((d) => d.id === item.control);
+
+  // Picked on the scene: bring this row into view (it's below the scene on a phone).
+  useEffect(() => {
+    if (highlight === 'scene') rowRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [highlight]);
+
   return (
-    <div className="delivery-row">
-      <div className="delivery-row__text">
+    <div
+      ref={rowRef}
+      className={highlight === null ? 'delivery-row' : 'delivery-row delivery-row--highlighted'}
+      data-delivery={item.control}
+      data-highlighted={highlight !== null}
+    >
+      <button
+        type="button"
+        className="delivery-row__text"
+        aria-label={`Show ${item.label} on scene`}
+        // The label names the action; the size and lay stay readable as its description.
+        aria-describedby={`${textId}-name ${textId}-line`}
+        aria-pressed={highlight !== null}
+        onClick={() => {
+          toggleHighlight(item.control, 'panel');
+        }}
+      >
         <DeliveryTag tag={item.tag} glyph={item.glyph} />
-        <span className="delivery-row__name">
+        <span className="delivery-row__name" id={`${textId}-name`}>
           {item.label}
           {delivery === undefined ? '' : ` · ${String(delivery.sizeMm)} mm`}
         </span>
-        <span className="delivery-row__line">
+        <span className="delivery-row__line" id={`${textId}-line`}>
           {line === undefined ? 'No line laid' : describeLine(line)}
         </span>
-      </div>
+      </button>
       <ValveHandle
         label={item.label}
         value={open}
