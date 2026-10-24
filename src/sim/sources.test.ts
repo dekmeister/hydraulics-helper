@@ -12,7 +12,7 @@ import {
   run,
   truckOf,
 } from './testUtils';
-import type { ApplianceSpec, HoseLine, PlayerInputs } from './types';
+import type { ApplianceSpec, HoseLine, PlayerInputs, SupplyLine } from './types';
 
 // Inline spec so these tests don't move when an appliance's placeholders are re-tuned.
 const SPEC: ApplianceSpec = {
@@ -100,6 +100,12 @@ describe('hydrant supply', () => {
     const t = settle(hydrantSite(SPEC), inputsWith(1, ['suction', 'a', 'b']), BIG);
     expect(t.readings.compoundKpa).toBeCloseTo(0, 6);
     expect(t.readings.cavitation).toBeGreaterThan(0);
+    expect(t.readings.inletCollapsed.suction).toBe(true);
+  });
+
+  it('a layflat drawn within what the hydrant gives stays round', () => {
+    const t = settle(hydrantSite(SPEC), inputsWith(0.7, ['suction', 'a']));
+    expect(t.readings.inletCollapsed.suction).toBe(false);
   });
 
   it('C14: 400 kPa static, 300 residual at 1100 L/min leaves about as much again (L3127)', () => {
@@ -134,6 +140,8 @@ describe('cavitation floor', () => {
     expect(r100.pumpFlowLpm).toBeCloseTo(r90.pumpFlowLpm, 3);
     expect(r100.dischargeKpa).toBeCloseTo(r90.dischargeKpa, 3);
     expect(r100.compoundKpa).toBeCloseTo(-84, 3);
+    // Hard suction holds its shape at the floor: cavitation, not a collapsed hose.
+    expect(r100.inletCollapsed.suction).toBe(false);
     expect(r100.cavitation).toBeGreaterThanOrEqual(r90.cavitation);
   });
 
@@ -194,5 +202,66 @@ describe('draught supply', () => {
   it('rejects a supply whose source does not exist', () => {
     const site = draughtSite(SPEC, 3);
     expect(() => createInitialState(SPEC, ONE, { ...site, sources: [] })).toThrow(/no source/);
+  });
+});
+
+describe('site validation (data errors fail at state creation, not silently)', () => {
+  const site = draughtSite(SPEC, 3);
+  const withSupply = (patch: Partial<SupplyLine>): SiteOptions => ({
+    ...site,
+    supplies: site.supplies?.map((x) => ({ ...x, ...patch })) ?? [],
+  });
+
+  it('rejects a supply on an inlet the appliance does not have', () => {
+    expect(() => createInitialState(SPEC, ONE, withSupply({ inletId: 'nope' }))).toThrow(
+      /no inlet 'nope'/,
+    );
+  });
+
+  it('rejects a supply on the tank inlet', () => {
+    expect(() => createInitialState(SPEC, ONE, withSupply({ inletId: 'tank' }))).toThrow(
+      /not a suction inlet/,
+    );
+  });
+
+  it('rejects a supply to a truck that is not on the fireground', () => {
+    expect(() => createInitialState(SPEC, ONE, withSupply({ truckId: 'truck-9' }))).toThrow(
+      /no truck 'truck-9'/,
+    );
+  });
+
+  it('rejects two supplies on one inlet', () => {
+    const [hose] = site.supplies ?? [];
+    if (hose === undefined) throw new Error('draughtSite has no supply');
+    const twice: SiteOptions = { ...site, supplies: [hose, { ...hose, id: 'second' }] };
+    expect(() => createInitialState(SPEC, ONE, twice)).toThrow(/already has a supply/);
+  });
+
+  it('rejects more than one static source per truck (priming is tracked per pump)', () => {
+    const twoSuction: ApplianceSpec = {
+      ...SPEC,
+      inlets: [
+        ...SPEC.inlets,
+        { id: 'suction-2', label: 'Suction 2', kind: 'suction', lossKpaPerLpm2: 10e-6 },
+      ],
+    };
+    const [hose] = site.supplies ?? [];
+    if (hose === undefined) throw new Error('draughtSite has no supply');
+    const twoDams: SiteOptions = {
+      sources: [
+        { id: 'dam', kind: 'static', label: 'Dam', liftM: 3, volumeL: 1e6 },
+        { id: 'dam-2', kind: 'static', label: 'Dam 2', liftM: 3, volumeL: 1e6 },
+      ],
+      supplies: [hose, { ...hose, id: 'second', inletId: 'suction-2', sourceId: 'dam-2' }],
+    };
+    expect(() => createInitialState(twoSuction, ONE, twoDams)).toThrow(/one static source/);
+  });
+
+  it('rejects duplicate source ids', () => {
+    const dam = site.sources?.[0];
+    if (dam === undefined) throw new Error('draughtSite has no source');
+    expect(() => createInitialState(SPEC, ONE, { ...site, sources: [dam, dam] })).toThrow(
+      /duplicate source id 'dam'/,
+    );
   });
 });

@@ -123,3 +123,22 @@ export const VALVE_CLOSED_EPS = 0.01;
 
 /** Bisection iterations for the network solve: fixed, so results are deterministic. Numerical, not doctrine. */
 export const SOLVER_ITERATIONS = 60;
+
+/**
+ * How steeply the inlet pressure is taken to fall past the cavitation cap, kPa per L/min. Large, so
+ * the solve settles on the capped flow. Numerical, not doctrine.
+ */
+export const CAVITATION_STIFFNESS = 1e4;
+
+/**
+ * Inlet pressure within this of a layflat's collapse pressure counts as collapsed, kPa: the
+ * bisection lands a hair under it. Numerical, not doctrine.
+ */
+export const COLLAPSE_TOLERANCE_KPA = 1e-6;
+
+/**
+ * Gauge flutter is a smoothed random walk: each tick keeps this share of the last value and adds
+ * this much of a fresh uniform draw in −1…1. Display texture, not doctrine.
+ */
+export const FLUTTER_MEMORY = 0.5;
+export const FLUTTER_KICK = 0.87;

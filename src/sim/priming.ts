@@ -1,7 +1,7 @@
 // Priming for draughting (ARCHITECTURE §4.6): the primer pulls vacuum until it lifts water up the
 // hard suction to the pump, which then "catches". Behaviour switches on `primer.kind`.
 import { HEAD_KPA_PER_M, VACUUM_HOLD_TAU_S, VALVE_CLOSED_EPS } from './constants';
-import { hoseVolumeL } from './hose';
+import { hoseVolumeL, isRigid } from './hose';
 import type { ConnectedSupply } from './inlets';
 import type { ApplianceSpec, PlayerInputs, PrimerSpec, PumpState } from './types';
 
@@ -54,8 +54,8 @@ function stepDuty(primer: PrimerSpec | undefined, pump: PumpState, running: bool
  * Advance priming by `dtS`. Vacuum approaches the primer's best along an exponential whose time
  * constant is the air volume (casing, plus the suction hose if its valve is open) over the
  * primer's displacement. A sealed pump holds its vacuum slowly; an air leak or a flooded casing
- * drops it at once. The pump catches when vacuum ≥ 10 kPa per m of lift, and loses prime when its
- * static source runs dry or is disconnected.
+ * drops it at once. The pump catches when vacuum ≥ 10 kPa per m of lift up hard suction (never
+ * through layflat), and loses prime when its static source runs dry or is disconnected.
  */
 export function stepPrime(pump: PumpState, ctx: PrimeContext, dtS: number): PumpState {
   const { spec, inputs, supplies, flooded, openToAir } = ctx;
@@ -87,10 +87,12 @@ export function stepPrime(pump: PumpState, ctx: PrimeContext, dtS: number): Pump
   } else {
     vacuumKpa = pump.vacuumKpa * Math.exp(-dtS / VACUUM_HOLD_TAU_S);
   }
+  // Layflat flattens under vacuum, so only hard suction can lift water to the pump.
   if (
     draught !== undefined &&
     suctionOpen &&
     sourceHasWater &&
+    isRigid(draught.supply.segments) &&
     vacuumKpa >= HEAD_KPA_PER_M * draught.source.liftM
   ) {
     return { ...pump, ...duty, primed: true, primerRunS, vacuumKpa: 0 };

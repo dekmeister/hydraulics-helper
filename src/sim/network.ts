@@ -1,6 +1,8 @@
 import { branchK, branchPressureKpa } from './branch';
 import {
   CAVITATION_FULL_EXCESS,
+  CAVITATION_STIFFNESS,
+  COLLAPSE_TOLERANCE_KPA,
   HEAD_KPA_PER_M,
   SOLVER_ITERATIONS,
   VALVE_CLOSED_EPS,
@@ -18,12 +20,6 @@ import {
 } from './inlets';
 import { pumpRiseKpa } from './pump';
 import type { ApplianceSpec, DeliverySpec, HoseLine, PlayerInputs, TruckReadings } from './types';
-
-/**
- * How steeply the inlet pressure is taken to fall past the cavitation cap, kPa per L/min. Large, so
- * the solve settles on the capped flow; numerical, not doctrine.
- */
-const CAVITATION_STIFFNESS = 1e4;
 
 /** Loss coefficient of a delivery valve fully open, kPa per (L/min)²: scales as 1/d⁴ (velocity²). */
 export function valveLossCoeff(sizeMm: number): number {
@@ -72,6 +68,7 @@ export function dryReadings(
     deliveryFlowLpm: Object.fromEntries(spec.deliveries.map((d) => [d.id, 0])),
     branchKpa: Object.fromEntries(lines.map((l) => [l.id, 0])),
     inletFlowLpm: Object.fromEntries(spec.inlets.map((i) => [i.id, 0])),
+    inletCollapsed: Object.fromEntries(spec.inlets.map((i) => [i.id, false])),
     cavitation: 0,
   };
 }
@@ -196,8 +193,13 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
   const inletFlowLpm: Record<string, number> = Object.fromEntries(
     spec.inlets.map((i) => [i.id, 0]),
   );
+  const inletCollapsed: Record<string, boolean> = Object.fromEntries(
+    spec.inlets.map((i) => [i.id, false]),
+  );
   for (const path of paths) {
     inletFlowLpm[path.inletId] = (inletFlowLpm[path.inletId] ?? 0) + pathFlowLpm(path, inletKpa);
+    // Pulled down to its collapse pressure, a layflat supply has gone soft.
+    if (inletKpa <= path.collapseKpa + COLLAPSE_TOLERANCE_KPA) inletCollapsed[path.inletId] = true;
   }
   return {
     dischargeKpa: pKpa,
@@ -207,6 +209,7 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
     deliveryFlowLpm,
     branchKpa,
     inletFlowLpm,
+    inletCollapsed,
     cavitation,
   };
 }

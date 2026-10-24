@@ -70,6 +70,18 @@ describe.each([
     expect(timeToPrime(draught(spec, 8), priming(spec), 600)).toBeUndefined();
   });
 
+  it('can’t prime through layflat: soft hose flattens under vacuum instead of lifting water', () => {
+    const site = draughtSite(spec, 3);
+    const soft = createInitialState(spec, LINE, {
+      ...site,
+      supplies: (site.supplies ?? []).map((x) => ({
+        ...x,
+        segments: [{ hose: '65L', lengthM: 6 }],
+      })),
+    });
+    expect(timeToPrime(soft, priming(spec), 120)).toBeUndefined();
+  });
+
   it('can’t prime with a delivery open: the hose is an air leak (L3265)', () => {
     const inputs = { ...priming(spec), valves: { suction: 1, a: 1 } };
     expect(timeToPrime(draught(spec, 3), inputs, 60)).toBeUndefined();

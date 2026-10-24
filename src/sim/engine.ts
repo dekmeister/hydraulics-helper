@@ -1,11 +1,18 @@
 import { idleInputs, sanitiseInputs } from './appliances/controls';
-import { AMBIENT_C, PUMP_TEMP_CAUTION_C, VALVE_CLOSED_EPS } from './constants';
+import {
+  AMBIENT_C,
+  FLUTTER_KICK,
+  FLUTTER_MEMORY,
+  PUMP_TEMP_CAUTION_C,
+  VALVE_CLOSED_EPS,
+} from './constants';
 import { detectHammer } from './hammer';
 import { inletPaths, type ConnectedSupply } from './inlets';
 import { solveTruck } from './network';
 import { stepPrime } from './priming';
 import { lagRpm } from './pump';
 import { DEFAULT_SEED, nextRandom } from './rng';
+import { validateSite } from './site';
 import { stepTankL } from './tank';
 import { stepTempC } from './thermal';
 import type {
@@ -61,8 +68,8 @@ export function connectedSupplies(
 
 /**
  * Fresh state at t = 0: one truck of `spec`, engine at idle, tank full, all controls shut, plus
- * whatever sources and supply hoses the scenario sets out. The spec is copied in so the state
- * stays self-contained (ARCHITECTURE §9.2).
+ * whatever sources and supply hoses the scenario sets out (checked by `validateSite`). The spec is
+ * copied in so the state stays self-contained (ARCHITECTURE §9.2).
  */
 export function createInitialState(
   spec: ApplianceSpec,
@@ -79,6 +86,7 @@ export function createInitialState(
     tankL: spec.tank?.capacityL ?? 0,
     inputs,
   };
+  validateSite([{ id: DEFAULT_TRUCK_ID, spec }], sources, supplies);
   const ownLines = lines.filter((l) => l.truckId === DEFAULT_TRUCK_ID);
   const truck: TruckState = {
     ...base,
@@ -107,7 +115,7 @@ export function createIdleInputs(spec: ApplianceSpec): PlayerInputs {
 
 /** Gauge flutter noise: a smoothed random walk in −1…1 driven by one uniform draw per tick. */
 function stepFlutter(flutter: number, uniform: number): number {
-  return Math.max(-1, Math.min(1, 0.5 * flutter + 0.87 * (2 * uniform - 1)));
+  return Math.max(-1, Math.min(1, FLUTTER_MEMORY * flutter + FLUTTER_KICK * (2 * uniform - 1)));
 }
 
 /**
@@ -119,6 +127,7 @@ function advanceTruck(
   inputs: PlayerInputs,
   lines: readonly HoseLine[],
   supplies: readonly ConnectedSupply[],
+  prevTimeS: number,
   timeS: number,
   uniform: number,
   dtS: number,
@@ -171,11 +180,16 @@ function advanceTruck(
     flowNow: readings.deliveryFlowLpm,
     timeS,
   });
+  // A closure that stays hard over consecutive ticks is one event, not one per tick.
+  const continuing =
+    hammer !== undefined &&
+    truck.lastHammer?.deliveryId === hammer.deliveryId &&
+    truck.lastHammer.atS === prevTimeS;
   const t = truck.tally;
   const tally = {
     cavitationS: t.cavitationS + (readings.cavitation > 0 ? dtS : 0),
     overheatS: t.overheatS + (tempC >= PUMP_TEMP_CAUTION_C ? dtS : 0),
-    waterHammer: t.waterHammer + (hammer === undefined ? 0 : 1),
+    waterHammer: t.waterHammer + (hammer === undefined || continuing ? 0 : 1),
     worstSurgeKpa: Math.max(t.worstSurgeKpa, hammer?.surgeKpa ?? 0),
   };
 
@@ -221,6 +235,7 @@ export function advance(state: SimState, inputs: PlayerInputs, dtS: number): Sim
       truck.id === state.activeTruckId ? inputs : truck.inputs,
       state.lines.filter((l) => l.truckId === truck.id),
       connectedSupplies(state, truck.id),
+      state.timeS,
       timeS,
       uniform,
       dtS,

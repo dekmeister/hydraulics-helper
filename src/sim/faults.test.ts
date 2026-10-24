@@ -85,6 +85,27 @@ describe('water hammer', () => {
     expect(t.lastHammer?.atS).toBeCloseTo(s.timeS, 9);
   });
 
+  it('one closure spread over two hard ticks is one hammer, not two', () => {
+    // Full throttle, then the valve to 5 % and shut: each tick's surge passes the threshold.
+    let s = run(fresh(), inputsWith(1, ['tank', 'a']), 50);
+    s = run(s, { ...inputsWith(1, ['tank']), valves: { tank: 1, a: 0.05 } }, 1);
+    const first = truckOf(s).lastHammer;
+    s = run(s, inputsWith(1, ['tank']), 1);
+    const t = truckOf(s);
+    expect(first?.surgeKpa).toBeGreaterThan(WATER_HAMMER_SURGE_KPA);
+    expect(t.lastHammer?.surgeKpa).toBeGreaterThan(WATER_HAMMER_SURGE_KPA);
+    expect(t.lastHammer?.atS).toBeCloseTo(s.timeS, 9);
+    expect(t.tally.waterHammer).toBe(1);
+  });
+
+  it('two closures with a pause between are two hammers', () => {
+    let s = flowing();
+    s = run(s, inputsWith(0.6, ['tank']), 1);
+    s = run(s, inputsWith(0.6, ['tank', 'a']), 50);
+    s = run(s, inputsWith(0.6, ['tank']), 1);
+    expect(truckOf(s).tally.waterHammer).toBe(2);
+  });
+
   it('closing it smoothly over three seconds is not', () => {
     let s = flowing();
     for (let i = 29; i >= 0; i--) {

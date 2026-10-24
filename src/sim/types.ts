@@ -226,6 +226,8 @@ export interface TruckReadings {
   branchKpa: Record<string, number>;
   /** Flow in through each inlet, keyed by inlet id, L/min. */
   inletFlowLpm: Record<ControlId, number>;
+  /** Whether each inlet's layflat supply is pulled flat (soft hose, "inlet zero"), keyed by inlet id. */
+  inletCollapsed: Record<ControlId, boolean>;
   /** How hard the pump is cavitating, 0 (not) to 1 (fully); clean readings carry no flutter. */
   cavitation: number;
 }
