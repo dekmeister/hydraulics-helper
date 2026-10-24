@@ -17,6 +17,6 @@ Resources/hydraulics-manual.txt
 
 # Test and review output
 dist-e2e/
-review/
+/review/
 test-results/
 playwright-report/

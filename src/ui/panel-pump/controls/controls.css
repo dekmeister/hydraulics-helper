@@ -1,0 +1,178 @@
+/* Panel controls (Design §5, sheet 03). Every interactive box is ≥ 44 px (48 preferred). */
+
+.panel-caption {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-material-steel-dim);
+}
+
+/* Focus: a double ring, dial inside ink, never amber (Design §3). */
+.valve:focus-visible,
+.throttle__slider:focus-visible,
+.panel-button:focus-visible,
+.primer__button:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+}
+
+/* Lever valve */
+.valve {
+  position: relative;
+  width: 176px;
+  min-height: var(--touch-preferred);
+  border-radius: var(--radius-card);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.valve--dragging {
+  cursor: grabbing;
+}
+
+.valve__art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.valve__lever {
+  transition: transform 0.25s ease-out;
+}
+
+.valve--dragging .valve__lever {
+  transition: none;
+}
+
+.valve__end-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--color-material-steel-dim);
+}
+
+.valve__percent {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  fill: var(--color-material-steel);
+}
+
+.valve--disabled {
+  cursor: not-allowed;
+}
+
+.valve--disabled .valve__art {
+  opacity: 0.5;
+}
+
+.valve__chip {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 8px;
+  border: 1.5px dashed var(--color-material-steel-dim);
+  border-radius: var(--radius-plate);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--color-material-steel);
+}
+
+/* Throttle */
+.throttle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.throttle__slider {
+  flex: 1 1 220px;
+  max-width: 360px;
+  min-height: var(--touch-preferred);
+  border-radius: var(--radius-card);
+  touch-action: none;
+  cursor: ew-resize;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.throttle__art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.throttle__vernier {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.throttle__readout {
+  min-width: 4.5ch;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  color: var(--color-material-steel);
+}
+
+.panel-button {
+  width: var(--touch-preferred);
+  height: var(--touch-preferred);
+  border: 1.5px solid var(--color-material-galv-edge);
+  border-radius: var(--radius-card);
+  background: var(--color-material-raised);
+  color: var(--color-material-steel);
+  font: 600 24px/1 var(--font-display);
+  cursor: pointer;
+}
+
+.panel-button:active {
+  transform: translate(1px, 1px);
+}
+
+/* Primer */
+.primer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.primer__button {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 6px solid var(--color-material-tank-unlit);
+  background: radial-gradient(circle at 40% 35%, #3a4045, var(--color-material-ink));
+  box-shadow:
+    0 0 0 3px var(--color-material-galv-dark),
+    2px 3px 0 3px #000;
+  color: var(--color-material-steel);
+  font: 700 15px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.primer__button--on {
+  transform: translateY(2px);
+  border-color: var(--color-material-tank-lit);
+  box-shadow: 0 0 0 3px var(--color-material-galv-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valve__lever {
+    transition: none;
+  }
+}
