@@ -114,6 +114,8 @@ for (const spec of JOURNEY_APPLIANCES) {
       if (first === undefined) throw new Error('no line');
       const label = deliveryLabel(spec.id, first.deliveryId);
       const locate = panelLocateButton(page, label);
+      // The action name doesn't hide the row's text from a screen reader.
+      await expect(locate).toHaveAccessibleDescription(new RegExp(`^${label} · \\d+ mm .+`));
       await locate.scrollIntoViewIfNeeded();
       if (testInfo.project.use.hasTouch === true) await locate.tap();
       else await locate.click();
