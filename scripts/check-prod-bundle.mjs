@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const distDir = process.argv[2] ?? 'dist';
-const FORBIDDEN = ['__pumpops', 'Unknown fixture', 'shell/empty'];
+const FORBIDDEN = ['__pumpops', 'Unknown fixture', 'shell/default', 'tank-attack-700'];
 
 const files = readdirSync(distDir, { recursive: true, withFileTypes: true })
   .filter((d) => d.isFile() && d.name.endsWith('.js'))
