@@ -57,6 +57,13 @@ export const CAT1_LAYOUT: PanelLayout = {
           function: 'inlet',
           tap: 'toggle',
         },
+        {
+          kind: 'valve',
+          control: 'suction',
+          label: 'Suction inlet',
+          function: 'inlet',
+          tap: 'toggle',
+        },
         { kind: 'primer', control: 'primer', label: 'Primer' },
       ],
     },

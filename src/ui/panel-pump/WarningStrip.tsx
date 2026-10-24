@@ -9,14 +9,11 @@ const ICONS: Readonly<Record<WarningId, string>> = {
   'over-pressure': 'M10 27 A11 11 0 1 1 30 27 M20 20 L27 13',
   overheat: 'M18 9 a2 2 0 0 1 4 0 V22 a5 5 0 1 1 -4 0 Z M14 31 h12',
   cavitation: 'M13 22 a3 3 0 1 0 0.1 0 M24 15 a4 4 0 1 0 0.1 0 M26 27 a2.5 2.5 0 1 0 0.1 0',
+  // A pipe with a shock: the bang of a valve slammed shut.
+  hammer: 'M7 24 H19 M19 18 V30 M24 16 L27 12 M26 24 H31 M24 32 L27 36',
 };
 
-const LEVEL_TEXT = {
-  off: 'off',
-  caution: 'caution',
-  alarm: 'alarm',
-  unavailable: 'not simulated yet',
-} as const;
+const LEVEL_TEXT = { off: 'off', caution: 'caution', alarm: 'alarm' } as const;
 
 function Lamp({ warning }: { warning: Warning }) {
   const { level } = warning;
@@ -28,17 +25,6 @@ function Lamp({ warning }: { warning: Warning }) {
       <svg className="lamp__glass" viewBox="0 0 48 48" aria-hidden="true">
         <circle cx={24} cy={24} r={23} style={{ fill: COLOR.galvMid }} />
         <circle cx={24} cy={24} r={19} style={{ fill: glass }} />
-        {level === 'unavailable' && (
-          <circle
-            cx={24}
-            cy={24}
-            r={16}
-            fill="none"
-            strokeWidth={1.5}
-            strokeDasharray="3 3"
-            style={{ stroke: COLOR.steelDim }}
-          />
-        )}
         {/* Severity shape appears only when lit: triangle = caution, diamond = alarm (Design §2). */}
         {level === 'caution' && (
           <path d="M24 9 L39 36 H9 Z" fill="none" strokeWidth={2.5} style={{ stroke: COLOR.ink }} />

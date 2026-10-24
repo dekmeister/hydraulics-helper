@@ -13,7 +13,7 @@ const RUN_S = 10;
 
 export type PanelStateId = 'idle' | 'tank-attack-700' | 'tank-low' | 'tank-empty';
 
-function settle(state: SimState, inputs: PlayerInputs, seconds = RUN_S): SimState {
+export function settle(state: SimState, inputs: PlayerInputs, seconds = RUN_S): SimState {
   let s = state;
   const ticks = Math.round(seconds / TICK_S);
   for (let i = 0; i < ticks; i++) s = advance(s, inputs, TICK_S);
@@ -38,21 +38,30 @@ function attackInputs(
   return { throttle, valves, switches: {} };
 }
 
-/** Throttle that holds `targetKpa` with `open` flowing: bisection, as discharge rises with throttle. */
+/** Throttle that holds `targetKpa` with `inputsAt(throttle)`: bisection, as discharge rises with throttle. */
+export function throttleForKpa(
+  initial: SimState,
+  inputsAt: (throttle: number) => PlayerInputs,
+  targetKpa: number,
+): number {
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    if (discharge(settle(initial, inputsAt(mid))) < targetKpa) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/** Throttle that holds `targetKpa` on tank supply with `open` flowing. */
 function throttleFor(
   initial: SimState,
   spec: ApplianceSpec,
   open: readonly ControlId[],
   targetKpa: number,
 ) {
-  let lo = 0;
-  let hi = 1;
-  for (let i = 0; i < 20; i++) {
-    const mid = (lo + hi) / 2;
-    if (discharge(settle(initial, attackInputs(spec, open, mid))) < targetKpa) lo = mid;
-    else hi = mid;
-  }
-  return (lo + hi) / 2;
+  return throttleForKpa(initial, (t) => attackInputs(spec, open, t), targetKpa);
 }
 
 /** Sim state for a generated panel fixture. Throws if the appliance can't play tank attack. */

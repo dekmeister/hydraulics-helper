@@ -17,7 +17,13 @@ function specById(id: string): ApplianceSpec {
   return spec;
 }
 
-function loadSim({ scenario, appliance, state }: LoadOptions): SimState | undefined {
+function loadSim(opts: LoadOptions): SimState | undefined {
+  const sim = buildSim(opts);
+  const { seed } = opts;
+  return sim === undefined || seed === undefined ? sim : { ...sim, rngState: seed >>> 0 };
+}
+
+function buildSim({ scenario, appliance, state }: LoadOptions): SimState | undefined {
   if (state !== undefined) {
     if (scenario !== undefined || appliance !== undefined) {
       throw new Error('__pumpops.load: pass a state on its own');
@@ -38,10 +44,9 @@ function loadSim({ scenario, appliance, state }: LoadOptions): SimState | undefi
 export function createTestApi(): PumpOpsTestApi {
   return {
     load(opts) {
-      // Seed is accepted now and unused until the sim has randomness (M4).
       const sim = loadSim(opts);
       flushSync(() => {
-        useStore.getState().reset(sim);
+        useStore.getState().reset(sim, sim === undefined ? undefined : (opts.scenario ?? null));
       });
       snapAll();
     },

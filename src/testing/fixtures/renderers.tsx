@@ -2,13 +2,28 @@ import type { ReactElement } from 'react';
 import type { ControlId, GaugeScaleSpec, SimState } from '../../sim/types';
 import { SceneView } from '../../ui/panel-scene/SceneView';
 import { AppShell } from '../../ui/layout/AppShell';
-import { PANEL_FIXTURE_SETS, panelFixtureId, SCENE_FIXTURE_SETS, sceneFixtureId } from './catalog';
-import { GaugeGallery, TankGallery, ThrottlePrimerGallery, ValveGallery } from './galleries';
+import {
+  PANEL_FIXTURE_SETS,
+  panelFixtureId,
+  SCENE_FIXTURE_SETS,
+  sceneFixtureId,
+  SOURCE_FIXTURE_SETS,
+} from './catalog';
+import { SOURCE_STATE_SCENARIO, sourceState, type SourceStateId } from './sourceStates';
+import {
+  GaugeGallery,
+  TankGallery,
+  ThrottlePrimerGallery,
+  ValveGallery,
+  WakeGallery,
+} from './galleries';
 import { panelState, sceneState, type PanelStateId, type SceneStateId } from './panelStates';
 
 export interface FixtureRenderer {
   /** Sim state loaded into the store before rendering. */
   state?: () => SimState;
+  /** Scenario the state comes from, so the header picker shows it. */
+  scenario?: string;
   /** Delivery highlighted on the scene and panel after the state loads. */
   highlight?: (sim: SimState) => ControlId;
   render: () => ReactElement;
@@ -40,6 +55,22 @@ function panelRenderers(): Record<string, FixtureRenderer> {
     for (const state of states) {
       out[panelFixtureId(spec.id, state)] = {
         state: () => panelState(spec, state satisfies PanelStateId),
+        scenario: 'tank-attack',
+        render: () => <AppShell />,
+      };
+    }
+  }
+  return out;
+}
+
+/** Generated source and fault renderers, one per catalogued source fixture. */
+function sourceRenderers(): Record<string, FixtureRenderer> {
+  const out: Record<string, FixtureRenderer> = {};
+  for (const { spec, states } of SOURCE_FIXTURE_SETS) {
+    for (const state of states) {
+      out[panelFixtureId(spec.id, state)] = {
+        state: () => sourceState(spec, state satisfies SourceStateId),
+        scenario: SOURCE_STATE_SCENARIO[state],
         render: () => <AppShell />,
       };
     }
@@ -73,6 +104,7 @@ function sceneRenderers(): Record<string, FixtureRenderer> {
     }
     out[sceneFixtureId(spec.id, 'highlighted')] = {
       state: () => sceneState(spec, 'all-charged'),
+      scenario: 'tank-attack',
       highlight: (sim) => {
         const first = sim.lines[0];
         if (first === undefined) throw new Error(`no line laid on ${spec.id}`);
@@ -119,9 +151,11 @@ export const FIXTURE_RENDERERS: Record<string, FixtureRenderer> = {
       />
     ),
   },
+  'gauge/wake': { render: () => <WakeGallery scale={SHEET_02} /> },
   'gauge/tank': { render: () => <TankGallery capacityL={3000} values={[3000, 2000, 600, 0]} /> },
   'controls/valves': { render: () => <ValveGallery /> },
   'controls/throttle-primer': { render: () => <ThrottlePrimerGallery /> },
   ...panelRenderers(),
+  ...sourceRenderers(),
   ...sceneRenderers(),
 };

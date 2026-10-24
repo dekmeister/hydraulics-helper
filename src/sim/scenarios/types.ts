@@ -4,6 +4,10 @@ import type { ApplianceSpec, ControlId, SimState } from '../types';
 export interface ScenarioRequirements {
   tank: boolean;
   minDeliveries: number;
+  /** An external suction inlet (hydrant or draught supply). */
+  suction?: boolean;
+  /** A way to prime for draughting: any primer, self-priming included. */
+  primer?: boolean;
 }
 
 /** Input changes applied at sim time `tS`; unspecified controls keep their value. */
@@ -11,6 +15,7 @@ export interface ScriptStep {
   tS: number;
   throttle?: number;
   valves?: Record<ControlId, number>;
+  switches?: Record<ControlId, boolean>;
 }
 
 export interface ScriptedRun {
@@ -29,7 +34,13 @@ export interface Scenario {
 
 /** Whether `spec` has every capability the scenario requires. */
 export function supports(scenario: Scenario, spec: ApplianceSpec): boolean {
-  const { tank, minDeliveries } = scenario.requires;
+  const { tank, minDeliveries, suction = false, primer = false } = scenario.requires;
   const hasTank = spec.tank !== undefined && spec.inlets.some((i) => i.kind === 'tank');
-  return (!tank || hasTank) && spec.deliveries.length >= minDeliveries;
+  const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
+  return (
+    (!tank || hasTank) &&
+    (!suction || hasSuction) &&
+    (!primer || spec.primer !== undefined) &&
+    spec.deliveries.length >= minDeliveries
+  );
 }

@@ -1,5 +1,6 @@
 import { PumpPanel } from '../panel-pump/PumpPanel';
 import { SceneView } from '../panel-scene/SceneView';
+import { ScenarioPicker } from './ScenarioPicker';
 import './AppShell.css';
 
 /** Responsive two-panel shell: scene above pump panel on phones, side by side from 900 px. */
@@ -7,9 +8,12 @@ export function AppShell() {
   return (
     <main className="app-shell">
       <section className="app-panel" aria-labelledby="scene-title">
-        <h2 id="scene-title" className="app-panel__title">
-          Scene
-        </h2>
+        <div className="app-panel__head">
+          <h2 id="scene-title" className="app-panel__title">
+            Scene
+          </h2>
+          <ScenarioPicker />
+        </div>
         <SceneView />
       </section>
       <section className="app-panel app-panel--pump" aria-labelledby="pump-panel-title">

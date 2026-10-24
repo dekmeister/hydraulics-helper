@@ -13,6 +13,8 @@ import {
   zoneAt,
   type DialSpec,
 } from './gaugeScale';
+import type { Wake } from './wake';
+import { WakeMarks } from './WakeMarks';
 import './Gauge.css';
 
 export interface GaugeProps {
@@ -27,6 +29,10 @@ export interface GaugeProps {
   plate?: string;
   /** Rendered size: 'large' (discharge, compound) or 'medium' (tacho). CSS sets the pixels. */
   size?: 'large' | 'medium';
+  /** Afterimage of recent readings (Design §6); none drawn when omitted. */
+  wake?: Wake;
+  /** Needle in caution amber (the compound gauge while the pump cavitates, Design §6). */
+  alert?: boolean;
 }
 
 const TONE = { caution: COLOR.caution, alarm: COLOR.alarm } as const;
@@ -35,7 +41,16 @@ const TONE = { caution: COLOR.caution, alarm: COLOR.alarm } as const;
  * One parameterised dial gauge (Design sheet 02): static face from `dial`, needle at `value`,
  * with a mono readout underneath. Exposed as role="meter" in native units (docs/TESTING.md §3.3).
  */
-export function Gauge({ dial, value, label, unit, plate, size = 'large' }: GaugeProps) {
+export function Gauge({
+  dial,
+  value,
+  label,
+  unit,
+  plate,
+  size = 'large',
+  wake,
+  alert = false,
+}: GaugeProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [lo, hi] = range(dial);
   const zone = zoneAt(dial, value);
@@ -50,10 +65,12 @@ export function Gauge({ dial, value, label, unit, plate, size = 'large' }: Gauge
       aria-valuenow={Math.round(value)}
       aria-valuetext={reading}
       data-zone={zone ?? 'normal'}
+      data-alert={alert}
     >
       <svg className="gauge__dial" viewBox="-106 -106 214 214" aria-hidden="true">
         <DialFace dial={dial} uid={uid} plate={plate ?? dial.plate ?? null} />
-        <Needle angle={valueToAngle(dial, value)} uid={uid} />
+        {wake !== undefined && <WakeMarks dial={dial} wake={wake} />}
+        <Needle angle={valueToAngle(dial, value)} uid={uid} alert={alert} />
       </svg>
       <span className="gauge__readout">{reading}</span>
     </div>
@@ -229,7 +246,7 @@ const DialFace = memo(function DialFace({
   );
 });
 
-function Needle({ angle, uid }: { angle: number; uid: string }) {
+function Needle({ angle, uid, alert }: { angle: number; uid: string; alert: boolean }) {
   const n = GEOM.needle;
   const path = `M0 ${String(-n.tip)} L${String(n.halfWidth)} -8 L2.4 ${String(n.tail)} L-2.4 ${String(n.tail)} L${String(-n.halfWidth)} -8 Z`;
   const rotate = `rotate(${String(angle)})`;
@@ -239,7 +256,7 @@ function Needle({ angle, uid }: { angle: number; uid: string }) {
         <path d={path} fill="#000" opacity={0.2} transform={rotate} />
       </g>
       <g transform={rotate}>
-        <path d={path} style={{ fill: COLOR.ink }} />
+        <path d={path} style={{ fill: alert ? COLOR.caution : COLOR.ink }} />
         <line x1={0} y1={-74} x2={0} y2={-14} strokeWidth={0.9} style={{ stroke: COLOR.dial }} />
         <circle cy={n.counterweightY} r={n.counterweightR} style={{ fill: COLOR.ink }} />
         <circle cy={n.counterweightY} r={n.insetR} style={{ fill: COLOR.galv }} />

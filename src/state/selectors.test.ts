@@ -72,9 +72,10 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('selectors: %s', (_id
     expect(level(sim, both, 'supply')).toBe('off');
   });
 
-  it('shows overheat and cavitation as not simulated yet', () => {
-    expect(level(sim, idle, 'overheat')).toBe('unavailable');
-    expect(level(sim, idle, 'cavitation')).toBe('unavailable');
+  it('keeps the temperature, cavitation and hammer lamps unlit at rest', () => {
+    expect(level(sim, idle, 'overheat')).toBe('off');
+    expect(level(sim, idle, 'cavitation')).toBe('off');
+    expect(level(sim, idle, 'hammer')).toBe('off');
   });
 
   it('has a relief lamp exactly when the spec fits a relief valve', () => {

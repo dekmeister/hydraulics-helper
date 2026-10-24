@@ -8,6 +8,7 @@ import {
   selectWarnings,
 } from '../../state/selectors';
 import { useStore } from '../../state/store';
+import { primerStatus } from '../../state/supply';
 import type { ApplianceSpec, InstrumentSpec } from '../../sim/types';
 import type { PanelItem } from '../appliances/types';
 import { PrimerControl } from './controls/PrimerControl';
@@ -17,6 +18,7 @@ import { DeliveryTag } from './DeliveryTag';
 import { DIALS } from './gauge/dials';
 import { Gauge } from './gauge/Gauge';
 import { range } from './gauge/gaugeScale';
+import { computeWake } from './gauge/wake';
 import { TankLevel } from './gauge/TankLevel';
 import { describeLine } from './lineText';
 import { useDampedValue } from './useDampedValue';
@@ -44,6 +46,20 @@ function DialInstrument({ item }: { item: Extract<PanelItem, { kind: 'gauge' }> 
   const dial = useMemo(() => DIALS[item.dial](scale), [item.dial, scale]);
   const [lo, hi] = range(dial);
   const value = useDampedValue(useReading(instrument), hi - lo);
+  const samples = useStore((s) => s.wake);
+  const wake = useMemo(
+    () =>
+      computeWake(
+        samples.flatMap((w) => {
+          const v = w.values[instrument.kind];
+          return v === undefined ? [] : [{ tS: w.tS, v }];
+        }),
+      ),
+    [samples, instrument.kind],
+  );
+  const alert = useStore(
+    (s) => instrument.kind === 'compound' && activeTruck(s.sim).readings.cavitation > 0,
+  );
   return (
     <Gauge
       dial={dial}
@@ -51,6 +67,8 @@ function DialInstrument({ item }: { item: Extract<PanelItem, { kind: 'gauge' }> 
       label={item.label}
       unit={INSTRUMENT_UNIT[instrument.kind]}
       size={item.size}
+      wake={wake}
+      alert={alert}
       {...(item.plate === undefined ? {} : { plate: item.plate })}
     />
   );
@@ -158,12 +176,16 @@ function ThrottleItem({ item }: { item: Extract<PanelItem, { kind: 'throttle' }>
 function PrimerItem({ item }: { item: Extract<PanelItem, { kind: 'primer' }> }) {
   const on = useStore((s) => s.inputs.switches[item.control] ?? false);
   const setSwitch = useStore((s) => s.setSwitch);
+  const state = useStore((s) => primerStatus(s.sim, s.inputs, item.control).state);
+  const progress = useStore((s) => primerStatus(s.sim, s.inputs, item.control).progress);
   return (
     <div className="panel-control">
       <span className="panel-caption">{item.label}</span>
       <PrimerControl
         label={item.label}
         on={on}
+        state={state}
+        progress={progress}
         onChange={(v) => {
           setSwitch(item.control, v);
         }}

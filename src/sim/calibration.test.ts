@@ -4,8 +4,17 @@ import { describe, expect, it } from 'vitest';
 import { branchFlowLpm } from './branch';
 import { HEAD_KPA_PER_M, STANDARD_LENGTH_M } from './constants';
 import { hoseFrictionKpa } from './hose';
-import { expectWithinRel } from './testUtils';
-import type { HoseSegment } from './types';
+import { createInitialState } from './engine';
+import {
+  draughtSite,
+  expectWithinRel,
+  inputsWith,
+  layLine,
+  primedState,
+  run,
+  truckOf,
+} from './testUtils';
+import type { ApplianceSpec, HoseLine, HoseSegment } from './types';
 
 const lengths = (hose: string, n: number): HoseSegment[] =>
   Array.from({ length: n }, () => ({ hose, lengthM: STANDARD_LENGTH_M }));
@@ -64,5 +73,62 @@ describe('calibration: Table 1 branch flows at optimum pressure (L465–490)', (
       2 * branchFlowLpm({ tipMm: 15 }, 250),
       9,
     );
+  });
+});
+
+// Draughting (manual §2.x lift, Table 4). The pump in these is generic: −84 kPa cavitation is the
+// fitted figure (docs/CALIBRATION.md), the suction is 2 × 3 m of hard suction plus a strainer.
+const DRAUGHT_SPEC: ApplianceSpec = {
+  id: 'calibration-draught',
+  name: 'Draught calibration',
+  pump: {
+    shutoffKpa: 1400,
+    droopKpaPerLpm2: 4e-4,
+    cavitationInletKpa: -84,
+    casingVolumeL: 10,
+    churnKw: 10,
+  },
+  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5 },
+  inlets: [{ id: 'suction', label: 'Suction', kind: 'suction', sizeMm: 64, lossKpaPerLpm2: 10e-6 }],
+  deliveries: [
+    { id: 'a', label: 'A', sizeMm: 64 },
+    { id: 'b', label: 'B', sizeMm: 64 },
+  ],
+  instruments: [],
+};
+
+/** Readings after drawing from a primed draught at `liftM` for 5 s. */
+function draughtAt(liftM: number, throttle: number, lines: HoseLine[]) {
+  const s = primedState(createInitialState(DRAUGHT_SPEC, lines, draughtSite(DRAUGHT_SPEC, liftM)));
+  return truckOf(run(s, inputsWith(throttle, ['suction', 'a', 'b']), 50)).readings;
+}
+
+/** Wide open on two big lines: whatever the suction can give, the pump takes. */
+const flatOut = (liftM: number) =>
+  draughtAt(liftM, 1, [layLine('a', '65L', 1, 32), layLine('b', '65L', 1, 32)]).pumpFlowLpm;
+
+describe('calibration: draughting', () => {
+  it('C11: 4 m of lift reads about −40 kPa on the compound gauge (L3222–3225)', () => {
+    // A trickle (12 mm branch at idle), so suction friction is negligible. Tolerance ±2 kPa.
+    const r = draughtAt(4, 0, [layLine('a', '38L', 1, 12)]);
+    expect(r.pumpFlowLpm).toBeGreaterThan(0);
+    expect(Math.abs(r.compoundKpa - -40)).toBeLessThanOrEqual(2);
+  });
+
+  // Table 4 (L1179–1194): capacity lost against capacity at 3 m. The −84 kPa floor reproduces it
+  // to within 5 % up to 7 m; at 7.5 m the model keeps 43 % against the manual's 33 % (noted in
+  // docs/CALIBRATION.md, needs Dek).
+  it.each([
+    [4.5, 1 - 1 / 7],
+    [6, 1 - 1 / 3],
+    [7, 1 - 1 / 2],
+  ])('Table 4: at %s m lift the pump gives %s of its 3 m capacity', (liftM, fraction) => {
+    expectWithinRel(flatOut(liftM) / flatOut(3), fraction, 0.05);
+  });
+
+  it('7 m of lift ⇒ about half rated flow; 8 m ⇒ far short of it', () => {
+    const rated = flatOut(3);
+    expect(flatOut(7)).toBeLessThan(0.55 * rated);
+    expect(flatOut(8)).toBeLessThan(0.3 * rated);
   });
 });
