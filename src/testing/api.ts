@@ -1,14 +1,25 @@
+import { getAppliance } from '../sim/appliances/catalogue';
+import { createInitialState } from '../sim/engine';
 import { useStore } from '../state/store';
 import type { LoadOptions, PumpOpsTestApi } from './types';
 
 export function createTestApi(): PumpOpsTestApi {
   return {
     load({ scenario, appliance, state }: LoadOptions) {
-      // Scenarios and appliances arrive in M1; seed is accepted now and unused until the sim has randomness.
-      if (scenario !== undefined || appliance !== undefined) {
-        throw new Error('__pumpops.load: scenario/appliance loading is not implemented yet (M1)');
+      // Seed is accepted now and unused until the sim has randomness (M4).
+      if (scenario !== undefined) {
+        throw new Error('__pumpops.load: scenario loading is not implemented yet (M6)');
       }
-      useStore.getState().reset(state === undefined ? undefined : structuredClone(state));
+      if (appliance !== undefined && state !== undefined) {
+        throw new Error('__pumpops.load: pass either appliance or state, not both');
+      }
+      const sim =
+        appliance !== undefined
+          ? createInitialState(getAppliance(appliance))
+          : state === undefined
+            ? undefined
+            : structuredClone(state);
+      useStore.getState().reset(sim);
     },
     step(ticks) {
       if (!Number.isInteger(ticks) || ticks < 0) {

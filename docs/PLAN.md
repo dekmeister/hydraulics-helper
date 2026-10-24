@@ -23,15 +23,15 @@ Companion to `ARCHITECTURE.md`. Milestones are sized so a Claude Code session ca
 
 ## M1 — Core hydraulics: tank attack (the heart)
 
-- [ ] Types: `ApplianceSpec` (§9.2), `TruckState`, `HoseLine`, `Branch`, `PlayerInputs` (keyed by spec control ids, §9.3).
-- [ ] Reference appliance: **Cat 1 tanker** spec in `sim/appliances/` + catalogue. Manual-backed traits: electric rotary vane primer (1 min on in 3), relief valve preset (not adjustable) and dumping to tank. Pump curve, rpm and tank figures are PLACEHOLDER until Dek supplies them.
-- [ ] Pump curve + engine RPM lag + throttle input.
-- [ ] Single-truck network solver: tank source → the spec's deliveries (any N) → 38/65 mm hose segments → branch orifice; valve losses; elevation.
-- [ ] Tank volume integration; runs-dry behaviour (flow collapse, not a crash).
-- [ ] Calibration tests: ≥ 5 worked examples from `docs/CALIBRATION.md` asserted to within tolerance.
-- [ ] Appliance contract suite (`describe.each` over the catalogue): determinism (same inputs → identical state after N ticks), NaN fuzz, runs-dry.
-- [ ] Test fixture: a minimal second "test appliance" (different delivery count, no primer) registered only in tests, so single-appliance assumptions fail early.
-- [ ] Golden trace for the tank-attack scripted run (CSV snapshot per appliance) + `npm run sim:trace`.
+- [x] Types: `ApplianceSpec` (§9.2), `TruckState`, `HoseLine`, `Branch`, `PlayerInputs` (keyed by spec control ids, §9.3).
+- [x] Reference appliance: **Cat 1 tanker** spec in `sim/appliances/` + catalogue. Manual-backed traits: electric rotary vane primer (1 min on in 3), relief valve preset (not adjustable) and dumping to tank. Pump curve, rpm and tank figures are PLACEHOLDER until Dek supplies them.
+- [x] Pump curve + engine RPM lag + throttle input.
+- [x] Single-truck network solver: tank source → the spec's deliveries (any N) → hose segments from the shared 25–90 mm catalogue → branch orifice; valve losses; elevation.
+- [x] Tank volume integration; runs-dry behaviour (flow collapse, not a crash).
+- [x] Calibration tests: ≥ 5 worked examples from `docs/CALIBRATION.md` asserted to within tolerance.
+- [x] Appliance contract suite (`describe.each` over the catalogue): determinism (same inputs → identical state after N ticks), NaN fuzz, runs-dry.
+- [x] Test fixture: a minimal second "test appliance" (different delivery count, no primer) registered only in tests, so single-appliance assumptions fail early.
+- [x] Golden trace for the tank-attack scripted run (CSV snapshot per appliance) + `npm run sim:trace`.
 
 **Demo:** headless — `npm run sim:trace -- tank-attack` prints gauges over time for a scripted run.
 
@@ -99,6 +99,10 @@ Companion to `ARCHITECTURE.md`. Milestones are sized so a Claude Code session ca
 * Instructor mode: author/import scenarios as JSON.
 * Replays and shareable debriefs.
 * Further appliances beyond M7 (Cat 7/9, bulk water, urban pumper, portable pump), pump-specific quirks.
+* Cat 1 hose reels (Layout A has two, with their own valves) and the discharge master valve. Deferred from M1 (Dek, 2026-10-24).
+* Engine key switch / engine stop; M1 assumes the pump engine is always running.
+* Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event.
+* Unlined hose in scenarios (the catalogue already has it); hose carried per appliance.
 * Multiple independent pumps on one appliance (`pumps: PumpSpec[]`, e.g. separate high-pressure reel pump) — deferred, see `ARCHITECTURE.md` §9.2.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 
