@@ -44,7 +44,8 @@ export interface RelayLay {
 
 const NO_READING: RelayReading = { flowLpm: 0, startKpa: 0, endKpa: 0, collapsed: false };
 
-function relayTarget(sim: SimState, link: RelayLink): string {
+/** What a relay runs to, by name: the receiving truck's label, or the dam's. */
+export function relayTarget(sim: SimState, link: RelayLink): string {
   switch (link.to.kind) {
     case 'inlet':
     case 'tank': {
