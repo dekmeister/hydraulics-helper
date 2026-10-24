@@ -37,13 +37,15 @@ src/
   sim/            # Pure TypeScript. NO imports from React, DOM, or state/.
     types.ts      # Entities, units, config interfaces
     constants.ts  # Tunable physical constants (see §6)
-    pump.ts       # Pump curve, priming, cavitation, overheat
-    network.ts    # Hose network graph + steady-state solver
+    hose.ts       # Hose friction from the shared hose catalogue
+    branch.ts     # Branch orifice law
+    pump.ts       # Pump curve, engine rpm lag (priming, cavitation, overheat from M4)
+    network.ts    # Per-truck steady-state solver (bisection on discharge pressure)
     tank.ts       # Tank / dam volume integration
     relay.ts      # Relay link logic (open & closed)
     engine.ts     # Tick loop: advance(state, inputs, dt) -> state
     appliances/   # ApplianceSpec per vehicle type + catalogue (see §9)
-    scenarios/    # Scenario definitions as data (JSON-like TS)
+    scenarios/    # Scenario definitions as data (JSON-like TS); scripted runs + golden traces (__traces__/)
   state/
     store.ts      # Zustand store; owns SimState; dispatches player inputs
     selectors.ts  # Derived values for UI (gauge angles, warnings)
@@ -89,7 +91,7 @@ The number and size of inlets and deliveries come from the appliance spec (§9).
 
 Sources (which ones exist, and whether they can be combined, is set by the appliance spec):
 
-* **Tank** (tank-to-pump valve): inlet pressure ≈ 0 kPa gauge (small positive head), limited by tank volume.
+* **Tank** (tank-to-pump valve): the compound gauge reads slightly *negative*, more so with flow (manual L3529): `P_in = −k_inlet·Q²/open²`, limited by tank volume. With tank-to-pump shut or the tank empty, the pump is dry and every gauge reads 0 (Table 6). Smarter starvation behaviour arrives with cavitation in M4.
 * **Hydrant/collector**: fixed positive inlet pressure (scenario parameter, e.g. 300–700 kPa), effectively unlimited volume.
 * **Draughting** (static source via suction hose): inlet pressure is *negative* — lift converts to vacuum. Requires priming. Max practical lift ~7 m; performance degrades well before that.
 * **Relay inlet**: pressure supplied by another truck's discharge (closed relay).
@@ -108,18 +110,18 @@ Curve parameters are **per appliance** (`ApplianceSpec.pump`, §9). The formula 
 * Multi-stage pumps with a series/parallel (pressure/volume) mode switch change the effective curve: series ≈ ×2 pressure at the same flow, parallel ≈ ×2 flow at the same pressure (manual Figs 24–25). This is a spec option, not a separate engine.
 * Discharge pressure (what the discharge gauge reads) = `P_inlet + P_pump`, clamped ≥ 0.
 * Engine RPM chases throttle with a first-order lag (~0.5 s) so the throttle feels mechanical.
-* Optional **pressure governor / relief valve** toggle: caps discharge pressure by shedding effective RPM (teaches why gauges behave differently with the governor on).
+* **Pressure relief** (`ApplianceSpec.relief`): a bypass that opens above its set pressure, `Q_relief = slope·(P_d − P_set)`, and dumps to the tank or the pump inlet (manual L2322–2336). It adds to pump flow, so droop holds discharge just above the set pressure, and it doesn't drain the tank. `preset` (Cat 1) or `adjustable` (the set pressure comes from a panel control). `reliefFlowLpm` drives the over-pressure lamp. This is not RPM shedding.
 
 ### 4.5 Delivery lines and branches
 
 Each delivery is a series path: valve → hose segments → branch (nozzle).
 
-* **Valve**: quadratic loss scaled by opening, `ΔP_valve = k_v(open) · Q²`, with `k_v → ∞` as `open → 0`.
-* **Hose friction**: `ΔP_hose = C(diameter) · (L/100 m) · Q²`. Separate coefficients for 38 mm and 65 mm hose (65 mm is dramatically lower — this contrast is a core lesson). Values in `constants.ts`, tuned so worked examples match RFS-style pump calculations.
+* **Valve**: quadratic loss scaled by opening, `ΔP_valve = k_v(d)/open² · Q²`, with `k_v ∝ 1/d⁴`. Below `VALVE_CLOSED_EPS` the valve is shut. A delivery with no line laid is blank-capped.
+* **Hose friction**: `ΔP_hose = k_m · L_m · Q²`, per metre (Dek, 2026-10-24); scenarios still lay hose in 30 m lengths. The `HOSES` catalogue in `constants.ts` covers 25–90 mm, lined and unlined, fitted to manual Table 3 (`docs/CALIBRATION.md`). 65 mm is dramatically lower than 38 mm; this contrast is a core lesson.
 * **Elevation**: `ΔP_elev = 10 · Δh` (uphill positive).
 * **Branch**: orifice law, `Q = k_branch · √P_nozzle`. Branch types as data: 38 mm attack branch, 65 mm branch, fog/jet setting affecting `k`. Target teaching point: branches want ~700 kPa at the nozzle.
 
-**Solver**: for a given discharge pressure `P_d`, each open line's flow has a closed form or a fast 1-D bisection (monotone in Q). Total demand `ΣQ` feeds back into the pump curve, which is monotone decreasing in Q — so bisect on `P_d` (or fixed-point iterate) until supply = demand. Converges in <20 iterations; trivially fast at 10 Hz. No matrix solvers, no external libs.
+**Solver** (`network.ts`): for a given discharge pressure `P_d`, each open line's flow has a closed form, `Q = √((P_d − 10·Δh)/R)`, where `R` = valve + hose + `1/k_branch²`. Total demand (lines + relief) rises with `P_d`; the supply (pump curve less inlet loss) falls with flow. So bisect `P_d` on `[0, shutoff at current rpm]` for a fixed `SOLVER_ITERATIONS`, which keeps it deterministic. No matrix solvers, no external libs. One line per delivery.
 
 ### 4.6 Failure & realism behaviours (the fun part)
 
@@ -211,20 +213,21 @@ Differences are expressed as **fields and enums on the spec, never as `if (appli
 ### 9.2 `ApplianceSpec` (sketch)
 
 ```ts
-interface ApplianceSpec {
+interface ApplianceSpec {        // src/sim/types.ts is authoritative
   id: string;                    // 'cat1-generic' — stable, used in saves/scenarios
   name: string;                  // UI copy; generic, no branding
-  pump: PumpSpec;                // curve params, rpm range, stages/modes
-  engine: EngineSpec;            // drive type, rpm lag
-  tank?: TankSpec;               // capacityL, reserveL
-  inlets: InletSpec[];           // { id, kind: 'tank'|'hydrant'|'draught'|'relay', sizeMm }
-  deliveries: DeliverySpec[];    // { id, label, sizeMm, valveKind }
-  primer?: PrimerSpec;           // { kind: 'rotaryVane'|'diaphragm'|'selfPriming', ... }
-  relief?: ReliefSpec;
-  recirculation?: RecircSpec;
-  instruments: InstrumentSpec[];
+  pump: PumpSpec;                // { shutoffKpa, droopKpaPerLpm2 }
+  engine: EngineSpec;            // { idleRpm, maxRpm, rpmLagS }
+  tank?: TankSpec;               // { capacityL }
+  inlets: InletSpec[];           // { id, label, kind: 'tank'|'hydrant'|'draught'|'relay', lossKpaPerLpm2, sizeMm? }
+  deliveries: DeliverySpec[];    // { id, label, sizeMm }
+  primer?: PrimerSpec;           // { kind: 'rotaryVane', id, maxOnS, periodS } | { kind: 'diaphragm', id } | { kind: 'selfPriming' }
+  relief?: ReliefSpec;           // { kind: 'preset', setKpa, … } | { kind: 'adjustable', id, minKpa, maxKpa, … }; dumpTo 'tank'|'inlet'
+  instruments: InstrumentSpec[]; // { id, kind: 'compound'|'discharge'|'tacho'|'tank' }
 }
 ```
+
+Control ids are the inlet, delivery and adjustable-relief ids (valves, 0–1) plus primer ids (switches); `appliances/controls.ts` derives them. Hose lays (`HoseLine`) are scenario data rather than part of the spec, so the hose carried isn't modelled yet.
 
 * Specs are immutable. At scenario load the spec is **copied into `TruckState.spec`**, so `advance(state, inputs, dt)` keeps its signature and a saved state or replay stays self-contained even if the spec file is later re-tuned.
 * One pump per appliance in this version. A vehicle with two independent pumps (e.g. a separate high-pressure reel pump) would need `pumps: PumpSpec[]`. That is deferred and listed in the PLAN parking lot.

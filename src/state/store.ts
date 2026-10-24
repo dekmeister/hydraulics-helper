@@ -1,7 +1,22 @@
 import { create } from 'zustand';
+import { getAppliance } from '../sim/appliances/catalogue';
 import { TICK_S } from '../sim/constants';
-import { advance, createIdleInputs, createInitialState } from '../sim/engine';
+import { advance, createInitialState } from '../sim/engine';
 import type { PlayerInputs, SimState } from '../sim/types';
+
+/** Appliance loaded at start-up until scenario selection exists (M6). */
+export const DEFAULT_APPLIANCE_ID = 'cat1-generic';
+
+function defaultSim(): SimState {
+  return createInitialState(getAppliance(DEFAULT_APPLIANCE_ID));
+}
+
+/** The player's current inputs are the active truck's last applied inputs. */
+function activeInputs(sim: SimState): PlayerInputs {
+  const truck = sim.trucks.find((t) => t.id === sim.activeTruckId);
+  if (truck === undefined) throw new Error(`No active truck '${sim.activeTruckId}'`);
+  return truck.inputs;
+}
 
 interface PumpOpsStore {
   sim: SimState;
@@ -12,9 +27,11 @@ interface PumpOpsStore {
   reset: (sim?: SimState) => void;
 }
 
+const initialSim = defaultSim();
+
 export const useStore = create<PumpOpsStore>()((set) => ({
-  sim: createInitialState(),
-  inputs: createIdleInputs(),
+  sim: initialSim,
+  inputs: activeInputs(initialSim),
   step: (ticks) => {
     set(({ sim, inputs }) => {
       let next = sim;
@@ -22,7 +39,7 @@ export const useStore = create<PumpOpsStore>()((set) => ({
       return { sim: next };
     });
   },
-  reset: (sim = createInitialState()) => {
-    set({ sim, inputs: createIdleInputs() });
+  reset: (sim = defaultSim()) => {
+    set({ sim, inputs: activeInputs(sim) });
   },
 }));
