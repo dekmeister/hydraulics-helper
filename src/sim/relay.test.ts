@@ -16,10 +16,12 @@ import { hoseResistance } from './hose';
 import { valveLossCoeff } from './network';
 import { relayEndKpa, relayOrder } from './relay';
 import {
+  closedRelayPair,
   expectSane,
   expectWithinRel,
   inputsWith,
   layLine,
+  relayDelivery,
   run,
   suctionInletOf,
   truck,
@@ -117,59 +119,6 @@ describe('relay site checks', () => {
 // Closed relay: the base pump's delivery feeds the receiving pump's suction inlet.
 // ---------------------------------------------------------------------------
 
-/** First delivery closest to 65 mm: where a relay leaves (as `attachLines` would choose). */
-const relayDelivery = (spec: ApplianceSpec) =>
-  spec.deliveries.reduce((a, b) => (Math.abs(b.sizeMm - 65) < Math.abs(a.sizeMm - 65) ? b : a)).id;
-
-interface PairOptions {
-  lengths?: number;
-  elevationM?: number;
-  baseThrottle?: number;
-  /** Tip of the receiving truck's branches. */
-  tipMm?: number;
-}
-
-/**
- * A base pump of `base` on its own tank, relay delivery held open, pushing `lengths` × 30 m of
- * 65 mm up `elevationM` to the suction inlet of a receiving pump of `receiver`, which has a 38 mm
- * line on every delivery. The receiver is active.
- */
-function closedPair(base: ApplianceSpec, receiver: ApplianceSpec, opts: PairOptions = {}) {
-  const { lengths = 4, elevationM = 0, baseThrottle = 0.8, tipMm = 15 } = opts;
-  const out = relayDelivery(base);
-  const inlet = suctionInletOf(receiver);
-  const link: RelayLink = {
-    id: 'relay',
-    truckId: 'base',
-    deliveryId: out,
-    segments: Array.from({ length: lengths }, () => ({ hose: '65L', lengthM: 30 })),
-    elevationM,
-    to: { kind: 'inlet', truckId: 'attack', inletId: inlet },
-  };
-  const lines = receiver.deliveries.map((d) => ({
-    ...layLine(d.id, '38L', 2, tipMm),
-    id: `attack-${d.id}`,
-    truckId: 'attack',
-  }));
-  const tankIn = base.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
-  const state = createSiteState(
-    [
-      { id: 'attack', label: 'Attack pump', spec: receiver },
-      {
-        id: 'base',
-        label: 'Base pump',
-        spec: base,
-        inputs: inputsWith(baseThrottle, [...tankIn, out]),
-      },
-    ],
-    lines,
-    { links: [link] },
-  );
-  const attackInputs = (throttle: number, open = receiver.deliveries.map((d) => d.id)) =>
-    inputsWith(throttle, [inlet, ...open]);
-  return { state, link, inlet, out, attackInputs };
-}
-
 const PAIRS = [
   [CAT1, TEST_APPLIANCE],
   [TEST_APPLIANCE, CAT1],
@@ -179,7 +128,7 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
   'closed relay %s',
   (_name, base, receiver) => {
     it('delivers the base pump’s water to the receiving lines with a positive residual', () => {
-      const { state, inlet, out, attackInputs } = closedPair(base, receiver);
+      const { state, inlet, out, attackInputs } = closedRelayPair(base, receiver);
       const s = run(state, attackInputs(0.3), 100);
       const b = truck(s, 'base');
       const a = truck(s, 'attack');
@@ -196,7 +145,7 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
     });
 
     it('residual = base discharge − valve − hose friction − head, and matches the compound', () => {
-      const { state, link, inlet, out, attackInputs } = closedPair(base, receiver, {
+      const { state, link, inlet, out, attackInputs } = closedRelayPair(base, receiver, {
         elevationM: 15,
       });
       const s = run(state, attackInputs(0.3), 150);
@@ -220,14 +169,14 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
 
     it('pushing uphill leaves less residual at the attack pump', () => {
       const residual = (elevationM: number) => {
-        const { state, attackInputs } = closedPair(base, receiver, { elevationM });
+        const { state, attackInputs } = closedRelayPair(base, receiver, { elevationM });
         return truck(run(state, attackInputs(0.3), 100), 'attack').readings.compoundKpa;
       };
       expect(residual(20)).toBeLessThan(residual(0) - 100);
     });
 
     it('over-running the relay flattens the layflat: compound 0, cavitation, throttle adds nothing', () => {
-      const { state, inlet, attackInputs } = closedPair(base, receiver, {
+      const { state, inlet, attackInputs } = closedRelayPair(base, receiver, {
         lengths: 6,
         baseThrottle: 0.5,
         tipMm: 20,
@@ -241,7 +190,7 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
     });
 
     it('gives nothing when the base pump shuts its relay delivery or runs dry', () => {
-      const { state, inlet, out, attackInputs } = closedPair(base, receiver);
+      const { state, inlet, out, attackInputs } = closedRelayPair(base, receiver);
       const shut: SimState = {
         ...state,
         trucks: state.trucks.map((t) =>
@@ -265,7 +214,7 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
     });
 
     it('beats the attack pump’s own tank when both are open (higher head wins, as a hydrant)', () => {
-      const { state, inlet, attackInputs } = closedPair(base, receiver);
+      const { state, inlet, attackInputs } = closedRelayPair(base, receiver);
       const tankIn = inletOfKind(receiver, 'tank');
       const both = attackInputs(0.3);
       both.valves[tankIn] = 1;
@@ -275,7 +224,7 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
     });
 
     it('is deterministic', () => {
-      const { state, attackInputs } = closedPair(base, receiver);
+      const { state, attackInputs } = closedRelayPair(base, receiver);
       expect(run(state, attackInputs(0.5), 200)).toStrictEqual(run(state, attackInputs(0.5), 200));
     });
   },
@@ -338,7 +287,7 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
   'relay burst %s',
   (_name, base, receiver) => {
     const flowing = () => {
-      const pair = closedPair(base, receiver);
+      const pair = closedRelayPair(base, receiver);
       return { ...pair, s: run(pair.state, pair.attackInputs(0.6), 150) };
     };
     const inletShut = (inputs: PlayerInputs, inlet: string, open = 0): PlayerInputs => ({

@@ -2,8 +2,9 @@
 // with a different shape, must pass these. Generic behaviour belongs here, not in per-truck tests.
 import { describe, expect, it } from 'vitest';
 import { BRANCH_OPTIMUM_KPA, HOSES } from '../constants';
-import { createIdleInputs, createInitialState } from '../engine';
+import { createIdleInputs, createInitialState, switchTruck } from '../engine';
 import {
+  closedRelayPair,
   draughtSite,
   expectSane,
   hydrantSite,
@@ -15,6 +16,7 @@ import {
   seededRandom,
   suctionInletOf,
   tankAttackInputs,
+  truck,
   truckOf,
 } from '../testUtils';
 import type { ApplianceSpec, HoseLine, PlayerInputs } from '../types';
@@ -232,6 +234,71 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
           expectSane(s);
         }
       }
+    });
+  },
+);
+
+// Relay contract (ARCHITECTURE §4.7): every appliance relays to every other, its own kind included.
+const PAIRS = ALL.flatMap((base) => ALL.map((receiver) => [base, receiver] as const)).filter(
+  ([, receiver]) => receiver.inlets.some((i) => i.kind === 'suction'),
+);
+
+describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
+  'relay contract: %s',
+  (_name, base, receiver) => {
+    it('a closed relay delivers water, conserves it, and replays exactly', () => {
+      const { state, inlet, out, attackInputs } = closedRelayPair(base, receiver);
+      const go = () => run(state, attackInputs(0.4), 200);
+      const s = go();
+      expect(s).toStrictEqual(go());
+      expectSane(s);
+      const q = truck(s, 'attack').readings.inletFlowLpm[inlet] ?? 0;
+      expect(q).toBeGreaterThan(0);
+      expect(truck(s, 'base').readings.deliveryFlowLpm[out]).toBeCloseTo(q, 6);
+      expect(truck(s, 'attack').readings.compoundKpa).toBeGreaterThan(0);
+    });
+
+    it('over-running the relay caps the flow without NaN', () => {
+      const { state, attackInputs } = closedRelayPair(base, receiver, {
+        lengths: 8,
+        baseThrottle: 0.3,
+        tipMm: 25,
+      });
+      const s = run(state, attackInputs(1), 100);
+      expectSane(s);
+      expect(truck(s, 'attack').readings.cavitation).toBeGreaterThan(0);
+    });
+
+    it('survives fuzzed inputs on both pumps, bursting the hose or not', () => {
+      const rand = seededRandom(0xfeed);
+      const wild = () => [rand(), 0, 1, -1, Number.NaN, 1e-9][Math.floor(rand() * 6)] ?? 0;
+      const fuzz = (spec: ApplianceSpec): PlayerInputs => ({
+        throttle: wild(),
+        valves: Object.fromEntries(controlIds(spec).map((id) => [id, wild()])),
+        switches: Object.fromEntries(controlIds(spec).map((id) => [id, rand() < 0.5])),
+      });
+      let s = closedRelayPair(base, receiver).state;
+      for (let burst = 0; burst < 30; burst++) {
+        // Now and then the base pump's settings change too (as the player would leave them).
+        if (burst % 5 === 4) {
+          s = switchTruck(switchTruck(s, 'base', fuzz(receiver)), 'attack', fuzz(base));
+        }
+        s = run(s, fuzz(receiver), 10);
+        expectSane(s);
+      }
+    });
+
+    it('an open relay into the receiving tank refills it', () => {
+      const { state, link, out } = closedRelayPair(base, receiver);
+      const open = {
+        ...state,
+        links: [{ ...link, to: { kind: 'tank' as const, truckId: 'attack' } }],
+        trucks: state.trucks.map((t) => (t.id === 'attack' ? { ...t, tankL: 0 } : t)),
+      };
+      const s = run(open, createIdleInputs(receiver), 100);
+      expectSane(s);
+      expect(truck(s, 'base').readings.deliveryFlowLpm[out]).toBeGreaterThan(0);
+      expect(truck(s, 'attack').tankL).toBeGreaterThan(0);
     });
   },
 );

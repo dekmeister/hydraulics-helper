@@ -11,18 +11,37 @@ export interface PlannedLine {
   tipMm: number;
 }
 
-/** Attach each planned line to the unused delivery closest in size to its hose (adaptors assumed). */
-export function attachLines(spec: ApplianceSpec, plans: readonly PlannedLine[]): HoseLine[] {
+/**
+ * The free delivery closest in size to `hose` (adaptors assumed); takes it out of `free`. Throws
+ * when every delivery is taken.
+ */
+export function takeDelivery(free: DeliverySpec[], hose: string): DeliverySpec {
+  const sizeMm = hoseType(hose).sizeMm;
+  const [first, ...rest] = free;
+  if (first === undefined) throw new Error(`No free delivery for ${hose}`);
+  const best = rest.reduce(
+    (a, b) => (Math.abs(b.sizeMm - sizeMm) < Math.abs(a.sizeMm - sizeMm) ? b : a),
+    first,
+  );
+  free.splice(free.indexOf(best), 1);
+  return best;
+}
+
+/**
+ * Attach each planned line to the unused delivery closest in size to its hose (adaptors assumed),
+ * on truck `truckId`.
+ */
+export function attachLines(
+  spec: ApplianceSpec,
+  plans: readonly PlannedLine[],
+  truckId = DEFAULT_TRUCK_ID,
+): HoseLine[] {
   const free: DeliverySpec[] = [...spec.deliveries];
   return plans.map((plan) => {
-    const sizeMm = hoseType(plan.hose).sizeMm;
-    const best = free.reduce((a, b) =>
-      Math.abs(b.sizeMm - sizeMm) < Math.abs(a.sizeMm - sizeMm) ? b : a,
-    );
-    free.splice(free.indexOf(best), 1);
+    const best = takeDelivery(free, plan.hose);
     return {
       id: plan.id,
-      truckId: DEFAULT_TRUCK_ID,
+      truckId,
       deliveryId: best.id,
       segments: Array.from({ length: plan.lengths }, () => ({
         hose: plan.hose,

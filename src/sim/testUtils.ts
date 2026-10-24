@@ -2,13 +2,14 @@
 import { expect } from 'vitest';
 import { STANDARD_LENGTH_M, TICK_S } from './constants';
 import { inletOfKind } from './appliances/controls';
-import { DEFAULT_TRUCK_ID, advance, type SiteOptions } from './engine';
+import { DEFAULT_TRUCK_ID, advance, createSiteState, type SiteOptions } from './engine';
 import { nextRandom } from './rng';
 import type {
   ApplianceSpec,
   ControlId,
   HoseLine,
   PlayerInputs,
+  RelayLink,
   SimState,
   TruckState,
 } from './types';
@@ -201,4 +202,61 @@ export function primedState(state: SimState): SimState {
     ...state,
     trucks: state.trucks.map((t) => ({ ...t, pump: { ...t.pump, primed: true } })),
   };
+}
+
+/** First delivery closest to 65 mm: where a relay leaves (as `attachLines` would choose). */
+export const relayDelivery = (spec: ApplianceSpec) =>
+  spec.deliveries.reduce((a, b) => (Math.abs(b.sizeMm - 65) < Math.abs(a.sizeMm - 65) ? b : a)).id;
+
+export interface PairOptions {
+  lengths?: number;
+  elevationM?: number;
+  baseThrottle?: number;
+  /** Tip of the receiving truck's branches. */
+  tipMm?: number;
+}
+
+/**
+ * A base pump of `base` on its own tank, relay delivery held open, pushing `lengths` × 30 m of
+ * 65 mm up `elevationM` to the suction inlet of a receiving pump of `receiver`, which has a 38 mm
+ * line on every delivery. The receiver is active.
+ */
+export function closedRelayPair(
+  base: ApplianceSpec,
+  receiver: ApplianceSpec,
+  opts: PairOptions = {},
+) {
+  const { lengths = 4, elevationM = 0, baseThrottle = 0.8, tipMm = 15 } = opts;
+  const out = relayDelivery(base);
+  const inlet = suctionInletOf(receiver);
+  const link: RelayLink = {
+    id: 'relay',
+    truckId: 'base',
+    deliveryId: out,
+    segments: Array.from({ length: lengths }, () => ({ hose: '65L', lengthM: 30 })),
+    elevationM,
+    to: { kind: 'inlet', truckId: 'attack', inletId: inlet },
+  };
+  const lines = receiver.deliveries.map((d) => ({
+    ...layLine(d.id, '38L', 2, tipMm),
+    id: `attack-${d.id}`,
+    truckId: 'attack',
+  }));
+  const tankIn = base.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
+  const state = createSiteState(
+    [
+      { id: 'attack', label: 'Attack pump', spec: receiver },
+      {
+        id: 'base',
+        label: 'Base pump',
+        spec: base,
+        inputs: inputsWith(baseThrottle, [...tankIn, out]),
+      },
+    ],
+    lines,
+    { links: [link] },
+  );
+  const attackInputs = (throttle: number, open = receiver.deliveries.map((d) => d.id)) =>
+    inputsWith(throttle, [inlet, ...open]);
+  return { state, link, inlet, out, attackInputs };
 }
