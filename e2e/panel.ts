@@ -1,12 +1,17 @@
 // Helpers for driving the pump panel through its real controls (docs/TESTING.md §3–4).
 import type { Locator, Page, TestInfo } from '@playwright/test';
-import type { SimState, TruckState } from '../src/sim/types';
+import { APPLIANCES } from '../src/sim/appliances/catalogue';
+import { TEST_APPLIANCE } from '../src/sim/appliances/testAppliance';
+import type { ApplianceSpec, SimState, TruckState } from '../src/sim/types';
 import { CATALOGUE_LAYOUTS } from '../src/ui/appliances/registry';
 import type { PanelItem, PanelLayout } from '../src/ui/appliances/types';
 import { TEST_APPLIANCE_LAYOUT } from '../src/testing/appliances/testApplianceLayout';
 import { expect } from './fixtures';
 
 export const ALL_LAYOUTS: readonly PanelLayout[] = [...CATALOGUE_LAYOUTS, TEST_APPLIANCE_LAYOUT];
+
+/** Appliances the journeys run on: the catalogue plus the test-only one, whose panel differs. */
+export const JOURNEY_APPLIANCES: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
 
 export function layoutFor(applianceId: string): PanelLayout {
   const layout = ALL_LAYOUTS.find((l) => l.applianceId === applianceId);

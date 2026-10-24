@@ -1,11 +1,21 @@
 import { flushSync } from 'react-dom';
-import { getAppliance } from '../sim/appliances/catalogue';
+import { APPLIANCES } from '../sim/appliances/catalogue';
+import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { createInitialState } from '../sim/engine';
 import { eligibleAppliances, getScenario } from '../sim/scenarios';
-import type { SimState } from '../sim/types';
+import type { ApplianceSpec, SimState } from '../sim/types';
 import { useStore } from '../state/store';
 import { snapAll } from '../ui/panel-pump/settle';
 import type { LoadOptions, PumpOpsTestApi } from './types';
+
+/** The e2e build can load the test-only appliance too, so journeys prove the panel is generic. */
+const LOADABLE: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
+
+function specById(id: string): ApplianceSpec {
+  const spec = LOADABLE.find((a) => a.id === id);
+  if (spec === undefined) throw new Error(`__pumpops.load: unknown appliance '${id}'`);
+  return spec;
+}
 
 function loadSim({ scenario, appliance, state }: LoadOptions): SimState | undefined {
   if (state !== undefined) {
@@ -18,11 +28,11 @@ function loadSim({ scenario, appliance, state }: LoadOptions): SimState | undefi
     // The scenario's initial state (lines laid, controls shut). Objectives and the full loader
     // arrive in M6; the scripted input timeline is for golden traces, not the player.
     const s = getScenario(scenario);
-    const spec = appliance !== undefined ? getAppliance(appliance) : eligibleAppliances(s)[0];
+    const spec = appliance !== undefined ? specById(appliance) : eligibleAppliances(s)[0];
     if (spec === undefined) throw new Error(`__pumpops.load: no appliance can play '${scenario}'`);
     return s.build(spec).state;
   }
-  return appliance === undefined ? undefined : createInitialState(getAppliance(appliance));
+  return appliance === undefined ? undefined : createInitialState(specById(appliance));
 }
 
 export function createTestApi(): PumpOpsTestApi {

@@ -1,5 +1,4 @@
 // Journeys: a player's lesson driven through the real controls (docs/TESTING.md §4).
-import { APPLIANCES } from '../../src/sim/appliances/catalogue';
 import { expect, gotoApp, test } from '../fixtures';
 import {
   activeTruckOf,
@@ -9,14 +8,16 @@ import {
   expectStatus,
   getState,
   instrumentName,
+  JOURNEY_APPLIANCES,
   layoutFor,
+  layoutItems,
   meterValue,
   sliderValue,
   stepAndSettle,
   tapOrClick,
 } from '../panel';
 
-for (const spec of APPLIANCES) {
+for (const spec of JOURNEY_APPLIANCES) {
   test.describe(`tank attack on ${spec.id}`, () => {
     test.beforeEach(async ({ page }) => {
       await gotoApp(page);
@@ -124,17 +125,22 @@ for (const spec of APPLIANCES) {
       expect(open).toBeLessThanOrEqual(0.55);
     });
 
-    test('a tap never charges a line, and a delivery with no line is disabled', async ({
+    test('a tap does what the layout says, and a delivery with no line is disabled', async ({
       page,
     }, testInfo) => {
       const layout = layoutFor(spec.id);
       const state = await getState(page);
-      const [first] = state.lines;
-      if (first === undefined) throw new Error('no line');
-      const valve = page.getByRole('slider', { name: controlName(layout, first.deliveryId) });
-      await valve.scrollIntoViewIfNeeded();
-      await tapOrClick(valve, testInfo);
-      await expect(valve).toHaveAttribute('aria-valuenow', '0');
+      for (const line of state.lines) {
+        // 'none' must never charge a line from a stray thumb; 'toggle' snaps fully open.
+        const item = layoutItems(layout).find(
+          (i) => i.kind === 'delivery' && i.control === line.deliveryId,
+        );
+        if (item?.kind !== 'delivery') throw new Error(`${line.deliveryId} not placed`);
+        const valve = page.getByRole('slider', { name: item.label });
+        await valve.scrollIntoViewIfNeeded();
+        await tapOrClick(valve, testInfo);
+        await expect(valve).toHaveAttribute('aria-valuenow', item.tap === 'toggle' ? '100' : '0');
+      }
 
       const used = new Set(state.lines.map((l) => l.deliveryId));
       for (const d of spec.deliveries.filter((x) => !used.has(x.id))) {
