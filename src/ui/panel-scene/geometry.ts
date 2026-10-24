@@ -1,8 +1,8 @@
 // Plan-view scene layout (PLAN M3): where the truck, its couplings, hose lays and branches are
 // drawn. Pure functions of the scene art and the sim's lines; no React.
-import type { ControlId, HoseLine } from '../../sim/types';
+import type { ControlId, HoseLine, WaterSource } from '../../sim/types';
 import type { SceneArt } from '../appliances/types';
-import { FIRE_HEADING_DEG, TRUCK_AT } from './site';
+import { DAM, FIRE_HEADING_DEG, HYDRANT, TRUCK_AT } from './site';
 
 /** Scene drawing space (SVG viewBox). */
 export const SCENE_VIEW = { w: 800, h: 500 } as const;
@@ -43,7 +43,9 @@ export interface TruckPose extends Point {
 }
 
 export interface CouplingPoint extends Point {
-  deliveryId: ControlId;
+  /** Spec control id: a delivery or a suction inlet. */
+  control: ControlId;
+  kind: 'delivery' | 'inlet';
   /** Way the coupling points in the scene, degrees. */
   facingDeg: number;
 }
@@ -58,10 +60,28 @@ export interface LayGeometry {
   headingDeg: number;
 }
 
+/** A supply hose from a truck's inlet coupling to its source. */
+export interface SupplyGeometry {
+  supplyId: string;
+  inletId: ControlId;
+  sourceKind: WaterSource['kind'];
+  path: string;
+  /** The source end: strainer in the dam, or the hydrant. */
+  end: Point;
+}
+
+/** What `layoutScene` needs to know about a supply hose. */
+export interface SupplyRef {
+  id: string;
+  inletId: ControlId;
+  sourceKind: WaterSource['kind'];
+}
+
 export interface SceneGeometry {
   truck: TruckPose;
   couplings: CouplingPoint[];
   lines: LayGeometry[];
+  supplies: SupplyGeometry[];
   unitsPerM: number;
   /** Length the scale bar stands for, m. */
   scaleBarM: number;
@@ -85,11 +105,12 @@ export function toScene(pose: TruckPose, local: Point): Point {
 function parkTruck(art: SceneArt): TruckPose {
   let sx = 0;
   let sy = 0;
-  for (const c of art.couplings) {
+  const deliveries = art.couplings.filter((c) => c.kind === 'delivery');
+  for (const c of deliveries) {
     sx += Math.cos(rad(c.facingDeg));
     sy += Math.sin(rad(c.facingDeg));
   }
-  const balanced = Math.hypot(sx, sy) < 0.1 * Math.max(1, art.couplings.length);
+  const balanced = Math.hypot(sx, sy) < 0.1 * Math.max(1, deliveries.length);
   const meanFacingDeg = (Math.atan2(sy, sx) * 180) / Math.PI;
   return { ...TRUCK_AT, headingDeg: balanced ? 0 : FIRE_HEADING_DEG - meanFacingDeg };
 }
@@ -113,19 +134,45 @@ function scaleBarFor(unitsPerM: number): number {
   return fits.at(-1) ?? SCALE_BAR_CHOICES_M[0];
 }
 
+/** How far a supply hose runs straight out of its inlet coupling, drawing units. */
+const INLET_LEAD_U = 36;
+
+/** Where a supply from a source of `kind` ends on the map. */
+function sourcePoint(kind: WaterSource['kind']): Point {
+  return kind === 'static' ? DAM.intake : HYDRANT;
+}
+
+/** A supply hose: out of its coupling along its facing, then into the source. */
+function supplyPath(coupling: CouplingPoint, end: Point): string {
+  const lead = dir(coupling.facingDeg);
+  const c1 = { x: coupling.x + INLET_LEAD_U * lead.x, y: coupling.y + INLET_LEAD_U * lead.y };
+  const c2 = { x: (c1.x + end.x) / 2, y: Math.max(c1.y, end.y) };
+  return (
+    `M${fmt(coupling.x)} ${fmt(coupling.y)} ` +
+    `C${fmt(c1.x)} ${fmt(c1.y)}, ${fmt(c2.x)} ${fmt(c2.y)}, ${fmt(end.x)} ${fmt(end.y)}`
+  );
+}
+
 /**
- * Lay out the scene for one truck: park it, place a coupling per delivery, and run each laid line
- * from its coupling to a branch on a fan towards the fire. A branch's distance from the truck is
+ * Lay out the scene for one truck: park it, place its couplings, and run each laid line from its
+ * coupling to a branch on a fan towards the fire. A branch's distance from the truck is
  * proportional to the hose laid; the scale shrinks so the longest lay and its spray stay in view.
+ * Supply hoses run from their inlet couplings to the dam or the hydrant (map symbols, not to scale).
  */
-export function layoutScene(art: SceneArt, lines: readonly HoseLine[]): SceneGeometry {
+export function layoutScene(
+  art: SceneArt,
+  lines: readonly HoseLine[],
+  supplies: readonly SupplyRef[] = [],
+): SceneGeometry {
   const truck = parkTruck(art);
   const couplings: CouplingPoint[] = art.couplings.map((c) => ({
-    deliveryId: c.delivery,
+    control: c.control,
+    kind: c.kind,
     ...toScene(truck, c),
     facingDeg: c.facingDeg + truck.headingDeg,
   }));
-  const couplingFor = (id: ControlId) => couplings.find((c) => c.deliveryId === id);
+  const couplingFor = (id: ControlId) =>
+    couplings.find((c) => c.kind === 'delivery' && c.control === id);
 
   // Order lays across the fan by where their couplings sit, so neighbouring hoses don't cross.
   const across = dir(FIRE_HEADING_DEG - 90);
@@ -173,5 +220,27 @@ export function layoutScene(art: SceneArt, lines: readonly HoseLine[]): SceneGeo
     return { lineId: line.id, deliveryId: line.deliveryId, path, branch, headingDeg };
   });
 
-  return { truck, couplings, lines: lays, unitsPerM, scaleBarM: scaleBarFor(unitsPerM) };
+  const supplyLays = supplies.flatMap((s): SupplyGeometry[] => {
+    const coupling = couplings.find((c) => c.kind === 'inlet' && c.control === s.inletId);
+    if (coupling === undefined) return [];
+    const end = sourcePoint(s.sourceKind);
+    return [
+      {
+        supplyId: s.id,
+        inletId: s.inletId,
+        sourceKind: s.sourceKind,
+        path: supplyPath(coupling, end),
+        end,
+      },
+    ];
+  });
+
+  return {
+    truck,
+    couplings,
+    lines: lays,
+    supplies: supplyLays,
+    unitsPerM,
+    scaleBarM: scaleBarFor(unitsPerM),
+  };
 }

@@ -234,6 +234,91 @@
   }
 }
 
+/* Cavitation (Design §6): the charged core breaks into gaps; the gaps travel only with motion. */
+.scene-hose--gapped .scene-hose__core {
+  stroke-dasharray: 18 5 7 4 22 5;
+}
+.scene-hose--gapped .scene-hose__flow {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scene-hose--gapped .scene-hose__core {
+    animation: scene-hose-gaps 0.9s linear infinite;
+  }
+}
+
+@keyframes scene-hose-gaps {
+  to {
+    stroke-dashoffset: -61;
+  }
+}
+
+/* Supply hoses (Design §7, OPEN_DECISIONS #1: suction lines are inlet green). */
+.scene-supply path {
+  fill: none;
+  stroke-linecap: round;
+}
+.scene-supply__hard-casing {
+  stroke: var(--color-material-ink);
+  stroke-width: 14;
+}
+.scene-supply__hard-core {
+  stroke: var(--color-material-galv);
+  stroke-width: 9;
+}
+.scene-supply__water {
+  stroke: var(--color-function-inlet);
+  stroke-width: 4;
+}
+.scene-supply__water--layflat {
+  stroke-width: 6;
+}
+.scene-supply__soft {
+  stroke: var(--color-scene-canvas-hose-dry);
+  stroke-width: 3.5;
+  stroke-dasharray: 8 6;
+}
+.scene-supply__strainer {
+  fill: var(--color-material-galv);
+  stroke: var(--color-material-ink);
+  stroke-width: 2;
+}
+.scene-supply__strainer-mesh {
+  stroke: var(--color-material-ink);
+  stroke-width: 1.2;
+}
+.scene-coupling--inlet {
+  fill: var(--color-function-inlet);
+}
+.scene-coupling--inlet.scene-coupling--capped {
+  fill: var(--color-material-ink);
+  stroke: var(--color-function-inlet);
+}
+.scene-hydrant__body {
+  fill: var(--color-signal-alarm);
+  stroke: var(--color-material-ink);
+  stroke-width: 2;
+}
+.scene-hydrant__cap {
+  fill: var(--color-material-galv);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.2;
+}
+.scene-hydrant__outlet {
+  fill: var(--color-material-galv);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+.scene-hydrant__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  fill: var(--color-material-ink);
+  opacity: 0.7;
+}
+
 @keyframes scene-hose-flow {
   to {
     stroke-dashoffset: -18;
@@ -297,7 +382,8 @@ circle.scene-highlight--outer {
 }
 
 .scene-legend__row,
-.scene-legend__tank {
+.scene-legend__tank,
+.scene-legend__info {
   display: grid;
   grid-template-columns: 36px auto minmax(0, 1fr) auto;
   align-items: center;
@@ -357,9 +443,14 @@ circle.scene-highlight--outer {
   color: var(--color-material-steel);
 }
 
-.scene-legend__tank {
+.scene-legend__tank,
+.scene-legend__info {
   grid-template-columns: minmax(0, 1fr) auto;
   background: none;
+}
+
+.scene-legend__supply--soft .scene-legend__status {
+  color: var(--color-signal-caution);
 }
 
 .scene-legend__tank--low .scene-legend__status {

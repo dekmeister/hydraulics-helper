@@ -1,5 +1,5 @@
 // Scene art ↔ spec consistency (ARCHITECTURE §9.4, docs/TESTING.md layer 4): one coupling per
-// spec delivery, nothing the spec lacks, and every coupling drawn on the truck body.
+// spec delivery and suction inlet, nothing the spec lacks, and every coupling drawn on the truck body.
 import { describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
@@ -26,9 +26,18 @@ describe.each(PAIRS)('scene art ↔ spec: %s', (_id, spec, art) => {
     expect(art.applianceId).toBe(spec.id);
   });
 
-  it('has one coupling per delivery and nothing else', () => {
-    expect(art.couplings.map((c) => c.delivery).sort()).toEqual(
-      spec.deliveries.map((d) => d.id).sort(),
+  it('has one coupling per delivery and per suction inlet, and nothing else', () => {
+    const of = (kind: 'delivery' | 'inlet') =>
+      art.couplings
+        .filter((c) => c.kind === kind)
+        .map((c) => c.control)
+        .sort();
+    expect(of('delivery')).toEqual(spec.deliveries.map((d) => d.id).sort());
+    expect(of('inlet')).toEqual(
+      spec.inlets
+        .filter((i) => i.kind === 'suction')
+        .map((i) => i.id)
+        .sort(),
     );
   });
 

@@ -2,7 +2,8 @@ import type { SceneArt } from '../../ui/appliances/types';
 
 /**
  * Scene art for the test-only appliance: shorter, no hatch, and its two deliveries on opposite
- * sides rather than at the rear, so the scene can't assume rear-facing couplings.
+ * sides rather than at the rear, so the scene can't assume rear-facing couplings; its intake is on
+ * the right-hand side towards the cab.
  */
 export const TEST_APPLIANCE_SCENE_ART: SceneArt = {
   applianceId: 'test-2d',
@@ -11,7 +12,8 @@ export const TEST_APPLIANCE_SCENE_ART: SceneArt = {
   cabU: 28,
   hatch: false,
   couplings: [
-    { delivery: 'left', x: -16, y: -21, facingDeg: -90 },
-    { delivery: 'right', x: -16, y: 21, facingDeg: 90 },
+    { control: 'left', kind: 'delivery', x: -16, y: -21, facingDeg: -90 },
+    { control: 'right', kind: 'delivery', x: -16, y: 21, facingDeg: 90 },
+    { control: 'intake', kind: 'inlet', x: 14, y: 21, facingDeg: 90 },
   ],
 };

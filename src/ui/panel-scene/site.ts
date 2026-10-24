@@ -27,4 +27,9 @@ export const DAM = {
     'M100 402 q5 -2 10 0',
   ],
   label: { x: 58, y: 440 },
+  /** Where hard suction goes in: just inside the bank nearest the truck. */
+  intake: { x: 122, y: 414 },
 } as const;
+
+/** A hydrant on the track's verge below the truck: in layflat reach of a suction inlet. */
+export const HYDRANT = { x: 372, y: 452, label: { x: 390, y: 478 } } as const;

@@ -3,8 +3,9 @@ import type { SceneArt } from '../appliances/types';
 import type { TruckPose } from './geometry';
 
 export interface CouplingView {
-  deliveryId: string;
-  /** No line laid: the coupling carries a blank cap. */
+  /** Spec control id of the coupling (delivery or suction inlet). */
+  control: string;
+  /** Nothing connected: the coupling carries a blank cap. */
   capped: boolean;
   highlighted: boolean;
 }
@@ -60,12 +61,13 @@ function TankBar({
 
 /**
  * A truck from above, drawn from its scene art (Design §7: plain red body, white cab, no livery):
- * pump bay at the rear, optional tank hatch, tank fill bar, and a coupling per delivery.
+ * pump bay at the rear, optional tank hatch, tank fill bar, a coupling per delivery and per
+ * suction inlet (inlet green, Design OPEN_DECISIONS #1).
  */
 export function ApplianceArt({ art, pose, couplings, tank }: Props) {
   const L = art.lengthU;
   const W = art.widthU;
-  const capped = new Map(couplings.map((c) => [c.deliveryId, c]));
+  const views = new Map(couplings.map((c) => [c.control, c]));
   const tankStart = -L / 2 + BAY_U;
   const tankEnd = L / 2 - art.cabU;
   return (
@@ -89,23 +91,19 @@ export function ApplianceArt({ art, pose, couplings, tank }: Props) {
       )}
       {tank !== undefined && <TankBar art={art} fraction={tank.fraction} level={tank.level} />}
       {art.couplings.map((c) => {
-        const view = capped.get(c.delivery);
+        const view = views.get(c.control);
+        const classes = ['scene-coupling'];
+        if (c.kind === 'inlet') classes.push('scene-coupling--inlet');
+        if (view?.capped === true) classes.push('scene-coupling--capped');
         return (
-          <g key={c.delivery} data-testid={`coupling-${c.delivery}`}>
+          <g key={c.control} data-testid={`coupling-${c.control}`}>
             {view?.highlighted === true && (
               <circle className="scene-highlight scene-highlight--outer" cx={c.x} cy={c.y} r="13" />
             )}
             {view?.highlighted === true && (
               <circle className="scene-highlight" cx={c.x} cy={c.y} r="10" />
             )}
-            <circle
-              className={
-                view?.capped === true ? 'scene-coupling scene-coupling--capped' : 'scene-coupling'
-              }
-              cx={c.x}
-              cy={c.y}
-              r="5.5"
-            />
+            <circle className={classes.join(' ')} cx={c.x} cy={c.y} r="5.5" />
           </g>
         );
       })}
