@@ -69,6 +69,22 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(spec.primer.maxOnS).toBeLessThan(spec.primer.periodS);
     });
 
+    it('has dial scales that cover what its pump and engine can reach', () => {
+      for (const inst of spec.instruments) {
+        if (inst.kind === 'tank') continue;
+        const { fullScale, zones } = inst.scale;
+        // Tank supply can't push discharge past shutoff, and the governor caps rpm at maxRpm.
+        const reach = inst.kind === 'tacho' ? spec.engine.maxRpm : spec.pump.shutoffKpa;
+        expect(fullScale).toBeGreaterThanOrEqual(reach);
+        const low = inst.kind === 'compound' ? -100 : 0;
+        for (const z of zones) {
+          expect(z.from).toBeLessThan(z.to);
+          expect(z.from).toBeGreaterThanOrEqual(low);
+          expect(z.to).toBeLessThanOrEqual(fullScale);
+        }
+      }
+    });
+
     it('has idle inputs covering exactly its controls', () => {
       const idle = createIdleInputs(spec);
       expect(validateInputs(spec, idle)).toEqual([]);

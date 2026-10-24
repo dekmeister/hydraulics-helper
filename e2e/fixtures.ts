@@ -31,8 +31,20 @@ export async function gotoApp(page: Page, query = ''): Promise<void> {
   });
 }
 
-/** Attach the ARIA snapshot and sim state, for failure triage and the review bundle. */
+/** Every rendered instrument as 'Name value', joined with ' · ' (for the review report). */
+export async function meterReadings(page: Page): Promise<string> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll('[role="meter"]')]
+      .map(
+        (m) => `${m.getAttribute('aria-label') ?? '?'} ${m.getAttribute('aria-valuetext') ?? ''}`,
+      )
+      .join(' · '),
+  );
+}
+
+/** Attach the ARIA snapshot, instrument readings and sim state, for triage and the review bundle. */
 export async function attachDiagnostics(page: Page, testInfo: TestInfo): Promise<void> {
+  await testInfo.attach('meters', { body: await meterReadings(page), contentType: 'text/plain' });
   const aria = await page.locator('body').ariaSnapshot();
   await testInfo.attach('aria', { body: aria, contentType: 'text/plain' });
   const state = await page.evaluate(() => window.__pumpops?.getState());

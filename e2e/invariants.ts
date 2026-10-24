@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import type { PanelLayout } from '../src/ui/appliances/types';
 
 /** Minimum touch target edge in CSS px (CLAUDE.md mobile floor; Design token touch.min). */
 export const TOUCH_MIN_PX = 44;
@@ -54,4 +55,35 @@ export async function expectNoOverlaps(page: Page): Promise<void> {
     });
   });
   expect(overlaps, 'overlapping interactive elements').toEqual([]);
+}
+
+/**
+ * Invariant 4: every control and instrument the layout places for the spec is rendered exactly
+ * once, by role and accessible name, and can be scrolled into view.
+ */
+export async function expectSpecRenderedOnce(page: Page, layout: PanelLayout): Promise<void> {
+  const expected = layout.sections
+    .flatMap((s) => s.items)
+    .flatMap((i): { role: 'meter' | 'slider' | 'switch'; name: string }[] => {
+      switch (i.kind) {
+        case 'gauge':
+        case 'tank-level':
+          return [{ role: 'meter', name: i.label }];
+        case 'valve':
+        case 'delivery':
+        case 'throttle':
+          return [{ role: 'slider', name: i.label }];
+        case 'primer':
+          return [{ role: 'switch', name: i.label }];
+        case 'warnings':
+          return [];
+      }
+    });
+  for (const { role, name } of expected) {
+    const found = page.getByRole(role, { name, exact: true });
+    await expect(found, `${role} "${name}"`).toHaveCount(1);
+    await found.scrollIntoViewIfNeeded();
+    await expect(found, `${role} "${name}" reachable`).toBeInViewport();
+  }
+  await expect(page.getByRole('status')).toHaveCount(1);
 }

@@ -1,7 +1,14 @@
 import type { Page } from '@playwright/test';
+import { FIXTURES } from '../src/testing/fixtures/catalog';
 import { SIDE_BY_SIDE_MIN_PX } from '../src/ui/layout/breakpoints';
 import { expect, gotoApp, test } from './fixtures';
-import { expectNoHorizontalScroll, expectNoOverlaps, expectTouchTargets } from './invariants';
+import {
+  expectNoHorizontalScroll,
+  expectNoOverlaps,
+  expectSpecRenderedOnce,
+  expectTouchTargets,
+} from './invariants';
+import { layoutFor } from './panel';
 
 async function panelBoxes(page: Page) {
   const scene = await page.getByRole('region', { name: 'Scene' }).boundingBox();
@@ -40,4 +47,17 @@ test.describe('app shell layout invariants', () => {
       await expectArrangement(page, width);
     }
   });
+});
+
+// Every generated panel fixture, at every viewport (docs/TESTING.md §4 layout invariants).
+test.describe('pump panel layout invariants', () => {
+  for (const fixture of FIXTURES.filter((f) => f.applianceId !== undefined)) {
+    test(fixture.id, async ({ page }) => {
+      await gotoApp(page, `?fixture=${encodeURIComponent(fixture.id)}`);
+      await expectNoHorizontalScroll(page);
+      await expectTouchTargets(page);
+      await expectNoOverlaps(page);
+      await expectSpecRenderedOnce(page, layoutFor(fixture.applianceId ?? ''));
+    });
+  }
 });

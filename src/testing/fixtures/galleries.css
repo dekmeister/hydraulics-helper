@@ -1,0 +1,24 @@
+.fixture-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  container-type: inline-size;
+}
+
+.fixture-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--color-material-raised);
+}
+
+.fixture-card figcaption {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-material-steel-dim);
+}
