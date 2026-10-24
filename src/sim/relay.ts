@@ -2,11 +2,13 @@
 // and the solve order that couples the pumps of a closed relay.
 import {
   HEAD_KPA_PER_M,
+  HOSE_BURST_KPA,
   RELAY_FIT_MIN_R,
   RELAY_FIT_PROBE_LPM,
   VALVE_CLOSED_EPS,
 } from './constants';
-import { hoseResistance, isRigid } from './hose';
+import { surgeKpa } from './hammer';
+import { hoseResistance, hoseType, isRigid } from './hose';
 import type { RelayFeed } from './inlets';
 import { solveTruck, valveLossCoeff, type RelayOutlet, type TruckSolveInput } from './network';
 import type {
@@ -240,4 +242,42 @@ export function solveSite(
     linkReadings[link.id] = relayReading(link, supplier, own, receiver);
   }
   return { inputs, readings, linkReadings };
+}
+
+/** Valve openings of each truck last tick and this tick, to tell who cut a relay's flow. */
+export interface ValveChange {
+  before: (truckId: string) => Record<string, number>;
+  now: (truckId: string) => Record<string, number>;
+}
+
+/**
+ * Relays after this tick's over-pressure check. A live closed relay's peak pressure is its higher
+ * end now, or its far end as it was plus a Joukowsky surge if the receiving pump cut the flow this
+ * tick (the shutdown spike, L3865–3873). A drop because the supplying pump shut its own delivery
+ * is water hammer on that pump instead. At `HOSE_BURST_KPA` a length bursts: the first if the
+ * supplying end peaked, the last if the far end did.
+ */
+export function checkBursts(
+  links: readonly RelayLink[],
+  before: Readonly<Record<string, RelayReading>>,
+  now: Readonly<Record<string, RelayReading>>,
+  valves: ValveChange,
+  timeS: number,
+): RelayLink[] {
+  return links.map((link) => {
+    const r = now[link.id];
+    const first = link.segments[0];
+    if (closedTo(link) === undefined || r === undefined || first === undefined) return link;
+    const prev = before[link.id];
+    const id = link.deliveryId;
+    const supplierShut =
+      (valves.now(link.truckId)[id] ?? 0) < (valves.before(link.truckId)[id] ?? 0);
+    const dropLpm = prev === undefined || supplierShut ? 0 : prev.flowLpm - r.flowLpm;
+    const surge = dropLpm > 0 ? surgeKpa(dropLpm, hoseType(first.hose).sizeMm) : 0;
+    const farKpa = Math.max(r.endKpa, (prev?.endKpa ?? 0) + surge);
+    const peakKpa = Math.max(r.startKpa, farKpa);
+    if (peakKpa < HOSE_BURST_KPA) return link;
+    const segment = r.startKpa >= farKpa ? 0 : link.segments.length - 1;
+    return { ...link, burst: { atS: timeS, segment, peakKpa } };
+  });
 }

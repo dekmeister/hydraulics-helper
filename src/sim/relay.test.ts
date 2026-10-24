@@ -4,8 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { CAT1 } from './appliances/cat1';
 import { inletOfKind } from './appliances/controls';
 import { TEST_APPLIANCE } from './appliances/testAppliance';
-import { HOSES, RELAY_DELIVERY_KPA, RELAY_MIN_RESIDUAL_KPA, STANDARD_LENGTH_M } from './constants';
-import { createSiteState, type TruckSetup } from './engine';
+import {
+  HOSE_BURST_KPA,
+  HOSES,
+  RELAY_DELIVERY_KPA,
+  RELAY_MIN_RESIDUAL_KPA,
+  STANDARD_LENGTH_M,
+} from './constants';
+import { createIdleInputs, createSiteState, switchTruck, type TruckSetup } from './engine';
+import { hoseResistance } from './hose';
 import { valveLossCoeff } from './network';
 import { relayEndKpa, relayOrder } from './relay';
 import {
@@ -17,7 +24,15 @@ import {
   suctionInletOf,
   truck,
 } from './testUtils';
-import type { ApplianceSpec, RelayEnd, RelayLink, SimState, WaterSource } from './types';
+import type {
+  ApplianceSpec,
+  PlayerInputs,
+  RelayEnd,
+  RelayLink,
+  SimState,
+  SupplyLine,
+  WaterSource,
+} from './types';
 
 const relay = (id: string, from: string, deliveryId: string, to: RelayEnd): RelayLink => ({
   id,
@@ -314,3 +329,195 @@ describe('relay spacing (C12, C13: 700 kPa out, 100 kPa residual, 600 kPa budget
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Over-pressure: the shutdown spike bursts a relay hose (manual L3865–3873).
+// ---------------------------------------------------------------------------
+
+describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
+  'relay burst %s',
+  (_name, base, receiver) => {
+    const flowing = () => {
+      const pair = closedPair(base, receiver);
+      return { ...pair, s: run(pair.state, pair.attackInputs(0.6), 150) };
+    };
+    const inletShut = (inputs: PlayerInputs, inlet: string, open = 0): PlayerInputs => ({
+      ...inputs,
+      valves: { ...inputs.valves, [inlet]: open },
+    });
+
+    it('slamming the relay inlet shut bursts the far length; the base pump then runs into it', () => {
+      const { s, inlet, out, attackInputs } = flowing();
+      const shut = inletShut(attackInputs(0.6), inlet);
+      const s1 = run(s, shut, 1);
+      const burst = s1.links[0]?.burst;
+      expect(burst?.atS).toBeCloseTo(s1.timeS, 9);
+      expect(burst?.segment).toBe(3);
+      expect(burst?.peakKpa).toBeGreaterThanOrEqual(HOSE_BURST_KPA);
+      expect(truck(s1, 'base').tally.hoseBursts).toBe(1);
+
+      const s2 = run(s1, shut, 50);
+      expect(truck(s2, 'base').tally.hoseBursts).toBe(1);
+      expect(s2.links[0]?.burst).toEqual(burst);
+      // The attack pump has lost its supply; the base pump's water runs out of the burst length:
+      // high rpm, low delivery pressure, water flowing (Table 6).
+      const reopened = run(s2, attackInputs(0.6), 20);
+      expect(truck(reopened, 'attack').readings.inletFlowLpm[inlet]).toBe(0);
+      expect(truck(s2, 'base').readings.deliveryFlowLpm[out]).toBeGreaterThan(500);
+      expect(truck(s2, 'base').readings.dischargeKpa).toBeLessThan(
+        truck(s, 'base').readings.dischargeKpa,
+      );
+      expect(s2.linkReadings.relay?.endKpa).toBe(0);
+      expectSane(reopened);
+    });
+
+    it('easing the relay inlet shut over 3 s, slowest at the end, leaves the hose whole', () => {
+      const { s, inlet, attackInputs } = flowing();
+      // A valve cuts most of its flow in the last of its travel (loss ∝ 1/open²), so easing it
+      // means slowing towards shut: an even sweep still cuts ~300 L/min in its last tenth.
+      let eased = s;
+      for (let i = 1; i <= 30; i++)
+        eased = run(eased, inletShut(attackInputs(0.6), inlet, (1 - i / 30) ** 2), 1);
+      eased = run(eased, inletShut(attackInputs(0.6), inlet), 100);
+      expect(eased.links[0]?.burst).toBeUndefined();
+      expect(truck(eased, 'base').tally.hoseBursts).toBe(0);
+    });
+
+    it('the base pump slamming its own relay delivery is water hammer on it, not a burst', () => {
+      const { s, out } = flowing();
+      const switched = switchTruck(s, 'base', truck(s, 'attack').inputs);
+      const held = truck(switched, 'base').inputs;
+      const s1 = run(switched, { ...held, valves: { ...held.valves, [out]: 0 } }, 1);
+      expect(s1.links[0]?.burst).toBeUndefined();
+      expect(truck(s1, 'base').tally.waterHammer).toBe(1);
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Open relay: the base pump discharges into a tank or a portable dam.
+// ---------------------------------------------------------------------------
+
+/** Base pump of `base` on its tank, relay held open at `throttle`, into `to` over 3 lengths. */
+function openRelay(
+  base: ApplianceSpec,
+  receiver: TruckSetup,
+  to: RelayEnd,
+  sources: WaterSource[] = [],
+  supplies: SupplyLine[] = [],
+  throttle = 0.6,
+) {
+  const out = relayDelivery(base);
+  const link: RelayLink = {
+    id: 'relay',
+    truckId: 'base',
+    deliveryId: out,
+    segments: Array.from({ length: 3 }, () => ({ hose: '65L', lengthM: 30 })),
+    elevationM: 5,
+    to,
+  };
+  const tankIn = base.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
+  const state = createSiteState(
+    [receiver, { id: 'base', spec: base, inputs: inputsWith(throttle, [...tankIn, out]) }],
+    receiver.spec.deliveries.map((d) => ({
+      ...layLine(d.id, '38L', 2, 15),
+      id: `attack-${d.id}`,
+      truckId: 'attack',
+    })),
+    { links: [link], sources, supplies },
+  );
+  return { state, link, out };
+}
+
+describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
+  'open relay %s',
+  (_name, base, receiver) => {
+    it('into a tank: flows by valve and hose alone, refills the tank, overflows when full', () => {
+      const { state, link, out } = openRelay(
+        base,
+        { id: 'attack', spec: receiver },
+        {
+          kind: 'tank',
+          truckId: 'attack',
+        },
+      );
+      // The base pump's own tank holds more than the 1000 L the attack tank is short of.
+      const startL = (receiver.tank?.capacityL ?? 0) - 1000;
+      const low: SimState = {
+        ...state,
+        trucks: state.trucks.map((t) => (t.id === 'attack' ? { ...t, tankL: startL } : t)),
+      };
+      const s = run(low, createIdleInputs(receiver), 100);
+      const b = truck(s, 'base');
+      const q = s.linkReadings.relay?.flowLpm ?? 0;
+      const delivery = base.deliveries.find((d) => d.id === out);
+      if (delivery === undefined) throw new Error('no relay delivery');
+      // Open end: discharge − head = (valve + hose)·Q², no branch.
+      const r = valveLossCoeff(delivery.sizeMm) + hoseResistance(link.segments);
+      expect(q).toBeCloseTo(Math.sqrt((b.readings.dischargeKpa - 10 * link.elevationM) / r), 6);
+      expect(s.linkReadings.relay?.endKpa).toBe(0);
+      // Ten seconds of flow, less the first moments while the base engine came up.
+      expect(truck(s, 'attack').tankL).toBeGreaterThan(startL + (q * 8) / 60);
+      const full = run(s, createIdleInputs(receiver), 1200);
+      expect(truck(full, 'attack').tankL).toBe(receiver.tank?.capacityL);
+      expectSane(full);
+    });
+
+    describe('into a portable dam the attack pump draughts from', () => {
+      // Small enough that the base pump's own tank can fill it.
+      const dam = (volumeL: number): WaterSource => ({ ...PORTABLE_DAM, volumeL, capacityL: 1000 });
+      const suction = suctionInletOf(receiver);
+      const site = (volumeL: number, throttle?: number) =>
+        openRelay(
+          base,
+          { id: 'attack', spec: receiver, primed: true },
+          { kind: 'dam', sourceId: 'pd' },
+          [dam(volumeL)],
+          [
+            {
+              id: 'suction-hose',
+              truckId: 'attack',
+              inletId: suction,
+              sourceId: 'pd',
+              segments: [{ hose: '65H', lengthM: 3 }],
+            },
+          ],
+          throttle,
+        );
+      const volume = (s: SimState) => {
+        const pd = s.sources.find((x) => x.id === 'pd');
+        return pd?.kind === 'static' ? pd.volumeL : Number.NaN;
+      };
+      const draw = (throttle: number) =>
+        inputsWith(throttle, [suction, ...receiver.deliveries.map((d) => d.id)]);
+
+      it('fills the dam while nothing draws, and overflows at its capacity', () => {
+        const { state } = site(0);
+        const s = run(state, createIdleInputs(receiver), 100);
+        const q = s.linkReadings.relay?.flowLpm ?? 0;
+        expect(q).toBeGreaterThan(100);
+        expect(volume(s)).toBeGreaterThan((q * 8) / 60);
+        expect(volume(s)).toBeLessThan((q * 10) / 60);
+        expect(volume(run(s, createIdleInputs(receiver), 1200))).toBe(1000);
+      });
+
+      it('balances fill against draw: drawn faster than filled, it empties and the pump loses prime', () => {
+        const { state } = site(1000, 0.3);
+        let s = run(state, draw(1), 100);
+        const a = truck(s, 'attack');
+        const fill = s.linkReadings.relay?.flowLpm ?? 0;
+        expect(a.readings.inletFlowLpm[suction]).toBeGreaterThan(fill);
+        for (let i = 0; i < 3000 && truck(s, 'attack').pump.primed; i++) s = run(s, draw(1), 10);
+        expect(volume(s)).toBe(0);
+        expect(truck(s, 'attack').pump.primed).toBe(false);
+        expectSane(s);
+      });
+
+      it('decouples the pumps: the base throttle doesn’t move the attack pump’s gauges', () => {
+        const attackAt = (baseThrottle: number) =>
+          truck(run(site(1000, baseThrottle).state, draw(0.6), 50), 'attack').readings;
+        expect(attackAt(0.9)).toEqual(attackAt(0.4));
+      });
+    });
+  },
+);

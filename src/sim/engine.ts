@@ -6,7 +6,7 @@ import { inletPaths, type ConnectedSupply, type RelayFeed } from './inlets';
 import type { TruckSolveInput } from './network';
 import { stepPrime } from './priming';
 import { lagRpm } from './pump';
-import { solveSite } from './relay';
+import { checkBursts, solveSite } from './relay';
 import { nextRandom } from './rng';
 import { stepTankL } from './tank';
 import { stepTempC } from './thermal';
@@ -257,8 +257,8 @@ function stepSources(
 /**
  * Advance the sim by `dtS` seconds. Pure and deterministic: returns new state, never mutates.
  * `inputs` apply to the active truck; other trucks keep their held inputs. Trucks are prepared
- * (engine, priming) in relay order, the whole site is solved (`solveSite`), then each truck's slow
- * states move. Noise comes from each truck's own seeded PRNG stream, one draw per tick.
+ * (engine, priming) in relay order, the whole site is solved (`solveSite`), each truck's slow
+ * states move, and relay hoses are checked for over-pressure (`checkBursts`). Noise comes from each truck's own seeded PRNG stream, one draw per tick.
  */
 export function advance(state: SimState, inputs: PlayerInputs, dtS: number): SimState {
   const timeS = state.timeS + dtS;
@@ -269,17 +269,35 @@ export function advance(state: SimState, inputs: PlayerInputs, dtS: number): Sim
     prepared.set(truck.id, p.prepared);
     return p.input;
   });
-  const trucks = state.trucks.map((truck) => {
+  const finished = state.trucks.map((truck) => {
     const p = prepared.get(truck.id);
     const readings = site.readings.get(truck.id);
     if (p === undefined || readings === undefined) throw new Error(`Truck '${truck.id}' unsolved`);
     return finishTruck(state, p, readings, site.linkReadings, timeS, dtS);
+  });
+  const valvesOf = (trucks: readonly TruckState[]) => (id: string) =>
+    trucks.find((t) => t.id === id)?.inputs.valves ?? {};
+  const links = checkBursts(
+    state.links,
+    state.linkReadings,
+    site.linkReadings,
+    { before: valvesOf(state.trucks), now: valvesOf(finished) },
+    timeS,
+  );
+  // A burst is tallied against the truck whose delivery the hose is on.
+  const burstNow = links.filter(
+    (l, i) => l.burst !== undefined && state.links[i]?.burst === undefined,
+  );
+  const trucks = finished.map((t) => {
+    const n = burstNow.filter((l) => l.truckId === t.id).length;
+    return n === 0 ? t : { ...t, tally: { ...t.tally, hoseBursts: t.tally.hoseBursts + n } };
   });
   return {
     ...state,
     timeS,
     trucks,
     sources: stepSources(state, trucks, site.linkReadings, dtS),
+    links,
     linkReadings: site.linkReadings,
   };
 }
