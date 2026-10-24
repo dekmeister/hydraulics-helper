@@ -37,15 +37,42 @@ Companion to `ARCHITECTURE.md`. Milestones are sized so a Claude Code session ca
 
 ## M2 — Pump panel UI
 
-- [ ] Parameterised SVG `Gauge` (discharge, compound dual-scale, tacho, tank level).
-- [ ] `ValveHandle` (drag + tap), `Throttle`, tank-to-pump control; ≥ 44 px hit targets; keyboard operable.
-- [ ] Panel rendered from the reference appliance's layout data (`ui/appliances/<id>/layout.ts`); layout↔spec consistency test.
-- [ ] Wire to store: inputs → sim @ 10 Hz → damped needle rendering.
-- [ ] Warning strip (low tank, overheat placeholder, cavitation placeholder).
-- [ ] Fixtures: each gauge face at key values (zero, mid, red zone, compound vacuum); generated per-appliance panel fixtures (`idle`, `tank-attack-700`, `tank-low`). Contact sheets reviewed, baselines committed.
-- [ ] Journeys: tank attack, second line sag, runs dry, valve drag precision; layout invariants over every panel fixture; keyboard pass.
+- [x] Parameterised SVG `Gauge` (discharge, compound dual-scale, tacho, tank level).
+- [x] `ValveHandle` (drag + tap), `Throttle`, tank-to-pump control; ≥ 44 px hit targets; keyboard operable.
+- [x] Panel rendered from the reference appliance's layout data (`ui/appliances/<id>/layout.ts`); layout↔spec consistency test.
+- [x] Wire to store: inputs → sim @ 10 Hz → damped needle rendering.
+- [x] Warning strip (low tank, overheat placeholder, cavitation placeholder).
+- [x] Fixtures: each gauge face at key values (zero, mid, red zone, compound vacuum); generated per-appliance panel fixtures (`idle`, `tank-attack-700`, `tank-low`). Contact sheets reviewed, baselines committed.
+- [x] Journeys: tank attack, second line sag, runs dry, valve drag precision; layout invariants over every panel fixture; keyboard pass.
 
 **Demo:** playable tank attack — open tank-to-pump, open delivery, throttle up, watch discharge gauge and tank fall; sag when a second line opens.
+
+### M2 implementation plan
+
+Decisions taken to keep M2 demoable without building past `Design/OPEN_DECISIONS.md` (each is flagged under "needs Dek" in `docs/CALIBRATION.md`):
+
+* **Panel layout is grouped, not absolute.** `ui/appliances/<id>/layout.ts` is an ordered list of sections (instruments, throttle, inlets, deliveries…), each placing spec instruments and controls with label, gauge face and control variant. The renderer lays sections out with CSS grid / container queries so one layout works at 375, 768 and 1280 px; each component draws its own SVG in its own `viewBox`. The realistic bay and close-up views (Design sheets 07–08, `layout-a.json` coordinates) are a later view over the same data, not M2.
+* **Handle colour by function (OPEN_DECISIONS #1, option B, the designer's recommendation):** outlets blue, inlets green; delivery identity is carried by numeral and glyph only.
+* **Tap behaviour is layout data.** `tap: 'toggle'` (tank-to-pump: tap opens/closes) or `tap: 'none'` (deliveries: a stray thumb never charges a line, Design §5). ARCHITECTURE §7 said every valve toggles on tap and the Design spec says outlets ignore taps, so this is a per-item choice.
+* **One throttle variant:** the push-pull T-handle (horizontal drag + − / + buttons). The vernier knob (Layout A, OPEN_DECISIONS #4) is parked.
+* **Instruments are `role="meter"`** (docs/TESTING.md), not `role="img"` (Design §9). `aria-valuenow` is the damped, displayed value.
+* **No per-delivery flow readouts on the panel**: the spec fits no flow meters. Line status ("NO LINE" when nothing is laid on a delivery) is shown, and those valves are disabled, per Design sheet 03.
+* **The Wake** (needle afterimage) is parked until M4 cavitation, where hunting matters. The geometry module keeps its arc helpers.
+* **Warning lamps are read-only in M2.** Acknowledging a lamp needs coaching cards (M6).
+
+Work order (one commit each, `npm run verify` green at the end):
+
+1. **Harness repair.** `.gitignore` `review/` → `/review/`. Rebuild `e2e/review/reporter.ts` (report.md, contact sheets, shots, diffs), which M0 lost to that pattern. Add an opt-in `PW_CHROMIUM_EXECUTABLE` for machines whose preinstalled Chromium doesn't match the pinned Playwright.
+2. **Gauge geometry + dials** (`ui/panel-pump/gauge/`). Port `Design/reference-impl/gaugeScale.ts` and its tests to Vitest. Dial presets: discharge 0–1600, compound −100…1600 dual scale, tacho 0–4000. Zones are PLACEHOLDER (OPEN_DECISIONS #5).
+3. **`Gauge` component** (one parameterised SVG; mini variant below 100 px) and `TankLevel` (five-segment LED column, amber ≤ ¼, alarm outline when empty).
+4. **Store + selectors.** Store actions `setValve`, `setThrottle`, `setSwitch`; an instrument reading per `InstrumentKind`; the line on each delivery; warnings. The default app state is the tank-attack scenario's initial state (lines laid, nothing open). Tests in Vitest.
+5. **Needle damping.** A pure critically damped step function (Vitest) plus a `useDampedValue` hook on `requestAnimationFrame`. `__pumpops.settle()` snaps every needle via `flushSync`.
+6. **Controls.** `ValveHandle` (quarter-turn lever, drag by angle about the pivot, Pointer Events only, `role="slider"`, arrows ±10 %, Home/End, optional tap toggle, disabled reason chip), `Throttle` (T-handle slider + − / + buttons, 5 % steps), `PrimerControl` (hold = switch on; behaviour arrives in M4). All targets ≥ 44 px.
+7. **Panel renderer + layouts.** `PumpPanel` iterates the layout. Cat 1 layout; a layout for the test-only appliance lives in `src/testing/` so the e2e build proves the renderer is generic. Layout↔spec consistency test over every catalogue appliance and the test appliance.
+8. **Warning strip.** Lamps: tank (caution ≤ ¼, alarm empty), no supply (deliveries open with every inlet shut), over-pressure (relief flowing), and engine temperature and cavitation shown as "not simulated yet" placeholders. A polite live region carries the text.
+9. **Test hooks + fixtures.** `__pumpops.load({ scenario })` loads a scenario's initial state. Gauge-face fixtures (discharge, compound, tacho, tank at key values), a controls fixture, and generated panel fixtures per appliance (`idle`, `tank-attack-700`: throttle found by bisection so it holds for any appliance, `tank-low`, `tank-empty`).
+10. **Journeys + invariants.** Tank attack, second-line sag, runs dry, valve drag precision, throttle drag; keyboard pass; layout invariants (44 px, no scroll, no overlap, every spec control and instrument rendered once) over the app and every panel fixture.
+11. **Review loop**, baselines, docs (ARCHITECTURE §7/§9.4 reconciled with what was built, TESTING, CALIBRATION "needs Dek").
 
 ## M3 — Scene panel v1
 
@@ -104,6 +131,14 @@ Companion to `ARCHITECTURE.md`. Milestones are sized so a Claude Code session ca
 * Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event.
 * Unlined hose in scenarios (the catalogue already has it); hose carried per appliance.
 * Multiple independent pumps on one appliance (`pumps: PumpSpec[]`, e.g. separate high-pressure reel pump) — deferred, see `ARCHITECTURE.md` §9.2.
+* The Wake (needle afterimage, Design §6) and needle flutter: geometry is ported; wire it with cavitation in M4, driven by sim time.
+* Realistic bay view and zone C close-up (Design sheets 07–08, `Design/layouts/layout-a.json`) as a second view over the panel layout data.
+* Vernier-knob throttle variant (Layout A, Design OPEN_DECISIONS #4); M2 ships the T-handle only.
+* Warning lamp acknowledge (tap → steady, opens a coaching card); needs coaching cards (M6).
+* `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
+* **Inputs have two sources of truth** (before M5, multi-truck relay): the store keeps one global `inputs`, while `TruckState.inputs` is the copy last applied on a tick, and there is no action to change the active truck. Make the active truck's inputs the single source, or key `inputs` by truck id. (PR #1 review.)
+* **Layout vocabulary gaps** (M4/M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button; an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` always shows the "not simulated" temperature and cavitation lamps, whatever instruments the truck has.
+* Split `ValveHandle.tsx` (~260 lines) and `Gauge.tsx` (~250) under the ~200-line guideline; both are mostly SVG.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 
 ## Risks

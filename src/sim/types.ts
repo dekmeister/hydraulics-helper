@@ -81,10 +81,26 @@ export type ReliefSpec =
 
 export type InstrumentKind = 'compound' | 'discharge' | 'tacho' | 'tank';
 
-export interface InstrumentSpec {
-  id: string;
-  kind: InstrumentKind;
+/** A coloured band on a dial face, in the instrument's unit. */
+export interface GaugeZone {
+  from: number;
+  to: number;
+  tone: 'caution' | 'alarm';
 }
+
+/**
+ * Markings on a fitted dial gauge. Display data only: the sim never reads it. Compound gauges also
+ * carry a fixed −100…0 kPa vacuum sector, so their zones may go negative.
+ */
+export interface GaugeScaleSpec {
+  /** Top of the scale, in the instrument's unit (kPa or rpm). */
+  fullScale: number;
+  zones: GaugeZone[];
+}
+
+export type InstrumentSpec =
+  | { id: string; kind: Exclude<InstrumentKind, 'tank'>; scale: GaugeScaleSpec }
+  | { id: string; kind: 'tank' };
 
 export interface ApplianceSpec {
   /** Stable id used in saves and scenarios, e.g. 'cat1-generic'. */

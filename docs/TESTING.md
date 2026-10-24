@@ -71,6 +71,7 @@ interface Fixture {
 }
 ```
 
+* A renderer may supply a `state()`: the sim state loaded into the store before render (`renderers.tsx`). Panel states are built from the tank-attack scenario by pure sim calls (`panelStates.ts`); `tank-attack-700` finds its throttle by bisection so its caption holds on any appliance.
 * Panel and scene fixtures are **generated per catalogue appliance** (`panel/<applianceId>/idle`, `…/tank-attack-700`, `…/tank-low`, `…/cavitating`), so a new appliance gets them automatically.
 * The visual spec is one `describe.each` over the registry × viewports: **adding a fixture = adding a screenshot.**
 * `expect` is plain English, written for review: *"Discharge needle at ~700 kPa, compound ~0 kPa, tank gauge ~¾, delivery 1 handle fully open, others closed. No warnings."*
@@ -84,7 +85,7 @@ interface Fixture {
 
 ## 4. Playwright setup
 
-* **One browser: Chromium**, from Playwright's pinned download (`npx playwright install chromium`, no sudo; if system libraries are missing, Dek runs `sudo npx playwright install-deps chromium`). Baselines are only valid for that pinned browser and this OS; `@playwright/test` is pinned to an exact version and upgraded deliberately (that upgrade will refresh baselines).
+* **One browser: Chromium**, from Playwright's pinned download. On a machine whose preinstalled Chromium doesn't match the pinned Playwright (e.g. a cloud container), set `PW_CHROMIUM_EXECUTABLE` to that browser; screenshots taken with a different build may need their baselines checked (`npx playwright install chromium`, no sudo; if system libraries are missing, Dek runs `sudo npx playwright install-deps chromium`). Baselines are only valid for that pinned browser and this OS; `@playwright/test` is pinned to an exact version and upgraded deliberately (that upgrade will refresh baselines).
 * **Target:** `npm run build:e2e` + `vite preview --outDir dist-e2e` on fixed port 4317 (`--strictPort`), started by Playwright's `webServer`. Testing the built app catches production-only issues and avoids HMR noise. The server is always rebuilt (`reuseExistingServer: false`): the e2e build takes under a second, and reusing a running server risks testing a stale bundle.
 * **Configs:** `playwright.base.ts` holds the shared server and projects; `playwright.config.ts` (`test:e2e`) runs everything except `e2e/visual/`; `playwright.review.config.ts` (`review`) runs only `e2e/visual/` with the review reporter and `updateSnapshots: 'none'`, so a missing baseline fails as **New** instead of being written silently.
 * **Projects (viewports):**
@@ -113,6 +114,8 @@ Run in every project, over the app shell and every panel fixture:
 This turns "test layouts at 375 / 768 / 1280 px" from a manual step into a failing test.
 
 ### Journeys (layer 5)
+
+Helpers in `e2e/panel.ts` drive the real controls (`dragValve` sweeps around the lever's `data-part="pivot"`, `dragThrottle` moves the `data-part="handle"` along the `data-part="track"`), find names from the layout data, and `stepAndSettle()` before reading meters. Journeys run over every catalogue appliance.
 
 Each journey plays a lesson as a player would, at the `phone` project at minimum. Examples:
 

@@ -1,0 +1,78 @@
+.warnings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.warnings__lamps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 52px;
+}
+
+.lamp__glass {
+  width: 44px;
+  height: 44px;
+}
+
+.lamp__caption {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-material-steel-dim);
+}
+
+.lamp--caution .lamp__caption {
+  color: var(--color-signal-caution);
+}
+
+.lamp--alarm .lamp__caption {
+  color: var(--color-signal-alarm-text-on-dark);
+}
+
+.lamp--unavailable .lamp__glass {
+  opacity: 0.6;
+}
+
+/* Alarm lamps flash at 2 Hz, below the 3 flashes/s photosensitivity threshold (Design §9). */
+.lamp--alarm .lamp__glass {
+  animation: lamp-flash 0.5s steps(1) infinite;
+}
+
+@keyframes lamp-flash {
+  50% {
+    opacity: 0.22;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp--alarm .lamp__glass {
+    animation: none;
+    outline: 2px solid var(--color-signal-alarm);
+    outline-offset: 3px;
+    border-radius: 50%;
+  }
+}
+
+.warnings__messages {
+  margin: 0;
+  min-height: 1.5em;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-material-steel);
+}

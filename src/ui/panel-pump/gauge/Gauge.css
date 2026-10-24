@@ -1,0 +1,84 @@
+/* Sizes follow Design §4 (discharge/compound 160 px phone → 220 desktop; tacho 112 → 150),
+   scaled by the pump panel's container width. */
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.gauge__dial {
+  display: block;
+  width: clamp(140px, 42cqi, 220px);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.gauge--medium .gauge__dial {
+  width: clamp(112px, 30cqi, 150px);
+}
+
+.gauge__numerals,
+.gauge__plate {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.gauge__plate {
+  font-weight: 700;
+}
+
+.gauge__readout,
+.tank-level__readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  color: var(--color-material-steel);
+  white-space: nowrap;
+}
+
+.gauge[data-zone='caution'] .gauge__readout {
+  color: var(--color-signal-caution);
+}
+
+.gauge[data-zone='alarm'] .gauge__readout {
+  color: var(--color-signal-alarm-text-on-dark);
+}
+
+/* Tank level: five-segment LED column (Design §4). */
+.tank-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.tank-level__column {
+  display: block;
+  width: 48px;
+  height: auto;
+}
+
+.tank-level[data-level='low'] .tank-level__readout {
+  color: var(--color-signal-caution);
+}
+
+.tank-level[data-level='empty'] .tank-level__readout {
+  color: var(--color-signal-alarm-text-on-dark);
+}
+
+.tank-level__empty-outline {
+  animation: tank-empty-flash 0.5s steps(1) infinite;
+}
+
+@keyframes tank-empty-flash {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tank-level__empty-outline {
+    animation: none;
+  }
+}
