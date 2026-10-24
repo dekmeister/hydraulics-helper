@@ -1,0 +1,16 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Env and editor/OS noise
+.env
+.env.*
+.DS_Store
+.vscode/
+.idea/
+
+# Source manual: third-party material, kept locally only
+Resources/*.pdf
+Resources/hydraulics-manual.txt
