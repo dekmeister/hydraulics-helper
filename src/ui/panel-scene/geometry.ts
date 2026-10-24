@@ -2,6 +2,7 @@
 // drawn. Pure functions of the scene art and the sim's lines; no React.
 import type { ControlId, HoseLine } from '../../sim/types';
 import type { SceneArt } from '../appliances/types';
+import { FIRE_HEADING_DEG, TRUCK_AT } from './site';
 
 /** Scene drawing space (SVG viewBox). */
 export const SCENE_VIEW = { w: 800, h: 500 } as const;
@@ -17,12 +18,6 @@ export const SPRAY_REACH_U = 70;
 
 /** Gap kept between the spray tip and the edge of the view, drawing units. */
 const EDGE_U = 12;
-
-/** Where the truck is parked, drawing units: left of centre, room to lay out towards the fire. */
-const TRUCK_AT = { x: 230, y: 330 } as const;
-
-/** The fireground lies up and to the right; lays fan out about this heading, degrees (y down). */
-const FIRE_HEADING_DEG = -25;
 
 /** Widest fan between the outermost lays, and the most between neighbours, degrees. */
 const FAN_SPAN_DEG = 38;

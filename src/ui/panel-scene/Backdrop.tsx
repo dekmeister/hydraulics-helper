@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { SCENE_VIEW } from './geometry';
+import { DAM, FIRE_FRONT, TRACK } from './site';
 
 // Static scenery (Design §7, sheet 06): ground tints, contours, track, scrub, the dam, fire glow
 // at the edge. Decorative only; nothing here reads sim state. Contours are unlabelled because the
@@ -17,9 +18,6 @@ const CONTOURS: readonly { d: string; startX: number }[] = [
 /** Ground tints step lighter uphill: each fills from its contour to the top edge. */
 const TINTS = CONTOURS.map(({ d, startX }) => `${d} L${String(w)} 0 L${String(startX)} 0 Z`);
 
-const TRACK =
-  'M376 500 C 362 456, 349 422, 336 405 C 304 367, 264 317, 224 267 C 184 208, 144 142, 112 92 S 64 25, 43 0';
-
 const SCRUB: readonly [number, number, number][] = [
   [48, 208, 1],
   [24, 250, 0.8],
@@ -32,11 +30,6 @@ const SCRUB: readonly [number, number, number][] = [
   [700, 446, 0.7],
   [240, 33, 0.8],
 ];
-
-const DAM =
-  'M64 392 C 56 333, 128 308, 200 325 C 256 338, 276 375, 256 417 C 232 467, 96 475, 72 442 C 64 429, 66 413, 64 392 Z';
-
-const FIRE_FRONT = 'M610 0 C 640 25, 688 17, 720 42 S 792 67, 800 100';
 
 function Scrub({ x, y, s }: { x: number; y: number; s: number }) {
   return (
@@ -87,14 +80,13 @@ export const Backdrop = memo(function Backdrop() {
       {SCRUB.map(([x, y, s]) => (
         <Scrub key={`${String(x)},${String(y)}`} x={x} y={y} s={s} />
       ))}
-      <path className="scene-dam" d={DAM} />
+      <path className="scene-dam" d={DAM.path} />
       <g className="scene-dam__ripples">
-        <path d="M112 344 q10 -3 19 0" />
-        <path d="M160 376 q10 -3 19 0" />
-        <path d="M120 408 q8 -3 16 0" />
-        <path d="M192 336 q8 -3 16 0" />
+        {DAM.ripples.map((d) => (
+          <path key={d} d={d} />
+        ))}
       </g>
-      <text className="scene-dam__label" x="122" y="392">
+      <text className="scene-dam__label" x={DAM.label.x} y={DAM.label.y}>
         DAM
       </text>
     </g>

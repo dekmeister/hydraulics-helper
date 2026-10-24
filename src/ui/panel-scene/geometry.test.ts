@@ -6,7 +6,8 @@ import type { ApplianceSpec, HoseLine } from '../../sim/types';
 import { TEST_APPLIANCE_SCENE_ART } from '../../testing/appliances/testApplianceScene';
 import { getSceneArt } from '../appliances/registry';
 import type { SceneArt } from '../appliances/types';
-import { DEFAULT_UNITS_PER_M, layoutScene, SCENE_VIEW, SPRAY_REACH_U } from './geometry';
+import { DEFAULT_UNITS_PER_M, layoutScene, SCENE_VIEW, SPRAY_REACH_U, toScene } from './geometry';
+import { DAM } from './site';
 
 const PAIRS: [string, ApplianceSpec, SceneArt][] = [
   ...APPLIANCES.map((s): [string, ApplianceSpec, SceneArt] => [s.id, s, getSceneArt(s.id)]),
@@ -62,6 +63,25 @@ describe.each(PAIRS)('scene geometry: %s', (_id, spec, art) => {
     }
     const ends = scene.lines.map((l) => `${l.branch.x.toFixed(0)},${l.branch.y.toFixed(0)}`);
     expect(new Set(ends).size).toBe(ends.length);
+  });
+
+  it('parks the truck clear of the dam', () => {
+    // Walk the body outline in truck-local units; no point may fall in the dam (plus a bank).
+    const BANK_U = 8;
+    const hx = art.lengthU / 2;
+    const hy = art.widthU / 2;
+    const outline = Array.from({ length: 21 }, (_, i) => -1 + i / 10).flatMap((t) => [
+      { x: t * hx, y: -hy },
+      { x: t * hx, y: hy },
+      { x: -hx, y: t * hy },
+      { x: hx, y: t * hy },
+    ]);
+    const { x0, y0, x1, y1 } = DAM.box;
+    for (const p of outline.map((local) => toScene(scene.truck, local))) {
+      const inDam =
+        p.x > x0 - BANK_U && p.x < x1 + BANK_U && p.y > y0 - BANK_U && p.y < y1 + BANK_U;
+      expect(inDam, `body point ${p.x.toFixed(0)},${p.y.toFixed(0)}`).toBe(false);
+    }
   });
 
   it('is deterministic', () => {
