@@ -69,9 +69,34 @@
 
 .delivery-row__text {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-1);
   min-width: 0;
+  min-height: var(--touch-min);
+  margin: 0;
+  padding: var(--space-1) var(--space-2) var(--space-1) 0;
+  border: none;
+  border-radius: var(--radius-plate);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delivery-row__text:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+}
+
+/* Picked out from the scene: the focus ring's double band (Design §3), never amber. */
+.delivery-row--highlighted {
+  box-shadow:
+    inset 0 0 0 2px var(--color-focus-outer),
+    inset 0 0 0 4px var(--color-focus-inner);
 }
 
 .delivery-row__name {
