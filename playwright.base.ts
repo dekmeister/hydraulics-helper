@@ -3,10 +3,17 @@ import { devices, type PlaywrightTestConfig } from '@playwright/test';
 /** Fixed port for the e2e preview server; strictPort makes a clash fail loudly. */
 const PORT = 4317;
 
+/**
+ * Opt-in override for machines whose preinstalled Chromium doesn't match the pinned Playwright
+ * (e.g. cloud containers). Baselines are only valid for one browser build (docs/TESTING.md §4).
+ */
+const executablePath = process.env.PW_CHROMIUM_EXECUTABLE;
+
 const common = {
   ...devices['Desktop Chrome'],
   deviceScaleFactor: 1,
   reducedMotion: 'reduce',
+  ...(executablePath ? { launchOptions: { executablePath } } : {}),
 } as const;
 
 /** Shared by playwright.config.ts (journeys + layout) and playwright.review.config.ts (visual). */
