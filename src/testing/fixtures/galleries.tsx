@@ -55,6 +55,34 @@ export function GaugeGallery({
   );
 }
 
+/** Mixed dial faces, one value each: an appliance's fitted gauges side by side. */
+export function DialsGallery({
+  cards,
+}: {
+  cards: readonly {
+    dial: DialId;
+    scale: GaugeScaleSpec;
+    value: number;
+    unit: string;
+    label: string;
+  }[];
+}) {
+  return (
+    <Gallery>
+      {cards.map((c) => (
+        <Card key={c.label} caption={`${c.label} ${String(c.value)} ${c.unit}`}>
+          <Gauge
+            dial={DIALS[c.dial](c.scale)}
+            value={c.value}
+            label={`${c.label} at ${String(c.value)}`}
+            unit={c.unit}
+          />
+        </Card>
+      ))}
+    </Gallery>
+  );
+}
+
 export function TankGallery({
   capacityL,
   values,

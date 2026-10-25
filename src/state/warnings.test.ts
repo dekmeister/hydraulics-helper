@@ -24,6 +24,20 @@ const patchTruck = (sim: SimState, patch: (t: TruckState) => TruckState): SimSta
   trucks: sim.trucks.map(patch),
 });
 
+describe('supply lamp with a tank-fill inlet', () => {
+  const spec = APPLIANCES.find((s) => s.inlets.some((i) => i.kind === 'tankFill'));
+  it.runIf(spec !== undefined)('doesn’t count hydrant to tank as a pump supply', () => {
+    if (spec === undefined) return;
+    const fill = spec.inlets.find((i) => i.kind === 'tankFill')?.id ?? '';
+    const sim = getScenario('tank-attack').build(spec).state;
+    const d = sim.lines[0]?.deliveryId ?? '';
+    const w = lamp(sim, inputsWith(0.5, [fill, d]), 'supply');
+    expect(w?.level).toBe('caution');
+    expect(w?.message).toMatch(/^No supply: open /);
+    expect(w?.message).not.toMatch(/hydrant to tank/i);
+  });
+});
+
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_id, spec) => {
   const draught = getScenario('draughting').build(spec).state;
   const hydrant = getScenario('hydrant-supply').build(spec).state;

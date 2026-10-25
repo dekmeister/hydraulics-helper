@@ -67,6 +67,15 @@ describe('Cat 1-only source states', () => {
       'cavitating',
       'hydrant',
       'faults',
+      'refilling',
     ]);
+  });
+
+  it('refilling fills the tank through hydrant to tank with the pump idle', () => {
+    const s = sourceState(CAT1, 'refilling');
+    const t = activeTruck(s);
+    expect(t.readings.inletFlowLpm['hydrant-to-tank']).toBeGreaterThan(900);
+    expect(t.readings.pumpFlowLpm).toBe(0);
+    expect(t.tankL).toBeGreaterThan(500);
   });
 });

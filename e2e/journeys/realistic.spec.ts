@@ -1,0 +1,203 @@
+// Realistic-view journeys (docs/TESTING.md §4): the same jobs as on the simplified panel, done on
+// the truck's own arrangement through its real controls: bay levers, the speed controller, the
+// PRIME pull handle and hydrant to tank on the side of the truck.
+import { inletOfKind } from '../../src/sim/appliances/controls';
+import { getScenario } from '../../src/sim/scenarios';
+import { supports } from '../../src/sim/scenarios/types';
+import { REALISTIC_APPLIANCES } from '../../src/testing/fixtures/realisticStates';
+import { expect, gotoApp, test } from '../fixtures';
+import {
+  activeTruckOf,
+  controlName,
+  dragValve,
+  expectStatus,
+  getState,
+  instrumentName,
+  layoutFor,
+  layoutItems,
+  meterValue,
+  sliderValue,
+  stepAndSettle,
+  tapOrClick,
+} from '../panel';
+import { load, openInlet, prime, throttle } from '../sources';
+import type { Page } from '@playwright/test';
+
+const showRealistic = async (page: Page) => {
+  await page.getByRole('button', { name: 'Realistic', exact: true }).click();
+  await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
+};
+
+/** Hold one half of the speed controller while `ticks` of sim time pass. */
+async function holdSpeedSwitch(page: Page, direction: 'up' | 'down', ticks: number) {
+  const sw = throttle(page);
+  await sw.scrollIntoViewIfNeeded();
+  const box = await sw.boundingBox();
+  if (box === null) throw new Error('speed switch not rendered');
+  const y = box.y + box.height * (direction === 'up' ? 0.2 : 0.8);
+  await page.mouse.move(box.x + box.width / 2, y);
+  await page.mouse.down();
+  await stepAndSettle(page, ticks);
+  await page.mouse.up();
+}
+
+for (const spec of REALISTIC_APPLIANCES) {
+  test.describe(`realistic bay on ${spec.id}`, () => {
+    test('the view switch shows the realistic bay and is remembered', async ({ page }) => {
+      await gotoApp(page);
+      await page.evaluate((appliance) => {
+        window.__pumpops?.load({ scenario: 'tank-attack', appliance });
+      }, spec.id);
+      await expect(page.getByRole('button', { name: 'Simplified', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await showRealistic(page);
+      await expect(page.locator('[data-plate="bay"]')).toBeVisible();
+      await page.reload();
+      await page.evaluate((appliance) => {
+        window.__pumpops?.load({ scenario: 'tank-attack', appliance });
+      }, spec.id);
+      await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
+      await page.getByRole('button', { name: 'Simplified', exact: true }).click();
+      await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'simplified');
+    });
+
+    test('tank attack through the bay levers and the speed controller', async ({ page }, info) => {
+      await load(page, 'tank-attack', spec.id);
+      await showRealistic(page);
+      const layout = layoutFor(spec.id);
+      const initial = await getState(page);
+      const [first] = initial.lines;
+      if (first === undefined) throw new Error('tank attack needs a line');
+      const discharge = instrumentName(initial, layout, 'discharge');
+
+      await openInlet(page, spec, 'tank', info);
+      const delivery = page.getByRole('slider', { name: controlName(layout, first.deliveryId) });
+      await dragValve(page, delivery, 1);
+      expect(await sliderValue(delivery)).toBe(1);
+
+      // A flick nudges the speed a little; holding it up runs the engine up by sim time.
+      const sw = throttle(page);
+      await sw.scrollIntoViewIfNeeded();
+      const swBox = await sw.boundingBox();
+      if (swBox === null) throw new Error('speed switch not rendered');
+      const upper = { x: swBox.width / 2, y: swBox.height * 0.2 };
+      if (info.project.use.hasTouch === true) await sw.tap({ position: upper });
+      else await sw.click({ position: upper });
+      await stepAndSettle(page, 1);
+      const flicked = activeTruckOf(await getState(page)).inputs.throttle;
+      expect(flicked).toBeGreaterThan(0);
+      expect(flicked).toBeLessThan(0.1);
+      await holdSpeedSwitch(page, 'up', 25);
+      const up = activeTruckOf(await getState(page)).inputs.throttle;
+      expect(up).toBeGreaterThan(flicked + 0.3);
+      await stepAndSettle(page, 100);
+      expect(activeTruckOf(await getState(page)).inputs.throttle).toBe(up);
+      const shown = await meterValue(page, discharge);
+      expect(shown).toBeGreaterThan(300);
+      await expectStatus(page, 'No warnings.');
+
+      await holdSpeedSwitch(page, 'down', 10);
+      await stepAndSettle(page, 50);
+      expect(await meterValue(page, discharge)).toBeLessThan(shown);
+
+      // The number plate on the coupling picks the hose out on the scene.
+      const locate = page.getByRole('button', {
+        name: `Show ${controlName(layout, first.deliveryId)} on scene`,
+      });
+      await tapOrClick(locate, info);
+      await expect(locate).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('draught: prime with the PRIME pull handle', async ({ page }, info) => {
+      test.skip(!supports(getScenario('draughting'), spec), 'no draught');
+      await load(page, 'draughting', spec.id);
+      await showRealistic(page);
+      await openInlet(page, spec, 'suction', info);
+      await prime(page, spec);
+      await expect(page.getByTestId(`supply-lay-${inletOfKind(spec, 'suction')}`)).toHaveAttribute(
+        'data-state',
+        'primed',
+      );
+    });
+
+    test('keyboard reaches every control, and arrows flick the speed controller', async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'desktop', 'keyboard pass runs on desktop');
+      await load(page, 'tank-attack', spec.id);
+      await showRealistic(page);
+      const laid = new Set((await getState(page)).lines.map((l) => l.deliveryId));
+      const expected = layoutItems(layoutFor(spec.id)).flatMap((i) => {
+        switch (i.kind) {
+          case 'valve':
+          case 'primer':
+          case 'throttle':
+            return [i.label];
+          case 'delivery': {
+            const locate = [`Show ${i.label} on scene`, `Show ${i.label} on panel`];
+            return laid.has(i.control) ? [i.label, ...locate] : locate;
+          }
+          default:
+            return [];
+        }
+      });
+      const visited = new Set<string>();
+      for (let i = 0; i < expected.length + 12; i++) {
+        await page.keyboard.press('Tab');
+        const name = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+        if (name) visited.add(name);
+      }
+      expect([...visited].sort()).toEqual([...expected].sort());
+
+      const sw = throttle(page);
+      await sw.focus();
+      await page.keyboard.press('ArrowUp');
+      await page.keyboard.press('ArrowUp');
+      const two = await sliderValue(sw);
+      expect(two).toBeGreaterThan(0);
+      await page.keyboard.press('ArrowDown');
+      expect(await sliderValue(sw)).toBeLessThan(two);
+    });
+
+    test('a held speed controller stops when the bay goes away', async ({ page }) => {
+      await load(page, 'tank-attack', spec.id);
+      await showRealistic(page);
+      const sw = throttle(page);
+      await sw.scrollIntoViewIfNeeded();
+      const box = await sw.boundingBox();
+      if (box === null) throw new Error('speed switch not rendered');
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.2);
+      await page.mouse.down();
+      // Switch view mid-hold (the pointer is busy holding, so press the button directly).
+      await page
+        .getByRole('button', { name: 'Simplified', exact: true })
+        .evaluate((b: HTMLElement) => {
+          b.click();
+        });
+      await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'simplified');
+      await page.mouse.up();
+      const held = await sliderValue(throttle(page));
+      await stepAndSettle(page, 50);
+      expect(await sliderValue(throttle(page))).toBe(held);
+    });
+
+    test('refill the tank through hydrant to tank', async ({ page }) => {
+      test.skip(!supports(getScenario('tank-refill'), spec), 'no hydrant to tank');
+      await load(page, 'tank-refill', spec.id);
+      await showRealistic(page);
+      const layout = layoutFor(spec.id);
+      const tank = instrumentName(await getState(page), layout, 'tank');
+      const before = await meterValue(page, tank);
+      const fill = page.getByRole('slider', {
+        name: controlName(layout, inletOfKind(spec, 'tankFill')),
+      });
+      await dragValve(page, fill, 1);
+      await stepAndSettle(page, 300);
+      // 30 s at the hydrant's ~1000 L/min.
+      expect(await meterValue(page, tank)).toBeGreaterThan(before + 400);
+      expect(activeTruckOf(await getState(page)).readings.pumpFlowLpm).toBe(0);
+    });
+  });
+}

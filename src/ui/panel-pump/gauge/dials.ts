@@ -56,7 +56,7 @@ export function compoundDial(scale: GaugeScaleSpec): DialSpec {
         labelMuted: true,
         tint: true,
       },
-      linear(scale.fullScale, [-75, 135], 4),
+      linear(scale.fullScale, [-75, 135], 5),
     ],
     zones: zonesOf(scale),
     breaks: [0],

@@ -75,7 +75,7 @@ export async function prime(page: Page, spec: ApplianceSpec) {
     await stepAndSettle(page, 300);
   } else {
     const held = await holdPrimer(page, controlName(layoutFor(spec.id), id), 250);
-    await expect(page.locator('.primer', { has: held.primer })).toHaveAttribute(
+    await expect(page.locator('.primer, .pull-primer', { has: held.primer })).toHaveAttribute(
       'data-state',
       'primed',
     );

@@ -20,6 +20,7 @@ import {
   type RelayFeed,
 } from './inlets';
 import { pumpRiseKpa } from './pump';
+import { tankFillFlows } from './tankFill';
 import type {
   ApplianceSpec,
   ControlId,
@@ -82,6 +83,7 @@ export function dryReadings(
     compoundKpa,
     pumpFlowLpm: 0,
     reliefFlowLpm: 0,
+    pumpToTankLpm: 0,
     deliveryFlowLpm: Object.fromEntries(spec.deliveries.map((d) => [d.id, 0])),
     branchKpa: Object.fromEntries(lines.map((l) => [l.id, 0])),
     inletFlowLpm: Object.fromEntries(spec.inlets.map((i) => [i.id, 0])),
@@ -130,6 +132,13 @@ function bisectDecreasing(g: (x: number) => number, lo: number, hi: number): num
  * `lines` must be this truck's lines, one per delivery.
  */
 export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckReadings {
+  const readings = solvePump(truck, lines);
+  // Tank-fill inlets run whether or not the pump has water.
+  const fill = tankFillFlows(truck.spec, truck.inputs, truck.supplies ?? []);
+  return { ...readings, inletFlowLpm: { ...readings.inletFlowLpm, ...fill } };
+}
+
+function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckReadings {
   const { spec, rpm, tankL, inputs } = truck;
   const paths = inletPaths({
     spec,
@@ -160,6 +169,11 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
   const fixedLpm = fixed.reduce((q, o) => q + o.flowLpm, 0);
   const setKpa = reliefSetKpa(spec, inputs);
   const relief = spec.relief;
+  const ptt = spec.pumpToTank;
+  const pttOpen = ptt === undefined ? 0 : (inputs.valves[ptt.id] ?? 0);
+  // Pump to tank discharges at atmospheric pressure: P = (k/open²)·Q².
+  const pttR =
+    ptt === undefined || pttOpen < VALVE_CLOSED_EPS ? 0 : ptt.lossKpaPerLpm2 / pttOpen ** 2;
 
   const demand = (pKpa: number) => {
     const flows = open.map(({ r, headKpa }) => outletFlowLpm(pKpa, r, headKpa));
@@ -168,9 +182,11 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
       relief === undefined || setKpa === undefined
         ? 0
         : relief.slopeLpmPerKpa * Math.max(0, pKpa - setKpa);
+    const pttLpm = pttR > 0 ? outletFlowLpm(pKpa, pttR, 0) : 0;
     // Relief dumped to the tank is drawn back in through the inlets; dumped to the inlet it isn't.
-    const inletLpm = outLpm + (relief?.dumpTo === 'tank' ? reliefLpm : 0);
-    return { flows, outLpm, reliefLpm, inletLpm, pumpLpm: outLpm + reliefLpm };
+    // Pump to tank always goes round through the tank.
+    const inletLpm = outLpm + pttLpm + (relief?.dumpTo === 'tank' ? reliefLpm : 0);
+    return { flows, outLpm, reliefLpm, pttLpm, inletLpm, pumpLpm: outLpm + pttLpm + reliefLpm };
   };
   const rise = (q: number) => pumpRiseKpa(spec.pump, spec.engine, rpm, q);
   // Past the cap the inlet pressure plunges, which pins the root at the capped flow.
@@ -240,6 +256,7 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
     compoundKpa: inletKpa,
     pumpFlowLpm: d.pumpLpm,
     reliefFlowLpm: d.reliefLpm,
+    pumpToTankLpm: d.pttLpm,
     deliveryFlowLpm,
     branchKpa,
     inletFlowLpm,

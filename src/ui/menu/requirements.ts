@@ -17,6 +17,8 @@ function lacks(r: ScenarioRequirements, spec: ApplianceSpec): string[] {
     out.push('a tank');
   if (r.suction === true && !spec.inlets.some((i) => i.kind === 'suction'))
     out.push('a suction inlet');
+  if (r.tankFill === true && !spec.inlets.some((i) => i.kind === 'tankFill'))
+    out.push('a hydrant-to-tank inlet');
   if (r.primer === true && spec.primer === undefined) out.push('a primer');
   if (spec.deliveries.length < r.minDeliveries) out.push(`${String(r.minDeliveries)} deliveries`);
   return out;

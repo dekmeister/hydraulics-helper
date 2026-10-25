@@ -134,9 +134,11 @@ function prepareTruck(
       supplies,
       relays: relayIn,
     }).length > 0;
-  const openToAir = hosesOn(state, truck.id).some(
-    (h) => (clean.valves[h.deliveryId] ?? 0) >= VALVE_CLOSED_EPS,
-  );
+  // Pump to tank open lets air in on the discharge side, as an open delivery does.
+  const pttId = spec.pumpToTank?.id;
+  const openToAir =
+    hosesOn(state, truck.id).some((h) => (clean.valves[h.deliveryId] ?? 0) >= VALVE_CLOSED_EPS) ||
+    (pttId !== undefined && (clean.valves[pttId] ?? 0) >= VALVE_CLOSED_EPS);
   const pump = stepPrime(truck.pump, { spec, inputs: clean, supplies, flooded, openToAir }, dtS);
   return {
     prepared: { truck, inputs: clean, rpm, pump, wet: flooded || pump.primed },
@@ -155,7 +157,7 @@ function prepareTruck(
 
 /**
  * Second half of a truck's tick, once the site is solved: the slow states move. Tank (drawn, refilled
- * by relief dumped to it and by open relays into it), casing temperature, flutter, fault tallies and
+ * by relief, pump to tank, tank-fill inlets and open relays), casing temperature, flutter, fault tallies and
  * water hammer on any delivery with a hose on it.
  */
 function finishTruck(
@@ -170,15 +172,19 @@ function finishTruck(
   const { spec } = truck;
   const outLpm = Object.values(readings.deliveryFlowLpm).reduce((a, b) => a + b, 0);
   const reliefToTankLpm = spec.relief?.dumpTo === 'tank' ? readings.reliefFlowLpm : 0;
+  const returnLpm = reliefToTankLpm + readings.pumpToTankLpm;
   const tankDrawLpm = spec.inlets
     .filter((i) => i.kind === 'tank')
+    .reduce((q, i) => q + (readings.inletFlowLpm[i.id] ?? 0), 0);
+  const fillLpm = spec.inlets
+    .filter((i) => i.kind === 'tankFill')
     .reduce((q, i) => q + (readings.inletFlowLpm[i.id] ?? 0), 0);
   const relayInLpm = state.links
     .filter((l) => l.burst === undefined && l.to.kind === 'tank' && l.to.truckId === truck.id)
     .reduce((q, l) => q + (linkReadings[l.id]?.flowLpm ?? 0), 0);
   const tempC = stepTempC(
     p.pump.tempC,
-    { spec, rpm, wet: p.wet, throughLpm: outLpm + reliefToTankLpm },
+    { spec, rpm, wet: p.wet, throughLpm: outLpm + returnLpm },
     dtS,
   );
   const [uniform, rngState] = nextRandom(truck.rngState);
@@ -217,7 +223,7 @@ function finishTruck(
       truck.tankL,
       spec.tank?.capacityL ?? 0,
       tankDrawLpm,
-      reliefToTankLpm + relayInLpm,
+      returnLpm + fillLpm + relayInLpm,
       dtS,
     ),
     rngState,

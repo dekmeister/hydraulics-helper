@@ -13,22 +13,41 @@ export const KEY_STEP = 0.1;
 export const THROTTLE_VERNIER_RPM = 25;
 
 /**
- * Valve opening (0 shut … 1 open) for a pointer at (dx, dy) CSS px from the lever pivot.
- * Shut is the lever straight up across the pipe; open is 90° clockwise, along the pipe. Angles
- * beyond either end clamp to it, and within VALVE_DETENT_DEG of an end snap to the detent.
+ * Opening (0 shut … 1 open) of a quarter-turn lever for a pointer at (dx, dy) CSS px from its
+ * pivot. The lever swings from `shutDeg` to `openDeg` (degrees clockwise from 12 o'clock, 90°
+ * apart, either way round). Angles beyond either end clamp to it (the half-turn behind the
+ * travel splits between them), and within VALVE_DETENT_DEG of an end snap to the detent.
  */
-export function valveOpeningAt(dx: number, dy: number): number {
+export function leverOpeningAt(dx: number, dy: number, shutDeg: number, openDeg: number): number {
   if (dx === 0 && dy === 0) return 0;
-  const deg = (Math.atan2(dx, -dy) * 180) / Math.PI; // clockwise from 12 o'clock, −180…180
-  const clamped = deg < 0 ? (deg < -90 ? 90 : 0) : Math.min(90, deg);
+  const pointerDeg = (Math.atan2(dx, -dy) * 180) / Math.PI;
+  const sense = openDeg >= shutDeg ? 1 : -1;
+  // Pointer angle past shut, towards open, in −180…180.
+  let rel = ((pointerDeg - shutDeg) * sense) % 360;
+  if (rel > 180) rel -= 360;
+  if (rel <= -180) rel += 360;
+  const clamped = rel < 0 ? (rel < -90 ? 90 : 0) : Math.min(90, rel);
   if (clamped <= VALVE_DETENT_DEG) return 0;
   if (clamped >= 90 - VALVE_DETENT_DEG) return 1;
   return clamped / 90;
 }
 
+/** Lever angle, degrees clockwise from 12 o'clock, for an opening on a lever from shut to open. */
+export function leverAngleDeg(opening: number, shutDeg: number, openDeg: number): number {
+  return shutDeg + clamp01(opening) * (openDeg - shutDeg);
+}
+
+/**
+ * Valve opening for the simplified panel's lever: shut straight up across the pipe, open 90°
+ * clockwise along it.
+ */
+export function valveOpeningAt(dx: number, dy: number): number {
+  return leverOpeningAt(dx, dy, 0, 90);
+}
+
 /** Lever angle, degrees clockwise from shut, for an opening. */
 export function valveAngleDeg(opening: number): number {
-  return clamp01(opening) * 90;
+  return leverAngleDeg(opening, 0, 90);
 }
 
 /** New 0–1 position after dragging `dxPx` along a track `travelPx` long, from `start`. */

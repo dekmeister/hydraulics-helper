@@ -28,14 +28,14 @@ describe.each(SCENARIOS.map((s) => [s.id, s] as const))('scenario %s', (_id, sce
     },
   );
 
-  // Supplies join a real source to a suction inlet; draughting needs hose that holds a vacuum.
+  // Supplies join a real source to an external inlet; draughting needs hose that holds a vacuum.
   it.each(specs.map((spec) => [spec.id, spec] as const))(
-    'connects supplies to suction inlets, over hard suction for static water, on %s',
+    'connects supplies to external inlets, over hard suction for static water, on %s',
     (_specId, spec) => {
       const { sources, supplies, trucks } = scenario.build(spec).state;
       for (const supply of supplies) {
         const truck = trucks.find((t) => t.id === supply.truckId);
-        const suction = truck?.spec.inlets.filter((i) => i.kind === 'suction').map((i) => i.id);
+        const suction = truck?.spec.inlets.filter((i) => i.kind !== 'tank').map((i) => i.id);
         expect(suction).toContain(supply.inletId);
         const source = sources.find((x) => x.id === supply.sourceId);
         expect(source).toBeDefined();

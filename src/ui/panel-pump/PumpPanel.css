@@ -5,6 +5,35 @@
   padding-top: var(--space-2);
 }
 
+.pump-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pump-panel__views {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.pump-panel__view {
+  width: auto;
+  height: var(--touch-min);
+  padding: 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pump-panel__view[aria-pressed='true'] {
+  background: var(--color-material-steel);
+  color: var(--color-material-ink);
+}
+
 .pump-panel__appliance {
   margin: 0;
   font-size: 14px;

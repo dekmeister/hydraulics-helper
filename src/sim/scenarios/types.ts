@@ -8,6 +8,8 @@ export interface ScenarioRequirements {
   minDeliveries: number;
   /** An external suction inlet (hydrant or draught supply). */
   suction?: boolean;
+  /** An inlet straight into the tank (hydrant to tank). */
+  tankFill?: boolean;
   /** A way to prime for draughting: any primer, self-priming included. */
   primer?: boolean;
   /** Only these appliances, by spec id (a scenario written for one vehicle); default any. */
@@ -88,12 +90,20 @@ export function supports(
 
 /** Whether `spec` has every capability in `requires`. */
 function meets(requires: ScenarioRequirements, spec: ApplianceSpec): boolean {
-  const { tank, minDeliveries, suction = false, primer = false, appliances } = requires;
+  const {
+    tank,
+    minDeliveries,
+    suction = false,
+    tankFill = false,
+    primer = false,
+    appliances,
+  } = requires;
   const hasTank = spec.tank !== undefined && spec.inlets.some((i) => i.kind === 'tank');
   const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
   return (
     (!tank || hasTank) &&
     (!suction || hasSuction) &&
+    (!tankFill || spec.inlets.some((i) => i.kind === 'tankFill')) &&
     (!primer || spec.primer !== undefined) &&
     (appliances === undefined || appliances.includes(spec.id)) &&
     spec.deliveries.length >= minDeliveries

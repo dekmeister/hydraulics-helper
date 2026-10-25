@@ -16,7 +16,7 @@ describe('saved settings and progress', () => {
   it('round-trips through storage', () => {
     const storage = memoryStorage();
     const saved = recordResult(
-      { ...defaultSaved(), settings: { sound: false } },
+      { ...defaultSaved(), settings: { sound: false, panelView: 'realistic' } },
       'first-line',
       'cat1-generic',
       { passed: true, points: 92, stars: 3 },
@@ -58,6 +58,19 @@ describe('saved settings and progress', () => {
     );
     expect(saved.settings.sound).toBe(true);
     expect(saved.results).toEqual({ a: { x: { passed: true, bestPoints: 80, bestStars: 2 } } });
+  });
+
+  it('defaults the panel view to simplified, and keeps only a view it knows', () => {
+    expect(defaultSaved().settings.panelView).toBe('simplified');
+    const blob = (panelView: unknown) =>
+      parseSaved(JSON.stringify({ version: 1, settings: { sound: true, panelView } }));
+    expect(blob('realistic').settings.panelView).toBe('realistic');
+    expect(blob('photo').settings.panelView).toBe('simplified');
+    // A v1 blob saved before the setting existed still loads.
+    expect(parseSaved('{"version":1,"settings":{"sound":false}}').settings).toEqual({
+      sound: false,
+      panelView: 'simplified',
+    });
   });
 
   it('keeps the best result: a pass stays a pass, bests only improve', () => {

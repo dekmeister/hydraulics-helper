@@ -10,8 +10,8 @@ export interface SiteTruck {
 
 /**
  * Throw on the first data error in a site: duplicate truck, source or supply ids, a supply to a
- * missing truck, source or inlet, a supply on a non-suction inlet or on an inlet that already has
- * one, more than one static source per truck (priming is tracked per pump, so a second dam would
+ * missing truck, source or inlet, a supply on the tank feed or on an inlet that already has one,
+ * a tank-fill supply from anything but a hydrant of its own, more than one static source per truck (priming is tracked per pump, so a second dam would
  * prime for free), or a relay that doesn't fit (`validateLinks`).
  */
 export function validateSite(
@@ -46,8 +46,17 @@ export function validateSite(
     const inlet = truck.spec.inlets.find((i) => i.id === supply.inletId);
     if (inlet === undefined)
       throw new Error(`Supply '${supply.id}': ${truck.spec.id} has no inlet '${supply.inletId}'`);
-    if (inlet.kind !== 'suction')
-      throw new Error(`Supply '${supply.id}': '${inlet.id}' is not a suction inlet`);
+    if (inlet.kind === 'tank')
+      throw new Error(`Supply '${supply.id}': '${inlet.id}' is not an external inlet`);
+    if (inlet.kind === 'tankFill') {
+      if (source.kind !== 'hydrant')
+        throw new Error(`Supply '${supply.id}': '${inlet.id}' fills the tank only from a hydrant`);
+      // One hose per hydrant while it fills a tank: two draws on one main would share its loss,
+      // which the solver doesn't couple (PLAN parking lot).
+      const other = supplies.find((x) => x.id !== supply.id && x.sourceId === source.id);
+      if (other !== undefined)
+        throw new Error(`Supply '${supply.id}': hydrant '${source.id}' also feeds '${other.id}'`);
+    }
     const inletKey = `${truck.id}/${inlet.id}`;
     if (usedInlets.has(inletKey))
       throw new Error(`Supply '${supply.id}': '${inlet.id}' already has a supply`);

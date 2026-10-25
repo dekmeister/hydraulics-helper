@@ -231,6 +231,19 @@ As built (2026-10-25): the plan held, with these changes. Lesson fixtures are ca
 10. **Fixtures + journeys**: menu (fresh, with progress), lesson dock (guided step, objectives with radio), debrief (passed, failed). Journeys: scenario 1 guided through the real controls to the debrief; scenarios 2 and 3 unassisted; progress survives a reload; the incident's events; sound setting persists.
 11. **Review loop**, baselines, docs (ARCHITECTURE §3/§5/§7/§8, TESTING, CALIBRATION "needs Dek", PLAN tick).
 
+## R1 — Realistic Cat 1 panel (part-task trainer)
+
+From Dek's Cat 1 photos (`Resources/Photos/Cat1_*`, 2026-10-25), which corrected several Layout A guesses: no discharge master (the big blue lever is the 65 mm outlet's), tank to pump far left, the blue lever above the suction is pump to tank, hydrant to tank is round the side, PRIME is a pull handle on the bumper, the throttle is a speed controller, the small dials are oil temperature and oil pressure, and the tank level is a sight tube.
+
+- [x] Baselines refreshed on the pinned Chromium (the committed ones came from another build).
+- [x] Cat 1 65 mm outlet and suction; real gauge faces (compound −100…2500, discharge 0–4000, tacho 0–4000 with the placard limits).
+- [x] Sim: pump to tank (`ApplianceSpec.pumpToTank`) and hydrant to tank (`InletKind 'tankFill'`), tests first, contract cases, `tank-refill` free-play scenario and trace.
+- [x] Spec `TankDisplay` (sight tube / electronic bands).
+- [x] Realistic layout data, generic components (bay lever, pull-handle primer, speed switch, tank gauges, plate backdrop), the Simplified · Realistic switch (saved), fixtures, journeys, review.
+- [x] Polish (Dek, 2026-10-25): panel re-spaced on a grid, pipework terminated on fittings and flanges, radial pump (eye inlet, tangential outlet), plates sized from their text, speed switch as a face-on up/down toggle (swipe or press a half).
+
+**Demo:** switch the Cat 1 to Realistic, run a tank attack with the bay levers and the speed controller, prime with the PRIME handle on the draughting fireground, refill at a hydrant through hydrant to tank.
+
 ## M7 — Second appliance (proves extensibility)
 
 - [ ] Add a second real appliance by following the `ARCHITECTURE.md` §9.7 checklist: spec, calibration section, layout, scene art. Choice and figures from Dek.
@@ -245,13 +258,18 @@ As built (2026-10-25): the plan held, with these changes. Lesson fixtures are ca
 * Instructor mode: author/import scenarios as JSON.
 * Replays and shareable debriefs.
 * Further appliances beyond M7 (Cat 7/9, bulk water, urban pumper, portable pump), pump-specific quirks.
-* Cat 1 hose reels (Layout A has two, with their own valves) and the discharge master valve. Deferred from M1 (Dek, 2026-10-24).
-* Engine key switch / engine stop; M1 assumes the pump engine is always running.
+* Cat 1 hose reels (two, each with its own blue lever off the discharge manifold; the right one is drawn inert on the realistic bay). Deferred from M1 (Dek, 2026-10-24). There is no discharge master on the Cat 1 (photos, 2026-10-25).
+* Engine key switch / engine stop; M1 assumes the pump engine is always running. The realistic Cat 1 panel draws stop, ignition, ALT lamp and start as not in the game yet; "to stop pump, ignition must be on" is on its placard.
+* Realistic-view future work (R1): oil temperature and oil pressure gauges (need an engine model), foam (bypass / foam-off / foam-on switch, selection and metering valves), fuses, the air-cleaner indicator, reels; a callouts toggle for a "find it yourself" mode (Design §8); a refill lesson on the `tank-refill` fireground; a hydrant feeding two hoses at once (shared main loss); relays into hydrant to tank; a realistic layout for the test appliance or M7's second truck; Cat 7 photos are in `Resources/Photos/` for when it's built.
+* **R1 review follow-ups:**
+  * The speed controller ramps in the store (`state/throttleRamp.ts`), not the sim, so scripts, lessons and traces can't see it and lesson timing differs between views. Moving it into `advance` (a `PlayerInputs.throttleRate` of −1/0/+1) would make the Simplified view ramp too, which is a design call. Its rates are now in the spec (`EngineSpec.speedController`).
+  * Hydrant to tank is an `InletKind` ('tankFill'), so every pump-side sum over `inletFlowLpm` must exclude it (`inletPaths`, `warnings.ts`, `SceneTruck`, `site.ts` do). A separate `tankInlets` field would make that structural.
+  * `TEST_APPLIANCE` has no pump to tank, hydrant to tank or realistic layout, so those paths are proven on Cat 1 only, and the electronic `bands` tank gauge has no fixture. Adding them adds the test appliance's tank-refill eligibility, trace columns and fixtures, and needs a review pass.
+  * Phone legibility of the realistic bay: plate text is 18–26 viewBox units, ~6–9 px at 320 px, so placards are unreadable and "NO LINE" clips at the plate edge; `e2e/layout.spec.ts` doesn't check text size. The desktop bay is ~1350 px tall, so it can't be seen with the scene.
 * Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event.
 * Unlined hose in scenarios (the catalogue already has it); hose carried per appliance.
 * Multiple independent pumps on one appliance (`pumps: PumpSpec[]`, e.g. separate high-pressure reel pump) — deferred, see `ARCHITECTURE.md` §9.2.
-* Realistic bay view and zone C close-up (Design sheets 07–08, `Design/layouts/layout-a.json`) as a second view over the panel layout data.
-* Vernier-knob throttle variant (Layout A, Design OPEN_DECISIONS #4); M2 ships the T-handle only.
+* Vernier-knob throttle variant (Design OPEN_DECISIONS #4); the Cat 1 turned out to have a speed controller (R1), so the knob waits for a truck that has one.
 * Warning lamp acknowledge (tap → steady, opens a coaching card). M6 built the coach as a dock, not cards; a lamp tap could open the lamp's explanation in the dock.
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
 * **Layout vocabulary gaps** (M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button (the sim treats its switch as "stroking"); an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` shows every lamp the sim can light (temperature, cavitation, hammer), whatever the truck actually fits.

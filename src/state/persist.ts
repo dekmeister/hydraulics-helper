@@ -5,9 +5,16 @@
 export const SAVE_KEY = 'pumpops:v1';
 const VERSION = 1;
 
+/** Which pump panel to show: the grouped simplified panel, or the truck's real arrangement. */
+export type PanelView = 'simplified' | 'realistic';
+
+const PANEL_VIEWS: readonly PanelView[] = ['simplified', 'realistic'];
+
 export interface Settings {
   /** Play the engine, primer, cavitation and spray sounds. */
   sound: boolean;
+  /** The pump panel view; an appliance without a realistic layout shows the simplified one. */
+  panelView: PanelView;
 }
 
 /** Best result on one scenario with one appliance. */
@@ -25,7 +32,7 @@ export interface Saved {
 }
 
 export function defaultSaved(): Saved {
-  return { version: VERSION, settings: { sound: true }, results: {} };
+  return { version: VERSION, settings: { sound: true, panelView: 'simplified' }, results: {} };
 }
 
 const isRecord = (x: unknown): x is Record<string, unknown> =>
@@ -55,8 +62,12 @@ export function parseSaved(text: string | null): Saved {
     return saved;
   }
   if (!isRecord(raw) || raw.version !== VERSION) return saved;
-  if (isRecord(raw.settings) && typeof raw.settings.sound === 'boolean')
-    saved.settings.sound = raw.settings.sound;
+  if (isRecord(raw.settings)) {
+    const { sound, panelView } = raw.settings;
+    if (typeof sound === 'boolean') saved.settings.sound = sound;
+    const view = PANEL_VIEWS.find((v) => v === panelView);
+    if (view !== undefined) saved.settings.panelView = view;
+  }
   if (isRecord(raw.results)) {
     for (const [scenario, byAppliance] of Object.entries(raw.results)) {
       if (!isRecord(byAppliance)) continue;
