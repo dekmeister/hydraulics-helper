@@ -487,3 +487,71 @@ circle.scene-highlight--outer {
     grid-column: 3;
   }
 }
+
+/* Relay hoses (M5): drawn like delivery hoses; burst lengths jet water. */
+.scene-relay path {
+  fill: none;
+  stroke-linecap: round;
+}
+.scene-relay__burst {
+  stroke: var(--color-material-tank-lit);
+  stroke-width: 3;
+}
+.scene-relay__burst-ring {
+  fill: var(--color-signal-alarm);
+  stroke: var(--color-material-ink);
+  stroke-width: 2;
+}
+
+/* Portable dams (M5): canvas wall, water, and a ring lit with the water held. */
+.scene-portable-dam__wall {
+  fill: var(--color-scene-hose-dry-canvas);
+  stroke: var(--color-material-ink);
+  stroke-width: 2;
+}
+.scene-portable-dam__water {
+  fill: var(--color-scene-dam);
+}
+.scene-portable-dam__track,
+.scene-portable-dam__level {
+  fill: none;
+  stroke-width: 5;
+}
+.scene-portable-dam__track {
+  stroke: var(--color-material-tank-unlit);
+}
+.scene-portable-dam__level {
+  stroke: var(--color-material-tank-lit);
+}
+.scene-portable-dam--low .scene-portable-dam__level {
+  stroke: var(--color-signal-caution);
+}
+.scene-portable-dam--empty .scene-portable-dam__track {
+  stroke: var(--color-signal-alarm);
+}
+
+/* Truck names when several trucks share the fireground; tap a truck to operate it. */
+.scene-truck-label rect {
+  fill: var(--color-material-paper);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
+.scene-truck-label--active rect {
+  fill: var(--color-material-ink);
+  stroke: var(--color-focus-inner);
+  stroke-width: 2.5;
+}
+.scene-truck-label text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  fill: var(--color-material-ink);
+}
+.scene-truck-label--active text {
+  fill: var(--color-material-paper);
+}
+.scene-truck-tap {
+  fill: transparent;
+  cursor: pointer;
+}

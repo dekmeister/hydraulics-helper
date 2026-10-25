@@ -5,11 +5,21 @@
 /** Where the truck is parked, drawing units: left of centre, room to lay out towards the fire. */
 export const TRUCK_AT = { x: 230, y: 330 } as const;
 
+/**
+ * With several trucks (relays), the one nearest the fire (the attack pump) stands here, up the
+ * track towards the fire; trucks further back along a relay stand between it and `TRUCK_AT`, by
+ * the water.
+ */
+export const ATTACK_AT = { x: 470, y: 230 } as const;
+
 /** The fire front lies up and to the right of the truck; lays fan out about this heading, degrees (y down). */
 export const FIRE_HEADING_DEG = -25;
 
 /** Fire front at the top-right corner of the view, across `FIRE_HEADING_DEG` from the truck. */
 export const FIRE_FRONT = 'M610 0 C 640 25, 688 17, 720 42 S 792 67, 800 100';
+
+/** A point on the fire front, to measure how near a truck stands to it. */
+export const FIRE_FRONT_AT = { x: 720, y: 42 } as const;
 
 /** Farm track: passes the truck on its fire side and runs off the top-left; never under the truck. */
 export const TRACK =

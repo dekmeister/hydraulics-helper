@@ -1,128 +1,153 @@
 import { useEffect, useRef } from 'react';
-import { activeTruck, deliveryLines, tankFraction } from '../../state/selectors';
+import { deliveryLines, tankFraction } from '../../state/selectors';
+import { portableDams, relayLays } from '../../state/relay';
 import { supplyLays } from '../../state/supply';
 import { useStore } from '../../state/store';
 import { tankLevelState } from '../../state/tankLevel';
+import type { TruckState } from '../../sim/types';
 import { deliveryIdentities } from '../appliances/identity';
 import { getPanelLayout, getSceneArt } from '../appliances/registry';
-import { ApplianceArt } from './ApplianceArt';
 import { Backdrop, MapFurniture } from './Backdrop';
-import { BranchCrew } from './BranchCrew';
-import { layoutScene, SCENE_VIEW } from './geometry';
-import { HoseLay } from './HoseLay';
+import { SCENE_VIEW } from './geometry';
+import { PortableDam } from './PortableDam';
+import { RelayLay } from './RelayLay';
 import { SceneLegend } from './SceneLegend';
-import { Hydrant, SupplyLay } from './SupplyLay';
+import { SceneTruck, TruckSupplies } from './SceneTruck';
+import { layoutSite, siteInput } from './siteLayout';
+import { Hydrant } from './SupplyLay';
 import './Scene.css';
 
+/** A truck's tank fill and level, for the map and legend; undefined with no tank. */
+function tankOf(truck: TruckState) {
+  const capacityL = truck.spec.tank?.capacityL;
+  if (capacityL === undefined) return undefined;
+  return { capacityL, level: tankLevelState(truck.tankL, capacityL) };
+}
+
 /**
- * Plan view of the fireground (ARCHITECTURE §7, Design §7): the active truck, its hose lays and the
- * crews on the branches, drawn from the appliance's scene art and the sim's lines. Lines charge and
- * branches spray from sim flow; tapping a line or its legend row highlights its delivery on the
- * panel. Generic: nothing here knows which truck it is drawing.
+ * Plan view of the fireground (ARCHITECTURE §7, Design §7): every truck with its hose lays and the
+ * crews on its branches, supply and relay hoses, drawn from each appliance's scene art and the
+ * sim. Lines charge and branches spray from sim flow; tapping a line or its legend row highlights
+ * its delivery on the panel, and tapping another truck operates it. Generic: nothing here knows
+ * which trucks it is drawing.
  */
 export function SceneView() {
   const sim = useStore((s) => s.sim);
   const inputs = useStore((s) => s.inputs);
   const highlight = useStore((s) => s.highlight);
   const toggleHighlight = useStore((s) => s.toggleHighlight);
+  const setActiveTruck = useStore((s) => s.setActiveTruck);
   const ref = useRef<HTMLDivElement>(null);
-
-  const truck = activeTruck(sim);
-  const { spec } = truck;
-  const art = getSceneArt(spec.id);
-  // Cheap enough to recompute each tick: a handful of lines.
-  const identities = deliveryIdentities(getPanelLayout(spec.id));
-  const supplies = supplyLays(sim, inputs);
-  const geometry = layoutScene(
-    art,
-    sim.lines.filter((l) => l.truckId === sim.activeTruckId),
-    supplies.map((s) => ({
-      id: s.supply.id,
-      inletId: s.supply.inletId,
-      sourceKind: s.source.kind,
-    })),
-  );
-  const supplyState = new Map(supplies.map((s) => [s.supply.id, s.state]));
-  const cavitating = truck.readings.cavitation > 0;
-  const suctionInlets = spec.inlets.filter((i) => i.kind === 'suction').map((i) => i.id);
-  const deliveries = deliveryLines(sim);
-  const byDelivery = new Map(deliveries.map((d) => [d.deliveryId, d]));
-  const capacityL = spec.tank?.capacityL;
-  const tankLevel = tankLevelState(truck.tankL, capacityL ?? 0);
-  const isHighlighted = (id: string) => highlight?.deliveryId === id;
-  const tapFromScene = (id: string) => {
-    toggleHighlight(id, 'scene');
-  };
 
   // Asked from the panel: bring the scene into view (it's above the panel on a phone).
   useEffect(() => {
     if (highlight?.from === 'panel') ref.current?.scrollIntoView({ block: 'nearest' });
   }, [highlight]);
 
-  const identityOf = (id: string) => {
-    const identity = identities.get(id);
-    if (identity === undefined) throw new Error(`${spec.id} layout places no delivery '${id}'`);
-    return identity;
-  };
+  // Cheap enough to recompute each tick: a handful of trucks and lines.
+  const geometry = layoutSite(siteInput(sim, getSceneArt));
+  const multi = sim.trucks.length > 1;
+  const relays = relayLays(sim);
+  const dams = portableDams(sim);
+  const highlighted = highlight?.truckId === sim.activeTruckId ? highlight.deliveryId : null;
+  // The active truck is drawn last, on top.
+  const trucks = [...sim.trucks].sort(
+    (a, b) => Number(a.id === sim.activeTruckId) - Number(b.id === sim.activeTruckId),
+  );
+  const perTruck = trucks.map((truck) => {
+    const g = geometry.trucks.find((x) => x.id === truck.id);
+    if (g === undefined) throw new Error(`No scene layout for truck '${truck.id}'`);
+    const identities = deliveryIdentities(getPanelLayout(truck.spec.id));
+    const identityOf = (id: string) => {
+      const identity = identities.get(id);
+      if (identity === undefined)
+        throw new Error(`${truck.spec.id} layout places no delivery '${id}'`);
+      return identity;
+    };
+    const supplies = supplyLays(sim, inputs, truck.id);
+    const connected = new Set([
+      ...supplies.map((s) => s.supply.inletId),
+      ...sim.links.flatMap((l) =>
+        l.to.kind === 'inlet' && l.to.truckId === truck.id ? [l.to.inletId] : [],
+      ),
+    ]);
+    return {
+      truck,
+      geometry: g,
+      supplies,
+      connected,
+      identityOf,
+      deliveries: deliveryLines(sim, truck.id),
+      active: truck.id === sim.activeTruckId,
+    };
+  });
+  const active = perTruck.find((t) => t.active);
+  if (active === undefined) throw new Error(`No active truck '${sim.activeTruckId}'`);
+  const activeTank = tankOf(active.truck);
+  const cavitating = active.truck.readings.cavitation > 0;
 
   return (
-    <div className="scene" ref={ref} data-appliance={spec.id}>
+    <div className="scene" ref={ref} data-appliance={active.truck.spec.id}>
       <svg
         className="scene__map"
         viewBox={`0 0 ${String(SCENE_VIEW.w)} ${String(SCENE_VIEW.h)}`}
         role="img"
-        aria-label={`Plan view: the ${spec.name} with its hose lays, crews and water supply.`}
+        aria-label={
+          multi
+            ? `Plan view: ${sim.trucks.map((t) => `the ${t.label.toLowerCase()} (${t.spec.name})`).join(' and ')} with their hose lays, relay, crews and water supply.`
+            : `Plan view: the ${active.truck.spec.name} with its hose lays, crews and water supply.`
+        }
       >
         <Backdrop />
         {sim.sources.some((x) => x.kind === 'hydrant') && <Hydrant />}
-        {geometry.supplies.map((lay) => (
-          <SupplyLay key={lay.supplyId} lay={lay} state={supplyState.get(lay.supplyId) ?? 'dry'} />
+        {geometry.dams.map((g) => {
+          const dam = dams.find((d) => d.source.id === g.sourceId);
+          return dam === undefined ? null : <PortableDam key={g.sourceId} geometry={g} dam={dam} />;
+        })}
+        {perTruck.map((t) => (
+          <TruckSupplies
+            key={t.truck.id}
+            truck={t.truck}
+            active={t.active}
+            geometry={t.geometry}
+            supplies={t.supplies}
+          />
         ))}
-        {geometry.lines.map((lay) => {
-          const d = byDelivery.get(lay.deliveryId);
+        {geometry.relays.map((g) => {
+          const relay = relays.find((r) => r.link.id === g.linkId);
+          if (relay === undefined) return null;
           return (
-            <HoseLay
-              key={lay.lineId}
-              lay={lay}
-              state={d?.state === 'charged' ? 'charged' : 'dry'}
-              highlighted={isHighlighted(lay.deliveryId)}
-              cavitating={cavitating}
-              onTap={() => {
-                tapFromScene(lay.deliveryId);
-              }}
+            <RelayLay
+              key={g.linkId}
+              geometry={g}
+              relay={relay}
+              highlighted={g.truckId === sim.activeTruckId && highlighted === g.deliveryId}
             />
           );
         })}
-        <ApplianceArt
-          art={art}
-          pose={geometry.truck}
-          couplings={[
-            ...deliveries.map((d) => ({
-              control: d.deliveryId,
-              capped: d.state === 'none',
-              highlighted: d.state === 'none' && isHighlighted(d.deliveryId),
-            })),
-            ...suctionInlets.map((id) => ({
-              control: id,
-              capped: !supplies.some((s) => s.supply.inletId === id),
-              highlighted: false,
-            })),
-          ]}
-          {...(capacityL === undefined
-            ? {}
-            : { tank: { fraction: tankFraction(truck), level: tankLevel } })}
-        />
-        {geometry.lines.map((lay) => {
-          const d = byDelivery.get(lay.deliveryId);
+        {perTruck.map((t) => {
+          const tank = tankOf(t.truck);
           return (
-            <BranchCrew
-              key={lay.lineId}
-              lay={lay}
-              identity={identityOf(lay.deliveryId)}
-              spraying={d?.state === 'charged'}
-              elevationM={d?.line?.elevationM ?? 0}
-              onTap={() => {
-                tapFromScene(lay.deliveryId);
+            <SceneTruck
+              key={t.truck.id}
+              truck={t.truck}
+              art={getSceneArt(t.truck.spec.id)}
+              geometry={t.geometry}
+              deliveries={t.deliveries}
+              connectedInlets={t.connected}
+              identityOf={t.identityOf}
+              {...(tank === undefined
+                ? {}
+                : { tank: { fraction: tankFraction(t.truck), level: tank.level } })}
+              active={t.active}
+              multi={multi}
+              highlighted={t.active ? highlighted : null}
+              cavitating={t.truck.readings.cavitation > 0}
+              onTapDelivery={(id) => {
+                toggleHighlight(id, 'scene');
+              }}
+              onOperate={() => {
+                setActiveTruck(t.truck.id);
               }}
             />
           );
@@ -130,17 +155,27 @@ export function SceneView() {
         <MapFurniture unitsPerM={geometry.unitsPerM} scaleBarM={geometry.scaleBarM} />
       </svg>
       <SceneLegend
-        rows={deliveries.map((d) => ({
+        rows={active.deliveries.map((d) => ({
           delivery: d,
-          identity: identityOf(d.deliveryId),
-          highlighted: isHighlighted(d.deliveryId),
+          identity: active.identityOf(d.deliveryId),
+          highlighted: highlighted === d.deliveryId,
         }))}
-        {...(capacityL === undefined
+        {...(activeTank === undefined
           ? {}
-          : { tank: { valueL: truck.tankL, capacityL, level: tankLevel } })}
-        supplies={supplies}
+          : {
+              tank: {
+                valueL: active.truck.tankL,
+                capacityL: activeTank.capacityL,
+                level: activeTank.level,
+              },
+            })}
+        supplies={active.supplies}
+        relays={relays}
+        dams={dams}
         cavitating={cavitating}
-        onTap={tapFromScene}
+        onTap={(id) => {
+          toggleHighlight(id, 'scene');
+        }}
       />
     </div>
   );

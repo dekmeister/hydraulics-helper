@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import type { PortableDam, RelayLay } from '../../state/relay';
 import type { DeliveryLine } from '../../state/selectors';
 import type { SupplyLay } from '../../state/supply';
 import type { TankLevelState } from '../../state/tankLevel';
@@ -17,12 +18,20 @@ interface Props {
   tank?: { valueL: number; capacityL: number; level: TankLevelState };
   /** Supply hoses to the truck's suction inlets. */
   supplies?: readonly SupplyLay[];
+  /** Relay hoses on the fireground. */
+  relays?: readonly RelayLay[];
+  /** Portable dams on the fireground. */
+  dams?: readonly PortableDam[];
   /** The pump is cavitating: charged lines say so. */
   cavitating?: boolean;
   onTap: (deliveryId: string) => void;
 }
 
 function statusText(d: DeliveryLine, cavitating: boolean): string {
+  if (d.relay !== undefined) {
+    if (d.relay.burst !== undefined) return 'Relay burst';
+    return d.state === 'charged' ? `Relay · ${formatWhole(d.flowLpm)} L/min` : 'Relay, dry';
+  }
   switch (d.state) {
     case 'charged':
       return `Charged · ${formatWhole(d.flowLpm)} L/min${cavitating ? ' · cavitating' : ''}`;
@@ -86,6 +95,73 @@ function supplyText(s: SupplyLay): { name: string; status: string } {
   }
 }
 
+/** What a relay row says: where it runs, and how it is doing at the far end. */
+function relayText(r: RelayLay): { name: string; status: string } {
+  const name = `Relay · ${r.fromLabel} → ${r.toLabel}`;
+  const flow = `${formatWhole(r.reading.flowLpm)} L/min`;
+  switch (r.state) {
+    case 'burst':
+      return { name, status: `Burst: length ${String((r.link.burst?.segment ?? 0) + 1)}` };
+    case 'soft':
+      return { name, status: 'Soft: over-running the relay' };
+    case 'dry':
+      return { name, status: 'Dry' };
+    case 'charged':
+      return {
+        name,
+        status:
+          r.kind === 'closed'
+            ? `${flow} · ${formatWhole(r.reading.endKpa)} kPa at the inlet`
+            : `${flow} in`,
+      };
+  }
+}
+
+function RelayRow({ relay }: { relay: RelayLay }) {
+  const { name, status } = relayText(relay);
+  return (
+    <li
+      className={`scene-legend__info scene-legend__relay--${relay.state}`}
+      data-relay={relay.link.id}
+    >
+      <span className="scene-legend__name">{name}</span>
+      <span className="scene-legend__status">{status}</span>
+    </li>
+  );
+}
+
+/** Water held, like the tank: "2 000 L of 5 000 L", with a signal when low or empty. */
+function LevelRow({
+  name,
+  valueL,
+  capacityL,
+  level,
+  className,
+  data,
+}: {
+  name: string;
+  valueL: number;
+  capacityL: number;
+  level: TankLevelState;
+  className: string;
+  data?: string;
+}) {
+  return (
+    <li
+      className={`${className} ${className}--${level}`}
+      {...(data === undefined ? {} : { 'data-dam': data })}
+    >
+      <span className="scene-legend__name">{name}</span>
+      <span className="scene-legend__status">
+        {level !== 'ok' && <SignalGlyph level={level} />}
+        {`${formatWhole(valueL)} L of ${formatWhole(capacityL)} L`}
+        {level === 'low' && ' · low'}
+        {level === 'empty' && ' · empty'}
+      </span>
+    </li>
+  );
+}
+
 function SupplyRow({ supply }: { supply: SupplyLay }) {
   const { name, status } = supplyText(supply);
   return (
@@ -136,9 +212,18 @@ function Row({
 
 /**
  * The scene's key and its accessible, thumb-sized equivalent: one button per delivery (tap to find
- * it on the panel) with the line's state, the supply hoses, and the water left in the tank.
+ * it on the panel) with the line's state, the supply and relay hoses, portable dams, and the water
+ * left in the tank.
  */
-export function SceneLegend({ rows, tank, supplies = [], cavitating = false, onTap }: Props) {
+export function SceneLegend({
+  rows,
+  tank,
+  supplies = [],
+  relays = [],
+  dams = [],
+  cavitating = false,
+  onTap,
+}: Props) {
   return (
     <ul className="scene-legend" aria-label="Lines and water">
       {rows.map((row) => (
@@ -147,16 +232,28 @@ export function SceneLegend({ rows, tank, supplies = [], cavitating = false, onT
       {supplies.map((s) => (
         <SupplyRow key={s.supply.id} supply={s} />
       ))}
+      {relays.map((r) => (
+        <RelayRow key={r.link.id} relay={r} />
+      ))}
+      {dams.map((d) => (
+        <LevelRow
+          key={d.source.id}
+          name={d.source.label}
+          valueL={d.source.volumeL}
+          capacityL={d.source.capacityL ?? 0}
+          level={d.level}
+          className="scene-legend__tank"
+          data={d.source.id}
+        />
+      ))}
       {tank !== undefined && (
-        <li className={`scene-legend__tank scene-legend__tank--${tank.level}`}>
-          <span className="scene-legend__name">Tank water</span>
-          <span className="scene-legend__status">
-            {tank.level !== 'ok' && <SignalGlyph level={tank.level} />}
-            {`${formatWhole(tank.valueL)} L of ${formatWhole(tank.capacityL)} L`}
-            {tank.level === 'low' && ' · low'}
-            {tank.level === 'empty' && ' · empty'}
-          </span>
-        </li>
+        <LevelRow
+          name="Tank water"
+          valueL={tank.valueL}
+          capacityL={tank.capacityL}
+          level={tank.level}
+          className="scene-legend__tank"
+        />
       )}
     </ul>
   );
