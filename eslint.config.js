@@ -40,6 +40,10 @@ export default tseslint.config(
     files: ['**/*.{js,mjs}'],
     ...tseslint.configs.disableTypeChecked,
   },
+  {
+    files: ['public/sw.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
   // CLAUDE.md rule 1: src/sim/ is pure and deterministic.
   {
     files: ['src/sim/**/*.ts'],
