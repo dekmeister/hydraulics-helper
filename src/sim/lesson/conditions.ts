@@ -82,7 +82,11 @@ export function holds(c: Condition, state: SimState, facts: LessonFacts): boolea
       return t !== undefined && within(t.tally[c.tally], c);
     }
     case 'time':
-      return within(state.timeS, c);
+      // Sim time is a sum of 0.1 s ticks, so 10 ticks is 0.9999…: allow for it.
+      return within(state.timeS, {
+        min: (c.min ?? -Infinity) - 1e-9,
+        max: (c.max ?? Infinity) + 1e-9,
+      });
     case 'ack':
       return facts.acks.includes(c.step);
     case 'objective':
