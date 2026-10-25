@@ -1,16 +1,15 @@
 import { useId } from 'react';
 import { SCENARIOS } from '../../sim/scenarios';
 import { supports } from '../../sim/scenarios/types';
-import { activeTruck } from '../../state/selectors';
 import { useStore } from '../../state/store';
 
 /**
- * Loads any scenario the active appliance can play (a native select: thumb-sized, keyboard and
+ * Loads any scenario the player's appliance can play (a native select: thumb-sized, keyboard and
  * screen-reader ready). A stand-in until scenario selection proper (M6).
  */
 export function ScenarioPicker() {
   const id = useId();
-  const spec = useStore((s) => activeTruck(s.sim).spec);
+  const spec = useStore((s) => s.playerSpec);
   const scenarioId = useStore((s) => s.scenarioId);
   const loadScenario = useStore((s) => s.loadScenario);
   const playable = SCENARIOS.filter((s) => supports(s, spec));

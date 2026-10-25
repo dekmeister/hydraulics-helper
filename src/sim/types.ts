@@ -194,6 +194,11 @@ export type WaterSource =
       liftM: number;
       /** Water left, L. */
       volumeL: number;
+      /**
+       * Most it holds, L: a portable dam or a tank on the ground overflows past it. Open water
+       * (a farm dam, a creek) has no limit.
+       */
+      capacityL?: number;
     };
 
 /** Hose from a source to one of a truck's suction inlets: hard suction or layflat. */
@@ -204,6 +209,52 @@ export interface SupplyLine {
   inletId: ControlId;
   sourceId: string;
   segments: HoseSegment[];
+}
+
+/**
+ * Where a relay hose ends. 'inlet': another truck's suction inlet (closed relay: the pumps are
+ * coupled). 'tank': another truck's tank, and 'dam': a static source such as a portable dam (open
+ * relay: the water lands at atmospheric pressure and the next pump draws on it independently).
+ */
+export type RelayEnd =
+  | { kind: 'inlet'; truckId: string; inletId: ControlId }
+  | { kind: 'tank'; truckId: string }
+  | { kind: 'dam'; sourceId: string };
+
+/** A burst length in a relay hose. */
+export interface HoseBurst {
+  /** Sim time it burst, s. */
+  atS: number;
+  /** Index of the length that burst in `segments`. */
+  segment: number;
+  /** Peak pressure in the hose when it went, kPa. */
+  peakKpa: number;
+}
+
+/** A relay hose from one truck's delivery to another truck or a dam (ARCHITECTURE §4.7). */
+export interface RelayLink {
+  id: string;
+  /** Supplying truck and the delivery the relay hose leaves from. */
+  truckId: string;
+  deliveryId: ControlId;
+  segments: HoseSegment[];
+  /** Height of the far end above the supplying pump, m (negative = downhill). */
+  elevationM: number;
+  to: RelayEnd;
+  /** Set once over-pressure has burst a length; the relay no longer reaches its far end. */
+  burst?: HoseBurst;
+}
+
+/** What a relay hose is doing, recomputed every tick. */
+export interface RelayReading {
+  /** Flow leaving the supplying delivery, L/min. */
+  flowLpm: number;
+  /** Pressure at the supplying end, after its delivery valve, kPa. */
+  startKpa: number;
+  /** Pressure at the far end, kPa: the receiving inlet's residual for a closed relay; 0 when open. */
+  endKpa: number;
+  /** A closed relay's layflat is pulled flat by the receiving pump (over-running the relay). */
+  collapsed: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -265,10 +316,14 @@ export interface FaultTally {
   overheatS: number;
   waterHammer: number;
   worstSurgeKpa: number;
+  /** Relay hose lengths burst by over-pressure on this truck's deliveries. */
+  hoseBursts: number;
 }
 
 export interface TruckState {
   id: string;
+  /** UI copy naming the truck on the fireground, e.g. 'Base pump'. */
+  label: string;
   /** Copy of the appliance spec, so saved states stay self-contained (ARCHITECTURE §9.2). */
   spec: ApplianceSpec;
   rpm: number;
@@ -281,6 +336,8 @@ export interface TruckState {
   tally: FaultTally;
   /** Most recent water hammer, if any. */
   lastHammer?: HammerEvent;
+  /** This truck's seeded PRNG state (mulberry32), so its noise replays and other trucks don't shift it. */
+  rngState: number;
 }
 
 export interface SimState {
@@ -292,8 +349,10 @@ export interface SimState {
   lines: HoseLine[];
   sources: WaterSource[];
   supplies: SupplyLine[];
-  /** Seeded PRNG state (mulberry32), so noisy behaviour replays exactly. */
-  rngState: number;
+  /** Relay hoses between trucks, and into tanks and dams. */
+  links: RelayLink[];
+  /** What each relay hose is doing, keyed by link id. */
+  linkReadings: Record<string, RelayReading>;
 }
 
 /** Everything the player can change, keyed by spec control id (ARCHITECTURE §9.3). */

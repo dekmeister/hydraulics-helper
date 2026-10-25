@@ -1,7 +1,7 @@
 import { flushSync } from 'react-dom';
 import { APPLIANCES } from '../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
-import { createInitialState } from '../sim/engine';
+import { createInitialState, reseed } from '../sim/engine';
 import { eligibleAppliances, getScenario } from '../sim/scenarios';
 import type { ApplianceSpec, SimState } from '../sim/types';
 import { useStore } from '../state/store';
@@ -20,12 +20,12 @@ function specById(id: string): ApplianceSpec {
 function loadSim(opts: LoadOptions): SimState | undefined {
   const sim = buildSim(opts);
   const { seed } = opts;
-  return sim === undefined || seed === undefined ? sim : { ...sim, rngState: seed >>> 0 };
+  return sim === undefined || seed === undefined ? sim : reseed(sim, seed);
 }
 
-function buildSim({ scenario, appliance, state }: LoadOptions): SimState | undefined {
+function buildSim({ scenario, appliance, support, state }: LoadOptions): SimState | undefined {
   if (state !== undefined) {
-    if (scenario !== undefined || appliance !== undefined) {
+    if (scenario !== undefined || appliance !== undefined || support !== undefined) {
       throw new Error('__pumpops.load: pass a state on its own');
     }
     return structuredClone(state);
@@ -36,7 +36,9 @@ function buildSim({ scenario, appliance, state }: LoadOptions): SimState | undef
     const s = getScenario(scenario);
     const spec = appliance !== undefined ? specById(appliance) : eligibleAppliances(s)[0];
     if (spec === undefined) throw new Error(`__pumpops.load: no appliance can play '${scenario}'`);
-    return s.build(spec).state;
+    const other = support === undefined ? undefined : specById(support);
+    const roles = Object.fromEntries((s.support ?? []).map((r) => [r.id, other ?? spec]));
+    return s.build(spec, roles).state;
   }
   return appliance === undefined ? undefined : createInitialState(specById(appliance));
 }

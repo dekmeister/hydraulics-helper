@@ -1,9 +1,15 @@
 // Warning lamps for the active truck (ARCHITECTURE §7 HUD). Pure functions of sim state and inputs.
-import { PUMP_TEMP_ALARM_C, PUMP_TEMP_CAUTION_C, VALVE_CLOSED_EPS } from '../sim/constants';
+import {
+  HOSE_WORKING_KPA,
+  PUMP_TEMP_ALARM_C,
+  PUMP_TEMP_CAUTION_C,
+  RELAY_MIN_RESIDUAL_KPA,
+  VALVE_CLOSED_EPS,
+} from '../sim/constants';
 import { connectedSupplies } from '../sim/engine';
 import { isRigid } from '../sim/hose';
 import { draughtSupply } from '../sim/priming';
-import type { PlayerInputs, SimState, TruckState } from '../sim/types';
+import type { PlayerInputs, RelayLink, SimState, TruckState } from '../sim/types';
 import { activeTruck } from './activeTruck';
 import { tankLevelState } from './tankLevel';
 
@@ -57,9 +63,68 @@ interface SupplyProblem {
 
 const caution = (message: string): SupplyProblem => ({ level: 'caution', message });
 
+/** Closed relays into this truck's inlets. */
+function relaysInto(sim: SimState, truck: TruckState): RelayLink[] {
+  return sim.links.filter((l) => l.to.kind === 'inlet' && l.to.truckId === truck.id);
+}
+
+/** The supplying truck's name in a sentence: 'the base pump'. */
+function supplierOf(sim: SimState, link: RelayLink): string {
+  const label = sim.trucks.find((t) => t.id === link.truckId)?.label ?? link.truckId;
+  return `the ${label.toLowerCase()}`;
+}
+
 /**
- * Why water isn't reaching the pump while a delivery is open, or undefined if it is (or the tank
- * lamp already says the tank is empty). Losing prime is an alarm; the rest are cautions.
+ * Relay problems that matter whatever is open: a burst relay hose (alarm), or one pushed past the
+ * hose's working pressure (the receiving operator sees the compound climb).
+ */
+function relayHoseProblem(sim: SimState, truck: TruckState): SupplyProblem | undefined {
+  const relays = relaysInto(sim, truck);
+  const burst = relays.find((l) => l.burst !== undefined);
+  if (burst !== undefined) {
+    return {
+      level: 'alarm',
+      message: `Relay hose burst: no water from ${supplierOf(sim, burst)}. Shut down the lines.`,
+    };
+  }
+  const high = relays.find((l) => (sim.linkReadings[l.id]?.endKpa ?? 0) > HOSE_WORKING_KPA);
+  if (high !== undefined) {
+    return caution(
+      `Relay pressure high: ask ${supplierOf(sim, high)} to ease off before a length bursts.`,
+    );
+  }
+  return undefined;
+}
+
+/**
+ * A relay that's open but not doing its job: residual under the 100 kPa minimum (L3794–3796) while
+ * water flows, or no water at all.
+ */
+function relayFlowProblem(
+  sim: SimState,
+  truck: TruckState,
+  inputs: PlayerInputs,
+): SupplyProblem | undefined {
+  for (const link of relaysInto(sim, truck)) {
+    if (link.to.kind !== 'inlet' || !isOpen(inputs.valves[link.to.inletId])) continue;
+    const flowing = (truck.readings.inletFlowLpm[link.to.inletId] ?? 0) > 0;
+    if (flowing && truck.readings.compoundKpa < RELAY_MIN_RESIDUAL_KPA) {
+      return caution(
+        `Relay residual low: keep the compound above ${String(RELAY_MIN_RESIDUAL_KPA)} kPa. ` +
+          `Ease the throttle or ask ${supplierOf(sim, link)} for more pressure.`,
+      );
+    }
+    if (!flowing && Object.values(truck.readings.inletFlowLpm).every((q) => q <= 0)) {
+      return caution(`No water from the relay: ${supplierOf(sim, link)} isn’t pumping to you.`);
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Why water isn't reaching the pump properly while a delivery is open, or undefined if it is (or
+ * the tank lamp already says the tank is empty). A relay hose burst or over-pressured is reported
+ * whatever is open. Losing prime and a burst relay are alarms; the rest are cautions.
  */
 function supplyProblem(
   sim: SimState,
@@ -67,6 +132,8 @@ function supplyProblem(
   inputs: PlayerInputs,
 ): SupplyProblem | undefined {
   const { spec } = truck;
+  const hose = relayHoseProblem(sim, truck);
+  if (hose !== undefined) return hose;
   if (!spec.deliveries.some((d) => isOpen(inputs.valves[d.id]))) return undefined;
   const openInlets = spec.inlets.filter((i) => isOpen(inputs.valves[i.id]));
   if (openInlets.length === 0) {
@@ -74,6 +141,8 @@ function supplyProblem(
       `No supply: open ${spec.inlets.map((i) => i.label.toLowerCase()).join(' or ')}.`,
     );
   }
+  const relay = relayFlowProblem(sim, truck, inputs);
+  if (relay !== undefined) return relay;
   if (Object.values(truck.readings.inletFlowLpm).some((q) => q > 0)) return undefined;
   if (openInlets.some((i) => i.kind === 'tank')) return undefined;
   const supplies = connectedSupplies(sim, truck.id);
@@ -96,7 +165,10 @@ function supplyProblem(
       );
     }
   }
-  if (openInlets.every((i) => !supplies.some((s) => s.supply.inletId === i.id))) {
+  const connected = (inletId: string) =>
+    supplies.some((s) => s.supply.inletId === inletId) ||
+    relaysInto(sim, truck).some((l) => l.to.kind === 'inlet' && l.to.inletId === inletId);
+  if (openInlets.every((i) => !connected(i.id))) {
     return caution('Nothing is connected to the open inlet.');
   }
   return undefined;

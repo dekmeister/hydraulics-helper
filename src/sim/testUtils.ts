@@ -2,13 +2,14 @@
 import { expect } from 'vitest';
 import { STANDARD_LENGTH_M, TICK_S } from './constants';
 import { inletOfKind } from './appliances/controls';
-import { DEFAULT_TRUCK_ID, advance, type SiteOptions } from './engine';
+import { DEFAULT_TRUCK_ID, advance, createSiteState, type SiteOptions } from './engine';
 import { nextRandom } from './rng';
 import type {
   ApplianceSpec,
   ControlId,
   HoseLine,
   PlayerInputs,
+  RelayLink,
   SimState,
   TruckState,
 } from './types';
@@ -53,6 +54,59 @@ export function run(state: SimState, inputs: PlayerInputs, ticks: number): SimSt
   let s = state;
   for (let i = 0; i < ticks; i++) s = advance(s, inputs, TICK_S);
   return s;
+}
+
+/** The truck with `id`; throws if there is none. */
+export function truck(state: SimState, id: string): TruckState {
+  const t = state.trucks.find((x) => x.id === id);
+  if (t === undefined) throw new Error(`state has no truck '${id}'`);
+  return t;
+}
+
+/** Every reading on `t` finite and in range: no NaN, no negative flow, gauges within their stops. */
+export function expectSaneTruck(t: TruckState): void {
+  const r = t.readings;
+  const numbers = [
+    t.rpm,
+    t.tankL,
+    r.dischargeKpa,
+    r.compoundKpa,
+    r.pumpFlowLpm,
+    r.reliefFlowLpm,
+    ...Object.values(r.deliveryFlowLpm),
+    ...Object.values(r.branchKpa),
+    t.pump.tempC,
+    t.pump.vacuumKpa,
+    t.pump.flutter,
+    r.cavitation,
+    ...Object.values(r.inletFlowLpm),
+  ];
+  for (const n of numbers) expect(Number.isFinite(n)).toBe(true);
+  expect(r.compoundKpa).toBeGreaterThanOrEqual(-100);
+  expect(r.cavitation).toBeGreaterThanOrEqual(0);
+  expect(r.cavitation).toBeLessThanOrEqual(1);
+  expect(t.pump.vacuumKpa).toBeGreaterThanOrEqual(0);
+  for (const q of Object.values(r.inletFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
+  expect(r.dischargeKpa).toBeGreaterThanOrEqual(0);
+  for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
+  expect(t.tankL).toBeGreaterThanOrEqual(0);
+  expect(t.tankL).toBeLessThanOrEqual(t.spec.tank?.capacityL ?? 0);
+  expect(t.rpm).toBeGreaterThanOrEqual(t.spec.engine.idleRpm - 1e-9);
+  expect(t.rpm).toBeLessThanOrEqual(t.spec.engine.maxRpm + 1e-9);
+}
+
+/** Every truck, relay reading and source in `state` sane (see `expectSaneTruck`). */
+export function expectSane(state: SimState): void {
+  for (const t of state.trucks) expectSaneTruck(t);
+  for (const r of Object.values(state.linkReadings)) {
+    for (const n of [r.flowLpm, r.startKpa, r.endKpa]) expect(Number.isFinite(n)).toBe(true);
+    expect(r.flowLpm).toBeGreaterThanOrEqual(0);
+  }
+  for (const s of state.sources) {
+    if (s.kind !== 'static') continue;
+    expect(s.volumeL).toBeGreaterThanOrEqual(0);
+    expect(s.volumeL).toBeLessThanOrEqual(s.capacityL ?? Number.POSITIVE_INFINITY);
+  }
 }
 
 export function truckOf(state: SimState): TruckState {
@@ -148,4 +202,61 @@ export function primedState(state: SimState): SimState {
     ...state,
     trucks: state.trucks.map((t) => ({ ...t, pump: { ...t.pump, primed: true } })),
   };
+}
+
+/** First delivery closest to 65 mm: where a relay leaves (as `attachLines` would choose). */
+export const relayDelivery = (spec: ApplianceSpec) =>
+  spec.deliveries.reduce((a, b) => (Math.abs(b.sizeMm - 65) < Math.abs(a.sizeMm - 65) ? b : a)).id;
+
+export interface PairOptions {
+  lengths?: number;
+  elevationM?: number;
+  baseThrottle?: number;
+  /** Tip of the receiving truck's branches. */
+  tipMm?: number;
+}
+
+/**
+ * A base pump of `base` on its own tank, relay delivery held open, pushing `lengths` × 30 m of
+ * 65 mm up `elevationM` to the suction inlet of a receiving pump of `receiver`, which has a 38 mm
+ * line on every delivery. The receiver is active.
+ */
+export function closedRelayPair(
+  base: ApplianceSpec,
+  receiver: ApplianceSpec,
+  opts: PairOptions = {},
+) {
+  const { lengths = 4, elevationM = 0, baseThrottle = 0.8, tipMm = 15 } = opts;
+  const out = relayDelivery(base);
+  const inlet = suctionInletOf(receiver);
+  const link: RelayLink = {
+    id: 'relay',
+    truckId: 'base',
+    deliveryId: out,
+    segments: Array.from({ length: lengths }, () => ({ hose: '65L', lengthM: 30 })),
+    elevationM,
+    to: { kind: 'inlet', truckId: 'attack', inletId: inlet },
+  };
+  const lines = receiver.deliveries.map((d) => ({
+    ...layLine(d.id, '38L', 2, tipMm),
+    id: `attack-${d.id}`,
+    truckId: 'attack',
+  }));
+  const tankIn = base.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
+  const state = createSiteState(
+    [
+      { id: 'attack', label: 'Attack pump', spec: receiver },
+      {
+        id: 'base',
+        label: 'Base pump',
+        spec: base,
+        inputs: inputsWith(baseThrottle, [...tankIn, out]),
+      },
+    ],
+    lines,
+    { links: [link] },
+  );
+  const attackInputs = (throttle: number, open = receiver.deliveries.map((d) => d.id)) =>
+    inputsWith(throttle, [inlet, ...open]);
+  return { state, link, inlet, out, attackInputs };
 }

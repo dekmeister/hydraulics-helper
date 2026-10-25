@@ -4,7 +4,14 @@ import {
   CAVITATION_FLUTTER_DISCHARGE_KPA,
 } from '../sim/constants';
 import { activeTruck } from './activeTruck';
-import type { ControlId, HoseLine, InstrumentKind, SimState, TruckState } from '../sim/types';
+import type {
+  ControlId,
+  HoseLine,
+  InstrumentKind,
+  RelayLink,
+  SimState,
+  TruckState,
+} from '../sim/types';
 
 interface HasSim {
   sim: SimState;
@@ -42,9 +49,22 @@ export const INSTRUMENT_UNIT: Readonly<Record<InstrumentKind, string>> = {
   tank: 'L',
 };
 
-/** The hose lay connected to a delivery of the active truck, if any. */
-export function lineOnDelivery(sim: SimState, deliveryId: ControlId): HoseLine | undefined {
-  return sim.lines.find((l) => l.truckId === sim.activeTruckId && l.deliveryId === deliveryId);
+/** The hose lay connected to a delivery of a truck (default: the active one), if any. */
+export function lineOnDelivery(
+  sim: SimState,
+  deliveryId: ControlId,
+  truckId = sim.activeTruckId,
+): HoseLine | undefined {
+  return sim.lines.find((l) => l.truckId === truckId && l.deliveryId === deliveryId);
+}
+
+/** The relay hose leaving a delivery of a truck (default: the active one), if any. */
+export function relayOnDelivery(
+  sim: SimState,
+  deliveryId: ControlId,
+  truckId = sim.activeTruckId,
+): RelayLink | undefined {
+  return sim.links.find((l) => l.truckId === truckId && l.deliveryId === deliveryId);
 }
 
 export { selectWarnings, type Warning, type WarningId, type WarningLevel } from './warnings';
@@ -62,6 +82,8 @@ export interface DeliveryLine {
   deliveryId: ControlId;
   /** The hose lay on this delivery, if any. */
   line?: HoseLine;
+  /** The relay hose on this delivery, if any (a delivery carries a lay or a relay). */
+  relay?: RelayLink;
   /** Flow out of the delivery, L/min. */
   flowLpm: number;
   /** Pressure at the branch, kPa; 0 when no line is laid. */
@@ -70,18 +92,31 @@ export interface DeliveryLine {
 }
 
 /**
- * Every delivery of the active truck, in spec order, with its line and whether it is charged.
- * Branches can't be shut yet, so a charged (pressurised) line is a flowing one.
+ * Every delivery of a truck (default: the active one), in spec order, with its line or relay and
+ * whether it is charged. Branches can't be shut yet, so a charged (pressurised) line is a flowing one.
  */
-export function deliveryLines(sim: SimState): DeliveryLine[] {
-  const truck = activeTruck(sim);
+export function deliveryLines(sim: SimState, truckId = sim.activeTruckId): DeliveryLine[] {
+  const truck = sim.trucks.find((t) => t.id === truckId);
+  if (truck === undefined) throw new Error(`No truck '${truckId}'`);
   return truck.spec.deliveries.map((d) => {
-    const line = lineOnDelivery(sim, d.id);
+    const line = lineOnDelivery(sim, d.id, truckId);
+    const relay = relayOnDelivery(sim, d.id, truckId);
     const flowLpm = truck.readings.deliveryFlowLpm[d.id] ?? 0;
     const state: LineState =
-      line === undefined ? 'none' : flowLpm >= CHARGED_MIN_LPM ? 'charged' : 'dry';
+      line === undefined && relay === undefined
+        ? 'none'
+        : flowLpm >= CHARGED_MIN_LPM
+          ? 'charged'
+          : 'dry';
     const branchKpa = line === undefined ? 0 : (truck.readings.branchKpa[line.id] ?? 0);
-    return { deliveryId: d.id, ...(line === undefined ? {} : { line }), flowLpm, branchKpa, state };
+    return {
+      deliveryId: d.id,
+      ...(line === undefined ? {} : { line }),
+      ...(relay === undefined ? {} : { relay }),
+      flowLpm,
+      branchKpa,
+      state,
+    };
   });
 }
 

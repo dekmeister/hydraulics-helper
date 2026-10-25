@@ -17,9 +17,17 @@ import {
   supplyLpm,
   unlimitedInletKpaFor,
   type ConnectedSupply,
+  type RelayFeed,
 } from './inlets';
 import { pumpRiseKpa } from './pump';
-import type { ApplianceSpec, DeliverySpec, HoseLine, PlayerInputs, TruckReadings } from './types';
+import type {
+  ApplianceSpec,
+  ControlId,
+  DeliverySpec,
+  HoseLine,
+  PlayerInputs,
+  TruckReadings,
+} from './types';
 
 /** Loss coefficient of a delivery valve fully open, kPa per (L/min)²: scales as 1/d⁴ (velocity²). */
 export function valveLossCoeff(sizeMm: number): number {
@@ -37,10 +45,19 @@ export function lineResistance(line: HoseLine, delivery: DeliverySpec, open: num
   );
 }
 
-/** Flow through a line at discharge pressure `pKpa`, from P − head = R·Q². */
-function lineFlowLpm(pKpa: number, resistance: number, elevationM: number): number {
-  return Math.sqrt(Math.max(0, pKpa - HEAD_KPA_PER_M * elevationM) / resistance);
+/** Flow through an outlet at discharge pressure `pKpa`, from P − head = R·Q². */
+function outletFlowLpm(pKpa: number, resistance: number, headKpa: number): number {
+  return Math.sqrt(Math.max(0, pKpa - headKpa) / resistance);
 }
+
+/**
+ * A relay hose leaving one of this truck's deliveries. 'fixed': a closed relay, which takes what
+ * the receiving pump draws (solved first). 'open': an open relay or a burst hose, flowing to
+ * atmosphere through `r` (valve and hose) against `headKpa` of elevation.
+ */
+export type RelayOutlet =
+  | { deliveryId: ControlId; kind: 'fixed'; flowLpm: number }
+  | { deliveryId: ControlId; kind: 'open'; r: number; headKpa: number };
 
 /** Relief valve set pressure for the current inputs, or undefined if none fitted. */
 function reliefSetKpa(spec: ApplianceSpec, inputs: PlayerInputs): number | undefined {
@@ -85,6 +102,10 @@ export interface TruckSolveInput {
   supplies?: readonly ConnectedSupply[];
   /** Primer vacuum on the casing, kPa: what the compound gauge shows while the pump is dry. */
   vacuumKpa?: number;
+  /** Closed relays feeding this truck's suction inlets. */
+  relayIn?: readonly RelayFeed[];
+  /** Relay hoses leaving this truck's deliveries. */
+  relayOut?: readonly RelayOutlet[];
 }
 
 /** Root of a decreasing function on [lo, hi] by fixed-count bisection (deterministic). */
@@ -105,6 +126,7 @@ function bisectDecreasing(g: (x: number) => number, lo: number, hi: number): num
  * and the pump curve both fall with flow, so bisection on discharge pressure converges. The inlet
  * can't be pulled below the pump's cavitation pressure: there the flow the pump can draw is capped,
  * extra rpm adds nothing, and `cavitation` says how far past that limit the pump is pushed.
+ * Relays: feeds join the inlet paths; outlets join the lines (open) or add a fixed flow (closed).
  * `lines` must be this truck's lines, one per delivery.
  */
 export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckReadings {
@@ -115,23 +137,33 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
     inputs,
     primed: truck.primed ?? false,
     supplies: truck.supplies ?? [],
+    relays: truck.relayIn ?? [],
   });
   if (paths.length === 0) return dryReadings(spec, lines, 0 - (truck.vacuumKpa ?? 0));
   const floorKpa = spec.pump.cavitationInletKpa;
   const capLpm = supplyLpm(paths, floorKpa);
 
-  const open = lines.flatMap((line) => {
-    const delivery = spec.deliveries.find((d) => d.id === line.deliveryId);
-    const valve = inputs.valves[line.deliveryId] ?? 0;
-    if (delivery === undefined || valve < VALVE_CLOSED_EPS) return [];
-    return [{ line, r: lineResistance(line, delivery, valve) }];
-  });
+  // Lines and open relays: flow rises with discharge pressure. Closed relays take a fixed flow.
+  const open = [
+    ...lines.flatMap((line) => {
+      const delivery = spec.deliveries.find((d) => d.id === line.deliveryId);
+      const valve = inputs.valves[line.deliveryId] ?? 0;
+      if (delivery === undefined || valve < VALVE_CLOSED_EPS) return [];
+      const r = lineResistance(line, delivery, valve);
+      return [{ deliveryId: line.deliveryId, line, r, headKpa: HEAD_KPA_PER_M * line.elevationM }];
+    }),
+    ...(truck.relayOut ?? []).flatMap((o) =>
+      o.kind === 'open' ? [{ ...o, line: undefined }] : [],
+    ),
+  ];
+  const fixed = (truck.relayOut ?? []).flatMap((o) => (o.kind === 'fixed' ? [o] : []));
+  const fixedLpm = fixed.reduce((q, o) => q + o.flowLpm, 0);
   const setKpa = reliefSetKpa(spec, inputs);
   const relief = spec.relief;
 
   const demand = (pKpa: number) => {
-    const flows = open.map(({ line, r }) => lineFlowLpm(pKpa, r, line.elevationM));
-    const outLpm = flows.reduce((a, b) => a + b, 0);
+    const flows = open.map(({ r, headKpa }) => outletFlowLpm(pKpa, r, headKpa));
+    const outLpm = flows.reduce((a, b) => a + b, fixedLpm);
     const reliefLpm =
       relief === undefined || setKpa === undefined
         ? 0
@@ -185,11 +217,13 @@ export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): 
     spec.deliveries.map((x) => [x.id, 0]),
   );
   const branchKpa: Record<string, number> = Object.fromEntries(lines.map((l) => [l.id, 0]));
-  open.forEach(({ line }, i) => {
+  open.forEach(({ deliveryId, line }, i) => {
     const q = d.flows[i] ?? 0;
-    deliveryFlowLpm[line.deliveryId] = (deliveryFlowLpm[line.deliveryId] ?? 0) + q;
-    branchKpa[line.id] = branchPressureKpa(line.branch, q);
+    deliveryFlowLpm[deliveryId] = (deliveryFlowLpm[deliveryId] ?? 0) + q;
+    if (line !== undefined) branchKpa[line.id] = branchPressureKpa(line.branch, q);
   });
+  for (const o of fixed)
+    deliveryFlowLpm[o.deliveryId] = (deliveryFlowLpm[o.deliveryId] ?? 0) + o.flowLpm;
   const inletFlowLpm: Record<string, number> = Object.fromEntries(
     spec.inlets.map((i) => [i.id, 0]),
   );

@@ -27,6 +27,18 @@ export interface InletPath {
   collapseKpa: number;
 }
 
+/**
+ * What a closed relay offers a receiving suction inlet: the supplying pump as an equivalent source
+ * plus the hose, so the inlet sees `headKpa − r·Q²` (the receiving inlet valve is added on top).
+ */
+export interface RelayFeed {
+  inletId: ControlId;
+  headKpa: number;
+  r: number;
+  /** Hard hose holds a vacuum; layflat flattens below `LAYFLAT_COLLAPSE_KPA`. */
+  rigid: boolean;
+}
+
 export interface InletContext {
   spec: ApplianceSpec;
   tankL: number;
@@ -35,6 +47,8 @@ export interface InletContext {
   primed: boolean;
   /** Supplies connected to this truck's inlets. */
   supplies: readonly ConnectedSupply[];
+  /** Closed relays feeding this truck's suction inlets. */
+  relays?: readonly RelayFeed[];
 }
 
 /** The supply on an inlet, if anything is connected. */
@@ -48,9 +62,11 @@ export function supplyOn(
 /**
  * Open inlet paths that can deliver water now. Tank: head 0 while there's water. Hydrant:
  * static − (main + hose + valve)·Q². Static source: −10·lift − (hose + strainer + valve)·Q², and
- * only once primed with water left. An external inlet with nothing connected is capped.
+ * only once primed with water left. Closed relay: the supplying pump's equivalent head less
+ * (pump + hose + valve)·Q². An external inlet with nothing connected is capped.
  */
-export function inletPaths({ spec, tankL, inputs, primed, supplies }: InletContext): InletPath[] {
+export function inletPaths(ctx: InletContext): InletPath[] {
+  const { spec, tankL, inputs, primed, supplies, relays = [] } = ctx;
   return spec.inlets.flatMap((inlet): InletPath[] => {
     const open = inputs.valves[inlet.id] ?? 0;
     if (open < VALVE_CLOSED_EPS) return [];
@@ -61,7 +77,18 @@ export function inletPaths({ spec, tankL, inputs, primed, supplies }: InletConte
         : [];
     }
     const connected = supplyOn(supplies, inlet.id);
-    if (connected === undefined) return [];
+    if (connected === undefined) {
+      const feed = relays.find((f) => f.inletId === inlet.id);
+      if (feed === undefined) return [];
+      return [
+        {
+          inletId: inlet.id,
+          headKpa: feed.headKpa,
+          r: feed.r + valveR,
+          collapseKpa: feed.rigid ? Number.NEGATIVE_INFINITY : LAYFLAT_COLLAPSE_KPA,
+        },
+      ];
+    }
     const { supply, source } = connected;
     const collapseKpa = isRigid(supply.segments) ? Number.NEGATIVE_INFINITY : LAYFLAT_COLLAPSE_KPA;
     const hoseR = hoseResistance(supply.segments);
