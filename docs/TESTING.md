@@ -18,7 +18,7 @@ Companion to `ARCHITECTURE.md` and `CLAUDE.md`. This describes **what** gets tes
 | 1 | Sim unit + calibration | Vitest (node) | `src/sim/**/*.test.ts` | Physics formulas; `docs/CALIBRATION.md` worked examples to tolerance |
 | 2 | Appliance contract suite | Vitest `describe.each` | `src/sim/appliances/contract.test.ts` | Determinism, NaN fuzz, runs-dry, cavitation, priming — every appliance |
 | 3 | Scenario golden traces | Vitest `toMatchFileSnapshot` | `src/sim/scenarios/__traces__/*.csv` | Behaviour over a scripted multi-minute run; diffs as readable CSV |
-| 4 | Data consistency | Vitest | next to the data | Layout ↔ spec one-to-one; inputs keyed by real control ids; scenario loader rejects missing capabilities; fixture registry valid |
+| 4 | Data consistency | Vitest | next to the data | Layout ↔ spec one-to-one; inputs keyed by real control ids; scenario loader rejects missing capabilities and unresolvable lessons; every ladder scenario passed cleanly by the scripted operator on every appliance (`scenarios/ladder.test.ts`); fixture registry valid |
 | 5 | Browser journeys | Playwright (Chromium) | `e2e/journeys/*.spec.ts` | Real input → store → sim → rendered instruments, on the built app |
 | 6 | Layout invariants | Playwright | `e2e/layout.spec.ts` | Mobile floor checked by code: 44 px targets, no horizontal scroll, no overlapping controls, every spec control rendered |
 | 7 | Visual baselines + review bundle | Playwright `toHaveScreenshot` + custom reporter | `e2e/visual/*.spec.ts`, `e2e/review/` | Pixel regressions; images + expectations for Claude to review |
@@ -50,8 +50,12 @@ interface PumpOpsTestApi {
   settle(): void;
   /** Serialisable snapshot for assertions. */
   getState(): SimState;
+  /** The lesson's progress (objectives, coach, status), or null in free play. Read-only. */
+  getLesson(): LessonProgress | null;
 }
 ```
+
+* `load({ scenario, appliance, support, seed, lesson: true })` starts the scenario's **lesson** (objectives, coach, dock) instead of free play. Without `lesson`, every load is free play, as before M6. The real app opens on the scenario menu; any `load` shows the panels.
 
 * In e2e mode the real-time `requestAnimationFrame` accumulator is **off**. Time moves only when a test calls `step()`. A journey that needs 30 s of sim time calls `step(300)`: fast and exact.
 * There is deliberately **no `setInputs`** on the API. Journeys must change inputs through the real controls; that is the point of a journey. Visual fixtures that need a particular input state get it from scenario data or a `state` blob (§3.2).
@@ -73,6 +77,7 @@ interface Fixture {
 
 * A renderer may supply a `state()`: the sim state loaded into the store before render (`renderers.tsx`). Panel states are built from the tank-attack scenario by pure sim calls (`panelStates.ts`); `tank-attack-700` finds its throttle by bisection so its caption holds on any appliance.
 * Panel and scene fixtures are **generated per catalogue appliance** (`panel/<applianceId>/idle`, `…/tank-attack-700`, `…/tank-low`, `…/tank-empty`; `scene/<applianceId>/all-charged`, `…/one-line-off`, `…/tank-low`, `…/tank-empty`, `…/highlighted`), so a new appliance gets them automatically. `surface` in the catalog says whether a fixture renders the whole shell or the scene alone; a renderer may also set a `highlight` after its state loads. Scene states are built next to the panel states (`panelStates.ts`, `sceneState`). Source and fault fixtures (`panel/<applianceId>/draught-priming`, `…/draught-working`, `…/cavitating`, `…/hydrant`, `…/faults`) are generated for every catalogue appliance that can play the scenario they come from (`sourceStates.ts`); `draught-priming` needs a primer control. `cavitating` sets `steps` so the store has 3 s of history for the Wake. Relay fixtures (`relay/<applianceId>/closed-working`, `…/closed-over-run`, `…/burst`, `…/open-dam`, `…/base-panel`, and `relay/<applianceId>/with-test-2d/closed-working` with the test appliance as base pump) are built from the relay scenarios in `relayStates.ts`; `relayStates.test.ts` holds each caption's promises (lamps, relay state, residual) on every spec pair. A renderer names its `scenario`, so the header picker shows it.
+* Menu, lesson and debrief fixtures (`menu/fresh`, `menu/progress`, `lesson/<applianceId>/guided`, `…/incident`, `debrief/<applianceId>/passed`, `…/failed`) render the whole app (`AppRoot`). Their store states are built by playing lessons with the scripted operator (`lessonStates.ts`, captions held by `lessonStates.test.ts`) and applied by the renderer's `setup()`. Lesson fixtures set `capture: 'viewport'`: the dock is fixed to the viewport, so a full-page shot would draw it over the middle of the page; the viewport shot is what the player sees, at the scroll the coach chose. Every other fixture is a full-page shot from the top.
 * The visual spec is one `describe.each` over the registry × viewports: **adding a fixture = adding a screenshot.**
 * `expect` is plain English, written for review: *"Discharge needle at ~700 kPa, compound ~0 kPa, tank gauge ~¾, delivery 1 handle fully open, others closed. No warnings."*
 
@@ -108,10 +113,12 @@ Run in every project, over the app shell and every generated panel and scene fix
 
 1. Every interactive element (`button`, `slider`, `switch`, `link`) has a bounding box ≥ 44 × 44 CSS px.
 2. `document.documentElement.scrollWidth <= window.innerWidth`, so no horizontal page scroll.
-3. No two interactive elements' boxes intersect.
+3. No two interactive elements' boxes intersect, except an element in the lesson dock (`[data-dock]`, fixed over the page) against one in the page: instead, the page must reserve at least the dock's height at its foot (`expectDockReserved`), so every control can be scrolled clear of it.
 4. Every control and instrument in the appliance spec is rendered exactly once (counted by accessible name / `data-testid` from the layout data), and each is reachable: inside the viewport or inside a scroll/swipe container that can bring it in.
 5. Keyboard: tabbing visits every control (including the scene↔panel locate buttons); arrow keys change a focused slider.
 6. Scene: one legend button per delivery of the truck operated, one hose lay per laid line (on its own truck) and one relay hose per relay.
+
+The menu and a lesson in play (`first-line`, and `incident` with its objective list open) get invariants 1–4 too (`menu and lesson layout invariants`).
 
 This turns "test layouts at 375 / 768 / 1280 px" from a manual step into a failing test.
 
@@ -126,6 +133,7 @@ Each journey plays a lesson as a player would, at the `phone` project at minimum
 * **Scene (M3 demo):** open both lines → both hose lays charged and spraying; drag one delivery shut → that line goes dry and stops spraying, the other keeps going. Tank runs out → every line dry. Tap a hose → its panel row is highlighted and in view; tap a panel row's locate button → its hose is highlighted and the scene in view.
 * **Draughting (M4 demo):** open the suction inlet, hold the primer (pointer down while `step()` runs) until it shows PRIMED, compound at −10 kPa per m of lift; open a line and throttle → water and no warnings; second line, throttle wide → cavitation lamp, amber compound needle, gapped hoses; four vernier steps back → same discharge and flow at lower rpm (the throttle did nothing); drag back to 60 % → recovered. Also hydrant over-run (compound ≈ 0 within the flutter, layflat soft), churn overheat and cooling by cracking a delivery, water hammer from `Home` on an open delivery, and the vacuum test.
 * **Relays (M5 demo):** closed relay: open the relay inlet and both lines, residual above 100 kPa with no lamps; full throttle over-runs the relay (compound ≈ 0, hose soft, SUPPLY "Relay residual low"); back to 60 % recovers. Tap the relay inlet shut (the shutdown spike) and the relay hose bursts. Switch to the base pump by tapping it on the map (test appliance as base: its own panel, the relay delivery described and open), ease its throttle, switch back with the switcher; the base pump holds its throttle. Open relay: prime on the portable dam, watch the relay fill it, then draw it down with both lines. The keyboard pass reaches the switcher and switches with Enter.
+* **Lessons (M6 demo, `e2e/journeys/lessons.spec.ts`, phone):** scenario 1 guided from the menu by the coach on every journey appliance (Got it, tap tank-to-pump, drag the delivery, throttle to ~700 kPa, hold the branch in band with the vernier, throttle to idle, ease the delivery shut in steps; debrief shows the pass, no water hammer); scenarios 2 and 3 unassisted, the journey closed-loop on what the branches and compound show but acting only through the controls (vernier presses, a fine valve drag that overshoots and comes back inside one gesture, as a thumb must to beat the drag threshold), then the debrief's Next scenario; the menu shows 2 and 3 passed after a reload; the incident's events (crew uphill: radio call, the branch now short; second line laid on the scene); the sound setting kept across visits. The keyboard pass starts a lesson from the menu and works the coach's Got it.
 * **Valve drag precision:** drag to half-open and assert the slider value is in 0.45–0.55 and the sim input matches (`getState()`).
 
 Assertions use tolerances that come from the calibration/scenario data, not new magic numbers in test files.
@@ -196,5 +204,5 @@ When a UI change has no fixture that shows it, add one. That's how the gallery g
 ## 9. Out of scope (for now)
 
 * Cross-browser pixel baselines. Chromium only; a non-pixel WebKit/Firefox smoke run may come later.
-* Audio. Test the *state* that drives audio (cavitating, primer running), not the sound.
+* Audio. Test the *state* that drives audio (`src/audio/params.test.ts`: pitch and levels from rpm, primer, cavitation, flow), not the sound. The synth never starts in the e2e build.
 * Performance. Revisit if the scene panel gets animated enough to matter (ARCHITECTURE §2).

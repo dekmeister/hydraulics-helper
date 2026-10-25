@@ -1,13 +1,17 @@
 import { expect, gotoApp, test } from '../fixtures';
 
-test('app loads with both panels', async ({ page }) => {
+test('app opens on the scenario menu; free play shows both panels', async ({ page }) => {
   await gotoApp(page);
+  await expect(page.getByRole('heading', { name: 'Scenarios', level: 1 })).toBeVisible();
+  await page.getByRole('button', { name: 'Free play', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Scene' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Pump panel' })).toBeVisible();
 });
 
 test('sim time moves only through __pumpops.step()', async ({ page }) => {
   await gotoApp(page);
+  // The menu pauses the sim: play from the panels.
+  await page.getByRole('button', { name: 'Free play', exact: true }).click();
   // Let several animation frames pass: the real-time loop is off in the e2e build.
   await page.evaluate(
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),

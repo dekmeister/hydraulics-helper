@@ -82,6 +82,14 @@ export const CASING_HEAT_LOSS_KW_PER_K = 0.02;
 export const PUMP_TEMP_CAUTION_C = 60;
 export const PUMP_TEMP_ALARM_C = 80;
 
+/**
+ * Sustained abuse that damages the pump and fails a lesson (PLAN parking lot, M4): seconds of
+ * cavitation, and seconds above the temperature caution, over the whole scenario. Gentle on purpose:
+ * a minute of either is well past a lesson learned. // PLACEHOLDER — needs Dek
+ */
+export const PUMP_DAMAGE_CAVITATION_S = 60;
+export const PUMP_DAMAGE_OVERHEAT_S = 60;
+
 /** Density of water, kg/m³. Physics. */
 export const WATER_DENSITY_KG_M3 = 1000;
 
@@ -109,6 +117,12 @@ export const BRANCH_OPTIMUM_KPA: Readonly<Record<number, number>> = {
   30: 800,
   32: 800,
 };
+
+/**
+ * How far a branch may sit from its Table 1 optimum and still count as "at working pressure" in a
+ * lesson objective: ±10 %, so 315–385 kPa for a 15 mm tip. // PLACEHOLDER — needs Dek
+ */
+export const BRANCH_BAND_FRACTION = 0.1;
 
 /**
  * Loss through a fully open 38 mm delivery valve, kPa per (L/min)²: ~10 kPa at 300 L/min.

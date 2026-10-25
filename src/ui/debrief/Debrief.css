@@ -1,0 +1,91 @@
+.debrief__card {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.debrief__result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.debrief__result .stars {
+  font-size: 32px;
+}
+
+.debrief__points {
+  margin: 0;
+  font: 400 15px/1 var(--font-body);
+}
+
+.debrief__points-value {
+  font: 500 28px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.debrief__heading {
+  margin: 0 0 var(--space-2);
+  font: 700 16px/1.2 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.debrief__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 400 15px/1.45 var(--font-body);
+}
+
+.debrief__finding {
+  display: grid;
+  gap: 2px;
+  padding-left: var(--space-3);
+  border-left: 4px solid var(--color-signal-caution);
+}
+
+.debrief__finding--good {
+  border-left-color: var(--color-function-inlet);
+}
+
+.debrief__finding-title {
+  font-weight: 600;
+}
+
+.debrief__objective {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: var(--space-2);
+}
+
+.debrief__score {
+  width: 100%;
+  border-collapse: collapse;
+  font: 400 15px/1.4 var(--font-body);
+}
+
+.debrief__score th {
+  text-align: left;
+  font-weight: 400;
+}
+
+.debrief__score td {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.debrief__score tr:last-child th,
+.debrief__score tr:last-child td {
+  border-top: var(--line-hairline) solid var(--color-material-ink);
+  font-weight: 600;
+}
+
+.debrief__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

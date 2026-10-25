@@ -117,3 +117,15 @@
   flex: 0 0 auto;
   width: 150px;
 }
+
+/* Lesson coach target (CoachAnchor): the focus double ring, never amber (Design §3). */
+.coach-anchor {
+  display: contents;
+}
+
+.coach-anchor[data-coach-target='true'] > * {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 8px var(--color-focus-outer);
+  border-radius: var(--radius-card);
+}

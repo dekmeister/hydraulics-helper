@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- PumpOps app icon: a discharge gauge on ironbark. Generic; no agency marks. -->
+  <rect width="512" height="512" fill="#1b1e21"/>
+  <circle cx="256" cy="268" r="190" fill="#aeb5ba"/>
+  <circle cx="256" cy="268" r="172" fill="#f5f2ea"/>
+  <path d="M137 389 A168 168 0 1 1 375 389" fill="none" stroke="#16191b" stroke-width="8"/>
+  <path d="M342 172 A136 136 0 0 1 375 389" fill="none" stroke="#f2a900" stroke-width="22"/>
+  <path d="M360 205 A136 136 0 0 1 375 389" fill="none" stroke="#e5362b" stroke-width="22"/>
+  <g stroke="#16191b" stroke-width="10" stroke-linecap="round">
+    <line x1="137" y1="389" x2="160" y2="366"/>
+    <line x1="88" y1="268" x2="120" y2="268"/>
+    <line x1="137" y1="147" x2="160" y2="170"/>
+    <line x1="256" y1="98" x2="256" y2="130"/>
+    <line x1="375" y1="147" x2="352" y2="170"/>
+    <line x1="424" y1="268" x2="392" y2="268"/>
+  </g>
+  <line x1="256" y1="268" x2="318" y2="150" stroke="#16191b" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="256" cy="268" r="24" fill="#16191b"/>
+  <circle cx="256" cy="268" r="9" fill="#aeb5ba"/>
+  <rect x="186" y="360" width="140" height="34" rx="4" fill="#a8251e"/>
+</svg>

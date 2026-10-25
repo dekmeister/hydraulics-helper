@@ -1,3 +1,4 @@
+import type { LessonProgress } from '../sim/lesson/progress';
 import type { SimState } from '../sim/types';
 
 export interface LoadOptions {
@@ -7,6 +8,8 @@ export interface LoadOptions {
   support?: string;
   state?: SimState;
   seed?: number;
+  /** Start the scenario's lesson (objectives, coach, score) instead of free play. */
+  lesson?: boolean;
 }
 
 /** window.__pumpops, present only in the e2e build (docs/TESTING.md §3.1). No setInputs, by design. */
@@ -19,6 +22,8 @@ export interface PumpOpsTestApi {
   settle(): void;
   /** Serialisable snapshot for assertions. */
   getState(): SimState;
+  /** The lesson's progress (objectives, coach, status), or null in free play. Read-only. */
+  getLesson(): LessonProgress | null;
 }
 
 declare global {

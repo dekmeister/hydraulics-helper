@@ -167,3 +167,9 @@ body {
   outline-offset: 2px;
   box-shadow: 0 0 0 6px var(--color-focus-outer);
 }
+
+.scenario-picker__lesson {
+  margin: 0;
+  font: 400 15px/1.3 var(--font-body);
+  color: var(--color-material-steel);
+}

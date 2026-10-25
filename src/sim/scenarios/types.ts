@@ -1,3 +1,5 @@
+import type { OperatorStep } from '../lesson/operator';
+import type { Condition, LessonDef } from '../lesson/types';
 import type { ApplianceSpec, ControlId, SimState } from '../types';
 
 /** Capabilities an appliance needs to play a scenario (ARCHITECTURE §9.6). */
@@ -8,11 +10,17 @@ export interface ScenarioRequirements {
   suction?: boolean;
   /** A way to prime for draughting: any primer, self-priming included. */
   primer?: boolean;
+  /** Only these appliances, by spec id (a scenario written for one vehicle); default any. */
+  appliances?: readonly string[];
 }
 
-/** Input changes applied at sim time `tS`; unspecified controls keep their value. */
+/**
+ * Input changes applied at sim time `tS`, or once `when` holds (checked against the player's
+ * truck), whichever is later; unspecified controls keep their value. Steps fire in order.
+ */
 export interface ScriptStep {
   tS: number;
+  when?: Condition;
   throttle?: number;
   valves?: Record<ControlId, number>;
   switches?: Record<ControlId, boolean>;
@@ -48,6 +56,10 @@ export interface Scenario {
    * with each support role on `support[role]` or, by default, the same appliance.
    */
   build(spec: ApplianceSpec, support?: SupportSpecs): ScriptedRun;
+  /** What the player must do, and what happens along the way; scenarios without one are sandbox only. */
+  lesson?: LessonDef;
+  /** How a competent operator passes the lesson on any eligible appliance (ladder.test.ts). */
+  solution?: readonly OperatorStep[];
 }
 
 /** The appliance a support role uses: the one chosen for it, or the player's. */
@@ -76,13 +88,14 @@ export function supports(
 
 /** Whether `spec` has every capability in `requires`. */
 function meets(requires: ScenarioRequirements, spec: ApplianceSpec): boolean {
-  const { tank, minDeliveries, suction = false, primer = false } = requires;
+  const { tank, minDeliveries, suction = false, primer = false, appliances } = requires;
   const hasTank = spec.tank !== undefined && spec.inlets.some((i) => i.kind === 'tank');
   const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
   return (
     (!tank || hasTank) &&
     (!suction || hasSuction) &&
     (!primer || spec.primer !== undefined) &&
+    (appliances === undefined || appliances.includes(spec.id)) &&
     spec.deliveries.length >= minDeliveries
   );
 }

@@ -1,6 +1,8 @@
 import { inletOfKind, primerControlId } from '../appliances/controls';
 import { createSiteState } from '../engine';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
+import { PUMP_DAMAGE } from '../lesson/common';
+import type { LessonDef } from '../lesson/types';
 import { attachLines, twoLines, type PlannedLine } from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay, lengths } from './relayTrucks';
 import { supportSpec, type Scenario, type ScriptStep, type SupportRole } from './types';
@@ -35,6 +37,54 @@ const BASE: SupportRole = {
   requires: { tank: false, suction: true, minDeliveries: 1 },
 };
 
+const LESSON: LessonDef = {
+  ladder: 6,
+  brief:
+    'The base pump on the hydrant fills a portable dam beside you; you draught from it. The pumps ' +
+    'aren’t coupled: what you can use is what’s in the dam. Two lines draw more than the relay ' +
+    'brings, so watch the dam level as well as your gauges.',
+  objectives: [
+    {
+      id: 'prime',
+      text: 'Prime from the portable dam: suction inlet open, deliveries shut, primer on until it catches.',
+      when: { kind: 'primed' },
+    },
+    {
+      id: 'water',
+      text: 'Charge both lines.',
+      when: {
+        kind: 'all',
+        of: [
+          { kind: 'flow', line: 'line-65', min: 50 },
+          { kind: 'flow', line: 'line-38', min: 50 },
+        ],
+      },
+      after: ['prime'],
+    },
+    {
+      id: 'hold',
+      text: 'Hold both branches at working pressure for 60 s without running the dam dry.',
+      when: {
+        kind: 'all',
+        of: [
+          { kind: 'branch', line: 'line-65' },
+          { kind: 'branch', line: 'line-38' },
+        ],
+      },
+      holdS: 60,
+      after: ['water'],
+    },
+  ],
+  failures: [
+    {
+      id: 'dam-dry',
+      text: 'The portable dam ran dry and the pump lost its prime.',
+      when: { kind: 'source', source: 'portable-dam', max: 0 },
+    },
+    ...PUMP_DAMAGE,
+  ],
+};
+
 /**
  * Open relay via a portable dam (ARCHITECTURE §5 ladder step 6): a base pump on the hydrant fills a
  * portable dam beside the attack pump, which primes and draughts from it. The pumps are decoupled:
@@ -56,8 +106,15 @@ export const OPEN_RELAY: Scenario = {
     });
     const baseSuction = inletOfKind(base, 'suction', 'open-relay base');
     const primerId = primerControlId(spec);
+    // The primer runs until the pump catches, whatever the appliance takes to prime.
     const prime = (on: boolean): ScriptStep[] =>
-      primerId === undefined ? [] : [{ tS: on ? 1 : 20, switches: { [primerId]: on } }];
+      primerId === undefined
+        ? []
+        : [
+            on
+              ? { tS: 1, switches: { [primerId]: true } }
+              : { tS: 1, when: { kind: 'primed' }, switches: { [primerId]: false } },
+          ];
     const state = createSiteState(
       [
         { id: ATTACK_ID, label: 'Attack pump', spec },
@@ -126,4 +183,17 @@ export const OPEN_RELAY: Scenario = {
       durationS: 300,
     };
   },
+  lesson: LESSON,
+  solution: [
+    { open: { inlet: 'suction' } },
+    { primer: true },
+    { until: { kind: 'primed' }, maxS: 90 },
+    { primer: false },
+    { open: { line: 'line-65' } },
+    { open: { line: 'line-38' } },
+    { throttle: 0.6 },
+    { trim: { branch: 'line-38' } },
+    { gate: 'line-65' },
+    { until: { kind: 'objective', objective: 'hold' }, maxS: 180 },
+  ],
 };
