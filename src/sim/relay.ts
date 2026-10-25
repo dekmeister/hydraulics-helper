@@ -250,13 +250,20 @@ export interface ValveChange {
   now: (truckId: string) => Record<string, number>;
 }
 
+/** Whether any of a truck's valves moved towards shut this tick. */
+function closedAny(valves: ValveChange, truckId: string): boolean {
+  const now = valves.now(truckId);
+  return Object.entries(valves.before(truckId)).some(([id, was]) => (now[id] ?? 0) < was);
+}
+
 /**
  * Relays after this tick's over-pressure check. A live closed relay's peak pressure is its higher
- * end now, or, if the receiving pump cut the flow this tick, a Joukowsky surge on top of the
- * highest pressure the hose held: the surge runs back up the hose from the closure and adds to the
- * pressure everywhere it passes (the shutdown spike, L3865–3873). A drop because the supplying
- * pump shut its own delivery is water hammer on that pump instead. At `HOSE_BURST_KPA` a length
- * bursts where the pressure was highest: the first at the pump, the last if the far end was higher.
+ * end now, or, if the receiving pump cut the flow this tick by shutting a valve (its relay inlet
+ * or deliveries), a Joukowsky surge on top of the highest pressure the hose held: the surge runs
+ * back up the hose from the closure and adds to the pressure everywhere it passes (the shutdown
+ * spike, L3865–3873). A drop from the supplying end (its delivery shut, its tank dry, its inlet
+ * shut) lowers the hose's pressure and sends no surge up it. At `HOSE_BURST_KPA` a length bursts
+ * where the pressure was highest: the first at the pump, the last if the far end was higher.
  */
 export function checkBursts(
   links: readonly RelayLink[],
@@ -268,12 +275,10 @@ export function checkBursts(
   return links.map((link) => {
     const r = now[link.id];
     const first = link.segments[0];
-    if (closedTo(link) === undefined || r === undefined || first === undefined) return link;
+    const to = closedTo(link);
+    if (to === undefined || r === undefined || first === undefined) return link;
     const prev = before[link.id];
-    const id = link.deliveryId;
-    const supplierShut =
-      (valves.now(link.truckId)[id] ?? 0) < (valves.before(link.truckId)[id] ?? 0);
-    const dropLpm = prev === undefined || supplierShut ? 0 : prev.flowLpm - r.flowLpm;
+    const dropLpm = prev === undefined || !closedAny(valves, to) ? 0 : prev.flowLpm - r.flowLpm;
     const surge = dropLpm > 0 ? surgeKpa(dropLpm, hoseType(first.hose).sizeMm) : 0;
     const startKpa = Math.max(r.startKpa, (prev?.startKpa ?? 0) + surge);
     const endKpa = Math.max(r.endKpa, (prev?.endKpa ?? 0) + surge);

@@ -344,6 +344,35 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
       expect(s1.links[0]?.burst).toBeUndefined();
       expect(truck(s1, 'base').tally.waterHammer).toBe(1);
     });
+
+    // Losing supply drops the hose's pressure; it can't send a surge back up it.
+    it('the base pump running its tank dry mid-relay leaves the hose whole', () => {
+      const { s, attackInputs } = flowing();
+      const low: SimState = {
+        ...s,
+        trucks: s.trucks.map((t) => (t.id === 'base' ? { ...t, tankL: 1 } : t)),
+      };
+      const dry = run(low, attackInputs(0.6), 20);
+      expect(truck(dry, 'base').tankL).toBe(0);
+      expect(dry.linkReadings.relay?.flowLpm).toBeLessThan(1);
+      expect(dry.links[0]?.burst).toBeUndefined();
+      expect(truck(dry, 'base').tally.hoseBursts).toBe(0);
+    });
+
+    it('the base pump shutting its own tank-to-pump leaves the hose whole', () => {
+      const { s } = flowing();
+      const switched = switchTruck(s, 'base', truck(s, 'attack').inputs);
+      const held = truck(switched, 'base').inputs;
+      const tankIn = base.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
+      const shut = {
+        ...held,
+        valves: { ...held.valves, ...Object.fromEntries(tankIn.map((i) => [i, 0])) },
+      };
+      const s1 = run(switched, shut, 20);
+      expect(s1.linkReadings.relay?.flowLpm).toBeLessThan(1);
+      expect(s1.links[0]?.burst).toBeUndefined();
+      expect(truck(s1, 'base').tally.hoseBursts).toBe(0);
+    });
   },
 );
 
