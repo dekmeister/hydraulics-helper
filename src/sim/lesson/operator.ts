@@ -49,6 +49,9 @@ const TRIM_GAIN = 0.15;
 const TRIM_MAX_STEP = 0.04;
 /** Delivery valve change per second per unit of relative branch over-pressure. */
 const GATE_GAIN = 0.4;
+/** Most a gated valve moves in a second: this fraction of its opening, or the minimum step. */
+const GATE_MAX_FRACTION = 0.5;
+const GATE_MIN_STEP = 0.01;
 
 function valveId(p: Play, ref: ValveRef): string {
   const v = resolveValve(p.state, p.progress.playerTruckId, ref);
@@ -91,7 +94,10 @@ function correct(p: Play): Play {
     if (band === undefined) continue;
     const over = (branchKpa(p.state, line) - band.targetKpa) / band.targetKpa;
     const open = next.inputs.valves[id] ?? 0;
-    next = setValve(next, id, clamp01(open - GATE_GAIN * over));
+    // Near shut a valve is stiff (its loss goes as 1/open²): move it by at most half its opening.
+    const limit = Math.max(GATE_MIN_STEP, GATE_MAX_FRACTION * open);
+    const step = Math.max(-limit, Math.min(limit, GATE_GAIN * over));
+    next = setValve(next, id, clamp01(open - step));
   }
   return next;
 }

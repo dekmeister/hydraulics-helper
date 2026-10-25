@@ -4,7 +4,7 @@ import { APPLIANCES } from '../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { HOSE_WORKING_KPA } from '../sim/constants';
 import { getScenario } from '../sim/scenarios';
-import { inputsWith, run, suctionInletOf, truck } from '../sim/testUtils';
+import { inputsWith, run, suctionInletOf, truck, withBigLines } from '../sim/testUtils';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../sim/types';
 import { portableDams, relayLays, trucksOnScene } from './relay';
 import { activeTruck, deliveryLines } from './selectors';
@@ -113,7 +113,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('relay selectors: %s'
   });
 
   it('reads a relay soft when over-run and burst once a length goes', () => {
-    const soft = run(closed, attackInputs(1), 100);
+    const soft = run(withBigLines(closed), attackInputs(1), 100);
     expect(relayLays(soft)[0]?.state).toBe('soft');
     const burst: SimState = {
       ...closed,

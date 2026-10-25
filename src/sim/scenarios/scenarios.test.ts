@@ -3,7 +3,9 @@ import { CAT1 } from '../appliances/cat1';
 import { TEST_APPLIANCE } from '../appliances/testAppliance';
 import { isRigid } from '../hose';
 import { eligibleAppliances, getScenario, scenarioTraceCsv, SCENARIOS } from './index';
-import { supports } from './types';
+import { APPLIANCES } from '../appliances/catalogue';
+import { loadScenario } from './load';
+import { missingRequirements, supports, supportsLesson } from './types';
 import type { ApplianceSpec } from '../types';
 
 // Golden traces (docs/TESTING.md §2, layer 3). If one changes, explain the numeric diff before
@@ -97,5 +99,25 @@ describe('scenario capabilities', () => {
   it('draughting also needs a way to prime', () => {
     expect(supports(getScenario('draughting'), noPrimer)).toBe(false);
     expect(supports(getScenario('draughting'), TEST_APPLIANCE)).toBe(true);
+  });
+
+  it('names what is missing, in words', () => {
+    const bare: ApplianceSpec = { ...noSuction, deliveries: noSuction.deliveries.slice(0, 1) };
+    expect(missingRequirements(getScenario('draughting'), bare)).toEqual([
+      'a suction inlet',
+      '2 deliveries',
+    ]);
+    for (const s of SCENARIOS)
+      expect(missingRequirements(s, TEST_APPLIANCE).length === 0).toBe(supports(s, TEST_APPLIANCE));
+  });
+
+  it('a lesson also needs the gauges it asks the player to read; free play doesn’t', () => {
+    // The test appliance has no compound gauge: its hydrant fireground plays, the lesson doesn't.
+    const hydrant = getScenario('hydrant-supply');
+    expect(supports(hydrant, TEST_APPLIANCE)).toBe(true);
+    expect(supportsLesson(hydrant, TEST_APPLIANCE)).toBe(false);
+    expect(missingRequirements(hydrant, TEST_APPLIANCE, {}, true)).toEqual(['a compound gauge']);
+    expect(() => loadScenario(hydrant, TEST_APPLIANCE)).toThrow(/a compound gauge/);
+    for (const spec of APPLIANCES) expect(supportsLesson(hydrant, spec)).toBe(true);
   });
 });

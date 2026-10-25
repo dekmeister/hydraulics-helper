@@ -3,13 +3,13 @@ import { createInitialState } from '../engine';
 import { PUMP_DAMAGE, TANK_DRY } from '../lesson/common';
 import type { LessonDef, LineDef } from '../lesson/types';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
-import { attachLines, type PlannedLine } from './lay';
+import { attachLines, LIGHT_LINE, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
 /** Crew 1: the first-line lay (Table 1 15 mm tip). */
 const FIRST: PlannedLine = { id: 'line-1', hose: '38L', lengths: 3, tipMm: 15 };
-/** Crew 2 runs out 65 mm with a 20 mm tip once the fire spreads. */
-const SECOND: LineDef = { id: 'line-2', hose: '65L', lengths: 3, tipMm: 20 };
+/** Crew 2 runs out 65 mm with a 20 mm tip once the fire spreads (the light line on a light truck). */
+const SECOND: LineDef = { id: 'line-2', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE };
 /** Crew 1 moves up the slope with another length. // PLACEHOLDER — needs Dek (a typical advance) */
 const UPHILL_M = 10;
 
@@ -17,7 +17,7 @@ const LESSON: LessonDef = {
   ladder: 7,
   brief:
     'A full incident on the tank. Crew 1 starts on a 38 mm line, then moves up the slope; a ' +
-    'second crew runs out 65 mm; and when a hydrant is connected you change over before the tank ' +
+    'second crew runs out {hose:line-2}; and when a hydrant is connected you change over before the tank ' +
     'runs dry. Listen to the radio and keep both crews in water.',
   objectives: [
     {
@@ -41,7 +41,7 @@ const LESSON: LessonDef = {
     },
     {
       id: 'second',
-      text: 'Charge crew 2’s 65 mm line and hold both branches at working pressure for 20 s.',
+      text: 'Charge crew 2’s {line:line-2} and hold both branches at working pressure for 20 s.',
       when: {
         kind: 'all',
         of: [
@@ -92,7 +92,7 @@ const LESSON: LessonDef = {
       effects: [{ kind: 'layLine', line: SECOND }],
       radio: {
         from: 'OIC',
-        text: 'Second crew has run out 65 mm. Charge it, and keep crew 1 going.',
+        text: 'Second crew has run out {hose:line-2}. Charge it, and keep crew 1 going.',
       },
     },
     {

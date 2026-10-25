@@ -2,8 +2,8 @@ import { useLayoutEffect, useRef } from 'react';
 import { coachView, objectiveRows } from '../../state/lessonView';
 import { activeTruck } from '../../state/selectors';
 import { useStore } from '../../state/store';
-import { getPanelLayout } from '../appliances/registry';
-import { metricMet, metricText, targetLabel } from './labels';
+import { getPanelLayout, getRealisticLayout } from '../appliances/registry';
+import { gestureHint, metricMet, metricText, targetLabel } from './labels';
 import './LessonDock.css';
 
 /**
@@ -18,6 +18,7 @@ export function LessonDock() {
   const openDebrief = useStore((s) => s.openDebrief);
   const expanded = useStore((s) => s.lessonListOpen);
   const setExpanded = useStore((s) => s.setLessonListOpen);
+  const view = useStore((s) => s.saved.settings.panelView);
   const ref = useRef<HTMLElement>(null);
 
   // Reserve the dock's height at the foot of the page, so every control can scroll clear of it.
@@ -37,7 +38,9 @@ export function LessonDock() {
   }, []);
 
   if (lesson === null) return null;
-  const layout = getPanelLayout(activeTruck(sim).spec.id);
+  const applianceId = activeTruck(sim).spec.id;
+  const layout = getPanelLayout(applianceId);
+  const realistic = view === 'realistic' ? getRealisticLayout(applianceId) : undefined;
   const rows = objectiveRows(lesson, sim);
   const done = rows.filter((r) => r.state === 'done').length;
   const active = rows.filter((r) => r.state === 'active');
@@ -46,10 +49,15 @@ export function LessonDock() {
   const status = lesson.progress.status;
   const failure = lesson.def.failures?.find((f) => f.id === lesson.progress.failure);
   const fill = (text: string) =>
-    text.replace(
-      '{target}',
-      coach?.targetKey === undefined ? 'it' : targetLabel(layout, coach.targetKey),
-    );
+    text
+      .replace(
+        '{target}',
+        coach?.targetKey === undefined ? 'it' : targetLabel(layout, coach.targetKey),
+      )
+      .replace(
+        '{gesture}',
+        coach?.targetKey === undefined ? '' : gestureHint(layout, realistic, coach.targetKey),
+      );
 
   return (
     <section

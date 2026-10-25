@@ -3,12 +3,37 @@ import { DEFAULT_TRUCK_ID } from '../engine';
 import { hoseType } from '../hose';
 import type { ApplianceSpec, DeliverySpec, HoseLine } from '../types';
 
-/** Line plan before it's attached to a delivery. */
-export interface PlannedLine {
-  id: string;
+/** What a crew runs out: a hose, how many standard lengths of it, and the branch tip. */
+export interface LineKit {
   hose: string;
   lengths: number;
   tipMm: number;
+}
+
+/**
+ * A line plan before it's attached to a delivery. `light`: what the crew runs instead from a truck
+ * whose free outlets are all smaller than `hose` (a light tanker has no 65 mm outlet), so one lesson
+ * plays on every appliance; without it the hose goes on the closest outlet through an adaptor.
+ */
+export interface PlannedLine extends LineKit {
+  id: string;
+  light?: LineKit;
+}
+
+/**
+ * The crew's light line in place of a 65 mm one: two lengths of 25 mm with a 12 mm branch (Table 1:
+ * 250 kPa, ~150 L/min; 25 mm loses ~250 kPa a length at that flow, L928), so it wants about the
+ * same pump pressure as the 38 mm crew line. // PLACEHOLDER — needs Dek (what a Cat 7 crew runs)
+ */
+export const LIGHT_LINE: LineKit = { hose: '25L', lengths: 2, tipMm: 12 };
+
+/** The kit to lay for `plan` from one of `free`: its light kit when every free outlet is smaller. */
+export function kitFor(
+  plan: LineKit & { light?: LineKit },
+  free: readonly DeliverySpec[],
+): LineKit {
+  const largestMm = Math.max(0, ...free.map((d) => d.sizeMm));
+  return plan.light !== undefined && largestMm < hoseType(plan.hose).sizeMm ? plan.light : plan;
 }
 
 /**
@@ -28,8 +53,8 @@ export function takeDelivery(free: DeliverySpec[], hose: string): DeliverySpec {
 }
 
 /**
- * Attach each planned line to the unused delivery closest in size to its hose (adaptors assumed),
- * on truck `truckId`.
+ * Attach each planned line (or its light kit, see `PlannedLine`) to the unused delivery closest in
+ * size to its hose (adaptors assumed), on truck `truckId`.
  */
 export function attachLines(
   spec: ApplianceSpec,
@@ -38,17 +63,18 @@ export function attachLines(
 ): HoseLine[] {
   const free: DeliverySpec[] = [...spec.deliveries];
   return plans.map((plan) => {
-    const best = takeDelivery(free, plan.hose);
+    const kit = kitFor(plan, free);
+    const best = takeDelivery(free, kit.hose);
     return {
       id: plan.id,
       truckId,
       deliveryId: best.id,
-      segments: Array.from({ length: plan.lengths }, () => ({
-        hose: plan.hose,
+      segments: Array.from({ length: kit.lengths }, () => ({
+        hose: kit.hose,
         lengthM: STANDARD_LENGTH_M,
       })),
       elevationM: 0,
-      branch: { tipMm: plan.tipMm },
+      branch: { tipMm: kit.tipMm },
     };
   });
 }

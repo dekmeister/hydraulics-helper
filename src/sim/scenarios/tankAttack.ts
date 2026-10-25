@@ -2,40 +2,43 @@ import { createInitialState } from '../engine';
 import { inletOfKind } from '../appliances/controls';
 import { PUMP_DAMAGE, TANK_DRY } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, twoLines, type PlannedLine } from './lay';
+import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
 /**
  * The 38 mm line first, then a 65 mm line: the friction contrast and the pump-droop sag when the
  * second line opens. Tips from Table 1: 15 mm (350 kPa, ~280 L/min) and 20 mm (500 kPa, ~600 L/min).
+ * A truck with no 65 mm outlet gets the light line instead (`LIGHT_LINE`): the sag and gating stay.
  */
 const LINES: readonly PlannedLine[] = [
   { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20 },
+  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
 ];
 
 const LESSON: LessonDef = {
   ladder: 2,
   brief:
-    'Two crews on the tank: a 38 mm line with a 15 mm branch and a 65 mm line with a 20 mm ' +
-    'branch. One pump pressure serves both, but the 38 mm line loses far more to friction. Set ' +
-    'the pump for the harder line and gate the other back until both branches are right.',
+    'Two crews on the tank: a {line:line-38} with a {tip:line-38} branch and a {line:line-65} ' +
+    'with a {tip:line-65} branch. One pump pressure serves both, but they need different ' +
+    'pressures at the pump. Set the pump for the harder line and gate the other back until both ' +
+    'branches are right.',
   objectives: [
     {
       id: 'first',
-      text: 'Charge the 38 mm line.',
+      text: 'Charge the {line:line-38}.',
       when: { kind: 'flow', line: 'line-38', min: 50 },
     },
     {
       id: 'second',
-      text: 'Charge the 65 mm line as well.',
+      text: 'Charge the {line:line-65} as well.',
       when: { kind: 'flow', line: 'line-65', min: 50 },
     },
     {
       id: 'both',
       text:
-        'Hold both branches at working pressure together for 30 s: about 350 kPa on the 38 mm, ' +
-        '500 kPa on the 65 mm. Gate back a delivery that runs high.',
+        'Hold both branches at working pressure together for 30 s: about {kpa:line-38} on the ' +
+        '{tip:line-38} branch, {kpa:line-65} on the {tip:line-65}. Gate back a delivery that runs ' +
+        'high.',
       when: {
         kind: 'all',
         of: [
@@ -52,7 +55,7 @@ const LESSON: LessonDef = {
 
 export const TANK_ATTACK: Scenario = {
   id: 'tank-attack',
-  title: 'Tank attack: 38 mm line, then a 65 mm line',
+  title: 'Tank attack: two lines on the tank',
   requires: { tank: true, minDeliveries: LINES.length },
   build(spec) {
     const lines = attachLines(spec, LINES);

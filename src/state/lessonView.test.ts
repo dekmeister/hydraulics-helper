@@ -31,6 +31,15 @@ describe.each([CAT1, TEST_APPLIANCE])('lesson view on $id', (spec) => {
     expect(both?.metrics[0]).toMatchObject({ kind: 'branch', line: 'line-38', kpa: 0 });
   });
 
+  it('reads a fraction-of-working-flow target in L/min', () => {
+    const { sim, lesson } = beginLesson('hydrant-supply', CAT1);
+    const done = { heldS: 0, doneAtS: 1 };
+    const later = { ...lesson, progress: { ...lesson.progress, objectives: { hydrant: done } } };
+    const flow = objectiveRows(later, sim)[1]?.metrics.find((m) => m.kind === 'flow');
+    // 0.635 of a 25 mm tip's ~1100 L/min at 700 kPa: the lesson's "700 L/min".
+    expect(flow?.kind === 'flow' ? flow.min : undefined).toBeCloseTo(700, -1);
+  });
+
   it('points the coach at the panel item for its target', () => {
     const { sim, lesson } = beginLesson('first-line', spec);
     expect(coachView(lesson, sim)).toMatchObject({ number: 1, count: 8 });

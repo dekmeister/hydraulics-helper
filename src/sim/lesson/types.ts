@@ -44,8 +44,11 @@ export type Condition =
   | ({ kind: 'tank'; truck?: string } & Range)
   /** The branch on `line` is within its working band (Table 1 pressure for its tip ± a margin). */
   | { kind: 'branch'; line: string }
-  /** Flow out of the delivery `line` is on, L/min. */
-  | ({ kind: 'flow'; line: string } & Range)
+  /**
+   * Flow out of the delivery `line` is on, L/min; with `ofWorking`, as a fraction of the line's
+   * working flow (its branch at the Table 1 pressure), so a target scales with the line laid.
+   */
+  | ({ kind: 'flow'; line: string; ofWorking?: true } & Range)
   | { kind: 'primed'; truck?: string }
   | { kind: 'cavitating'; truck?: string }
   /** Water left in a static source, L. */
@@ -83,12 +86,16 @@ export interface Failure {
   when: Condition;
 }
 
-/** A line the crew lays during the scenario, on the free delivery closest in size. */
+/**
+ * A line the crew lays during the scenario, on the free delivery closest in size; `light` is what
+ * they run instead when every free outlet is smaller than `hose` (as `PlannedLine`).
+ */
 export interface LineDef {
   id: string;
   hose: string;
   lengths: number;
   tipMm: number;
+  light?: { hose: string; lengths: number; tipMm: number };
   elevationM?: number;
   truck?: string;
 }
@@ -125,7 +132,11 @@ export interface ScenarioEvent {
 /** One guided step: the coach's words, what it points at, and when it moves on. */
 export interface CoachStep {
   id: string;
-  /** `{target}` is replaced by the target's panel label. */
+  /**
+   * `{target}` is replaced by the target's panel label and `{gesture}` by how to work it on the
+   * panel showing (a lever's colour, a tap or a drag, the throttle's kind): the UI's, from the
+   * layout, so the copy names no appliance's controls.
+   */
   text: string;
   target?: CoachTarget;
   /** Default: the player acknowledges it ('Got it'). */

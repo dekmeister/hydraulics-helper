@@ -4,7 +4,7 @@ import type { ScoreLineId } from '../../sim/lesson/score';
 import { debrief } from '../../state/debrief';
 import { lessonScore } from '../../state/lesson';
 import { useStore } from '../../state/store';
-import { missingCapabilities } from '../menu/requirements';
+import { supportsLesson } from '../../sim/scenarios/types';
 import { Stars } from '../menu/Stars';
 import './Debrief.css';
 
@@ -33,7 +33,7 @@ export function Debrief() {
   const scenario = getScenario(lesson.scenarioId);
   const { headline, findings } = debrief(lesson.def, lesson.progress, score);
   const next = SCENARIOS.filter(
-    (s) => (s.lesson?.ladder ?? 0) > lesson.def.ladder && missingCapabilities(s, spec).length === 0,
+    (s) => (s.lesson?.ladder ?? 0) > lesson.def.ladder && supportsLesson(s, spec),
   ).sort((a, b) => (a.lesson?.ladder ?? 0) - (b.lesson?.ladder ?? 0))[0];
   return (
     <main

@@ -305,7 +305,8 @@ const LESSON_CAPTIONS = {
     '"LESSON 1 First line…" instead of the picker. The tank-to-pump control has the focus double ' +
     'ring (white inside ink) and is scrolled into view. A paper dock at the foot of the screen ' +
     '(right half from 900 px): "STEP 2 OF 8", "Water comes from the truck’s tank first. Open Tank ' +
-    'to pump: tap its green handle." (the test appliance names its own valve), and OBJECTIVES 0/3 ' +
+    'to pump: tap its green handle, or drag it a quarter turn to open it part way." (each truck ' +
+    'names its own valve; the hint comes from its layout), and OBJECTIVES 0/3 ' +
     'and END buttons. Nothing hidden under the dock once scrolled.',
   incident:
     'Whole app in the incident lesson: one 38 mm line charged, the crew has just moved uphill. ' +

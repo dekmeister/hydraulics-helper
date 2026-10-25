@@ -1,8 +1,7 @@
 import { SCENARIOS } from '../../sim/scenarios';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
-import type { Scenario } from '../../sim/scenarios/types';
+import { missingRequirements, supports, type Scenario } from '../../sim/scenarios/types';
 import { useStore } from '../../state/store';
-import { missingCapabilities } from './requirements';
 import { Stars } from './Stars';
 import './ScenarioMenu.css';
 
@@ -21,10 +20,10 @@ export function ScenarioMenu() {
   const loadScenario = useStore((s) => s.loadScenario);
   const resumable = useStore((s) => s.lesson?.progress.status === 'running');
   const openPlay = useStore((s) => s.openPlay);
-  const playable = (s: Scenario) => missingCapabilities(s, spec).length === 0;
+  const playable = (s: Scenario) => missingRequirements(s, spec, {}, true).length === 0;
   const next = LADDER.find((s) => playable(s) && results[s.id]?.[spec.id]?.passed !== true);
   // The sandbox is tank attack, or the first fireground this appliance can play.
-  const sandbox = [TANK_ATTACK, ...SCENARIOS].find(playable);
+  const sandbox = [TANK_ATTACK, ...SCENARIOS].find((s) => supports(s, spec));
   return (
     <main className="screen menu" aria-labelledby="menu-title">
       <h1 id="menu-title" className="screen__title">
@@ -40,7 +39,7 @@ export function ScenarioMenu() {
       )}
       <ol className="menu__ladder">
         {LADDER.map((s) => {
-          const missing = missingCapabilities(s, spec);
+          const missing = missingRequirements(s, spec, {}, true);
           const result = results[s.id]?.[spec.id];
           const isNext = s === next;
           const n = s.lesson?.ladder ?? 0;

@@ -2,9 +2,10 @@
 // can be played there, capabilities and lesson both.
 import { startLesson, type LessonProgress } from '../lesson/progress';
 import type { LessonDef } from '../lesson/types';
-import { validateLesson } from '../lesson/validate';
+import { resolveLessonText } from '../lesson/text';
+import { projectEvents, validateLesson } from '../lesson/validate';
 import type { ApplianceSpec } from '../types';
-import { supports, type Scenario, type ScriptedRun, type SupportSpecs } from './types';
+import { missingRequirements, type Scenario, type ScriptedRun, type SupportSpecs } from './types';
 
 export interface LoadedScenario {
   run: ScriptedRun;
@@ -13,16 +14,19 @@ export interface LoadedScenario {
 }
 
 /**
- * `scenario` built on `spec` (support roles on `support`, or the same), with its lesson started on
- * the player's truck. Throws if an appliance lacks a capability the scenario needs, or if anything
- * the lesson names (valves, lines, sources, relays, instruments, objectives, events) isn't there.
+ * `scenario` built on `spec` (support roles on `support`, or the same), with its lesson's copy
+ * filled in for what was laid (`lesson/text.ts`) and the lesson started on the player's truck.
+ * Throws if an appliance lacks a capability the scenario needs, or if anything the lesson names
+ * (valves, lines, sources, relays, instruments, objectives, events, copy) isn't there.
  */
 export function loadScenario(
   scenario: Scenario,
   spec: ApplianceSpec,
   support?: SupportSpecs,
 ): LoadedScenario {
-  if (!supports(scenario, spec, support)) throw new Error(`${spec.id} can’t play '${scenario.id}'`);
+  const missing = missingRequirements(scenario, spec, support, true);
+  if (missing.length > 0)
+    throw new Error(`${spec.id} can’t play '${scenario.id}': needs ${missing.join(' and ')}`);
   const run = scenario.build(spec, support);
   const def = scenario.lesson;
   if (def === undefined) return { run };
@@ -30,5 +34,6 @@ export function loadScenario(
   const problems = validateLesson(def, run.state, player);
   if (problems.length > 0)
     throw new Error(`Scenario '${scenario.id}' on ${spec.id}: ${problems.join('; ')}`);
-  return { run, lesson: { def, progress: startLesson(def, player) } };
+  const resolved = resolveLessonText(def, projectEvents(def, run.state, player).state);
+  return { run, lesson: { def: resolved, progress: startLesson(resolved, player) } };
 }

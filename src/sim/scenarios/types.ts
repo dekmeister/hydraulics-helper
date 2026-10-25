@@ -1,6 +1,7 @@
 import type { OperatorStep } from '../lesson/operator';
 import type { Condition, LessonDef } from '../lesson/types';
-import type { ApplianceSpec, ControlId, SimState } from '../types';
+import { playerInstruments } from '../lesson/validate';
+import type { ApplianceSpec, ControlId, InstrumentKind, SimState } from '../types';
 
 /** Capabilities an appliance needs to play a scenario (ARCHITECTURE §9.6). */
 export interface ScenarioRequirements {
@@ -74,22 +75,60 @@ export function supportSpec(
 }
 
 /**
- * Whether the player's `spec` can play the scenario, with each support role on `support[role]` or
- * on the same appliance.
+ * What the player's `spec` (support roles on `support[role]`, or the same appliance) lacks to play
+ * the scenario, in words, e.g. 'a suction inlet', '2 deliveries'; empty when it can. With `lesson`,
+ * also the gauges its lesson asks the player to read ('a compound gauge'): free play needs none.
+ */
+export function missingRequirements(
+  scenario: Scenario,
+  spec: ApplianceSpec,
+  support: SupportSpecs = {},
+  lesson = false,
+): string[] {
+  const missing = new Set<string>([
+    ...lacks(scenario.requires, spec),
+    ...(scenario.support ?? []).flatMap((role) =>
+      lacks(role.requires, supportSpec(role, spec, support)),
+    ),
+  ]);
+  if (lesson && scenario.lesson !== undefined)
+    for (const kind of playerInstruments(scenario.lesson))
+      if (!spec.instruments.some((i) => i.kind === kind)) missing.add(INSTRUMENT_WORDS[kind]);
+  return [...missing];
+}
+
+/**
+ * Whether the player's `spec` can play the scenario's fireground, with each support role on
+ * `support[role]` or on the same appliance.
  */
 export function supports(
   scenario: Scenario,
   spec: ApplianceSpec,
   support: SupportSpecs = {},
 ): boolean {
+  return missingRequirements(scenario, spec, support).length === 0;
+}
+
+/** Whether the scenario has a lesson the player can play on `spec`, gauges included. */
+export function supportsLesson(
+  scenario: Scenario,
+  spec: ApplianceSpec,
+  support: SupportSpecs = {},
+): boolean {
   return (
-    meets(scenario.requires, spec) &&
-    (scenario.support ?? []).every((role) => meets(role.requires, supportSpec(role, spec, support)))
+    scenario.lesson !== undefined && missingRequirements(scenario, spec, support, true).length === 0
   );
 }
 
-/** Whether `spec` has every capability in `requires`. */
-function meets(requires: ScenarioRequirements, spec: ApplianceSpec): boolean {
+const INSTRUMENT_WORDS: Readonly<Record<InstrumentKind, string>> = {
+  compound: 'a compound gauge',
+  discharge: 'a discharge gauge',
+  tacho: 'a tachometer',
+  tank: 'a tank gauge',
+};
+
+/** What `spec` lacks of `requires`, in words. */
+function lacks(requires: ScenarioRequirements, spec: ApplianceSpec): string[] {
   const {
     tank,
     minDeliveries,
@@ -98,14 +137,14 @@ function meets(requires: ScenarioRequirements, spec: ApplianceSpec): boolean {
     primer = false,
     appliances,
   } = requires;
-  const hasTank = spec.tank !== undefined && spec.inlets.some((i) => i.kind === 'tank');
-  const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
-  return (
-    (!tank || hasTank) &&
-    (!suction || hasSuction) &&
-    (!tankFill || spec.inlets.some((i) => i.kind === 'tankFill')) &&
-    (!primer || spec.primer !== undefined) &&
-    (appliances === undefined || appliances.includes(spec.id)) &&
-    spec.deliveries.length >= minDeliveries
-  );
+  const out: string[] = [];
+  if (appliances !== undefined && !appliances.includes(spec.id)) out.push('a different appliance');
+  if (tank && (spec.tank === undefined || !spec.inlets.some((i) => i.kind === 'tank')))
+    out.push('a tank');
+  if (suction && !spec.inlets.some((i) => i.kind === 'suction')) out.push('a suction inlet');
+  if (tankFill && !spec.inlets.some((i) => i.kind === 'tankFill'))
+    out.push('a hydrant-to-tank inlet');
+  if (primer && spec.primer === undefined) out.push('a primer');
+  if (spec.deliveries.length < minDeliveries) out.push(`${String(minDeliveries)} deliveries`);
+  return out;
 }

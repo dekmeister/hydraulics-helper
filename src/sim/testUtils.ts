@@ -99,6 +99,23 @@ export function expectSaneTruck(t: TruckState): void {
   expect(t.rpm).toBeLessThanOrEqual(t.spec.engine.maxRpm + 1e-9);
 }
 
+/**
+ * `state` with every hose lay swapped for one length of 65 mm and a 32 mm branch: lines that take
+ * all a pump can give, to push any appliance past what its supply allows (a light tanker's crew
+ * lines can't over-run a hydrant or a 4 m draught).
+ */
+export function withBigLines(state: SimState): SimState {
+  return {
+    ...state,
+    lines: state.lines.map((l) => ({
+      ...l,
+      segments: [{ hose: '65L', lengthM: 30 }],
+      elevationM: 0,
+      branch: { tipMm: 32 },
+    })),
+  };
+}
+
 /** Every truck, relay reading and source in `state` sane (see `expectSaneTruck`). */
 export function expectSane(state: SimState): void {
   for (const t of state.trucks) expectSaneTruck(t);

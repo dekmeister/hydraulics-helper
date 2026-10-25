@@ -1,8 +1,9 @@
 // Checking a lesson against the fireground it will be played on (the scenario loader's job).
 import type { InstrumentKind, SimState } from '../types';
-import { validateCondition, type LessonNames } from './conditions';
+import { gaugeInstrument, validateCondition, type LessonNames } from './conditions';
 import { applyEffect } from './effects';
 import { resolvePrimer, resolveValve, truckOf } from './refs';
+import { lessonTextProblems } from './text';
 import type { CoachTarget, Condition, LessonDef } from './types';
 
 function duplicates(ids: readonly string[], kind: string): string[] {
@@ -22,6 +23,67 @@ function targetProblems(state: SimState, player: string, target: CoachTarget): s
     return fitted === true ? [] : [`coach target: no ${kind} instrument`];
   }
   return [];
+}
+
+/** Conditions in the lesson, coach steps' included. */
+function allConditions(def: LessonDef): Condition[] {
+  return [
+    ...def.objectives.map((o) => o.when),
+    ...(def.failures ?? []).map((f) => f.when),
+    ...(def.events ?? []).map((e) => e.when),
+    ...(def.coach ?? []).flatMap((c) => (c.done === undefined ? [] : [c.done])),
+  ];
+}
+
+function gaugesIn(c: Condition): InstrumentKind[] {
+  switch (c.kind) {
+    case 'gauge':
+      return c.truck === undefined ? [gaugeInstrument(c.gauge)] : [];
+    case 'all':
+    case 'any':
+      return c.of.flatMap(gaugesIn);
+    case 'not':
+      return gaugesIn(c.of);
+    default:
+      return [];
+  }
+}
+
+/**
+ * Instruments the lesson asks the player to read on their own truck: gauge conditions and the
+ * coach's gauge targets. A truck without one can't be taught it (it would have to be guessed).
+ */
+export function playerInstruments(def: LessonDef): InstrumentKind[] {
+  const kinds = [
+    ...allConditions(def).flatMap(gaugesIn),
+    ...(def.coach ?? []).flatMap((c) =>
+      c.target !== undefined && 'gauge' in c.target ? [c.target.gauge] : [],
+    ),
+  ];
+  return [...new Set(kinds)];
+}
+
+/**
+ * The fireground once every event's effects have applied, in event order (so a line an event lays
+ * can be named by an objective or the copy), with any effect that doesn't fit.
+ */
+export function projectEvents(
+  def: LessonDef,
+  state: SimState,
+  player: string,
+): { state: SimState; problems: string[] } {
+  let projected = state;
+  const problems: string[] = [];
+  for (const event of def.events ?? []) {
+    for (const effect of event.effects ?? []) {
+      try {
+        projected = applyEffect(projected, player, effect);
+      } catch (e) {
+        problems.push(`event '${event.id}': ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+  return { state: projected, problems };
 }
 
 /**
@@ -55,16 +117,8 @@ export function validateLesson(def: LessonDef, state: SimState, player: string):
         problems.push(`objective '${o.id}': '${a}' is not an earlier objective`);
   });
 
-  let projected = state;
-  for (const event of events) {
-    for (const effect of event.effects ?? []) {
-      try {
-        projected = applyEffect(projected, player, effect);
-      } catch (e) {
-        problems.push(`event '${event.id}': ${e instanceof Error ? e.message : String(e)}`);
-      }
-    }
-  }
+  const { state: projected, problems: effectProblems } = projectEvents(def, state, player);
+  problems.push(...effectProblems, ...lessonTextProblems(def, projected));
   const conditions: [string, Condition][] = [
     ...def.objectives.map((o): [string, Condition] => [`objective '${o.id}'`, o.when]),
     ...(def.failures ?? []).map((f): [string, Condition] => [`failure '${f.id}'`, f.when]),
