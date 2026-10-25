@@ -2,10 +2,16 @@
 // can be played there, capabilities and lesson both.
 import { startLesson, type LessonProgress } from '../lesson/progress';
 import type { LessonDef } from '../lesson/types';
-import { resolveLessonText } from '../lesson/text';
+import { genericText, resolveLessonText, resolveText } from '../lesson/text';
 import { projectEvents, validateLesson } from '../lesson/validate';
 import type { ApplianceSpec } from '../types';
-import { missingRequirements, type Scenario, type ScriptedRun, type SupportSpecs } from './types';
+import {
+  missingRequirements,
+  supports,
+  type Scenario,
+  type ScriptedRun,
+  type SupportSpecs,
+} from './types';
 
 export interface LoadedScenario {
   run: ScriptedRun;
@@ -36,4 +42,18 @@ export function loadScenario(
     throw new Error(`Scenario '${scenario.id}' on ${spec.id}: ${problems.join('; ')}`);
   const resolved = resolveLessonText(def, projectEvents(def, run.state, player).state);
   return { run, lesson: { def: resolved, progress: startLesson(resolved, player) } };
+}
+
+/**
+ * The lesson's brief as it reads on `spec` (support roles on the same appliance): built and filled
+ * in, as the loader would. On an appliance that can't play it, placeholders read generically.
+ */
+export function lessonBrief(scenario: Scenario, spec: ApplianceSpec): string {
+  const def = scenario.lesson;
+  if (def === undefined) return '';
+  if (supports(scenario, spec)) {
+    const state = scenario.build(spec).state;
+    return resolveText(def.brief, projectEvents(def, state, state.activeTruckId).state);
+  }
+  return genericText(def.brief);
 }

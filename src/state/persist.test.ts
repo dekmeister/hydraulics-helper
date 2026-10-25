@@ -16,7 +16,10 @@ describe('saved settings and progress', () => {
   it('round-trips through storage', () => {
     const storage = memoryStorage();
     const saved = recordResult(
-      { ...defaultSaved(), settings: { sound: false, panelView: 'realistic' } },
+      {
+        ...defaultSaved(),
+        settings: { sound: false, panelView: 'realistic', applianceId: 'cat7-generic' },
+      },
       'first-line',
       'cat1-generic',
       { passed: true, points: 92, stars: 3 },
@@ -24,6 +27,11 @@ describe('saved settings and progress', () => {
     writeSaved(storage, saved);
     expect(storage.data.has(SAVE_KEY)).toBe(true);
     expect(loadSaved(storage)).toEqual(saved);
+  });
+
+  it('ignores an appliance id that isn’t a string', () => {
+    const text = JSON.stringify({ version: 1, settings: { applianceId: 7 }, results: {} });
+    expect(parseSaved(text).settings.applianceId).toBeUndefined();
   });
 
   it('falls back to defaults on junk, other versions and missing storage', () => {

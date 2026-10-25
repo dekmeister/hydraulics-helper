@@ -62,6 +62,18 @@ export function resolveText(text: string, state: SimState): string {
   );
 }
 
+/** `text` with each placeholder in general words ('line', 'hose'), for copy no appliance fills. */
+export function genericText(text: string): string {
+  const words: Readonly<Record<string, string>> = {
+    line: 'line',
+    hose: 'hose',
+    tip: 'suitable',
+    kpa: 'working pressure',
+    flow: 'its working flow',
+  };
+  return text.replace(PLACEHOLDER, (_m, kind: string) => words[kind] ?? '');
+}
+
 /** Every string in a lesson that a player reads. */
 function mapText(def: LessonDef, f: (text: string) => string): LessonDef {
   return {

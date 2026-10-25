@@ -3,10 +3,10 @@ import { CAT1 } from '../appliances/cat1';
 import { createInitialState } from '../engine';
 import { attachLines, LIGHT_LINE, type PlannedLine } from '../scenarios/lay';
 import { getScenario } from '../scenarios';
-import { loadScenario } from '../scenarios/load';
+import { lessonBrief, loadScenario } from '../scenarios/load';
 import type { ApplianceSpec } from '../types';
 import { holds, noFacts, validateCondition } from './conditions';
-import { lessonTextProblems, resolveText } from './text';
+import { genericText, lessonTextProblems, resolveText } from './text';
 
 /** A light tanker: two 38 mm outlets and nothing bigger. */
 const LIGHT: ApplianceSpec = {
@@ -65,6 +65,18 @@ describe('lesson copy', () => {
     expect(lessonTextProblems({ ladder: 1, brief: '{line:nope}', objectives: [] }, cat1)).toEqual([
       "text: '{line:nope}' names nothing laid",
     ]);
+  });
+
+  it('reads generically where no appliance fills it', () => {
+    expect(genericText('a {line:line-65} with a {tip:line-65} branch')).toBe(
+      'a line with a suitable branch',
+    );
+  });
+
+  it('gives the menu a brief for the appliance, filled in', () => {
+    const brief = lessonBrief(getScenario('tank-attack'), LIGHT);
+    expect(brief).toContain('25 mm line');
+    expect(brief).not.toMatch(/\{/);
   });
 
   it('is filled in by the loader, every ladder lesson on every appliance', () => {
