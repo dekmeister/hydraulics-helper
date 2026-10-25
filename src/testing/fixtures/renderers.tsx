@@ -183,6 +183,13 @@ function lessonRenderers(): Record<string, FixtureRenderer> {
     setup: menu(() => savedProgress(useStore.getState().playerSpec)),
     render: () => <AppRoot />,
   };
+  out['menu/resume'] = {
+    setup: () => {
+      loadLesson(useStore.getState().playerSpec, 'guided', 'play');
+      useStore.setState({ screen: 'menu' });
+    },
+    render: () => <AppRoot />,
+  };
   for (const { spec, states } of LESSON_FIXTURE_SETS) {
     for (const state of states) {
       out[`lesson/${spec.id}/${state}`] = {

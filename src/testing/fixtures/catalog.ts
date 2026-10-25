@@ -538,6 +538,13 @@ export const FIXTURES: readonly FixtureMeta[] = [
       'As menu/fresh, but card 1 reads "Passed ★★★ best 100" and card 2 "Passed ★★☆ best 82" ' +
       '(PLAY AGAIN buttons), card 3 "Not passed yet" with NEXT UP and the ink border.',
   },
+  {
+    id: 'menu/resume',
+    expect:
+      'As menu/fresh, with a lesson in progress: the YOUR APPLIANCE card ends with "Changing ' +
+      'truck ends the lesson in progress." under the truck rows, and a filled RESUME LESSON ' +
+      'button sits between that card and the ladder.',
+  },
   ...LESSON_FIXTURES,
   ...DEBRIEF_FIXTURES,
   ...PANEL_FIXTURES,
