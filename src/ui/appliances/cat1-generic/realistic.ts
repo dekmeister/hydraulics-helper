@@ -25,13 +25,68 @@ export const CAT1_REALISTIC: RealisticLayout = {
       viewBox: { w: 1000, h: 720 },
       inset: false,
       art: [
-        { kind: 'pipe', d: 'M60 0 V300', widthU: 34 },
-        { kind: 'pipe', d: 'M70 600 H300 V300', widthU: 34 },
-        { kind: 'pipe', d: 'M640 227 V150 H250 V0', widthU: 22 },
-        { kind: 'pipe', d: 'M560 440 H955', widthU: 34 },
-        { kind: 'pipe', d: 'M560 440 V640 M710 440 V640 M860 440 V640', widthU: 28 },
-        { kind: 'pipe', d: 'M955 440 V85', widthU: 22 },
-        { kind: 'pipe', d: 'M590 227 H640 V440', widthU: 34 },
+        // Each run is split at its valve and drawn the way the water flows (see `PlateArt`).
+        { kind: 'pipe', d: 'M60 0 V200', widthU: 34, water: { at: 'tank' } },
+        {
+          kind: 'pipe',
+          d: 'M60 200 V300 H300',
+          widthU: 34,
+          water: { at: 'inlet', id: 'tank-to-pump', side: 'pump' },
+        },
+        {
+          kind: 'pipe',
+          d: 'M70 600 H180',
+          widthU: 34,
+          water: { at: 'inlet', id: 'suction', side: 'source' },
+        },
+        {
+          kind: 'pipe',
+          d: 'M180 600 H300 V300',
+          widthU: 34,
+          water: { at: 'inlet', id: 'suction', side: 'pump' },
+        },
+        {
+          kind: 'pipe',
+          d: 'M640 227 V150 H420',
+          widthU: 22,
+          water: { at: 'casing', feeds: ['pump-to-tank'] },
+        },
+        { kind: 'pipe', d: 'M420 150 H250 V0', widthU: 22, water: { at: 'pumpToTank' } },
+        // The manifold: each run flows only toward the outlets drawing through it.
+        { kind: 'pipe', d: 'M640 440 H560', widthU: 34, water: { at: 'casing', feeds: ['d1'] } },
+        {
+          kind: 'pipe',
+          d: 'M640 440 H710',
+          widthU: 34,
+          water: { at: 'casing', feeds: ['d2', 'd3'] },
+        },
+        { kind: 'pipe', d: 'M710 440 H860', widthU: 34, water: { at: 'casing', feeds: ['d3'] } },
+        // On to the reel riser: the reels aren't in the game, so this water never moves.
+        { kind: 'pipe', d: 'M860 440 H955 V85', widthU: 22, water: { at: 'casing', feeds: [] } },
+        ...(['d1', 'd2', 'd3'] as const).flatMap((id, i) => {
+          const x = String(560 + 150 * i);
+          return [
+            {
+              kind: 'pipe' as const,
+              d: `M${x} 440 V560`,
+              widthU: 28,
+              water: { at: 'casing' as const, feeds: [id] },
+            },
+            {
+              kind: 'pipe' as const,
+              d: `M${x} 560 V640`,
+              widthU: 28,
+              water: { at: 'delivery' as const, id },
+            },
+          ];
+        }),
+        { kind: 'pipe', d: 'M590 227 H640', widthU: 34, water: { at: 'casing' } },
+        {
+          kind: 'pipe',
+          d: 'M640 227 V440',
+          widthU: 34,
+          water: { at: 'casing', feeds: ['d1', 'd2', 'd3'] },
+        },
         {
           kind: 'casing',
           cx: 470,
@@ -39,9 +94,10 @@ export const CAT1_REALISTIC: RealisticLayout = {
           r: 90,
           label: 'PUMP',
           outlet: { x: 590, y: 227, dir: 'right', widthU: 34 },
+          water: { at: 'casing' },
         },
         // Inlet over the casing's face into the eye.
-        { kind: 'pipe', d: 'M60 300 H470', widthU: 34 },
+        { kind: 'pipe', d: 'M300 300 H470', widthU: 34, water: { at: 'casing' } },
         { kind: 'fitting', cx: 470, cy: 300, r: 30 },
         { kind: 'fitting', cx: 60, cy: 300, r: 19 },
         { kind: 'fitting', cx: 300, cy: 300, r: 19 },
@@ -120,7 +176,18 @@ export const CAT1_REALISTIC: RealisticLayout = {
       viewBox: { w: 500, h: 300 },
       inset: true,
       art: [
-        { kind: 'pipe', d: 'M90 190 H500', widthU: 34 },
+        {
+          kind: 'pipe',
+          d: 'M90 190 H230',
+          widthU: 34,
+          water: { at: 'inlet', id: 'hydrant-to-tank', side: 'source' },
+        },
+        {
+          kind: 'pipe',
+          d: 'M230 190 H500',
+          widthU: 34,
+          water: { at: 'inlet', id: 'hydrant-to-tank', side: 'pump' },
+        },
         { kind: 'flange', x: 494, y: 190, widthU: 34, along: 'h' },
         { kind: 'coupling', cx: 90, cy: 190, r: 60 },
         { kind: 'text', x: 430, y: 150, text: 'TO TANK' },

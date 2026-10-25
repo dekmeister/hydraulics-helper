@@ -63,6 +63,42 @@ for (const spec of REALISTIC_APPLIANCES) {
       await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'simplified');
     });
 
+    test('the pipework shows the water: empty, still, flowing, and kept in the casing', async ({
+      page,
+    }, info) => {
+      await load(page, 'tank-attack', spec.id);
+      await showRealistic(page);
+      const layout = layoutFor(spec.id);
+      const [first] = (await getState(page)).lines;
+      if (first === undefined) throw new Error('tank attack needs a line');
+      const casing = page.locator('[data-plate="bay"] [data-water-ref="casing"]').first();
+      const drop = page.locator(`[data-water-ref="delivery:${first.deliveryId}"]`);
+      await expect(casing).toHaveAttribute('data-water', 'empty');
+
+      await openInlet(page, spec, 'tank', info);
+      await stepAndSettle(page, 1);
+      await expect(casing).toHaveAttribute('data-water', 'still');
+      await expect(drop).toHaveAttribute('data-water', 'empty');
+
+      const delivery = page.getByRole('slider', { name: controlName(layout, first.deliveryId) });
+      await dragValve(page, delivery, 1);
+      await holdSpeedSwitch(page, 'up', 20);
+      await stepAndSettle(page, 20);
+      await expect(casing).toHaveAttribute('data-water', 'flowing');
+      await expect(drop).toHaveAttribute('data-water', 'flowing');
+
+      // Shut it all down: the line empties, the pump stays full.
+      await holdSpeedSwitch(page, 'down', 40);
+      await dragValve(page, delivery, 0);
+      const tank = page.getByRole('slider', {
+        name: controlName(layout, inletOfKind(spec, 'tank')),
+      });
+      await dragValve(page, tank, 0);
+      await stepAndSettle(page, 10);
+      await expect(drop).toHaveAttribute('data-water', 'empty');
+      await expect(casing).toHaveAttribute('data-water', 'still');
+    });
+
     test('tank attack through the bay levers and the speed controller', async ({ page }, info) => {
       await load(page, 'tank-attack', spec.id);
       await showRealistic(page);

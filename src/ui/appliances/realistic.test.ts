@@ -70,6 +70,28 @@ describe.each(CATALOGUE_REALISTIC.map((l) => [l.applianceId, l] as const))(
       }
     });
 
+    it("names only the spec's own inlets and outlets in its pipework's water", () => {
+      const inlets = new Set(spec.inlets.map((i) => i.id));
+      const outlets = new Set([
+        ...spec.deliveries.map((d) => d.id),
+        ...(spec.pumpToTank === undefined ? [] : [spec.pumpToTank.id]),
+      ]);
+      const refs = layout.plates.flatMap((p) =>
+        p.art.flatMap((a) =>
+          (a.kind === 'pipe' || a.kind === 'casing') && a.water !== undefined ? [a.water] : [],
+        ),
+      );
+      expect(refs.length).toBeGreaterThan(0);
+      for (const ref of refs) {
+        if (ref.at === 'inlet') expect(inlets.has(ref.id)).toBe(true);
+        if (ref.at === 'delivery') expect(spec.deliveries.map((d) => d.id)).toContain(ref.id);
+        if (ref.at === 'casing')
+          for (const id of ref.feeds ?? []) expect(outlets.has(id)).toBe(true);
+        if (ref.at === 'pumpToTank') expect(spec.pumpToTank).toBeDefined();
+        if (ref.at === 'tank') expect(spec.inlets.some((i) => i.kind === 'tank')).toBe(true);
+      }
+    });
+
     it('keeps every item on its plate, with unique plate and inert ids', () => {
       const plates = layout.plates.map((p) => p.id);
       expect(new Set(plates).size).toBe(plates.length);
