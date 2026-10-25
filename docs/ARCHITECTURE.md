@@ -46,9 +46,10 @@ src/
     thermal.ts    # Churn heat vs flow-through cooling
     hammer.ts     # Water hammer (Joukowsky surge on valve closures)
     rng.ts        # Seeded PRNG step (gauge flutter)
-    site.ts       # Fireground data checks (supplies → trucks, sources, suction inlets)
+    site.ts       # Fireground data checks (supplies and relays → trucks, sources, inlets, deliveries)
     tank.ts       # Tank volume integration
-    relay.ts      # Relay link logic (open & closed)
+    relay.ts      # Relays: solve order, equivalent source, outlets, two-pass site solve, bursts
+    create.ts     # Fireground state at t = 0 (createSiteState), switchTruck, reseed
     engine.ts     # Tick loop: advance(state, inputs, dt) -> state
     appliances/   # ApplianceSpec per vehicle type + catalogue (see §9)
     scenarios/    # Scenario definitions as data (JSON-like TS); scripted runs + golden traces (__traces__/)
@@ -57,12 +58,14 @@ src/
     selectors.ts  # Derived values for UI (displayed readings, delivery lines)
     warnings.ts   # Warning lamps
     supply.ts     # Primer status, supply hoses for the scene
+    relay.ts      # Trucks on scene, relay hoses, portable dams
     loop.ts       # requestAnimationFrame accumulator → fixed 10 Hz ticks (not started in the e2e build)
   ui/
     panel-pump/   # Generic controls (Gauge, ValveHandle, Throttle, Primer) + layout-driven renderer
-    panel-scene/  # SceneView, pure geometry.ts, Backdrop, ApplianceArt, HoseLay, BranchCrew, SceneLegend
+    panel-scene/  # SceneView, pure geometry.ts + siteLayout.ts, Backdrop, SceneTruck, ApplianceArt, HoseLay,
+                  # BranchCrew, SupplyLay, RelayLay, PortableDam, SceneLegend
     appliances/   # Per-appliance panel layout + scene art (see §9.4)
-    layout/       # Responsive shell, HUD, dialogs
+    layout/       # Responsive shell, scenario picker, truck switcher, HUD, dialogs
     tutorial/     # Coach marks / guided steps
   audio/          # Engine note, priming whine, cavitation rattle (later)
   testing/        # e2e build mode only: window.__pumpops test API, fixture gallery (docs/TESTING.md §3)
@@ -104,7 +107,7 @@ An appliance's inlets are *ports* (`InletKind = 'tank' | 'suction'`); what is pl
 * **Tank** (tank-to-pump valve): head 0, `P_in = −k_inlet·Q²/open²`: the compound gauge reads slightly *negative*, more so with flow (manual L3529). With tank-to-pump shut or the tank empty, the pump is dry: the discharge reads 0 (Table 6) and the compound shows any primer vacuum.
 * **Hydrant** (layflat to a collecting head on the suction inlet): `P_in = static − (main + layflat + inlet valve)·Q²`, the square law behind the manual's reserve-flow rule (C14). Layflat collapses below 0 kPa (`LAYFLAT_COLLAPSE_KPA`), so over-running the hydrant reads "inlet zero, hose soft" (Table 7). A hydrant at higher pressure than the tank means the tank feed gives nothing (no back-fill modelled).
 * **Draughting** (hard suction to static water): `P_in = −10·lift − (hard suction + strainer + inlet valve)·Q²`, and only once primed (§4.6). C11: 4 m of lift reads −40 kPa.
-* **Relay inlet** (M5): a third supply kind, fed by another truck's discharge.
+* **Closed relay** (M5, §4.7): another truck's delivery feeding a suction inlet. The supplying pump is taken as an equivalent source, so the relay is one more path `H − 10·Δh − (R + valve + hose + inlet valve)·Q²`; layflat flattens at 0, so over-running a relay reads "inlet zero, hose soft" like a hydrant.
 
 `readings.inletCollapsed` says which inlets have their layflat pulled flat, so the scene draws a soft hose from what the sim solved rather than re-deriving it. Sites are checked when the state is created (`site.ts` `validateSite`): every supply goes to a truck, source and *suction* inlet that exist, one supply per inlet, unique ids, and at most one static source per truck, because priming is tracked per pump (§4.6). A layflat to static water is allowed but never primes: the "use hard suction" mistake is something to teach, not a data error.
 
@@ -141,19 +144,22 @@ Each delivery is a series path: valve → hose segments → branch (nozzle).
 
 These make the model *teach*:
 
-* **Cavitation**: the pump cavitates when its inlet would fall below `pump.cavitationInletKpa` (−84 kPa reproduces Table 4's lift derate to 5 % up to 7 m). The inlet can't go lower, so the flow is capped: lift too high, suction restriction, a weak hydrant (where the layflat flattens at 0 first) or, later, outrunning a relay. Extra throttle adds no flow and no discharge ("adding RPM does nothing", the classic lesson). `readings.cavitation` (0–1) is how far past the cap the pump would go if the inlet could be pulled without limit. Gauges flutter: a seeded random walk (`SimState.rngState`, one draw per truck per tick) in `pump.flutter`, scaled by intensity and added to the *displayed* readings by the selectors, so sim readings, traces and calibration stay clean. Sustained cavitation is tallied (`tally.cavitationS`); pump damage and fail states are M6.
+* **Cavitation**: the pump cavitates when its inlet would fall below `pump.cavitationInletKpa` (−84 kPa reproduces Table 4's lift derate to 5 % up to 7 m). The inlet can't go lower, so the flow is capped: lift too high, suction restriction, a weak hydrant or outrunning a relay (where the layflat flattens at 0 first). Extra throttle adds no flow and no discharge ("adding RPM does nothing", the classic lesson). `readings.cavitation` (0–1) is how far past the cap the pump would go if the inlet could be pulled without limit. Gauges flutter: a seeded random walk (each truck's own stream, `TruckState.rngState`, one draw per tick) in `pump.flutter`, scaled by intensity and added to the *displayed* readings by the selectors, so sim readings, traces and calibration stay clean. Sustained cavitation is tallied (`tally.cavitationS`); pump damage and fail states are M6.
 * **Priming** (`priming.ts`): tank and hydrant supplies are flooded and never need it; a draught path supplies water only once primed. The primer pulls vacuum on the casing (plus the hard suction when its valve is open) towards `maxVacuumKpa`, with time constant air volume / `displacementLps`; the pump catches at `vacuum ≥ 10·lift`, and only up hard suction (layflat flattens under vacuum). An open delivery with a line is an air leak (no vacuum, L3265–3276); a casing flooded by an open tank or hydrant has no air to pull; with the suction valve shut, vacuum builds fast and holds (the vacuum test). `primer.kind`: rotary vane (switch; 1 min on in 3 duty, a cut-out that clears after the rest), hand diaphragm (switch = stroking; slower), self-priming (no control, primes whenever the suction is open), none (can't draught). Prime is lost when the static source runs dry. Air leaks and vortexing as events are M6. `pump.primed` is one flag per pump, which is why a truck may draught from only one static source for now; per-supply priming waits for an appliance with two suction inlets (M7).
 * **Tank runs dry**: level gauge, low-water warning, then flow collapse. Firefighters on the scene panel lose water.
 * **Overheat** (`thermal.ts`): casing water temperature from churn heat `churnKw·(rpm/max)³` against flow-through cooling `Q·4.186·ΔT` (deliveries, and relief dumped to the tank; relief dumped to the inlet recirculates and doesn't cool) and a little loss to air. A dry pump doesn't heat. Lamp at 60 / 80 °C; tallied.
 * **Water hammer** (`hammer.ts`): a delivery valve that closed further this tick, with the flow drop over the tick turned into a Joukowsky surge `ρ·a·Δv` in the hose. Above `WATER_HAMMER_SURGE_KPA` it is an event: `tally.waterHammer` (the penalty, scored in M6) and `lastHammer`, which latches a lamp for 5 s. A closure that stays over the threshold on consecutive ticks on the same delivery counts once. The surge is taken per tick, so it depends on the tick rate (fine at the fixed 10 Hz, but not a physical closure time; CALIBRATION "needs Dek" 21). Flow lost any other way (tank dry, cavitation onset) isn't hammer. Inlet (butterfly) valves aren't checked yet.
-* **Over-pressuring a closed relay**: receiving operator's compound gauge climbs; exceeding hose rating bursts a length (scenario event).
+* **Over-pressuring a closed relay** (`relay.ts` `checkBursts`): with the receiver taking less, its compound climbs (the SUPPLY lamp warns past the hose's 1000 kPa working pressure). A flow cut at the far end sends a Joukowsky surge back up the hose, adding to the pressure everywhere it passes; peak = max(each end now, the higher end before + surge). At `HOSE_BURST_KPA` a length bursts where the pressure was highest (by the pump on a flat or uphill relay): `link.burst`, `tally.hoseBursts` on the supplying truck, the receiver loses its supply and the supplying delivery runs into the open end (Table 6: high rpm, low delivery pressure, water flowing). A flow cut by the supplying pump's own valve is water hammer on that pump instead. Slamming the relay inlet bursts it; throttling down from the attack end and easing shut doesn't (the manual's shutdown sequence, L3865–3873). Repairing a length is an M6 event.
 
 ### 4.7 Relay pumping
 
-A scenario can contain multiple trucks; the player operates one panel at a time (tap a truck on the scene panel to switch — later milestone), others follow simple AI or fixed settings.
+A fireground can hold several trucks (`createSiteState`, `TruckSetup`: id, label such as "Base pump", spec, held inputs, already primed). The player operates one at a time; the others hold the inputs they were left with (AI later). A `RelayLink` (`SimState.links`) is a hose from a truck's delivery (one hose per delivery: a lay or a relay) over segments with an elevation, ending at `to`: another truck's suction inlet (closed relay), another truck's tank or a static source (open relay). `site.ts` checks it fits: real truck, delivery and inlet, one connection per inlet, no relay back to its own truck, closed relays don't loop.
 
-* **Closed relay**: truck A discharge → 65 mm supply line → truck B inlet. Solve trucks in supply order each tick: A's network sees B as a "branch" whose demand is B's current total flow; B's inlet pressure = A's discharge − friction − elevation. Key instrument lesson: B's compound gauge shows *positive* inlet pressure; B's operator must keep it above ~100 kPa residual, A's operator must not over/under-drive.
-* **Open relay**: truck A discharges into truck B's tank (or a portable dam) via an open line; B draughts/tanks independently. Model as a flow into B's tank volume, capped by A's line. Decouples the pumps — the lesson is *why* you'd choose this (simpler, tolerant) vs closed (efficient, no dam needed).
+* **Closed relay: the supplying pump as an equivalent source.** Seen from its relay delivery, a pump on tank or hydrant supply is exactly `P = H − R·Q²` (its curve and the inlet loss are both square laws). Each tick, upstream first (`relayOrder`, a topological sort over closed relays), each truck is prepared (rpm, priming, which needs the relay feeds into it to know if its casing is flooded) and H and R are fitted from two solves of the supplying truck: relay flow 0 and the link's previous flow (`RELAY_FIT_PROBE_LPM` when dry). The receiver takes the relay as one more inlet path, so the parallel-inlet and cavitation machinery is unchanged. Then downstream first, each truck is solved with its closed relays taking exactly what the receiver drew, so water is conserved. The fit is exact with only the relay open; with other lines, relief or a cavitation cap it is a secant through the last operating point that settles over a few ticks. Chains (base → booster → attack) work the same way.
+* **Readings** (`SimState.linkReadings`): flow, pressure at the start (discharge less valve loss) and far end (start − friction − 10·Δh, the manual's spacing rule, C12/C13), whether the receiver has pulled the layflat flat. Key instrument lesson: the receiver's compound shows *positive* residual; keep it above 100 kPa (`RELAY_MIN_RESIDUAL_KPA`), which the receiver's SUPPLY lamp says, along with no water, pressure too high and a burst.
+* **Open relay**: the hose ends at atmospheric pressure, `Q = √((P_d − 10·Δh)/(valve + hose))`, into the receiving truck's tank (overflows at capacity) or a static source; a static source with a `capacityL` is a portable dam, which fills, overflows and drains. The pumps are decoupled; the lesson is the dam level, filled at one rate and drawn at another.
+* **Noise**: each truck draws gauge flutter from its own stream (`TruckState.rngState`; truck 0 keeps the scenario seed), so adding a truck doesn't shift another's.
+* Scenarios: `closed-relay` (base pump primed at the dam, 4 lengths of 65 mm up 20 m to the attack pump) and `open-relay` (base pump on the hydrant filling a portable dam the attack pump draughts from).
 
 ### 4.8 State shape (sketch)
 
@@ -166,8 +172,9 @@ interface SimState {                 // src/sim/types.ts is authoritative
   lines: HoseLine[];         // delivery lays: segments, elevation, branch
   sources: WaterSource[];    // hydrants, static water (dam volume changes)
   supplies: SupplyLine[];    // inlet ← source hoses (hard suction, layflat)
-  rngState: number;          // seeded PRNG (flutter)
-  // later: links: RelayLink[] (M5), events: SimEvent[] and score (M6)
+  links: RelayLink[];        // relay hoses: delivery → inlet (closed), tank or dam (open); burst state
+  linkReadings: Record<string, RelayReading>; // flow, start/end pressure, collapsed
+  // trucks also carry label and their own rngState (flutter); later: events: SimEvent[] and score (M6)
 }
 ```
 
@@ -206,6 +213,8 @@ All physical constants live in `sim/constants.ts` with a comment citing the inte
 * **The Wake** (Design §6): the store keeps the last 3 s of *sim-time* displayed readings (`wake`), and each dial draws their min–max band and five fading ghosts (`gauge/wake.ts`, `WakeMarks`), so hunting shows as a fan even through needle damping and in a `step(300)` test. The compound needle turns amber while the pump cavitates.
 * **Primer control**: hold to run; a ring fills with vacuum (fraction of the primer's best); captions RUNNING, CHECK SUCTION (30 s without catching, amber), PRIMED (check mark), COOLING (duty cut-out).
 * **Scenario picker**: a native select at the top of the scene loads any scenario the active appliance can play (`store.loadScenario`). A stand-in for scenario selection (M6).
+* **Several trucks** (M5): `siteLayout.ts` stands trucks at stations by relay depth (the truck that feeds no other nearest the fire at `ATTACK_AT`, the deepest at the old spot by the dam and hydrant), pitches a portable dam off the suction coupling that draws on it, and runs each relay from its supplying coupling to an inlet coupling, a tank hatch or a dam; lays share the tightest map scale. One truck lays out exactly as before. Each truck is a group (`data-truck`, `data-truck-active`) with its label on the map (inverted for the one operated); tapping another truck operates it. Relay hoses draw charged (flowing, or a closed relay pressurised), dry, soft (over-run) or burst (a jet at the split length), with the climb halfway; portable dams show a level ring. The legend adds relay rows (flow and kPa at the inlet) and portable-dam rows; a relay delivery reads "Relay · N L/min".
+* **Truck switcher** (M5): with more than one truck, the pump panel's header has a button per truck (`aria-pressed`), reachable on a phone without scrolling to the map. `store.setActiveTruck` hands the store's inputs to the truck being left (held in the sim) and takes the other's, so the active truck's controls live in the store and every other truck's in the sim; it clears the highlight (keyed by truck and delivery) and the Wake. The panel remounts per truck and names it ("Base pump · Category 1 tanker"); a relay delivery's valve is operable and its row says where the relay goes.
 * **Scene supplies**: a supply hose runs from its inlet coupling to the dam (hard suction, strainer, green water core once primed) or to a hydrant on the track (green layflat, dashed when soft). While cavitating, charged delivery hoses break into gaps. The legend adds a non-interactive row per supply.
 * Accessibility floor: keyboard operable controls, ARIA labels with live gauge values, respects `prefers-reduced-motion`.
 * **Testability is a UI requirement** (`docs/TESTING.md` §3): instruments are `role="meter"` with `aria-valuenow` in native units, controls use Pointer Events only, and in the `e2e` build the real-time loop is replaced by explicit `__pumpops.step()` so rendered tests are deterministic.
@@ -276,11 +285,11 @@ Each appliance has a layout in `ui/appliances/<id>/layout.ts` (types in `ui/appl
 ### 9.5 Calibration and tests per appliance
 
 * `docs/CALIBRATION.md` has a **shared physics** section (friction, branches, lift, head) and **one section per appliance** (pump curve, tank, rated flow, rpm). Every spec number carries the same `// doctrine-confirmed` / `// PLACEHOLDER — needs Dek` comment as `constants.ts`.
-* A **contract suite** runs `describe.each` over all registered appliances: determinism, NaN/edge fuzz (on tank, hydrant and draught supplies), tank runs dry without crashing, and where a suction inlet and a primer exist: prime and draw, cavitation onset with throttle adding no flow, lose prime on an empty dam. A new appliance gets these for free; appliance-specific worked examples go alongside.
+* A **contract suite** runs `describe.each` over all registered appliances: determinism, NaN/edge fuzz (on tank, hydrant and draught supplies), tank runs dry without crashing, and where a suction inlet and a primer exist: prime and draw, cavitation onset with throttle adding no flow, lose prime on an empty dam. A relay contract runs every ordered pair of appliances: a closed relay delivers and conserves water and replays exactly, over-running it is capped without NaN, fuzz on both pumps (bursting or not), an open relay refills a tank. A new appliance gets these for free; appliance-specific worked examples go alongside.
 
 ### 9.6 Scenarios
 
-Scenarios name appliances by `id`. Where the lesson is generic (e.g. "tank attack"), a scenario declares the **capabilities** it requires (`tank`, `deliveries ≥ 2`, `suction` inlet, a `primer` of any kind) instead of a fixed appliance, so it can be played on any appliance that has them. The loader rejects a scenario whose appliances lack those capabilities (today `store.loadScenario` checks `supports()` and throws; the picker only offers eligible scenarios). Relay scenarios may mix appliance types (e.g. bulk water carrier supplying a Cat 1).
+Scenarios name appliances by `id`. Where the lesson is generic (e.g. "tank attack"), a scenario declares the **capabilities** it requires (`tank`, `deliveries ≥ 2`, `suction` inlet, a `primer` of any kind) instead of a fixed appliance, so it can be played on any appliance that has them. The loader rejects a scenario whose appliances lack those capabilities (today `store.loadScenario` checks `supports()` and throws; the picker only offers eligible scenarios). Relay scenarios may mix appliance types (e.g. bulk water carrier supplying a Cat 1): `Scenario.support` lists the other trucks' roles with their own requirements, and `build(spec, support)` takes an appliance per role, defaulting to the player's. Tests and golden traces run the relays with the test appliance in either role.
 
 ### 9.7 Adding an appliance — checklist
 

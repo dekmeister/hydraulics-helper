@@ -29,6 +29,9 @@ Tests: `src/sim/calibration.test.ts` asserts every worked example below. A faili
 | Ambient water / casing loss | 20 °C; 0.02 kW per °C | — | PLACEHOLDER — needs Dek |
 | Temperature lamp | caution 60 °C, alarm 80 °C | — | PLACEHOLDER — needs Dek |
 | Water hammer | surge `ρ·a·Δv`, a = 250 m/s in charged hose; event above 500 kPa | qualitative only (L2255, L3112) | PLACEHOLDER — needs Dek |
+| Relay design pressures | 700 kPa out, 100 kPa minimum residual in, 600 kPa budget between pumps | L3794–3796 | doctrine-confirmed |
+| Hose working pressure | 1000 kPa (a quarter of the ~4000 kPa rated burst); the receiving pump is warned above it | L945–948 | doctrine-confirmed |
+| Relay hose burst | 1300 kPa peak (steady, or the higher end before plus the Joukowsky surge of a flow cut at the far end) | L3865–3873 qualitative | PLACEHOLDER — needs Dek |
 
 ### Hose friction coefficients
 
@@ -87,7 +90,16 @@ Pump pressure = nozzle + friction ± head. Tolerance is ±5 %: the friction-fit 
 
 Table 4 is reproduced by one figure, the inlet pressure the pump cavitates at: the flow a draught can give is `√((−P_cav − 10·lift)/R)`, so its ratio to the 3 m flow doesn't depend on the suction hose. −84 kPa fits 4.5–7 m (fits per row: 86.5, 84, 83.3). At 7.5 m it keeps 43 % against the manual's 33 % (a −81 kPa fit); not asserted, needs Dek.
 
-Not yet asserted (they need later milestones): C12–C13 relay spacing (M5); C15 open-water capacity (M6).
+Not yet asserted (it needs a later milestone): C15 open-water capacity (M6).
+
+### Relay (asserted in `relay.test.ts`)
+
+| # | Setup | Manual | Sim | Source |
+|---|---|---|---|---|
+| C12 | 700 kPa out, 65 mm at 100 kPa per length, 20 m up: residual after 4 lengths | 100 kPa (the 600 kPa budget) | 100 | L3813–3820 |
+| C13 | Same, flat: residual after 6 lengths | 100 kPa | 100 | L3822–3827 |
+
+Also asserted, on Cat 1 and the test appliance in both roles: the residual is discharge − valve − friction − head and matches the receiving compound to 1 %; water is conserved through a relay and a three-pump chain; uphill leaves less residual; over-running the relay reads inlet zero, hose soft, cavitating, with throttle adding no flow; slamming the relay inlet bursts the length by the pump; throttling down and easing shut doesn't; an open relay flows by valve and hose alone into a tank or a portable dam, which overflow when full and drain when drawn faster than filled.
 
 ### Solver behaviour (asserted in `network.test.ts` and `engine.test.ts`)
 
@@ -139,6 +151,10 @@ The tank runs dry at t = 250 s, and every gauge then drops to zero. M4 appended 
 
 **Draughting trace** (`draughting.cat1-generic.csv`): dam 4 m below the pump, 2 × 3 m hard suction. Primer held from t = 1 s; primed at t ≈ 16 s, compound −40 with nothing flowing. 65 mm line at 0.6: 527 kPa, compound −55. Both lines at full throttle: compound −84, 944 L/min, cavitation 0.32; back at 0.6 it recovers.
 
+**Closed-relay trace** (`closed-relay.cat1-generic.csv`): base pump primed at the dam (2 m lift, held at throttle 0.8), 4 × 30 m 65 mm up 20 m to the attack pump's suction inlet; the attack pump runs the tank-attack pair. One line at 0.4: base 823 kPa, relay 627 L/min, residual 421 kPa. Both lines at 0.6: base 696, relay 822 L/min, residual 151 (compound) / 157 (hose end). Full throttle: over-run, compound 0, 912 L/min, cavitation 0.37; back at 0.6 it recovers. The mixed traces (`…cat1-generic+test-2d.csv`, `…test-2d+cat1-generic.csv`) land within 30 kPa of these.
+
+**Open-relay trace** (`open-relay.cat1-generic.csv`): base pump on the hydrant (throttle 0.2) fills a 5000 L portable dam (2000 L at the start, 1 m lift) at ~660 L/min through 4 × 30 m 65 mm up 10 m; the attack pump primes on it. One line (557 L/min) fills the dam, both at 0.6 (729) drain it slowly, both at full throttle (1035) at ~375 L/min.
+
 ---
 
 ## Needs Dek
@@ -164,3 +180,8 @@ The tank runs dry at t = 250 s, and every gauge then drops to zero. M4 appended 
 19. **Water hammer**: Joukowsky with a 250 m/s wave speed, event above 500 kPa; size isn't weighted, though the manual says ≥ 65 mm is worse. A keyboard step from 10 % to shut on a 38 mm line counts as hammer. Thresholds?
 20. **Cavitation flutter**: ±100 kPa discharge / ±15 kPa compound at full cavitation, scaled by intensity (0.25 excess flow = full). What does the hunting really look like?
 21. **Water hammer vs tick rate** (PR #3 review): the surge is the flow drop over one tick, so one physical closure reads differently at other tick rates (a 1 s closure: 702 kPa at 10 Hz, none at 20 Hz; a 0.5 s closure: 889 kPa at 10 Hz, 702 kPa at 20 Hz). The sim runs at a fixed 10 Hz, so play is consistent, but the figure isn't physical. Proposal: compare the closure time with the line's critical time 2L/a (≈ 0.7 s for 90 m at 250 m/s) and take Joukowsky `ρ·a·Δv` for faster closures, Michaud `ρ·a·Δv·(2L/a)/T` for slower, with Δv measured over a 2L/a window instead of one tick. Is that the right model to teach, and should line length weight it?
+22. **Relay hose burst** (M5): 1300 kPa peak in a 65 mm relay, the surge taken per tick like water hammer (row 21). It separates a slammed relay inlet (~1700 kPa: ~700 at the pump plus ~1000 surge at 800 L/min) from a relay eased shut or held dead-headed (~900–1120 kPa, a Cat 1 base pump through its relief). Does in-service layflat burst anywhere near that, and should the shutdown spike be judged against the hose's rating or a test pressure?
+23. **Relay scenarios** (M5): the closed relay's base pump is already primed at the farm dam (2 m lift, 2 × 3 m hard suction) and holds throttle 0.8 (~700 kPa at its delivery with the attack pump drawing both lines); the open relay's base pump is on the 400 kPa hydrant at throttle 0.2; the portable dam holds 5000 L (2000 at the start) with its water 1 m below the attack pump's inlet, one 3 m length of hard suction over the wall. What does a Cat 1 carry (portable dam size, hard suction), and how would a base pump operator set up?
+24. **Receiving pump's relief on shutdown**: on a Cat 1 receiver, slamming its *lines* shut opens its relief (dumping to tank), so the relay keeps flowing and no burst; only the inlet slammed shut bursts the relay. Is that how a real relief behaves under a relay, and should relief dumped into a full tank overflow?
+25. **Relay procedure**: the fill sequence (500 kPa until every pump has water, then 700, L3850–3853), radio calls and the booster-failure loss (~30 %, L3881) aren't modelled; support trucks hold fixed settings. Which of these matter for the first relay scenarios (M6)?
+26. **Relay display**: a closed relay is drawn charged once pressurised, even before the receiver draws; an open relay only while water flows. A burst length is drawn as a jet near its end of the hose, and the relay can't be repaired in play (reload the scenario). Right conventions?
