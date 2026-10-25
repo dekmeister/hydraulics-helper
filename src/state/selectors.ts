@@ -3,6 +3,7 @@ import {
   CAVITATION_FLUTTER_COMPOUND_KPA,
   CAVITATION_FLUTTER_DISCHARGE_KPA,
 } from '../sim/constants';
+import { CREW_WATER_MIN_LPM } from '../sim/lesson/progress';
 import { activeTruck } from './activeTruck';
 import type {
   ControlId,
@@ -70,10 +71,10 @@ export function relayOnDelivery(
 export { selectWarnings, type Warning, type WarningId, type WarningLevel } from './warnings';
 
 /**
- * Delivery flow at or above which the scene draws a line charged, L/min. A display threshold, not
- * physics: below it the legend would read "0 L/min" on a charged line.
+ * Delivery flow at or above which the scene draws a line charged, L/min: the flow at which a lesson
+ * counts a crew as having water, so the scene and the objectives agree.
  */
-export const CHARGED_MIN_LPM = 1;
+export const CHARGED_MIN_LPM = CREW_WATER_MIN_LPM;
 
 /** How the scene draws a delivery: a flowing line, a laid but dry line, or a blank cap. */
 export type LineState = 'charged' | 'dry' | 'none';

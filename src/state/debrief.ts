@@ -1,4 +1,5 @@
 // The debrief (ARCHITECTURE §5): what went wrong in a lesson and why, in plain words. Pure.
+import { RELAY_MIN_RESIDUAL_KPA } from '../sim/constants';
 import type { CavitationSupply, DryCause, LessonProgress } from '../sim/lesson/progress';
 import type { Score } from '../sim/lesson/score';
 import type { LessonDef } from '../sim/lesson/types';
@@ -36,7 +37,7 @@ const CAVITATION_WHY: Record<CavitationSupply, string> = {
     'throttle back; the compound’s positive reading is the water the hydrant has left.',
   relay:
     'You over-ran the relay: the residual on the compound fell to zero. Ease back, and keep it ' +
-    'above 100 kPa.',
+    `above ${String(RELAY_MIN_RESIDUAL_KPA)} kPa.`,
   tank: 'The tank feed couldn’t keep up with the flow you asked for. Ease the throttle back.',
 };
 

@@ -9,8 +9,9 @@ import { truckOf } from './refs';
 import type { LessonDef } from './types';
 
 /**
- * Flow from which a crew counts as having water, L/min: the scene's "charged" threshold
- * (`CHARGED_MIN_LPM` in state/selectors.ts), not physics.
+ * Flow from which a crew counts as having water, L/min; the scene draws a line charged from it too
+ * (`CHARGED_MIN_LPM` in state/selectors.ts). A display threshold, not physics: below it the legend
+ * would read "0 L/min" on a charged line.
  */
 export const CREW_WATER_MIN_LPM = 1;
 
