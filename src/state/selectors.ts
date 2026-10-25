@@ -68,6 +68,7 @@ export function relayOnDelivery(
   return sim.links.find((l) => l.truckId === truckId && l.deliveryId === deliveryId);
 }
 
+export { waterIn, waterRefKey, type WaterRef, type WaterState } from './plumbing';
 export { selectWarnings, type Warning, type WarningId, type WarningLevel } from './warnings';
 
 /**

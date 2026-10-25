@@ -1,14 +1,20 @@
 import type { PipeDir, PlateArt } from '../appliances/realistic';
 import { COLOR } from '../theme/colors';
 import { PLATE_FONT_U, PLATE_H_U, plateWidthU, textWidthU } from './geometry';
+import { CasingWater, PipeWater } from './PipeWater';
 
-/** A pipe: dark edge, galvanised body and a sheen down its middle, square at both ends. */
-function Pipe({ d, widthU }: { d: string; widthU: number }) {
+/**
+ * A pipe: dark edge, galvanised body and a sheen down its middle, square at both ends; with
+ * `water`, what the water in it is doing, drawn over the sheen.
+ */
+function Pipe({ art }: { art: Extract<PlateArt, { kind: 'pipe' }> }) {
+  const { d, widthU, water } = art;
   return (
     <g fill="none" strokeLinejoin="round" strokeLinecap="butt">
       <path d={d} strokeWidth={widthU} style={{ stroke: COLOR.galvEdge }} />
       <path d={d} strokeWidth={widthU - 6} style={{ stroke: COLOR.galvMid }} />
       <path d={d} strokeWidth={widthU * 0.22} style={{ stroke: COLOR.galvLight }} opacity={0.7} />
+      {water !== undefined && <PipeWater d={d} widthU={widthU} water={water} />}
     </g>
   );
 }
@@ -72,6 +78,7 @@ function Casing({ art }: { art: Extract<PlateArt, { kind: 'casing' }> }) {
         className="real-art__casing"
       />
       <circle cx={cx} cy={cy} r={r} className="real-art__casing" />
+      {art.water !== undefined && <CasingWater cx={cx} cy={cy} r={r} water={art.water} />}
       <Flange x={o.x} y={o.y} widthU={o.widthU} along={u.x === 0 ? 'v' : 'h'} />
       <text
         x={cx}
@@ -102,7 +109,7 @@ export function Art({ art }: { art: PlateArt }) {
         />
       );
     case 'pipe':
-      return <Pipe d={art.d} widthU={art.widthU} />;
+      return <Pipe art={art} />;
     case 'casing':
       return <Casing art={art} />;
     case 'coupling':

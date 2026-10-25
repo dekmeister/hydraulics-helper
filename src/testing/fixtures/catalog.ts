@@ -378,11 +378,26 @@ const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
     'up (shut), green suction lever up (shut) by the big coupling low left, PRIME T-handle home; ' +
     'three blue outlet levers pointing right (shut), D1 and D2 couplings open (laid), D3 capped ' +
     'and its lever dimmed with NO LINE. Insets: Side of truck (hydrant-to-tank lever up, shut) ' +
-    'and Tank (sight tube full, float at the top). Warning strip below, no lamps lit.',
+    'and Tank (sight tube full, float at the top). Warning strip below, no lamps lit. Water ' +
+    '(x-ray, drawn like a charged hose): only the tank feed above the tank-to-pump lever shows a ' +
+    'still blue core (no streaks); every other pipe and the pump are plain metal (empty).',
   'tank-attack-700':
     'As idle, but tank to pump open (green lever up along its pipe), the first line’s outlet ' +
     'lever up along its drop (open, travel arc filled blue), pressure needle at ~700 kPa (low on ' +
-    'the 0–4000 face), tacho above idle, sight tube nearly full. No warnings.',
+    'the 0–4000 face), tacho above idle, sight tube nearly full. No warnings. Water: blue cores ' +
+    'with white streaks (flowing) down the tank feed, along into the pump’s eye, out of the ' +
+    'volute, down to the manifold, right to the open line’s drop (D2 on the Cat 1) and through ' +
+    'its lever to the coupling; the pump’s pool shows a dashed swirl. Still cores (no streaks) ' +
+    'in the manifold toward the other drops, those drops down to their shut levers, the reel ' +
+    'riser and the pump-to-tank stub up to its lever; below the shut levers, the suction and the ' +
+    'return over the pump: plain metal.',
+  'after-tank-attack':
+    'As tank-attack-700 but every lever shut again (tank to pump pointing right, the outlet ' +
+    'lever pointing right), throttle back at idle, pressure ~0. Water: the casing kept its ' +
+    'water, so the pump’s pool (no swirl), the eye run, the discharge, manifold, the drops down ' +
+    'to every lever, the reel riser and the pump-to-tank stub all show still cores, no streaks; ' +
+    'the tank feed is still above and below its lever. Below the outlet levers, the suction and ' +
+    'the return over the pump: plain metal.',
   highlighted:
     'As tank-attack-700, with the first line’s delivery picked out: its coupling has a double ' +
     'focus ring and the number plate button is pressed; on the scene its hose and legend row are ' +
@@ -390,11 +405,22 @@ const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
   'draught-priming':
     'Draughting fireground, primer held 8 s: the PRIME T-handle pulled out of its bezel, a ' +
     'green vacuum bar part-filled under it, caption RUNNING; suction lever along its pipe ' +
-    '(open), compound needle into the vacuum sector. Scene: hard suction to the dam.',
+    '(open), compound needle into the vacuum sector. Scene: hard suction to the dam. Water: not ' +
+    'primed, so the suction and pump are plain metal; only the tank feed above its lever is ' +
+    'still blue.',
+  'draught-working':
+    'Draughting, primed and working: suction lever and the first line’s outlet lever open, ' +
+    'PRIME handle home, pressure needle near 700 kPa, compound in vacuum. Water: streaked ' +
+    '(flowing) cores from the suction coupling through its lever, up into the eye, round the ' +
+    'pump (swirl), out to the manifold and through the first drop to its coupling; tank-to-pump ' +
+    'shut, so the run below it is still and the feed above it still.',
   refilling:
     'Tank refill: the Side of truck inset’s hydrant-to-tank lever along its pipe (open); sight ' +
     'tube about a quarter full and the float at the water line; every bay lever shut, engine at ' +
-    'idle, pressure 0. Scene: green layflat from the hydrant to the coupling on the truck’s side.',
+    'idle, pressure 0. Scene: green layflat from the hydrant to the coupling on the truck’s ' +
+    'side. Water: the Side of truck inset’s pipe streaked (flowing) from the coupling through ' +
+    'the lever into the tank; the bay’s pump and pipes are plain metal except the tank feed ' +
+    'above its lever (still).',
 };
 
 const REALISTIC_FIXTURES: FixtureMeta[] = REALISTIC_APPLIANCES.flatMap((spec) =>

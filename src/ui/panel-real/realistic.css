@@ -94,6 +94,56 @@
   font-size: 24px;
 }
 
+/* Water in the pipework, drawn as the scene draws a charged hose (Scene.css .scene-hose__core /
+   __flow), scaled up to pipe size: a charged core while water stands, streaks running the way it
+   flows while it flows. The streaks move, and the casing's swirl turns, only with motion. */
+.real-water__core,
+.real-water__flow {
+  fill: none;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}
+.real-water__core {
+  stroke: var(--color-function-outlet);
+}
+.real-water__pool {
+  fill: var(--color-function-outlet);
+}
+.real-water__flow,
+.real-water__swirl {
+  fill: none;
+  stroke: #fff;
+  stroke-opacity: 0.55;
+  stroke-dasharray: 14 26;
+}
+.real-water__swirl {
+  stroke-width: 4;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .real-water__flow {
+    animation: real-water-flow 0.6s linear infinite;
+  }
+  .real-water__swirl {
+    animation: real-water-swirl 1.2s linear infinite;
+  }
+}
+
+/* One dash period per cycle, like scene-hose-flow. */
+@keyframes real-water-flow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+@keyframes real-water-swirl {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Things the game doesn't model yet: drawn plainly, a little dimmed. */
 [data-inert] {
   opacity: 0.8;

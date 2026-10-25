@@ -3,6 +3,7 @@
 // specs import it. Accessible names, delivery tags and tap behaviour come from the appliance's
 // simplified layout, so both views name every control the same way.
 import type { ControlId } from '../../sim/types';
+import type { WaterRef } from '../../state/plumbing';
 import type { DialId } from '../panel-pump/gauge/dials';
 
 /** Plate drawing units: each plate has its own viewBox, scaled to the panel's width. */
@@ -68,10 +69,14 @@ export type PipeDir = 'up' | 'down' | 'left' | 'right';
  * Backdrop art for a plate: drawn under the items, in order, never interactive. Pipes have square
  * ends: author each run to end on a pipe centreline (hidden under a `fitting`), a coupling's
  * centre, the pump's eye, or the plate edge (capped with a `flange`).
+ *
+ * A pipe or casing with `water` shows what the water in that stretch is doing (flowing, still or
+ * none). Split such pipes at every valve's pivot, since each side of a valve holds its own water,
+ * and draw each run the way the water flows: the flow streaks follow the path.
  */
 export type PlateArt =
   | { kind: 'panel'; box: RBox }
-  | { kind: 'pipe'; d: string; widthU: number }
+  | { kind: 'pipe'; d: string; widthU: number; water?: WaterRef }
   | {
       /**
        * A radial pump seen from the front: water enters at the eye (the centre; draw the inlet
@@ -84,6 +89,7 @@ export type PlateArt =
       r: number;
       label: string;
       outlet: RPoint & { dir: PipeDir; widthU: number };
+      water?: WaterRef;
     }
   | { kind: 'coupling'; cx: number; cy: number; r: number }
   /** A tee, elbow or the pump's eye: a collar over the joint. */

@@ -242,6 +242,8 @@ From Dek's Cat 1 photos (`Resources/Photos/Cat1_*`, 2026-10-25), which corrected
 - [x] Realistic layout data, generic components (bay lever, pull-handle primer, speed switch, tank gauges, plate backdrop), the Simplified · Realistic switch (saved), fixtures, journeys, review.
 - [x] Polish (Dek, 2026-10-25): panel re-spaced on a grid, pipework terminated on fittings and flanges, radial pump (eye inlet, tangential outlet), plates sized from their text, speed switch as a face-on up/down toggle (swipe or press a half). Simplified panel: deliveries as side-by-side cards, half-width sections so it fits a 1080 screen; every Cat 1 valve toggles on a tap.
 
+- [x] Water in the pipework (Dek, 2026-10-25): flowing, still or empty in every bay pipe and the pump, drawn like a charged hose (core + moving streaks); sim latch `PumpState.casingWet` keeps the pump full after the feed shuts; fixtures `after-tank-attack`, `draught-working`.
+
 **Demo:** switch the Cat 1 to Realistic, run a tank attack with the bay levers and the speed controller, prime with the PRIME handle on the draughting fireground, refill at a hydrant through hydrant to tank.
 
 ## M7 — Second appliance (proves extensibility)
@@ -261,6 +263,7 @@ From Dek's Cat 1 photos (`Resources/Photos/Cat1_*`, 2026-10-25), which corrected
 * Cat 1 hose reels (two, each with its own blue lever off the discharge manifold; the right one is drawn inert on the realistic bay). Deferred from M1 (Dek, 2026-10-24). There is no discharge master on the Cat 1 (photos, 2026-10-25).
 * Engine key switch / engine stop; M1 assumes the pump engine is always running. The realistic Cat 1 panel draws stop, ignition, ALT lamp and start as not in the game yet; "to stop pump, ignition must be on" is on its placard.
 * Realistic-view future work (R1): oil temperature and oil pressure gauges (need an engine model), foam (bypass / foam-off / foam-on switch, selection and metering valves), fuses, the air-cleaner indicator, reels; a callouts toggle for a "find it yourself" mode (Design §8); a refill lesson on the `tank-refill` fireground; a hydrant feeding two hoses at once (shared main loss); relays into hydrant to tank; a realistic layout for the test appliance or M7's second truck; Cat 7 photos are in `Resources/Photos/` for when it's built.
+* Realistic water follow-ups: an accessible summary of where the water is (pipes are decorative, `aria-hidden`); a drain cock for trucks that have one; water rising up the hard suction while priming; the hose reels' water once reels are modelled.
 * **R1 review follow-ups:**
   * The speed controller ramps in the store (`state/throttleRamp.ts`), not the sim, so scripts, lessons and traces can't see it and lesson timing differs between views. Moving it into `advance` (a `PlayerInputs.throttleRate` of −1/0/+1) would make the Simplified view ramp too, which is a design call. Its rates are now in the spec (`EngineSpec.speedController`).
   * Hydrant to tank is an `InletKind` ('tankFill'), so every pump-side sum over `inletFlowLpm` must exclude it (`inletPaths`, `warnings.ts`, `SceneTruck`, `site.ts` do). A separate `tankInlets` field would make that structural.
