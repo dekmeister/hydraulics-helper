@@ -159,10 +159,10 @@ export const HOSE_WORKING_KPA = 1000;
 
 /**
  * Pressure at which a length of charged layflat in service bursts, kPa: well under the rated
- * figure for new hose (L945–948), since hose in service is worn. A relay inlet slammed shut adds a
- * Joukowsky surge to the far end's residual (~1100 kPa for 900 L/min in 65 mm), taking it to
- * ~1400: the manual's shutdown burst (L3865–3873). Eased shut, or held dead-headed (~1000–1120
- * with a relief valve), it survives. // PLACEHOLDER — needs Dek
+ * figure for new hose (L945–948), since hose in service is worn. A relay inlet slammed shut sends a
+ * Joukowsky surge (~1000 kPa for 800 L/min in 65 mm) back up the hose on top of the ~700 kPa at
+ * the pump: the manual's shutdown burst (L3865–3873). Throttled down and eased shut, or held
+ * dead-headed (~900–1120 kPa, Cat 1 through its relief), it survives. // PLACEHOLDER — needs Dek
  */
 export const HOSE_BURST_KPA = 1300;
 

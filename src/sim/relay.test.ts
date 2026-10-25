@@ -15,6 +15,7 @@ import { createIdleInputs, createSiteState, switchTruck, type TruckSetup } from 
 import { hoseResistance } from './hose';
 import { valveLossCoeff } from './network';
 import { relayEndKpa, relayOrder } from './relay';
+import { getScenario } from './scenarios';
 import {
   closedRelayPair,
   expectSane,
@@ -295,13 +296,16 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
       valves: { ...inputs.valves, [inlet]: open },
     });
 
-    it('slamming the relay inlet shut bursts the far length; the base pump then runs into it', () => {
+    it('slamming the relay inlet shut bursts the length by the pump; the base pump then runs into it', () => {
       const { s, inlet, out, attackInputs } = flowing();
       const shut = inletShut(attackInputs(0.6), inlet);
       const s1 = run(s, shut, 1);
       const burst = s1.links[0]?.burst;
       expect(burst?.atS).toBeCloseTo(s1.timeS, 9);
-      expect(burst?.segment).toBe(3);
+      // The surge runs back up the hose and adds to the pressure everywhere it passes, so the
+      // hose goes where it was already highest: at the pump on a flat relay.
+      expect(burst?.segment).toBe(0);
+      expect(burst?.peakKpa).toBeGreaterThan(truck(s, 'base').readings.dischargeKpa);
       expect(burst?.peakKpa).toBeGreaterThanOrEqual(HOSE_BURST_KPA);
       expect(truck(s1, 'base').tally.hoseBursts).toBe(1);
 
@@ -470,3 +474,39 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
     });
   },
 );
+
+describe('relay burst in the closed-relay scenario', () => {
+  it.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
+    'slamming the relay inlet at working flow bursts a length (%s)',
+    (_name, base, receiver) => {
+      const { state } = getScenario('closed-relay').build(receiver, { base });
+      const inlet = suctionInletOf(receiver);
+      const lines = state.lines.map((l) => l.deliveryId);
+      const working = run(state, inputsWith(0.6, [inlet, ...lines]), 150);
+      expect(working.links[0]?.burst).toBeUndefined();
+      const slammed = run(working, inputsWith(0.6, lines), 1);
+      expect(slammed.links[0]?.burst?.segment).toBe(0);
+    },
+  );
+
+  it.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
+    'shutting down from the attack end first leaves it whole (%s)',
+    (_name, base, receiver) => {
+      const { state } = getScenario('closed-relay').build(receiver, { base });
+      const inlet = suctionInletOf(receiver);
+      const lines = state.lines.map((l) => l.deliveryId);
+      let s = run(state, inputsWith(0.6, [inlet, ...lines]), 150);
+      // Throttle back to idle over 3 s, then ease the lines shut over 5 s, slowest at the end.
+      for (let i = 1; i <= 30; i++)
+        s = run(s, inputsWith(0.6 * (1 - i / 30), [inlet, ...lines]), 1);
+      for (let i = 1; i <= 50; i++) {
+        const open = (1 - i / 50) ** 3;
+        const valves: Record<string, number> = { [inlet]: 1 };
+        for (const id of lines) valves[id] = open;
+        s = run(s, { throttle: 0, valves, switches: {} }, 1);
+      }
+      s = run(s, inputsWith(0, [inlet]), 100);
+      expect(s.links[0]?.burst).toBeUndefined();
+    },
+  );
+});

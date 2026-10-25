@@ -252,10 +252,11 @@ export interface ValveChange {
 
 /**
  * Relays after this tick's over-pressure check. A live closed relay's peak pressure is its higher
- * end now, or its far end as it was plus a Joukowsky surge if the receiving pump cut the flow this
- * tick (the shutdown spike, L3865–3873). A drop because the supplying pump shut its own delivery
- * is water hammer on that pump instead. At `HOSE_BURST_KPA` a length bursts: the first if the
- * supplying end peaked, the last if the far end did.
+ * end now, or, if the receiving pump cut the flow this tick, a Joukowsky surge on top of the
+ * highest pressure the hose held: the surge runs back up the hose from the closure and adds to the
+ * pressure everywhere it passes (the shutdown spike, L3865–3873). A drop because the supplying
+ * pump shut its own delivery is water hammer on that pump instead. At `HOSE_BURST_KPA` a length
+ * bursts where the pressure was highest: the first at the pump, the last if the far end was higher.
  */
 export function checkBursts(
   links: readonly RelayLink[],
@@ -274,10 +275,11 @@ export function checkBursts(
       (valves.now(link.truckId)[id] ?? 0) < (valves.before(link.truckId)[id] ?? 0);
     const dropLpm = prev === undefined || supplierShut ? 0 : prev.flowLpm - r.flowLpm;
     const surge = dropLpm > 0 ? surgeKpa(dropLpm, hoseType(first.hose).sizeMm) : 0;
-    const farKpa = Math.max(r.endKpa, (prev?.endKpa ?? 0) + surge);
-    const peakKpa = Math.max(r.startKpa, farKpa);
+    const startKpa = Math.max(r.startKpa, (prev?.startKpa ?? 0) + surge);
+    const endKpa = Math.max(r.endKpa, (prev?.endKpa ?? 0) + surge);
+    const peakKpa = Math.max(startKpa, endKpa);
     if (peakKpa < HOSE_BURST_KPA) return link;
-    const segment = r.startKpa >= farKpa ? 0 : link.segments.length - 1;
+    const segment = startKpa >= endKpa ? 0 : link.segments.length - 1;
     return { ...link, burst: { atS: timeS, segment, peakKpa } };
   });
 }
