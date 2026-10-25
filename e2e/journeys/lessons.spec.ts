@@ -69,10 +69,13 @@ async function expectPassedDebrief(page: Page) {
 for (const spec of JOURNEY_APPLIANCES) {
   test(`scenario 1, guided by the coach, on ${spec.id}`, async ({ page }, testInfo) => {
     await gotoApp(page);
-    if (spec.id === 'cat1-generic') {
+    if (APPLIANCES.includes(spec)) {
+      // A catalogue truck is picked on the menu and its lesson started there, as a player would.
       await expect(page.getByRole('heading', { name: 'Scenarios', level: 1 })).toBeVisible();
+      await page.getByRole('radio', { name: new RegExp(`^${spec.name}`) }).check();
       await startButton(page, 1).click();
     } else {
+      // The test appliance isn't on the menu.
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'first-line', appliance, lesson: true });
       }, spec.id);
@@ -144,14 +147,6 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
     page,
     (p) => objectiveDone(p, 'both'),
     async (s) => {
-      console.log(
-        'DBG',
-        s.timeS.toFixed(0),
-        activeTruckOf(s).inputs.throttle.toFixed(3),
-        branchKpa(s, 'line-38').toFixed(0),
-        branchKpa(s, 'line-65').toFixed(0),
-        JSON.stringify(activeTruckOf(s).inputs.valves),
-      );
       await trimBranch(page, s, 'line-38');
       await gateBranch(page, s, 'line-65', bigName);
     },
