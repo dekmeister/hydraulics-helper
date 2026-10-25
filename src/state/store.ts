@@ -13,6 +13,10 @@ import type {
   PlayerInputs,
   SimState,
 } from '../sim/types';
+import { acknowledge, advanceCoach } from '../sim/lesson/progress';
+import type { SupportSpecs } from '../sim/scenarios/types';
+import { beginLesson, recordIfEnded, stepActive, type ActiveLesson } from './lesson';
+import { browserStorage, loadSaved, writeSaved, type Saved } from './persist';
 import { activeTruck, instrumentValue } from './selectors';
 
 /** Appliance loaded at start-up until scenario selection exists (M6). */
@@ -57,7 +61,29 @@ export interface Highlight {
   from: HighlightSource;
 }
 
+/** What fills the screen: the scenario menu, the panels, or a lesson's debrief. */
+export type Screen = 'menu' | 'play' | 'debrief';
+
 interface PumpOpsStore {
+  screen: Screen;
+  /** Show the scenario menu; the sim stays as it is, to resume. */
+  openMenu: () => void;
+  /** Back to the panels. */
+  openPlay: () => void;
+  /** Show the debrief for the lesson in play. */
+  openDebrief: () => void;
+  /** The lesson being played; null in free play (the sandbox). */
+  lesson: ActiveLesson | null;
+  /**
+   * Start a scenario's lesson on the player's appliance (or `spec`, with support roles on
+   * `support`) and show the panels. Throws if it can't be played there.
+   */
+  startLesson: (id: string, opts?: { spec?: ApplianceSpec; support?: SupportSpecs }) => void;
+  /** The player has read the current coach step ('Got it'). */
+  acknowledgeCoach: () => void;
+  /** Settings and progress, as saved. */
+  saved: Saved;
+  setSound: (on: boolean) => void;
   sim: SimState;
   /**
    * What the player has set on the panel; applied to the active truck on every tick. Every other
@@ -66,7 +92,10 @@ interface PumpOpsStore {
   inputs: PlayerInputs;
   /** Run `ticks` fixed sim steps synchronously. The only way sim time moves. */
   step: (ticks: number) => void;
-  /** Replace the sim state wholesale (test fixtures); clears the scenario id unless given. */
+  /**
+   * Replace the sim state wholesale (free play, test fixtures) and show the panels; ends any
+   * lesson and clears the scenario id unless given.
+   */
   reset: (sim?: SimState, scenarioId?: string | null) => void;
   /** Scenario the sim was loaded from, if any (the header picker shows it). */
   scenarioId: string | null;
@@ -75,7 +104,7 @@ interface PumpOpsStore {
    * and offered on it, whichever truck the player is operating now.
    */
   playerSpec: ApplianceSpec;
-  /** Load a scenario's initial state on the player's appliance; throws if it can't play it. */
+  /** Load a scenario's initial state on the player's appliance for free play; throws if it can't play it. */
   loadScenario: (id: string) => void;
   /** Displayed readings for the last `WAKE_HISTORY_S` of sim time, oldest first. */
   wake: readonly WakeSample[];
@@ -96,7 +125,44 @@ interface PumpOpsStore {
 
 const initialSim = defaultSim();
 
+/** Save `saved` if it changed. */
+function persist(before: Saved, after: Saved): Saved {
+  if (after !== before) writeSaved(browserStorage(), after);
+  return after;
+}
+
 export const useStore = create<PumpOpsStore>()((set, get) => ({
+  screen: 'menu',
+  openMenu: () => {
+    set({ screen: 'menu' });
+  },
+  openPlay: () => {
+    set({ screen: 'play' });
+  },
+  openDebrief: () => {
+    if (get().lesson !== null) set({ screen: 'debrief' });
+  },
+  lesson: null,
+  startLesson: (id, opts = {}) => {
+    const { sim, lesson } = beginLesson(id, opts.spec ?? get().playerSpec, opts.support);
+    get().reset(sim, id);
+    set({ lesson });
+  },
+  acknowledgeCoach: () => {
+    set(({ lesson, sim }) => {
+      if (lesson === null) return {};
+      const step = lesson.def.coach?.[lesson.progress.coachIndex];
+      if (step === undefined || step.done !== undefined) return {};
+      const acked = acknowledge(lesson.def, lesson.progress, step.id);
+      return { lesson: { ...lesson, progress: advanceCoach(lesson.def, acked, sim) } };
+    });
+  },
+  saved: loadSaved(browserStorage()),
+  setSound: (on) => {
+    set(({ saved }) => ({
+      saved: persist(saved, { ...saved, settings: { ...saved.settings, sound: on } }),
+    }));
+  },
   sim: initialSim,
   inputs: activeTruck(initialSim).inputs,
   playerSpec: activeTruck(initialSim).spec,
@@ -104,20 +170,33 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   scenarioId: TANK_ATTACK.id,
   wake: [],
   step: (ticks) => {
-    set(({ sim, inputs, wake }) => {
+    set(({ sim, inputs, wake, lesson, saved }) => {
       let next = sim;
+      let playing = lesson;
       const samples = [...wake];
       for (let i = 0; i < ticks; i++) {
         next = advance(next, inputs, TICK_S);
+        if (playing !== null) ({ sim: next, lesson: playing } = stepActive(playing, next, TICK_S));
         samples.push(wakeSample(next));
       }
       const cutoff = next.timeS - WAKE_HISTORY_S;
-      return { sim: next, wake: samples.filter((w) => w.tS >= cutoff) };
+      const recorded =
+        lesson === null || playing === null
+          ? saved
+          : persist(saved, recordIfEnded(lesson.progress, playing, next, saved));
+      return {
+        sim: next,
+        lesson: playing,
+        saved: recorded,
+        wake: samples.filter((w) => w.tS >= cutoff),
+      };
     });
   },
   reset: (sim, scenarioId) => {
     const next = sim ?? defaultSim();
     set({
+      screen: 'play',
+      lesson: null,
       sim: next,
       inputs: activeTruck(next).inputs,
       playerSpec: activeTruck(next).spec,

@@ -72,6 +72,17 @@ export function lessonFacts(p: LessonProgress): LessonFacts {
   };
 }
 
+/** The coach moved past every step whose condition (default: acknowledged) now holds. */
+export function advanceCoach(def: LessonDef, p: LessonProgress, state: SimState): LessonProgress {
+  const coach = def.coach ?? [];
+  let coachIndex = p.coachIndex;
+  for (let step = coach[coachIndex]; step !== undefined; step = coach[++coachIndex]) {
+    const done = step.done ?? { kind: 'ack', step: step.id };
+    if (!holds(done, state, lessonFacts(p))) break;
+  }
+  return coachIndex === p.coachIndex ? p : { ...p, coachIndex };
+}
+
 /** The player has read a coach step ('Got it'). Takes effect on the next tick. */
 export function acknowledge(def: LessonDef, p: LessonProgress, step: string): LessonProgress {
   if (!(def.coach ?? []).some((c) => c.id === step) || p.acks.includes(step)) return p;
@@ -193,13 +204,7 @@ export function stepLesson(
   }
   p = { ...p, objectives, stats: stepStats(p.stats, s, truck, dtS) };
 
-  const coach = def.coach ?? [];
-  let coachIndex = p.coachIndex;
-  for (let step = coach[coachIndex]; step !== undefined; step = coach[++coachIndex]) {
-    const done = step.done ?? { kind: 'ack', step: step.id };
-    if (!holds(done, s, lessonFacts(p))) break;
-  }
-  p = { ...p, coachIndex };
+  p = advanceCoach(def, p, s);
 
   const finalTruck = truckOf(s, p.playerTruckId, undefined) ?? truck;
   if (def.objectives.every((o) => p.objectives[o.id]?.doneAtS !== undefined))
