@@ -242,6 +242,7 @@ Work order (one commit each, `npm run verify` green at the end):
   * Scene stations: trucks at the same relay depth spread across the route, and one farm dam and one hydrant are placed by the base pump's station; scenarios with several hydrants or dams, or trucks far apart, need placement data on the scenario (M6 data format). The relay hose is a map symbol labelled with its climb, not drawn to the lays' scale.
   * Closed-relay solve fits the supplying pump from last tick's flow; a pump far from a square law (several lines, relief, cavitating) settles over a few ticks. A second secant pass per tick would tighten it if a scenario needs it.
   * The e2e + review run is now ~2.1 + ~0.9 min with the relay fixtures and journeys (see the budget note above).
+  * **PR #4 review follow-ups:** `advance(state, inputs, dt)` takes inputs for the active truck only, so a `ScriptStep` can't drive a support truck (the fill sequence, a booster failure) and an AI operator would have to write `truck.inputs` from outside `advance`. Change it to a per-truck inputs map (unlisted trucks keep their held inputs) before M6 builds scripts on it. The closed-relay fit reads last tick's `linkReadings` flow, so it's sim state: a save must keep it, which adds to the schema-version item above.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 
 ## Risks

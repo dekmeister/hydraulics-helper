@@ -31,7 +31,7 @@ Tests: `src/sim/calibration.test.ts` asserts every worked example below. A faili
 | Water hammer | surge `ρ·a·Δv`, a = 250 m/s in charged hose; event above 500 kPa | qualitative only (L2255, L3112) | PLACEHOLDER — needs Dek |
 | Relay design pressures | 700 kPa out, 100 kPa minimum residual in, 600 kPa budget between pumps | L3794–3796 | doctrine-confirmed |
 | Hose working pressure | 1000 kPa (a quarter of the ~4000 kPa rated burst); the receiving pump is warned above it | L945–948 | doctrine-confirmed |
-| Relay hose burst | 1300 kPa peak (steady, or the higher end before plus the Joukowsky surge of a flow cut at the far end) | L3865–3873 qualitative | PLACEHOLDER — needs Dek |
+| Relay hose burst | 1300 kPa peak (steady, or the higher end before plus the Joukowsky surge of a flow cut by a valve shut on the receiving pump) | L3865–3873 qualitative | PLACEHOLDER — needs Dek |
 
 ### Hose friction coefficients
 
@@ -99,7 +99,7 @@ Not yet asserted (it needs a later milestone): C15 open-water capacity (M6).
 | C12 | 700 kPa out, 65 mm at 100 kPa per length, 20 m up: residual after 4 lengths | 100 kPa (the 600 kPa budget) | 100 | L3813–3820 |
 | C13 | Same, flat: residual after 6 lengths | 100 kPa | 100 | L3822–3827 |
 
-Also asserted, on Cat 1 and the test appliance in both roles: the residual is discharge − valve − friction − head and matches the receiving compound to 1 %; water is conserved through a relay and a three-pump chain; uphill leaves less residual; over-running the relay reads inlet zero, hose soft, cavitating, with throttle adding no flow; slamming the relay inlet bursts the length by the pump; throttling down and easing shut doesn't; an open relay flows by valve and hose alone into a tank or a portable dam, which overflow when full and drain when drawn faster than filled.
+Also asserted, on Cat 1 and the test appliance in both roles: the residual is discharge − valve − friction − head and matches the receiving compound to 1 %; water is conserved through a relay and a three-pump chain; uphill leaves less residual; over-running the relay reads inlet zero, hose soft, cavitating, with throttle adding no flow; slamming the relay inlet bursts the length by the pump; throttling down, easing shut, and the base pump running dry or shutting its tank-to-pump don't; an open relay flows by valve and hose alone into a tank or a portable dam, which overflow when full and drain when drawn faster than filled.
 
 ### Solver behaviour (asserted in `network.test.ts` and `engine.test.ts`)
 
@@ -185,3 +185,4 @@ The tank runs dry at t = 250 s, and every gauge then drops to zero. M4 appended 
 24. **Receiving pump's relief on shutdown**: on a Cat 1 receiver, slamming its *lines* shut opens its relief (dumping to tank), so the relay keeps flowing and no burst; only the inlet slammed shut bursts the relay. Is that how a real relief behaves under a relay, and should relief dumped into a full tank overflow?
 25. **Relay procedure**: the fill sequence (500 kPa until every pump has water, then 700, L3850–3853), radio calls and the booster-failure loss (~30 %, L3881) aren't modelled; support trucks hold fixed settings. Which of these matter for the first relay scenarios (M6)?
 26. **Relay display**: a closed relay is drawn charged once pressurised, even before the receiver draws; an open relay only while water flows. A burst length is drawn as a jet near its end of the hose, and the relay can't be repaired in play (reload the scenario). Right conventions?
+27. **Relay burst vs closure time** (PR #4 review): the surge in row 22 is taken per tick, like row 21, but a burst is latched with no repair (row 26), so a tick-size artefact becomes permanent. The review measured ~1800 kPa for a single-tick slam at any dt from 0.02 to 0.2 s and no burst for a 3 s ease at any dt; by inference (untested) a closure over ~0.5 s is seen as several small steps and likely under-predicted, since 2L/a for 120 m of layflat is about 1 s. Should "instant closure" be judged against the hose's 2L/a (row 21's proposal) before a burst is decided?
