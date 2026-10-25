@@ -48,7 +48,8 @@ export function gestureHint(
 const THROTTLE_HINTS: Readonly<Record<Extract<RealItem, { kind: 'throttle' }>['variant'], string>> =
   {
     'speed-switch': 'the speed switch: a flick up or down, or hold it',
-    vernier: 'the throttle knob: twist it to fine-tune, or hold its red button to push or pull it',
+    vernier:
+      'the throttle knob: drag it along its shaft to push or pull it, or up and down to twist it fine',
   };
 
 /** The delivery a line is on, by its panel label ('Delivery 1'), or the line id. */
