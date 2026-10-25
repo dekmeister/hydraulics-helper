@@ -82,6 +82,14 @@ export const CASING_HEAT_LOSS_KW_PER_K = 0.02;
 export const PUMP_TEMP_CAUTION_C = 60;
 export const PUMP_TEMP_ALARM_C = 80;
 
+/**
+ * Sustained abuse that damages the pump and fails a lesson (PLAN parking lot, M4): seconds of
+ * cavitation, and seconds above the temperature caution, over the whole scenario. Gentle on purpose:
+ * a minute of either is well past a lesson learned. // PLACEHOLDER — needs Dek
+ */
+export const PUMP_DAMAGE_CAVITATION_S = 60;
+export const PUMP_DAMAGE_OVERHEAT_S = 60;
+
 /** Density of water, kg/m³. Physics. */
 export const WATER_DENSITY_KG_M3 = 1000;
 
