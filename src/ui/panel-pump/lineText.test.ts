@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { HoseLine } from '../../sim/types';
-import { describeLine } from './lineText';
+import type { HoseLine, RelayLink } from '../../sim/types';
+import { describeLine, describeRelay } from './lineText';
 
 const line = (segments: HoseLine['segments'], elevationM = 0): HoseLine => ({
   id: 'l',
@@ -34,5 +34,32 @@ describe('hose lay description', () => {
       '2 × 30 m 65 mm lined + 1 × 30 m 38 mm unlined · 15 mm branch · 14 m uphill',
     );
     expect(describeLine({ ...l, elevationM: -6 })).toMatch(/6 m downhill$/);
+  });
+});
+
+describe('relay hose description', () => {
+  const relay = (elevationM: number): RelayLink => ({
+    id: 'r',
+    truckId: 'base',
+    deliveryId: 'd1',
+    segments: Array.from({ length: 4 }, () => ({ hose: '65L', lengthM: 30 })),
+    elevationM,
+    to: { kind: 'inlet', truckId: 'attack', inletId: 'suction' },
+  });
+
+  it('names the hose, where it goes and the climb', () => {
+    expect(describeRelay(relay(20), 'Attack pump')).toBe(
+      'Relay · 4 × 30 m 65 mm lined · to Attack pump · 20 m uphill',
+    );
+    expect(describeRelay(relay(0), 'Portable dam')).toBe(
+      'Relay · 4 × 30 m 65 mm lined · to Portable dam',
+    );
+  });
+
+  it('says when a length has burst', () => {
+    const burst = { ...relay(0), burst: { atS: 1, segment: 3, peakKpa: 1400 } };
+    expect(describeRelay(burst, 'Attack pump')).toBe(
+      'Relay · 4 × 30 m 65 mm lined · to Attack pump · length 4 burst',
+    );
   });
 });

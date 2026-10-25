@@ -5,8 +5,10 @@ import {
   INSTRUMENT_UNIT,
   instrumentValue,
   lineOnDelivery,
+  relayOnDelivery,
   selectWarnings,
 } from '../../state/selectors';
+import { relayTarget } from '../../state/relay';
 import { useStore } from '../../state/store';
 import { primerStatus } from '../../state/supply';
 import type { ApplianceSpec, InstrumentSpec } from '../../sim/types';
@@ -20,7 +22,7 @@ import { Gauge } from './gauge/Gauge';
 import { range } from './gauge/gaugeScale';
 import { computeWake } from './gauge/wake';
 import { TankLevel } from './gauge/TankLevel';
-import { describeLine } from './lineText';
+import { describeLine, describeRelay } from './lineText';
 import { useDampedValue } from './useDampedValue';
 import { WarningStrip } from './WarningStrip';
 
@@ -84,6 +86,12 @@ function TankInstrument({ item }: { item: Extract<PanelItem, { kind: 'tank-level
 function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> }) {
   const spec = useActiveSpec();
   const line = useStore((s) => lineOnDelivery(s.sim, item.control));
+  // A delivery carries a lay or a relay; either makes its valve worth opening.
+  const relayText = useStore((s) => {
+    const relay = relayOnDelivery(s.sim, item.control);
+    return relay === undefined ? undefined : describeRelay(relay, relayTarget(s.sim, relay));
+  });
+  const laid = line !== undefined || relayText !== undefined;
   const open = useStore((s) => s.inputs.valves[item.control] ?? 0);
   const setValve = useStore((s) => s.setValve);
   const highlight = useStore((s) =>
@@ -123,7 +131,7 @@ function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> 
           {delivery === undefined ? '' : ` · ${String(delivery.sizeMm)} mm`}
         </span>
         <span className="delivery-row__line" id={`${textId}-line`}>
-          {line === undefined ? 'No line laid' : describeLine(line)}
+          {line !== undefined ? describeLine(line) : (relayText ?? 'No line laid')}
         </span>
       </button>
       <ValveHandle
@@ -134,7 +142,7 @@ function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> 
         }}
         function="outlet"
         tap={item.tap}
-        {...(line === undefined ? { disabledReason: 'NO LINE' } : {})}
+        {...(laid ? {} : { disabledReason: 'NO LINE' })}
       />
     </div>
   );

@@ -2,9 +2,11 @@
 // with a different shape, must pass these. Generic behaviour belongs here, not in per-truck tests.
 import { describe, expect, it } from 'vitest';
 import { BRANCH_OPTIMUM_KPA, HOSES } from '../constants';
-import { createIdleInputs, createInitialState } from '../engine';
+import { createIdleInputs, createInitialState, switchTruck } from '../engine';
 import {
+  closedRelayPair,
   draughtSite,
+  expectSane,
   hydrantSite,
   inputsWith,
   layLine,
@@ -14,44 +16,16 @@ import {
   seededRandom,
   suctionInletOf,
   tankAttackInputs,
+  truck,
   truckOf,
 } from '../testUtils';
-import type { ApplianceSpec, HoseLine, PlayerInputs, SimState } from '../types';
+import type { ApplianceSpec, HoseLine, PlayerInputs } from '../types';
 import { APPLIANCES } from './catalogue';
 import { controlIds, switchControlIds, validateInputs } from './controls';
 import { TEST_APPLIANCE } from './testAppliance';
 
 const ALL: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
 const allDeliveries = (spec: ApplianceSpec) => spec.deliveries.map((d) => d.id);
-
-function expectSaneReadings(state: SimState) {
-  const t = truckOf(state);
-  const r = t.readings;
-  const numbers = [
-    t.rpm,
-    t.tankL,
-    r.dischargeKpa,
-    r.compoundKpa,
-    r.pumpFlowLpm,
-    r.reliefFlowLpm,
-    ...Object.values(r.deliveryFlowLpm),
-    ...Object.values(r.branchKpa),
-  ];
-  numbers.push(t.pump.tempC, t.pump.vacuumKpa, t.pump.flutter, r.cavitation);
-  numbers.push(...Object.values(r.inletFlowLpm));
-  for (const n of numbers) expect(Number.isFinite(n)).toBe(true);
-  expect(r.compoundKpa).toBeGreaterThanOrEqual(-100);
-  expect(r.cavitation).toBeGreaterThanOrEqual(0);
-  expect(r.cavitation).toBeLessThanOrEqual(1);
-  expect(t.pump.vacuumKpa).toBeGreaterThanOrEqual(0);
-  for (const q of Object.values(r.inletFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
-  expect(r.dischargeKpa).toBeGreaterThanOrEqual(0);
-  for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
-  expect(t.tankL).toBeGreaterThanOrEqual(0);
-  expect(t.tankL).toBeLessThanOrEqual(t.spec.tank?.capacityL ?? 0);
-  expect(t.rpm).toBeGreaterThanOrEqual(t.spec.engine.idleRpm - 1e-9);
-  expect(t.rpm).toBeLessThanOrEqual(t.spec.engine.maxRpm + 1e-9);
-}
 
 describe('appliance catalogue', () => {
   it('has unique ids and never registers the test appliance', () => {
@@ -140,7 +114,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         tankAttackInputs(spec, 0.6, allDeliveries(spec)),
         50,
       );
-      expectSaneReadings(s);
+      expectSane(s);
       expect(truckOf(s).readings.pumpFlowLpm).toBeGreaterThan(0);
       expect(truckOf(s).readings.dischargeKpa).toBeGreaterThan(0);
     });
@@ -165,7 +139,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
             switches: Object.fromEntries(controlIds(spec).map((id) => [id, rand() < 0.5])),
           };
           s = run(s, inputs, 10);
-          expectSaneReadings(s);
+          expectSane(s);
         }
       }
     });
@@ -187,7 +161,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
       expect(r.dischargeKpa).toBe(0);
       expect(r.pumpFlowLpm).toBe(0);
       for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBe(0);
-      expectSaneReadings(s);
+      expectSane(s);
     });
 
     const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
@@ -213,7 +187,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         let s = primeAt(4);
         expect(truckOf(s).pump.primed).toBe(true);
         s = run(s, inputsWith(0.6, [suctionInletOf(spec), ...allDeliveries(spec)]), 50);
-        expectSaneReadings(s);
+        expectSane(s);
         expect(truckOf(s).readings.pumpFlowLpm).toBeGreaterThan(0);
         expect(truckOf(s).readings.compoundKpa).toBeLessThan(-40);
       },
@@ -240,7 +214,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         s = run(s, inputsWith(1, [suctionInletOf(spec), ...allDeliveries(spec)]), 600);
         expect(truckOf(s).pump.primed).toBe(false);
         expect(truckOf(s).readings.pumpFlowLpm).toBe(0);
-        expectSaneReadings(s);
+        expectSane(s);
       },
     );
 
@@ -257,9 +231,74 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
             switches: Object.fromEntries(controlIds(spec).map((id) => [id, rand() < 0.5])),
           };
           s = run(s, inputs, 10);
-          expectSaneReadings(s);
+          expectSane(s);
         }
       }
+    });
+  },
+);
+
+// Relay contract (ARCHITECTURE §4.7): every appliance relays to every other, its own kind included.
+const PAIRS = ALL.flatMap((base) => ALL.map((receiver) => [base, receiver] as const)).filter(
+  ([, receiver]) => receiver.inlets.some((i) => i.kind === 'suction'),
+);
+
+describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
+  'relay contract: %s',
+  (_name, base, receiver) => {
+    it('a closed relay delivers water, conserves it, and replays exactly', () => {
+      const { state, inlet, out, attackInputs } = closedRelayPair(base, receiver);
+      const go = () => run(state, attackInputs(0.4), 200);
+      const s = go();
+      expect(s).toStrictEqual(go());
+      expectSane(s);
+      const q = truck(s, 'attack').readings.inletFlowLpm[inlet] ?? 0;
+      expect(q).toBeGreaterThan(0);
+      expect(truck(s, 'base').readings.deliveryFlowLpm[out]).toBeCloseTo(q, 6);
+      expect(truck(s, 'attack').readings.compoundKpa).toBeGreaterThan(0);
+    });
+
+    it('over-running the relay caps the flow without NaN', () => {
+      const { state, attackInputs } = closedRelayPair(base, receiver, {
+        lengths: 8,
+        baseThrottle: 0.3,
+        tipMm: 25,
+      });
+      const s = run(state, attackInputs(1), 100);
+      expectSane(s);
+      expect(truck(s, 'attack').readings.cavitation).toBeGreaterThan(0);
+    });
+
+    it('survives fuzzed inputs on both pumps, bursting the hose or not', () => {
+      const rand = seededRandom(0xfeed);
+      const wild = () => [rand(), 0, 1, -1, Number.NaN, 1e-9][Math.floor(rand() * 6)] ?? 0;
+      const fuzz = (spec: ApplianceSpec): PlayerInputs => ({
+        throttle: wild(),
+        valves: Object.fromEntries(controlIds(spec).map((id) => [id, wild()])),
+        switches: Object.fromEntries(controlIds(spec).map((id) => [id, rand() < 0.5])),
+      });
+      let s = closedRelayPair(base, receiver).state;
+      for (let burst = 0; burst < 30; burst++) {
+        // Now and then the base pump's settings change too (as the player would leave them).
+        if (burst % 5 === 4) {
+          s = switchTruck(switchTruck(s, 'base', fuzz(receiver)), 'attack', fuzz(base));
+        }
+        s = run(s, fuzz(receiver), 10);
+        expectSane(s);
+      }
+    });
+
+    it('an open relay into the receiving tank refills it', () => {
+      const { state, link, out } = closedRelayPair(base, receiver);
+      const open = {
+        ...state,
+        links: [{ ...link, to: { kind: 'tank' as const, truckId: 'attack' } }],
+        trucks: state.trucks.map((t) => (t.id === 'attack' ? { ...t, tankL: 0 } : t)),
+      };
+      const s = run(open, createIdleInputs(receiver), 100);
+      expectSane(s);
+      expect(truck(s, 'base').readings.deliveryFlowLpm[out]).toBeGreaterThan(0);
+      expect(truck(s, 'attack').tankL).toBeGreaterThan(0);
     });
   },
 );

@@ -24,17 +24,59 @@ export interface ScriptedRun {
   durationS: number;
 }
 
+/** Another truck the scenario puts on the fireground, which holds fixed settings (AI later). */
+export interface SupportRole {
+  /** Truck id in the built state, e.g. 'base'. */
+  id: string;
+  /** UI name, e.g. 'Base pump'. */
+  label: string;
+  requires: ScenarioRequirements;
+}
+
+/** Appliance chosen for each support role, by role id; a missing role takes the player's. */
+export type SupportSpecs = Readonly<Record<string, ApplianceSpec>>;
+
 export interface Scenario {
   id: string;
   title: string;
+  /** What the player's appliance needs. */
   requires: ScenarioRequirements;
-  /** Initial state and input timeline for `spec`, keyed by that spec's control ids. */
-  build(spec: ApplianceSpec): ScriptedRun;
+  /** Other trucks on the fireground, each with what its appliance needs. */
+  support?: readonly SupportRole[];
+  /**
+   * Initial state and input timeline for the player on `spec` (script keyed by its control ids),
+   * with each support role on `support[role]` or, by default, the same appliance.
+   */
+  build(spec: ApplianceSpec, support?: SupportSpecs): ScriptedRun;
 }
 
-/** Whether `spec` has every capability the scenario requires. */
-export function supports(scenario: Scenario, spec: ApplianceSpec): boolean {
-  const { tank, minDeliveries, suction = false, primer = false } = scenario.requires;
+/** The appliance a support role uses: the one chosen for it, or the player's. */
+export function supportSpec(
+  role: Pick<SupportRole, 'id'>,
+  spec: ApplianceSpec,
+  support: SupportSpecs = {},
+): ApplianceSpec {
+  return support[role.id] ?? spec;
+}
+
+/**
+ * Whether the player's `spec` can play the scenario, with each support role on `support[role]` or
+ * on the same appliance.
+ */
+export function supports(
+  scenario: Scenario,
+  spec: ApplianceSpec,
+  support: SupportSpecs = {},
+): boolean {
+  return (
+    meets(scenario.requires, spec) &&
+    (scenario.support ?? []).every((role) => meets(role.requires, supportSpec(role, spec, support)))
+  );
+}
+
+/** Whether `spec` has every capability in `requires`. */
+function meets(requires: ScenarioRequirements, spec: ApplianceSpec): boolean {
+  const { tank, minDeliveries, suction = false, primer = false } = requires;
   const hasTank = spec.tank !== undefined && spec.inlets.some((i) => i.kind === 'tank');
   const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
   return (

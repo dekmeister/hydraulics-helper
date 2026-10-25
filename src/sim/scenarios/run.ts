@@ -7,7 +7,10 @@ export interface TraceSample {
   /** Sample time, s (from the tick count, so free of float drift). */
   tS: number;
   inputs: PlayerInputs;
+  /** The active truck. */
   truck: TruckState;
+  /** The whole state, for multi-truck traces. */
+  state: SimState;
 }
 
 function activeTruck(state: SimState): TruckState {
@@ -17,7 +20,8 @@ function activeTruck(state: SimState): TruckState {
 }
 
 /**
- * Run a scripted scenario at the fixed tick rate, sampling the active truck every `sampleEveryS`.
+ * Run a scripted scenario at the fixed tick rate, sampling every `sampleEveryS`. The script drives
+ * the active truck; other trucks hold their settings.
  * Script steps fire on the first tick at or after their time.
  */
 export function runScript(run: ScriptedRun, sampleEveryS = 1): TraceSample[] {
@@ -43,7 +47,7 @@ export function runScript(run: ScriptedRun, sampleEveryS = 1): TraceSample[] {
     }
     if (tick > 0) state = advance(state, inputs, TICK_S);
     if (tick % sampleTicks === 0)
-      samples.push({ tS: tick * TICK_S, inputs, truck: activeTruck(state) });
+      samples.push({ tS: tick * TICK_S, inputs, truck: activeTruck(state), state });
   }
   return samples;
 }

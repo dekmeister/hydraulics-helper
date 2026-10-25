@@ -1,6 +1,6 @@
 /**
  * One step of mulberry32, a small seeded PRNG: returns a value in [0, 1) and the next state.
- * The sim keeps the state in `SimState.rngState`, so noisy behaviour replays exactly.
+ * Each truck keeps its own state in `TruckState.rngState`, so noisy behaviour replays exactly.
  */
 export function nextRandom(state: number): [number, number] {
   const next = (state + 0x6d2b79f5) >>> 0;

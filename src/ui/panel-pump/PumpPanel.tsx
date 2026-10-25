@@ -48,10 +48,14 @@ function Section({ section }: { section: PanelSection }) {
 export function PumpPanel() {
   const applianceId = useStore((s) => activeTruck(s.sim).spec.id);
   const name = useStore((s) => activeTruck(s.sim).spec.name);
+  // With several trucks on the fireground, say which one this panel is.
+  const truckLabel = useStore((s) => (s.sim.trucks.length > 1 ? activeTruck(s.sim).label : null));
   const layout = getPanelLayout(applianceId);
   return (
     <div className="pump-panel" data-appliance={applianceId}>
-      <p className="pump-panel__appliance">{name}</p>
+      <p className="pump-panel__appliance">
+        {truckLabel === null ? name : `${truckLabel} · ${name}`}
+      </p>
       {layout.sections.map((s) => (
         <Section key={s.id} section={s} />
       ))}

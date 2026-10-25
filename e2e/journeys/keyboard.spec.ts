@@ -91,3 +91,20 @@ for (const spec of JOURNEY_APPLIANCES) {
     }
   });
 }
+
+test('keyboard reaches the truck switcher and changes trucks with Enter', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'keyboard pass runs on desktop');
+  await gotoApp(page);
+  await page.evaluate(() => {
+    window.__pumpops?.load({ scenario: 'closed-relay' });
+  });
+  const onBase = async () =>
+    page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.truck === 'base');
+  for (let i = 0; i < 60 && !(await onBase()); i++) await page.keyboard.press('Tab');
+  expect(await onBase()).toBe(true);
+  await page.keyboard.press('Enter');
+  expect((await getState(page)).activeTruckId).toBe('base');
+  await expect(page.getByRole('button', { name: /^Base pump/, pressed: true })).toBeVisible();
+});

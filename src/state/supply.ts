@@ -65,14 +65,23 @@ function supplyState(truck: TruckState, supply: SupplyLine, source: WaterSource)
   }
 }
 
-/** Every supply hose on the active truck, with its state, given the inputs the player holds. */
-export function supplyLays(sim: SimState, inputs: PlayerInputs): SupplyLay[] {
-  const truck = activeTruck(sim);
+/**
+ * Every supply hose on a truck (default: the active one) with its state. `inputs` are the ones the
+ * player holds on the active truck; any other truck's come from the sim, where they're held.
+ */
+export function supplyLays(
+  sim: SimState,
+  inputs: PlayerInputs,
+  truckId = sim.activeTruckId,
+): SupplyLay[] {
+  const truck = sim.trucks.find((t) => t.id === truckId);
+  if (truck === undefined) throw new Error(`No truck '${truckId}'`);
+  const valves = truckId === sim.activeTruckId ? inputs.valves : truck.inputs.valves;
   return connectedSupplies(sim, truck.id).map(({ supply, source }) => ({
     supply,
     source,
     state: supplyState(truck, supply, source),
     flowLpm: truck.readings.inletFlowLpm[supply.inletId] ?? 0,
-    open: (inputs.valves[supply.inletId] ?? 0) >= VALVE_CLOSED_EPS,
+    open: (valves[supply.inletId] ?? 0) >= VALVE_CLOSED_EPS,
   }));
 }

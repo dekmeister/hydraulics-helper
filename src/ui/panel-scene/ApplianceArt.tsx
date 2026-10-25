@@ -1,6 +1,6 @@
 import type { TankLevelState } from '../../state/tankLevel';
 import type { SceneArt } from '../appliances/types';
-import type { TruckPose } from './geometry';
+import { PUMP_BAY_U as BAY_U, type TruckPose } from './geometry';
 
 export interface CouplingView {
   /** Spec control id of the coupling (delivery or suction inlet). */
@@ -18,8 +18,6 @@ interface Props {
   tank?: { fraction: number; level: TankLevelState };
 }
 
-/** Length of the pump bay at the rear of the body, drawing units. */
-const BAY_U = 14;
 const BAR_H = 8;
 
 /**

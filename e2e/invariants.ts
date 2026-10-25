@@ -90,8 +90,8 @@ export async function expectSpecRenderedOnce(page: Page, layout: PanelLayout): P
 }
 
 /**
- * Scene invariant: one legend button per spec delivery, by the name the layout gives it, and one
- * hose lay per laid line, each reachable.
+ * Scene invariant: one legend button per spec delivery of the active truck, by the name the layout
+ * gives it, each reachable; one hose lay per laid line, on its own truck; one relay hose per relay.
  */
 export async function expectSceneRenderedOnce(page: Page, layout: PanelLayout): Promise<void> {
   const state = await page.evaluate(() => window.__pumpops?.getState());
@@ -105,9 +105,15 @@ export async function expectSceneRenderedOnce(page: Page, layout: PanelLayout): 
     await row.scrollIntoViewIfNeeded();
     await expect(row, `legend row for ${d.label} reachable`).toBeInViewport();
   }
+  // Delivery ids repeat between trucks, so hose lays are counted within the active truck's groups.
+  const active = page.locator('[data-truck-active="true"]');
   const laid = state.lines.filter((l) => l.truckId === state.activeTruckId);
   for (const line of laid) {
-    await expect(page.getByTestId(`hose-lay-${line.deliveryId}`)).toHaveCount(1);
+    await expect(active.getByTestId(`hose-lay-${line.deliveryId}`)).toHaveCount(1);
   }
-  await expect(page.locator('[data-testid^="hose-lay-"]')).toHaveCount(laid.length);
+  await expect(active.locator('[data-testid^="hose-lay-"]')).toHaveCount(laid.length);
+  await expect(page.locator('[data-testid^="hose-lay-"]')).toHaveCount(state.lines.length);
+  for (const link of state.links) {
+    await expect(page.getByTestId(`relay-lay-${link.id}`)).toHaveCount(1);
+  }
 }
