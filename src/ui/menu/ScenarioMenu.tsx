@@ -1,4 +1,5 @@
 import { SCENARIOS } from '../../sim/scenarios';
+import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import type { Scenario } from '../../sim/scenarios/types';
 import { useStore } from '../../state/store';
 import { missingCapabilities } from './requirements';
@@ -22,6 +23,8 @@ export function ScenarioMenu() {
   const openPlay = useStore((s) => s.openPlay);
   const playable = (s: Scenario) => missingCapabilities(s, spec).length === 0;
   const next = LADDER.find((s) => playable(s) && results[s.id]?.[spec.id]?.passed !== true);
+  // The sandbox is tank attack, or the first fireground this appliance can play.
+  const sandbox = [TANK_ATTACK, ...SCENARIOS].find(playable);
   return (
     <main className="screen menu" aria-labelledby="menu-title">
       <h1 id="menu-title" className="screen__title">
@@ -100,8 +103,9 @@ export function ScenarioMenu() {
         <button
           type="button"
           className="paper-button"
+          disabled={sandbox === undefined}
           onClick={() => {
-            loadScenario(SCENARIOS.find((s) => s.id === 'tank-attack')?.id ?? LADDER[0]?.id ?? '');
+            if (sandbox !== undefined) loadScenario(sandbox.id);
           }}
         >
           Free play
