@@ -211,6 +211,30 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
       },
     );
 
+    it.runIf(hasSuction && spec.primer !== undefined)('fills the casing when it primes', () => {
+      expect(truckOf(createInitialState(spec)).pump.casingWet).toBe(false);
+      expect(truckOf(primeAt(4)).pump.casingWet).toBe(true);
+    });
+
+    const tankInlets = spec.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
+    it.runIf(tankInlets.length > 0)(
+      'keeps the casing full once the tank has filled it, until an open line pumps it out',
+      () => {
+        const lines = lineOnEveryDelivery(spec);
+        let s = createInitialState(spec, lines);
+        expect(truckOf(s).pump.casingWet).toBe(false);
+        s = run(s, tankAttackInputs(spec, 0, []), 1);
+        expect(truckOf(s).pump.casingWet).toBe(true);
+        // Every valve shut: the water stays in the casing.
+        s = run(s, createIdleInputs(spec), 50);
+        expect(truckOf(s).pump.casingWet).toBe(true);
+        // No feed and a line open to air: the pump pushes its water out.
+        s = run(s, inputsWith(0.5, allDeliveries(spec)), 1);
+        expect(truckOf(s).pump.casingWet).toBe(false);
+        expectSane(s);
+      },
+    );
+
     it.runIf(hasSuction && spec.primer !== undefined)(
       'cavitates when pushed past what the lift allows, and throttle then adds no flow',
       () => {

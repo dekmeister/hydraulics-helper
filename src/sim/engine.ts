@@ -139,9 +139,13 @@ function prepareTruck(
   const openToAir =
     hosesOn(state, truck.id).some((h) => (clean.valves[h.deliveryId] ?? 0) >= VALVE_CLOSED_EPS) ||
     (pttId !== undefined && (clean.valves[pttId] ?? 0) >= VALVE_CLOSED_EPS);
-  const pump = stepPrime(truck.pump, { spec, inputs: clean, supplies, flooded, openToAir }, dtS);
+  const primed = stepPrime(truck.pump, { spec, inputs: clean, supplies, flooded, openToAir }, dtS);
+  const wet = flooded || primed.primed;
+  // PLACEHOLDER — needs Dek: with no feed, a line or pump to tank open to air pumps the casing out;
+  // otherwise it stays full (no drain is modelled).
+  const pump = { ...primed, casingWet: wet || (primed.casingWet && !openToAir) };
   return {
-    prepared: { truck, inputs: clean, rpm, pump, wet: flooded || pump.primed },
+    prepared: { truck, inputs: clean, rpm, pump, wet },
     input: {
       spec,
       rpm,

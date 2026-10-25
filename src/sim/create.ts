@@ -45,6 +45,7 @@ export interface TruckSetup {
 export function restingPump(): PumpState {
   return {
     primed: false,
+    casingWet: false,
     vacuumKpa: 0,
     primerRunS: 0,
     primerDutyS: 0,
@@ -106,7 +107,7 @@ export function buildTrucks(setups: readonly TruckSetup[], seed: number): TruckS
       tankL: spec.tank?.capacityL ?? 0,
       inputs: setup.inputs === undefined ? idleInputs(spec) : sanitiseInputs(spec, setup.inputs),
       readings: restingReadings(spec),
-      pump: { ...restingPump(), primed: setup.primed === true },
+      pump: { ...restingPump(), primed: setup.primed === true, casingWet: setup.primed === true },
       tally: { cavitationS: 0, overheatS: 0, waterHammer: 0, worstSurgeKpa: 0, hoseBursts: 0 },
       rngState: truckSeed(seed, i),
     };

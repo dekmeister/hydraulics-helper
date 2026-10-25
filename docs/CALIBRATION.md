@@ -33,6 +33,7 @@ Tests: `src/sim/calibration.test.ts` asserts every worked example below. A faili
 | Hose working pressure | 1000 kPa (a quarter of the ~4000 kPa rated burst); the receiving pump is warned above it | L945–948 | doctrine-confirmed |
 | Relay hose burst | 1300 kPa peak (steady, or the higher end before plus the Joukowsky surge of a flow cut by a valve shut on the receiving pump) | L3865–3873 qualitative | PLACEHOLDER — needs Dek |
 | Lesson branch band | Table 1 optimum ± 10 % (`BRANCH_BAND_FRACTION`) | — | PLACEHOLDER — needs Dek |
+| Casing water (display only) | the casing stays full once water reaches it; with no feed, an open line (with a hose) or pump to tank empties it in one tick; no gravity drain, no drain cock | — | PLACEHOLDER — needs Dek |
 | Pump damage (lesson fail) | 60 s cavitation or 60 s above temperature caution, summed | — | PLACEHOLDER — needs Dek |
 
 ### Hose friction coefficients
