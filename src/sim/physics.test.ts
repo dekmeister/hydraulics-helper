@@ -12,7 +12,7 @@ const PUMP = {
   casingVolumeL: 10,
   churnKw: 10,
 };
-const ENGINE = { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5 };
+const ENGINE = { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 };
 
 describe('hose friction', () => {
   it('is quadratic in flow (manual law 3, L798)', () => {

@@ -22,6 +22,11 @@ describe.each([CAT1, TEST_APPLIANCE])('sound on $id', (spec) => {
     expect([low.primerGain, low.rattleGain, low.sprayGain]).toEqual([0, 0, 0]);
   });
 
+  it('fires each cylinder every other revolution: the note follows the spec’s engine', () => {
+    const p = soundParams(truckOf(spec, { rpm: 1200 }), idle);
+    expect(p.engineHz).toBeCloseTo((1200 / 60) * (spec.engine.cylinders / 2), 9);
+  });
+
   it('rattles with cavitation and hisses with flow', () => {
     const t = truckOf(spec);
     const p = soundParams(

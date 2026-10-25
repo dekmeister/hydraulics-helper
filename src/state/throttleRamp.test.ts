@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { rampedThrottle, speedSwitchRates } from './throttleRamp';
 
-const ENGINE = { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5 };
+const ENGINE = { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 };
 
 describe('speed controller (momentary switch) on the throttle', () => {
   it('converts the switch’s rpm figures into throttle fractions for the engine', () => {
@@ -24,7 +24,7 @@ describe('speed controller (momentary switch) on the throttle', () => {
 
   it('copes with an engine with no governed range', () => {
     const r = speedSwitchRates(
-      { idleRpm: 1000, maxRpm: 1000, rpmLagS: 1 },
+      { idleRpm: 1000, maxRpm: 1000, rpmLagS: 1, cylinders: 4 },
       { rampRpmPerS: 400, flickRpm: 50 },
     );
     expect(Number.isFinite(r.perS) && Number.isFinite(r.flick)).toBe(true);

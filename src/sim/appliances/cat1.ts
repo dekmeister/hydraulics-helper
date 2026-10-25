@@ -21,6 +21,7 @@ export const CAT1: ApplianceSpec = {
     idleRpm: 800, // PLACEHOLDER — needs Dek
     maxRpm: 3000, // PLACEHOLDER — needs Dek
     rpmLagS: 0.5, // throttle-to-rpm time constant (ARCHITECTURE §4.4) // PLACEHOLDER — needs Dek
+    cylinders: 6, // pump engine, for the engine note // PLACEHOLDER — needs Dek
     speedController: {
       rampRpmPerS: 400, // governor run-up while the switch is held // PLACEHOLDER — needs Dek
       flickRpm: 50, // one quick flick of the switch // PLACEHOLDER — needs Dek

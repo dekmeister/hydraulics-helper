@@ -160,9 +160,9 @@ function prepareTruck(
 }
 
 /**
- * Second half of a truck's tick, once the site is solved: the slow states move. Tank (drawn, refilled
- * by relief, pump to tank, tank-fill inlets and open relays), casing temperature, flutter, fault tallies and
- * water hammer on any delivery with a hose on it.
+ * Second half of a truck's tick, once the site is solved: the slow states move. Tank (drawn,
+ * refilled by relief, pump to tank, recirculation, tank-fill inlets and open relays), casing
+ * temperature, flutter, fault tallies and water hammer on any delivery with a hose on it.
  */
 function finishTruck(
   state: SimState,
@@ -176,7 +176,7 @@ function finishTruck(
   const { spec } = truck;
   const outLpm = Object.values(readings.deliveryFlowLpm).reduce((a, b) => a + b, 0);
   const reliefToTankLpm = spec.relief?.dumpTo === 'tank' ? readings.reliefFlowLpm : 0;
-  const returnLpm = reliefToTankLpm + readings.pumpToTankLpm;
+  const returnLpm = reliefToTankLpm + readings.pumpToTankLpm + readings.recircLpm;
   const tankDrawLpm = spec.inlets
     .filter((i) => i.kind === 'tank')
     .reduce((q, i) => q + (readings.inletFlowLpm[i.id] ?? 0), 0);

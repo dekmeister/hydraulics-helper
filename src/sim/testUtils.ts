@@ -74,6 +74,7 @@ export function expectSaneTruck(t: TruckState): void {
     r.pumpFlowLpm,
     r.reliefFlowLpm,
     r.pumpToTankLpm,
+    r.recircLpm,
     ...Object.values(r.deliveryFlowLpm),
     ...Object.values(r.branchKpa),
     t.pump.tempC,
@@ -90,6 +91,7 @@ export function expectSaneTruck(t: TruckState): void {
   for (const q of Object.values(r.inletFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
   expect(r.dischargeKpa).toBeGreaterThanOrEqual(0);
   expect(r.pumpToTankLpm).toBeGreaterThanOrEqual(0);
+  expect(r.recircLpm).toBeGreaterThanOrEqual(0);
   for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
   expect(t.tankL).toBeGreaterThanOrEqual(0);
   expect(t.tankL).toBeLessThanOrEqual(t.spec.tank?.capacityL ?? 0);
