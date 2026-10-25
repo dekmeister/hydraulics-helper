@@ -27,6 +27,7 @@ export function AppliancePicker() {
               setPlayerAppliance(a.id);
             }}
           />
+          <span className="appliance-picker__dot" aria-hidden="true" />
           <span className="appliance-picker__text">
             <span className="appliance-picker__name">{a.name}</span>
             <span className="appliance-picker__summary">{applianceSummary(a)}</span>

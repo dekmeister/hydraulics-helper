@@ -98,6 +98,7 @@
 }
 
 .appliance-picker__option {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -112,12 +113,27 @@
   border: 2px solid var(--color-material-ink);
 }
 
+/* The native radio covers the whole card (a 44 px target), unseen; the dot draws its state. */
 .appliance-picker__option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.appliance-picker__dot {
   flex: none;
   width: 22px;
   height: 22px;
-  margin: 0;
-  accent-color: var(--color-material-ink);
+  border: 2px solid var(--color-material-ink);
+  border-radius: var(--radius-round);
+}
+
+.appliance-picker__option--on .appliance-picker__dot {
+  background: radial-gradient(var(--color-material-ink) 45%, transparent 50%);
 }
 
 .appliance-picker__option:focus-within {

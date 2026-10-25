@@ -1,5 +1,6 @@
 // M4 journeys (docs/TESTING.md §4): draughting and priming through the real primer, cavitation
 // induced and recovered with the throttle, hydrant over-run, churn overheat, water hammer.
+import { CAT1 } from '../../src/sim/appliances/cat1';
 import { primerControlId as primerControl } from '../../src/sim/appliances/controls';
 import { CAVITATION_FLUTTER_COMPOUND_KPA } from '../../src/sim/constants';
 import { getScenario } from '../../src/sim/scenarios';
@@ -25,6 +26,8 @@ import {
   inletOf,
   load,
   openInlet,
+  overRuns,
+  relayBurstsOnSlam,
   prime,
   throttle,
 } from '../sources';
@@ -60,6 +63,14 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('draugh
     expect(await meterValue(page, discharge)).toBeGreaterThan(300);
     expect(await compoundShown(page, spec)).toBeLessThan(-10 * liftM);
     await expectStatus(page, 'No warnings.');
+
+    if (!overRuns('draughting', spec)) {
+      test.info().annotations.push({
+        type: 'physics',
+        description: `${spec.id} can't draw past this lift with these lines: no cavitation to induce`,
+      });
+      return;
+    }
 
     // Push it: second line open, throttle wide.
     await dragValve(
@@ -129,6 +140,12 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('hydran
     await throttle(page).focus();
     await page.keyboard.press('End');
     await stepAndSettle(page, 50);
+    if (!overRuns('hydrant-supply', spec)) {
+      // A pump this size can't out-draw the hydrant: the compound stays positive at full throttle.
+      expect(await compoundShown(page, spec)).toBeGreaterThan(50);
+      await expect(supply).toHaveAttribute('data-state', 'charged');
+      return;
+    }
     // Over-running: inlet zero (± the flutter), hose soft, cavitating (Table 7).
     expect(Math.abs(await compoundShown(page, spec))).toBeLessThanOrEqual(
       CAVITATION_FLUTTER_COMPOUND_KPA + 0.5,
@@ -153,6 +170,11 @@ for (const spec of JOURNEY_APPLIANCES) {
       await openInlet(page, spec, 'tank', info);
       await dragThrottle(page, 0.8);
       await stepAndSettle(page, 4000);
+      if (spec.recirc !== undefined) {
+        // Its recirculation bleed carries the churn heat back to the tank: it never gets hot.
+        await expectStatus(page, 'No warnings.');
+        return;
+      }
       await expectStatus(page, /Pump hot/);
       await dragValve(
         page,
@@ -200,3 +222,11 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => primerControl(s) !== undefin
     expect(activeTruckOf(await getState(page)).pump.primed).toBe(false);
   });
 }
+
+// The over-run guards above skip only where the physics says so: the reference appliance must
+// still be pushed past every supply, so the cavitation journeys always run somewhere.
+test('the reference appliance over-runs every supply and bursts a slammed relay', () => {
+  for (const scenario of ['draughting', 'hydrant-supply', 'closed-relay'])
+    expect(overRuns(scenario, CAT1), scenario).toBe(true);
+  expect(relayBurstsOnSlam(CAT1)).toBe(true);
+});

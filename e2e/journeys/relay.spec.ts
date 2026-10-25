@@ -21,7 +21,15 @@ import {
   tapOrClick,
 } from '../panel';
 import { relayLay, tapTruck } from '../scene';
-import { compoundShown, inletOf, load, openInlet, prime } from '../sources';
+import {
+  compoundShown,
+  inletOf,
+  load,
+  openInlet,
+  overRuns,
+  prime,
+  relayBurstsOnSlam,
+} from '../sources';
 
 const truckButton = (page: Page, label: string) =>
   page.getByRole('group', { name: 'Truck you operate' }).getByRole('button', { name: label });
@@ -51,6 +59,14 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
       await expectStatus(page, 'No warnings');
       await expect(page.locator('[data-relay="relay"]')).toContainText('kPa at the inlet');
 
+      if (!overRuns('closed-relay', spec)) {
+        test.info().annotations.push({
+          type: 'physics',
+          description: `${spec.id}'s lines can't out-draw the relay: no over-run to recover from`,
+        });
+        return;
+      }
+
       // Full throttle: more than the relay can give. The layflat goes soft at inlet zero.
       await dragThrottle(page, 1);
       await stepAndSettle(page, 100);
@@ -68,6 +84,8 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
     });
 
     test('slamming the relay inlet shut bursts the relay hose', async ({ page }, info) => {
+      // The surge scales with the flow cut off: a light tanker's relay doesn't carry enough.
+      test.skip(!relayBurstsOnSlam(spec), `${spec.id}'s relay flow is too small to burst a length`);
       await load(page, 'closed-relay', spec.id);
       const layout = layoutFor(spec.id);
       const lines = (await getState(page)).lines.filter((l) => l.truckId === 'attack');

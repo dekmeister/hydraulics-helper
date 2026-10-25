@@ -1,7 +1,9 @@
 // Lesson journeys (PLAN M6 demo): a new player completes scenarios 1–3 from the menu, through the
 // real controls, and their progress survives a reload. Run on the phone, the baseline constraint.
 import type { Page, TestInfo } from '@playwright/test';
+import { APPLIANCES } from '../../src/sim/appliances/catalogue';
 import { inletOfKind } from '../../src/sim/appliances/controls';
+import { DEFAULT_APPLIANCE_ID } from '../../src/state/store';
 import { expect, gotoApp, test } from '../fixtures';
 import {
   band,
@@ -251,3 +253,47 @@ test('the sound setting is kept across visits', async ({ page }) => {
     'false',
   );
 });
+
+// M7 demo: the same tank attack on another appliance, picked on the menu, with its own panel and
+// pump. Every catalogue appliance other than the default gets the journey.
+for (const spec of JOURNEY_APPLIANCES.filter(
+  (a) => a.id !== DEFAULT_APPLIANCE_ID && APPLIANCES.includes(a),
+)) {
+  test(`pick ${spec.id} on the menu and play the tank attack on it; the pick is kept`, async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(90_000);
+    await gotoApp(page);
+    const pick = page.getByRole('radio', { name: new RegExp(`^${spec.name}`) });
+    await pick.check();
+    await expect(pick).toBeChecked();
+    // Briefs name what this truck's crews run, filled in for it.
+    const card = page.locator('[data-scenario="tank-attack"]');
+    await expect(card).not.toContainText('{');
+    await startButton(page, 2).click();
+    await expect(page.locator('.pump-panel__appliance')).toContainText(spec.name);
+
+    await inlet(page, 'tank', testInfo);
+    const crew = await deliveryOf(page, 'line-38');
+    const second = await deliveryOf(page, 'line-65');
+    await dragValve(page, crew.valve, 1);
+    await dragValve(page, second.valve, 1);
+    await dragThrottle(page, 0.8);
+    const secondName = (await second.valve.getAttribute('aria-label')) ?? '';
+    await playUntil(
+      page,
+      (p) => objectiveDone(p, 'both'),
+      async (s) => {
+        await trimBranch(page, s, 'line-38');
+        await gateBranch(page, s, 'line-65', secondName);
+      },
+      150,
+    );
+    await expectPassedDebrief(page);
+
+    await page.reload();
+    await page.waitForFunction(() => window.__pumpops !== undefined);
+    await expect(page.getByRole('radio', { name: new RegExp(`^${spec.name}`) })).toBeChecked();
+    await expect(page.locator('[data-scenario="tank-attack"]')).toContainText('Passed');
+  });
+}
