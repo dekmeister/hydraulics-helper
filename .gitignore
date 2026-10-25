@@ -1,6 +1,7 @@
 # Dependencies and build output
 node_modules/
 dist/
+dist-deploy/
 coverage/
 *.tsbuildinfo
 
@@ -10,6 +11,9 @@ coverage/
 .DS_Store
 .vscode/
 .idea/
+
+# Deploy script: names the hosting account and server, kept locally only
+scripts/deploy.sh
 
 # Source manual: third-party material, kept locally only
 Resources/*.pdf
