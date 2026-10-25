@@ -167,6 +167,7 @@ function PrimerItem({ item }: { item: Extract<PanelItem, { kind: 'primer' }> }) 
   const setSwitch = useStore((s) => s.setSwitch);
   const state = useStore((s) => primerStatus(s.sim, s.inputs, item.control).state);
   const progress = useStore((s) => primerStatus(s.sim, s.inputs, item.control).progress);
+  const hand = useStore((s) => activeTruck(s.sim).spec.primer?.kind === 'diaphragm');
   return (
     <div className="panel-control">
       <span className="panel-caption">{item.label}</span>
@@ -175,6 +176,7 @@ function PrimerItem({ item }: { item: Extract<PanelItem, { kind: 'primer' }> }) 
         on={on}
         state={state}
         progress={progress}
+        kind={hand ? 'handle' : 'switch'}
         onChange={(v) => {
           setSwitch(item.control, v);
         }}
