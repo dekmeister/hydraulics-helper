@@ -21,6 +21,10 @@ export const CAT1: ApplianceSpec = {
     idleRpm: 800, // PLACEHOLDER — needs Dek
     maxRpm: 3000, // PLACEHOLDER — needs Dek
     rpmLagS: 0.5, // throttle-to-rpm time constant (ARCHITECTURE §4.4) // PLACEHOLDER — needs Dek
+    speedController: {
+      rampRpmPerS: 400, // governor run-up while the switch is held // PLACEHOLDER — needs Dek
+      flickRpm: 50, // one quick flick of the switch // PLACEHOLDER — needs Dek
+    },
   },
   tank: {
     capacityL: 3000, // PLACEHOLDER — needs Dek
@@ -34,20 +38,38 @@ export const CAT1: ApplianceSpec = {
       lossKpaPerLpm2: 15 / 1000 ** 2,
     },
     {
-      // Layout A B3/B5: 64 mm suction inlet with a green lever valve; hard suction or a
-      // collecting head connects here. // doctrine-confirmed (photo); size PLACEHOLDER — needs Dek
+      // 65 mm (2½") suction inlet with a green lever valve, low on the left of the pump bay; hard
+      // suction or a collecting head connects here. // doctrine-confirmed (photos, Dek 2026-10-25)
       id: 'suction',
       label: 'Suction inlet',
       kind: 'suction',
-      sizeMm: 64,
+      sizeMm: 65,
       lossKpaPerLpm2: 10 / 1000 ** 2, // 10 kPa at 1000 L/min through the open valve // PLACEHOLDER — needs Dek
+    },
+    {
+      // Hydrant to tank: a 65 mm coupling with a green lever on the side of the truck, straight
+      // into the tank past the pump (Dek, 2026-10-25). // doctrine-confirmed
+      id: 'hydrant-to-tank',
+      label: 'Hydrant to tank',
+      kind: 'tankFill',
+      sizeMm: 65,
+      lossKpaPerLpm2: 30 / 1000 ** 2, // 30 kPa at 1000 L/min through the open valve and pipe // PLACEHOLDER — needs Dek
+      fillHeightM: 2, // coupling to the top of the tank // PLACEHOLDER — needs Dek
     },
   ],
   deliveries: [
-    { id: 'd1', label: 'Delivery 1', sizeMm: 64 }, // Layout A outlet 1 // PLACEHOLDER — needs Dek (from photo)
-    { id: 'd2', label: 'Delivery 2', sizeMm: 38 }, // Layout A outlet 2 // PLACEHOLDER — needs Dek (from photo)
-    { id: 'd3', label: 'Delivery 3', sizeMm: 38 }, // Layout A outlet 3 // PLACEHOLDER — needs Dek (from photo)
+    { id: 'd1', label: 'Delivery 1', sizeMm: 65 }, // 65 mm outlet, big blue lever // doctrine-confirmed (Dek 2026-10-25)
+    { id: 'd2', label: 'Delivery 2', sizeMm: 38 }, // 38 mm outlet // doctrine-confirmed (Dek 2026-10-25)
+    { id: 'd3', label: 'Delivery 3', sizeMm: 38 }, // 38 mm outlet // doctrine-confirmed (Dek 2026-10-25)
   ],
+  // Pump to tank: the blue lever above the suction inlet, a return from the discharge into the tank
+  // (Dek, 2026-10-25). Sized as a 38 mm valved return passing ~500 L/min at 700 kPa.
+  pumpToTank: {
+    id: 'pump-to-tank',
+    label: 'Pump to tank',
+    sizeMm: 38, // PLACEHOLDER — needs Dek
+    lossKpaPerLpm2: 700 / 500 ** 2, // 500 L/min at 700 kPa // PLACEHOLDER — needs Dek
+  },
   // Electric rotary vane primer, max 1 min on in 3 (L1853–1908, L1890). // doctrine-confirmed
   primer: {
     kind: 'rotaryVane',
@@ -65,17 +87,17 @@ export const CAT1: ApplianceSpec = {
     setKpa: 1100, // PLACEHOLDER — needs Dek
     slopeLpmPerKpa: 50, // bypass flow per kPa over set; holds discharge within ~20 kPa of set // PLACEHOLDER — needs Dek
   },
-  // Dial markings: the design comps' faces, with the discharge caution band starting at the relief
-  // set pressure and the tacho redline just above the governed max (CALIBRATION row 9).
+  // Dial markings: the faces fitted to the Cat 1 (photos, Dek 2026-10-25), without the psi scale.
+  // The panel placard reads "do not exceed 3000 r/min, do not exceed −80 kPa".
   instruments: [
     {
       id: 'compound',
       kind: 'compound',
       scale: {
-        fullScale: 1600, // PLACEHOLDER — needs Dek
+        fullScale: 2500, // −100…2500 kPa face // doctrine-confirmed (photo)
         zones: [
-          { from: -85, to: -70, tone: 'caution' }, // PLACEHOLDER — needs Dek
-          { from: -100, to: -85, tone: 'alarm' }, // PLACEHOLDER — needs Dek
+          { from: -80, to: -70, tone: 'caution' }, // approaching the placard limit // PLACEHOLDER — needs Dek
+          { from: -100, to: -80, tone: 'alarm' }, // past the placard's −80 kPa // doctrine-confirmed (photo)
         ],
       },
     },
@@ -83,10 +105,11 @@ export const CAT1: ApplianceSpec = {
       id: 'discharge',
       kind: 'discharge',
       scale: {
-        fullScale: 1600, // PLACEHOLDER — needs Dek
+        fullScale: 4000, // 0–4000 kPa face // doctrine-confirmed (photo)
         zones: [
-          { from: 1100, to: 1400, tone: 'caution' }, // relief set → shutoff // PLACEHOLDER — needs Dek
-          { from: 1400, to: 1600, tone: 'alarm' }, // above shutoff: pressurised supply only // PLACEHOLDER — needs Dek
+          // Relief set → shutoff. No alarm band: on the 4000 kPa face it would paint most of the
+          // dial red, and the fitted gauge carries no zones. // PLACEHOLDER — needs Dek
+          { from: 1100, to: 1400, tone: 'caution' },
         ],
       },
     },
@@ -94,10 +117,11 @@ export const CAT1: ApplianceSpec = {
       id: 'tacho',
       kind: 'tacho',
       scale: {
-        fullScale: 3500, // PLACEHOLDER — needs Dek
-        zones: [{ from: 3100, to: 3500, tone: 'alarm' }], // redline above governed max // PLACEHOLDER — needs Dek
+        fullScale: 4000, // 0–40 ×100 rpm face // doctrine-confirmed (photo)
+        zones: [{ from: 3000, to: 4000, tone: 'alarm' }], // placard: do not exceed 3000 r/min // doctrine-confirmed (photo)
       },
     },
-    { id: 'tank-level', kind: 'tank' },
+    // A clear sight tube on the tank with a float at the water line (Dek, 2026-10-25). // doctrine-confirmed
+    { id: 'tank-level', kind: 'tank', display: { kind: 'sightTube' } },
   ],
 };

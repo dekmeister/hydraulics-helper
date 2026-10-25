@@ -93,9 +93,14 @@ async function centre(locator: Locator): Promise<{ x: number; y: number; width: 
 export async function dragValve(page: Page, valve: Locator, opening: number): Promise<void> {
   await valve.scrollIntoViewIfNeeded();
   const pivot = await centre(valve.locator('[data-part="pivot"]'));
-  const r = 50;
+  // Realistic bay levers say which way they swing; the simplified panel's go 12 → 3 o'clock.
+  const shutDeg = Number((await valve.getAttribute('data-shut-deg')) ?? 0);
+  const openDeg = Number((await valve.getAttribute('data-open-deg')) ?? 90);
+  // Stay on the lever's own hit box: small bay levers on a phone are under 50 px.
+  const own = await valve.boundingBox();
+  const r = Math.min(50, 0.75 * Math.min(own?.width ?? 50, own?.height ?? 50));
   const at = (f: number) => {
-    const a = (f * Math.PI) / 2; // clockwise from 12 o'clock
+    const a = ((shutDeg + f * (openDeg - shutDeg)) * Math.PI) / 180; // clockwise from 12 o'clock
     return { x: pivot.x + r * Math.sin(a), y: pivot.y - r * Math.cos(a) };
   };
   const from = await sliderValue(valve);

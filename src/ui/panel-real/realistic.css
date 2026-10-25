@@ -1,0 +1,284 @@
+/* Realistic pump bay (ARCHITECTURE §9.4): plates drawn to the panel's width, items placed on them
+   by percentage of the plate's viewBox. */
+.real-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.real-plate {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.real-plate__canvas {
+  position: relative;
+  width: 100%;
+}
+
+.real-plate__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.real-panel__insets {
+  display: grid;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+/* Items: each fills its box on the plate. */
+.real-item,
+.bay-lever,
+.real-outlet,
+.pull-primer,
+.speed-switch,
+.tank-gauge {
+  position: absolute;
+}
+
+.bay-lever > svg,
+.real-outlet > svg,
+.pull-primer__handle > svg,
+.speed-switch > svg,
+.tank-gauge > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Gauges fill their box; the truck has no readout under its dials (the value stays in ARIA). */
+.real-item--gauge .gauge__dial {
+  width: 100%;
+}
+
+.real-item--gauge .gauge__readout,
+.real-item--gauge .gauge__nameplate {
+  display: none;
+}
+
+/* Art */
+.real-art__panel {
+  fill: var(--color-material-ironbark);
+  stroke: var(--color-material-galv-edge);
+  stroke-width: 6;
+}
+
+.real-art__casing {
+  fill: var(--color-material-pump-red);
+  stroke: var(--color-material-ink);
+  stroke-width: 3;
+}
+
+.real-art__plate {
+  fill: var(--color-material-plate-red);
+}
+
+.real-art__plate-text,
+.real-art__text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  /* PLATE_FONT_U (geometry.ts) sizes the plates round this. */
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  fill: var(--color-material-paper);
+}
+
+.real-art__text {
+  fill: var(--color-material-steel-dim);
+  font-size: 24px;
+}
+
+/* Things the game doesn't model yet: drawn plainly, a little dimmed. */
+[data-inert] {
+  opacity: 0.8;
+}
+
+.real-inert__button {
+  fill: var(--color-material-galv-dark);
+  stroke: var(--color-material-galv-edge);
+  stroke-width: 4;
+}
+
+.real-inert__lamp {
+  fill: var(--color-material-lamp-glass-unlit);
+  stroke: var(--color-material-galv-edge);
+  stroke-width: 4;
+}
+
+.real-inert__indicator {
+  fill: var(--color-signal-alarm-unlit);
+  stroke: var(--color-material-galv-edge);
+  stroke-width: 4;
+}
+
+.real-inert__dial-face {
+  fill: var(--color-material-ironbark);
+  stroke: var(--color-material-steel-dim);
+  stroke-width: 2;
+}
+
+.real-inert__foam {
+  fill: var(--color-material-plate-red);
+}
+
+.real-inert__placard {
+  fill: var(--color-material-paper);
+  stroke: var(--color-material-plate-red);
+  stroke-width: 4;
+}
+
+.real-inert__placard-head,
+.real-inert__placard-line {
+  font-family: var(--font-display);
+  font-size: 20px;
+  fill: var(--color-material-plate-red);
+}
+
+.real-inert__placard-head {
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.real-inert__reel {
+  fill: var(--color-material-reel-hose);
+  stroke: var(--color-material-reel-hose-stroke);
+  stroke-width: 4;
+}
+
+/* Lever */
+.bay-lever {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  border-radius: var(--radius-card);
+}
+
+.bay-lever--dragging {
+  cursor: grabbing;
+}
+
+.bay-lever--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bay-lever__chip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 1px 6px;
+  border: 1.5px dashed var(--color-material-steel-dim);
+  border-radius: var(--radius-plate);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--color-material-steel);
+  white-space: nowrap;
+}
+
+/* Coupling with its number plate: locates the hose on the scene. */
+.real-outlet {
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-card);
+  cursor: pointer;
+}
+
+/* The number plate, centred under the coupling. */
+.real-outlet__tag {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+
+.real-outlet__ring {
+  fill: none;
+  stroke: var(--color-focus-inner);
+  stroke-width: 6;
+}
+
+.real-outlet[data-highlighted='true'] {
+  box-shadow:
+    inset 0 0 0 2px var(--color-focus-outer),
+    inset 0 0 0 4px var(--color-focus-inner);
+}
+
+/* PRIME T-handle */
+.pull-primer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pull-primer__handle {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-card);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.pull-primer__engraving {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  fill: var(--color-material-ink);
+}
+
+.pull-primer__vacuum {
+  fill: var(--color-function-inlet);
+}
+
+.pull-primer__caption {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.pull-primer--check-suction .pull-primer__caption {
+  color: var(--color-signal-caution);
+}
+
+/* Speed controller */
+.speed-switch {
+  touch-action: none;
+  cursor: ns-resize;
+  user-select: none;
+  border-radius: var(--radius-card);
+}
+
+.speed-switch__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.1em;
+  fill: var(--color-material-paper);
+}
+
+.tank-gauge__mark {
+  font-family: var(--font-display);
+  font-size: 18px;
+  fill: var(--color-material-steel);
+}
+
+.bay-lever:focus-visible,
+.real-outlet:focus-visible,
+.pull-primer__handle:focus-visible,
+.speed-switch:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+}

@@ -2,7 +2,7 @@
 import type { Metric } from '../../state/lessonView';
 import type { SimState } from '../../sim/types';
 import type { PanelLayout } from '../appliances/types';
-import { itemKey } from '../panel-pump/PumpPanel';
+import { itemKey } from '../appliances/itemKey';
 
 /** The label of the panel item with `key`, for a coach step's `{target}`. */
 export function targetLabel(layout: PanelLayout, key: string): string {

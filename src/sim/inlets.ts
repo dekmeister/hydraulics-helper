@@ -68,6 +68,8 @@ export function supplyOn(
 export function inletPaths(ctx: InletContext): InletPath[] {
   const { spec, tankL, inputs, primed, supplies, relays = [] } = ctx;
   return spec.inlets.flatMap((inlet): InletPath[] => {
+    // A tank-fill inlet runs straight to the tank (`tankFill.ts`); it never reaches the pump.
+    if (inlet.kind === 'tankFill') return [];
     const open = inputs.valves[inlet.id] ?? 0;
     if (open < VALVE_CLOSED_EPS) return [];
     const valveR = inlet.lossKpaPerLpm2 / (open * open);

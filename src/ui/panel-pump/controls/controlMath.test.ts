@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   dragPosition,
   keyedPosition,
+  leverAngleDeg,
+  leverOpeningAt,
   valveAngleDeg,
   valveOpeningAt,
   vernierStep,
@@ -56,5 +58,43 @@ describe('keyboard', () => {
     expect(keyedPosition('End', 0.3)).toBe(1);
     expect(keyedPosition('Home', 0.3)).toBe(0);
     expect(keyedPosition('Tab', 0.3)).toBeNull();
+  });
+});
+
+describe('lever swinging between any two angles (realistic bay levers)', () => {
+  // Polar pointer position, degrees clockwise from 12 o'clock.
+  const at = (deg: number, r = 50) => {
+    const a = (deg * Math.PI) / 180;
+    return [r * Math.sin(a), -r * Math.cos(a)] as const;
+  };
+
+  it('matches the simplified valve for shut 0°, open 90°', () => {
+    for (const deg of [-120, -30, 0, 20, 45, 70, 90, 150, 200]) {
+      const [dx, dy] = at(deg);
+      expect(leverOpeningAt(dx, dy, 0, 90)).toBe(valveOpeningAt(dx, dy));
+    }
+  });
+
+  it('opens anticlockwise when the open end is anticlockwise of shut', () => {
+    // Shut pointing up, open along a pipe running left (270°, written −90°).
+    expect(leverOpeningAt(...at(0), 0, -90)).toBe(0);
+    expect(leverOpeningAt(...at(-45), 0, -90)).toBeCloseTo(0.5, 9);
+    expect(leverOpeningAt(...at(-90), 0, -90)).toBe(1);
+    expect(leverOpeningAt(...at(30), 0, -90)).toBe(0);
+  });
+
+  it('works for a lever shut pointing right and open pointing up a vertical pipe', () => {
+    expect(leverOpeningAt(...at(90), 90, 0)).toBe(0);
+    expect(leverOpeningAt(...at(45), 90, 0)).toBeCloseTo(0.5, 9);
+    expect(leverOpeningAt(...at(0), 90, 0)).toBe(1);
+    expect(leverOpeningAt(...at(-40), 90, 0)).toBe(1);
+    expect(leverOpeningAt(...at(130), 90, 0)).toBe(0);
+  });
+
+  it('draws the lever at shut + opening × (open − shut)', () => {
+    expect(leverAngleDeg(0, 90, 0)).toBe(90);
+    expect(leverAngleDeg(0.5, 90, 0)).toBe(45);
+    expect(leverAngleDeg(1, 0, -90)).toBe(-90);
+    expect(leverAngleDeg(2, 0, 90)).toBe(90);
   });
 });

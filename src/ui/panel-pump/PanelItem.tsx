@@ -4,11 +4,8 @@ import {
   activeTruck,
   INSTRUMENT_UNIT,
   instrumentValue,
-  lineOnDelivery,
-  relayOnDelivery,
   selectWarnings,
 } from '../../state/selectors';
-import { relayTarget } from '../../state/relay';
 import { useStore } from '../../state/store';
 import { primerStatus } from '../../state/supply';
 import type { ApplianceSpec, InstrumentSpec } from '../../sim/types';
@@ -22,7 +19,7 @@ import { Gauge } from './gauge/Gauge';
 import { range } from './gauge/gaugeScale';
 import { computeWake } from './gauge/wake';
 import { TankLevel } from './gauge/TankLevel';
-import { describeLine, describeRelay } from './lineText';
+import { useDelivery } from './useDelivery';
 import { useDampedValue } from './useDampedValue';
 import { WarningStrip } from './WarningStrip';
 
@@ -85,19 +82,7 @@ function TankInstrument({ item }: { item: Extract<PanelItem, { kind: 'tank-level
 
 function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> }) {
   const spec = useActiveSpec();
-  const line = useStore((s) => lineOnDelivery(s.sim, item.control));
-  // A delivery carries a lay or a relay; either makes its valve worth opening.
-  const relayText = useStore((s) => {
-    const relay = relayOnDelivery(s.sim, item.control);
-    return relay === undefined ? undefined : describeRelay(relay, relayTarget(s.sim, relay));
-  });
-  const laid = line !== undefined || relayText !== undefined;
-  const open = useStore((s) => s.inputs.valves[item.control] ?? 0);
-  const setValve = useStore((s) => s.setValve);
-  const highlight = useStore((s) =>
-    s.highlight?.deliveryId === item.control ? s.highlight.from : null,
-  );
-  const toggleHighlight = useStore((s) => s.toggleHighlight);
+  const { laid, lineText, open, setOpen, highlight, toggleHighlight } = useDelivery(item.control);
   const rowRef = useRef<HTMLDivElement>(null);
   const textId = useId();
   const delivery = spec.deliveries.find((d) => d.id === item.control);
@@ -121,9 +106,7 @@ function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> 
         // The label names the action; the size and lay stay readable as its description.
         aria-describedby={`${textId}-name ${textId}-line`}
         aria-pressed={highlight !== null}
-        onClick={() => {
-          toggleHighlight(item.control, 'panel');
-        }}
+        onClick={toggleHighlight}
       >
         <DeliveryTag tag={item.tag} glyph={item.glyph} />
         <span className="delivery-row__name" id={`${textId}-name`}>
@@ -131,15 +114,13 @@ function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> 
           {delivery === undefined ? '' : ` · ${String(delivery.sizeMm)} mm`}
         </span>
         <span className="delivery-row__line" id={`${textId}-line`}>
-          {line !== undefined ? describeLine(line) : (relayText ?? 'No line laid')}
+          {lineText}
         </span>
       </button>
       <ValveHandle
         label={item.label}
         value={open}
-        onChange={(v) => {
-          setValve(item.control, v);
-        }}
+        onChange={setOpen}
         function="outlet"
         tap={item.tap}
         {...(laid ? {} : { disabledReason: 'NO LINE' })}

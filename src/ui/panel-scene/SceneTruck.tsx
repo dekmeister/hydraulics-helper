@@ -100,7 +100,7 @@ export function SceneTruck(props: TruckProps) {
             highlighted: active && d.state === 'none' && highlighted === d.deliveryId,
           })),
           ...truck.spec.inlets
-            .filter((i) => i.kind === 'suction')
+            .filter((i) => i.kind !== 'tank')
             .map((i) => ({
               control: i.id,
               capped: !props.connectedInlets.has(i.id),

@@ -32,6 +32,18 @@ export const TEST_APPLIANCE: ApplianceSpec = {
       kind: 'discharge',
       scale: { fullScale: 1400, zones: [{ from: 1200, to: 1400, tone: 'alarm' }] },
     },
-    { id: 'level', kind: 'tank' },
+    {
+      // Electronic gauge, as some trucks have (Dek, 2026-10-25): green 75–100 %, blue 25–75 %, red below.
+      id: 'level',
+      kind: 'tank',
+      display: {
+        kind: 'bands',
+        bands: [
+          { fromFraction: 0, tone: 'red' },
+          { fromFraction: 0.25, tone: 'blue' },
+          { fromFraction: 0.75, tone: 'green' },
+        ],
+      },
+    },
   ],
 };

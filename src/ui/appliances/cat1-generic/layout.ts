@@ -64,7 +64,22 @@ export const CAT1_LAYOUT: PanelLayout = {
           function: 'inlet',
           tap: 'toggle',
         },
+        {
+          // Blue on the truck: it's a return from the discharge side.
+          kind: 'valve',
+          control: 'pump-to-tank',
+          label: 'Pump to tank',
+          function: 'outlet',
+          tap: 'toggle',
+        },
         { kind: 'primer', control: 'primer', label: 'Primer' },
+        {
+          kind: 'valve',
+          control: 'hydrant-to-tank',
+          label: 'Hydrant to tank',
+          function: 'inlet',
+          tap: 'toggle',
+        },
       ],
     },
     {

@@ -221,7 +221,7 @@ const DialFace = memo(function DialFace({
       )}
 
       {plate !== null && dial.mini !== true && (
-        <g>
+        <g className="gauge__nameplate">
           <rect
             x={GEOM.plate.x}
             y={GEOM.plate.y}

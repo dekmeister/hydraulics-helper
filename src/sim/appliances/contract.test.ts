@@ -2,7 +2,13 @@
 // with a different shape, must pass these. Generic behaviour belongs here, not in per-truck tests.
 import { describe, expect, it } from 'vitest';
 import { BRANCH_OPTIMUM_KPA, HOSES } from '../constants';
-import { createIdleInputs, createInitialState, switchTruck } from '../engine';
+import {
+  DEFAULT_TRUCK_ID,
+  createIdleInputs,
+  createInitialState,
+  switchTruck,
+  type SiteOptions,
+} from '../engine';
 import {
   closedRelayPair,
   draughtSite,
@@ -59,6 +65,18 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(spec.primer.displacementLps).toBeGreaterThan(0);
       }
       expect(spec.pump.cavitationInletKpa).toBeLessThan(0);
+      if (spec.pumpToTank !== undefined) {
+        expect(spec.tank).toBeDefined();
+        expect(spec.pumpToTank.lossKpaPerLpm2).toBeGreaterThan(0);
+      }
+      for (const i of spec.instruments) {
+        if (i.kind !== 'tank' || i.display.kind !== 'bands') continue;
+        // Bands run up from empty in order, each starting inside the tank.
+        const from = i.display.bands.map((b) => b.fromFraction);
+        expect(from[0]).toBe(0);
+        expect([...from].sort((a, b) => a - b)).toEqual(from);
+        for (const f of from) expect(f).toBeLessThan(1);
+      }
       expect(spec.pump.cavitationInletKpa).toBeGreaterThan(-100);
       expect(spec.pump.casingVolumeL).toBeGreaterThan(0);
       expect(spec.pump.churnKw).toBeGreaterThan(0);
@@ -213,6 +231,67 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         let s = primeAt(3, 300);
         s = run(s, inputsWith(1, [suctionInletOf(spec), ...allDeliveries(spec)]), 600);
         expect(truckOf(s).pump.primed).toBe(false);
+        expect(truckOf(s).readings.pumpFlowLpm).toBe(0);
+        expectSane(s);
+      },
+    );
+
+    const ptt = spec.pumpToTank?.id;
+    const tankIn = spec.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
+
+    it.runIf(ptt !== undefined && spec.tank !== undefined)(
+      'pump to tank recirculates on tank supply and the level holds',
+      () => {
+        const s = run(createInitialState(spec), inputsWith(0.6, [...tankIn, ptt ?? '']), 300);
+        expect(truckOf(s).readings.pumpToTankLpm).toBeGreaterThan(0);
+        expect(truckOf(s).tankL).toBeCloseTo(spec.tank?.capacityL ?? 0, 6);
+        expectSane(s);
+      },
+    );
+
+    it.runIf(ptt !== undefined && hasSuction)(
+      'pump to tank refills the tank from a hydrant',
+      () => {
+        let s = createInitialState(spec, [], hydrantSite(spec));
+        s = { ...s, trucks: s.trucks.map((t) => ({ ...t, tankL: 0 })) };
+        s = run(s, inputsWith(0.3, [suctionInletOf(spec), ptt ?? '']), 300);
+        expect(truckOf(s).tankL).toBeGreaterThan(0);
+        expectSane(s);
+      },
+    );
+
+    it.runIf(ptt !== undefined && hasSuction && spec.primer !== undefined)(
+      'pump to tank open stops the pump priming',
+      () => {
+        let s = createInitialState(spec, [], draughtSite(spec, 3));
+        s = run(s, inputsWith(0, [suctionInletOf(spec), ptt ?? ''], primerIds), 600);
+        expect(truckOf(s).pump.primed).toBe(false);
+      },
+    );
+
+    const fill = spec.inlets.find((i) => i.kind === 'tankFill')?.id;
+
+    it.runIf(fill !== undefined && spec.tank !== undefined)(
+      'a tank-fill inlet refills the tank from a hydrant with the pump idle',
+      () => {
+        const site: SiteOptions = {
+          sources: [
+            { id: 'h', kind: 'hydrant', label: 'H', staticKpa: 400, mainLossKpaPerLpm2: 1e-4 },
+          ],
+          supplies: [
+            {
+              id: 'fill',
+              truckId: DEFAULT_TRUCK_ID,
+              inletId: fill ?? '',
+              sourceId: 'h',
+              segments: [{ hose: '65L', lengthM: 30 }],
+            },
+          ],
+        };
+        let s = createInitialState(spec, [], site);
+        s = { ...s, trucks: s.trucks.map((t) => ({ ...t, tankL: 0 })) };
+        s = run(s, inputsWith(0, [fill ?? '']), 300);
+        expect(truckOf(s).tankL).toBeGreaterThan(0);
         expect(truckOf(s).readings.pumpFlowLpm).toBe(0);
         expectSane(s);
       },

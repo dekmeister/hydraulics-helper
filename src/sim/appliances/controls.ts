@@ -1,8 +1,12 @@
-import type { ApplianceSpec, ControlId, InletKind, PlayerInputs } from '../types';
+import type { ApplianceSpec, ControlId, InletKind, InletSpec, PlayerInputs } from '../types';
 
-/** Ids of every 0–1 valve-type control on the spec: inlet valves, deliveries, an adjustable relief wheel. */
+/**
+ * Ids of every 0–1 valve-type control on the spec: inlet valves, deliveries, pump to tank, an
+ * adjustable relief wheel.
+ */
 export function valveControlIds(spec: ApplianceSpec): ControlId[] {
   const ids = [...spec.inlets.map((i) => i.id), ...spec.deliveries.map((d) => d.id)];
+  if (spec.pumpToTank !== undefined) ids.push(spec.pumpToTank.id);
   if (spec.relief?.kind === 'adjustable') ids.push(spec.relief.id);
   return ids;
 }
@@ -24,6 +28,11 @@ export function primerControlId(spec: ApplianceSpec): ControlId | undefined {
 export function switchControlIds(spec: ApplianceSpec): ControlId[] {
   const primer = primerControlId(spec);
   return primer === undefined ? [] : [primer];
+}
+
+/** Inlets that feed the pump: everything but a tank-fill inlet, which goes straight to the tank. */
+export function pumpInlets(spec: ApplianceSpec): InletSpec[] {
+  return spec.inlets.filter((i) => i.kind !== 'tankFill');
 }
 
 /** The spec's first inlet of `kind`; throws (prefixed with `context`, if given) when it has none. */

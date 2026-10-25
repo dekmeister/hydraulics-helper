@@ -31,6 +31,31 @@ describe('store', () => {
     expect(truck.readings.deliveryFlowLpm[line.deliveryId]).toBeGreaterThan(0);
   });
 
+  it('switches the pump panel view and keeps it in the saved settings', () => {
+    const { setPanelView } = useStore.getState();
+    setPanelView('realistic');
+    expect(useStore.getState().saved.settings.panelView).toBe('realistic');
+    setPanelView('simplified');
+    expect(useStore.getState().saved.settings.panelView).toBe('simplified');
+  });
+
+  it('runs the throttle up while a speed switch is held, by sim time, and holds on release', () => {
+    const { pressSpeedSwitch, releaseSpeedSwitch } = useStore.getState();
+    pressSpeedSwitch(1, { perS: 0.1, flick: 0.02 });
+    // The press flicks the throttle at once.
+    expect(useStore.getState().inputs.throttle).toBeCloseTo(0.02, 12);
+    useStore.getState().step(10); // 1 s
+    expect(useStore.getState().inputs.throttle).toBeCloseTo(0.12, 9);
+    expect(activeTruck(useStore.getState().sim).inputs.throttle).toBeCloseTo(0.12, 9);
+    releaseSpeedSwitch();
+    useStore.getState().step(10);
+    expect(useStore.getState().inputs.throttle).toBeCloseTo(0.12, 9);
+    pressSpeedSwitch(-1, { perS: 0.1, flick: 0.02 });
+    useStore.getState().step(50);
+    expect(useStore.getState().inputs.throttle).toBe(0);
+    releaseSpeedSwitch();
+  });
+
   it('clamps inputs to 0–1', () => {
     const { setThrottle, setValve, sim } = useStore.getState();
     setThrottle(1.7);

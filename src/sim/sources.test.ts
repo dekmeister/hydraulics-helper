@@ -220,7 +220,7 @@ describe('site validation (data errors fail at state creation, not silently)', (
 
   it('rejects a supply on the tank inlet', () => {
     expect(() => createInitialState(SPEC, ONE, withSupply({ inletId: 'tank' }))).toThrow(
-      /not a suction inlet/,
+      /not an external inlet/,
     );
   });
 

@@ -33,6 +33,17 @@ export interface EngineSpec {
   maxRpm: number;
   /** First-order lag time constant, seconds. */
   rpmLagS: number;
+  /**
+   * The truck's throttle is a momentary speed controller (hold to run the governor up or down)
+   * rather than a lever that stays put. Absent: a plain throttle.
+   */
+  speedController?: SpeedControllerSpec;
+}
+
+/** How fast a held speed controller moves the engine, and how far one flick nudges it. */
+export interface SpeedControllerSpec {
+  rampRpmPerS: number;
+  flickRpm: number;
 }
 
 export interface TankSpec {
@@ -42,9 +53,10 @@ export interface TankSpec {
 /**
  * What an inlet is on the truck. 'tank' is the internal tank-to-pump feed. 'suction' is an external
  * inlet: hard suction to a static source (draughting) or a collecting head and layflat from a
- * hydrant. What is connected to it is scenario data (`SupplyLine`), not part of the appliance.
+ * hydrant. 'tankFill' is an external inlet straight into the tank (hydrant to tank), bypassing the
+ * pump. What is connected to an external inlet is scenario data (`SupplyLine`), not the appliance.
  */
-export type InletKind = 'tank' | 'suction';
+export type InletKind = 'tank' | 'suction' | 'tankFill';
 
 export interface InletSpec {
   /** Control id of this inlet's valve, e.g. 'tank-to-pump'. */
@@ -54,6 +66,22 @@ export interface InletSpec {
   /** Loss through the inlet path with the valve fully open, kPa per (L/min)². */
   lossKpaPerLpm2: number;
   sizeMm?: number;
+  /** 'tankFill' only: how high the water climbs from the inlet into the tank, m (default 0). */
+  fillHeightM?: number;
+}
+
+/**
+ * Pump to tank: a valved return from the discharge side into the tank. Refills the tank from a
+ * hydrant or a draught through the pump, and is the operator's way to keep water moving through
+ * a pump that would otherwise churn. Flows to atmosphere, Q = open·√(P_d / k).
+ */
+export interface PumpToTankSpec {
+  /** Control id of its valve, e.g. 'pump-to-tank'. */
+  id: ControlId;
+  label: string;
+  sizeMm: number;
+  /** Loss through the return with the valve fully open, kPa per (L/min)². */
+  lossKpaPerLpm2: number;
 }
 
 export interface DeliverySpec {
@@ -127,9 +155,22 @@ export interface GaugeScaleSpec {
   zones: GaugeZone[];
 }
 
+/** One lit band of an electronic tank gauge: lit from `fromFraction` of full up to the next band. */
+export interface TankBand {
+  fromFraction: number;
+  tone: 'green' | 'blue' | 'red';
+}
+
+/**
+ * How a tank's level is shown on the truck. Display data only: the sim never reads it.
+ * 'sightTube': a clear tube on the tank with a float at the water line. 'bands': an electronic
+ * gauge that lights one coloured band for the range the level is in.
+ */
+export type TankDisplay = { kind: 'sightTube' } | { kind: 'bands'; bands: TankBand[] };
+
 export type InstrumentSpec =
   | { id: string; kind: Exclude<InstrumentKind, 'tank'>; scale: GaugeScaleSpec }
-  | { id: string; kind: 'tank' };
+  | { id: string; kind: 'tank'; display: TankDisplay };
 
 export interface ApplianceSpec {
   /** Stable id used in saves and scenarios, e.g. 'cat1-generic'. */
@@ -143,6 +184,8 @@ export interface ApplianceSpec {
   deliveries: DeliverySpec[];
   primer?: PrimerSpec;
   relief?: ReliefSpec;
+  /** Return from the discharge into the tank; needs a tank. */
+  pumpToTank?: PumpToTankSpec;
   instruments: InstrumentSpec[];
 }
 
@@ -271,6 +314,8 @@ export interface TruckReadings {
   pumpFlowLpm: number;
   /** Flow through the pressure relief bypass, L/min. */
   reliefFlowLpm: number;
+  /** Flow back to the tank through pump to tank, L/min; 0 if none is fitted. */
+  pumpToTankLpm: number;
   /** Flow out of each delivery, keyed by delivery id, L/min. */
   deliveryFlowLpm: Record<ControlId, number>;
   /** Pressure at each branch, keyed by line id, kPa. */

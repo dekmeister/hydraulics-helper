@@ -15,8 +15,9 @@ import type {
 } from '../sim/types';
 import { acknowledge, advanceCoach } from '../sim/lesson/progress';
 import type { SupportSpecs } from '../sim/scenarios/types';
+import { rampedThrottle, type ThrottleRamp } from './throttleRamp';
 import { beginLesson, recordIfEnded, stepActive, type ActiveLesson } from './lesson';
-import { browserStorage, loadSaved, writeSaved, type Saved } from './persist';
+import { browserStorage, loadSaved, writeSaved, type PanelView, type Saved } from './persist';
 import { activeTruck, instrumentValue } from './selectors';
 
 /** Appliance loaded at start-up until scenario selection exists (M6). */
@@ -87,6 +88,7 @@ interface PumpOpsStore {
   /** Settings and progress, as saved. */
   saved: Saved;
   setSound: (on: boolean) => void;
+  setPanelView: (view: PanelView) => void;
   sim: SimState;
   /**
    * What the player has set on the panel; applied to the active truck on every tick. Every other
@@ -115,6 +117,11 @@ interface PumpOpsStore {
   /** Displayed readings for the last `WAKE_HISTORY_S` of sim time, oldest first. */
   wake: readonly WakeSample[];
   setThrottle: (position: number) => void;
+  /** A speed switch held one way (null: released); the throttle ramps on every sim tick. */
+  throttleRamp: ThrottleRamp | null;
+  /** Push a speed switch: flick the throttle by `rates.flick` now, then ramp at `rates.perS`. */
+  pressSpeedSwitch: (direction: 1 | -1, rates: { perS: number; flick: number }) => void;
+  releaseSpeedSwitch: () => void;
   /** Set a valve-type control (0 shut – 1 open) by spec control id. */
   setValve: (id: ControlId, open: number) => void;
   /** Set an on/off control (primer) by spec control id. */
@@ -173,6 +180,11 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
       saved: persist(saved, { ...saved, settings: { ...saved.settings, sound: on } }),
     }));
   },
+  setPanelView: (view) => {
+    set(({ saved }) => ({
+      saved: persist(saved, { ...saved, settings: { ...saved.settings, panelView: view } }),
+    }));
+  },
   sim: initialSim,
   inputs: activeTruck(initialSim).inputs,
   playerSpec: activeTruck(initialSim).spec,
@@ -180,13 +192,15 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   scenarioId: TANK_ATTACK.id,
   wake: [],
   step: (ticks) => {
-    set(({ screen, sim, inputs, wake, lesson, saved }) => {
+    set(({ screen, sim, inputs, wake, lesson, saved, throttleRamp }) => {
       if (screen !== 'play') return {};
       let next = sim;
       let panel = inputs;
       let playing = lesson;
       const samples = [...wake];
       for (let i = 0; i < ticks; i++) {
+        if (throttleRamp !== null)
+          panel = { ...panel, throttle: rampedThrottle(panel.throttle, throttleRamp, TICK_S) };
         next = advance(next, panel, TICK_S);
         if (playing !== null) {
           const held = activeTruck(next).inputs;
@@ -220,6 +234,7 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
       inputs: activeTruck(next).inputs,
       playerSpec: activeTruck(next).spec,
       highlight: null,
+      throttleRamp: null,
       wake: [],
       scenarioId: scenarioId !== undefined ? scenarioId : sim === undefined ? TANK_ATTACK.id : null,
     });
@@ -229,6 +244,16 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
     const scenario = getScenario(id);
     if (!supports(scenario, spec)) throw new Error(`${spec.id} can’t play '${id}'`);
     get().reset(scenario.build(spec).state, id);
+  },
+  throttleRamp: null,
+  pressSpeedSwitch: (direction, rates) => {
+    set(({ inputs }) => ({
+      inputs: { ...inputs, throttle: clamp01(inputs.throttle + direction * rates.flick) },
+      throttleRamp: { direction, perS: rates.perS },
+    }));
+  },
+  releaseSpeedSwitch: () => {
+    set({ throttleRamp: null });
   },
   setThrottle: (position) => {
     set(({ inputs }) => ({ inputs: { ...inputs, throttle: clamp01(position) } }));
@@ -250,7 +275,13 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   setActiveTruck: (truckId) => {
     set(({ sim, inputs }) => {
       const next = switchTruck(sim, truckId, inputs);
-      return { sim: next, inputs: activeTruck(next).inputs, highlight: null, wake: [] };
+      return {
+        sim: next,
+        inputs: activeTruck(next).inputs,
+        highlight: null,
+        wake: [],
+        throttleRamp: null,
+      };
     });
   },
   toggleHighlight: (deliveryId, from) => {

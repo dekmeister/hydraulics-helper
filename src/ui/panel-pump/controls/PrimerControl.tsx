@@ -1,5 +1,6 @@
-import { useId, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useId } from 'react';
 import type { PrimerState } from '../../../state/supply';
+import { useHoldSwitch } from './useHoldSwitch';
 import './controls.css';
 
 export interface PrimerControlProps {
@@ -13,7 +14,8 @@ export interface PrimerControlProps {
   progress?: number;
 }
 
-const CAPTION: Readonly<Record<PrimerState, string>> = {
+/** What the primer is doing, as its caption says it. */
+export const PRIMER_CAPTION: Readonly<Record<PrimerState, string>> = {
   idle: 'HOLD',
   running: 'RUNNING',
   'check-suction': 'CHECK SUCTION',
@@ -38,20 +40,8 @@ export function PrimerControl({
   state = on ? 'running' : 'idle',
   progress = 0,
 }: PrimerControlProps) {
-  const [pointerId, setPointerId] = useState<number | null>(null);
+  const hold = useHoldSwitch(on, onChange);
   const captionId = useId();
-
-  const start = (e: PointerEvent<HTMLButtonElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setPointerId(e.pointerId);
-    onChange(true);
-  };
-  const stop = (e: PointerEvent<HTMLButtonElement>) => {
-    if (e.pointerId !== pointerId) return;
-    setPointerId(null);
-    onChange(false);
-  };
-  const isHoldKey = (e: KeyboardEvent) => e.key === ' ' || e.key === 'Enter';
 
   return (
     <div className={`primer primer--${state}`} data-state={state}>
@@ -76,28 +66,7 @@ export function PrimerControl({
           aria-checked={on}
           aria-label={label}
           aria-describedby={captionId}
-          onPointerDown={start}
-          onPointerUp={stop}
-          onPointerCancel={stop}
-          onKeyDown={(e) => {
-            if (!isHoldKey(e)) return;
-            e.preventDefault();
-            if (!e.repeat) onChange(true);
-          }}
-          onKeyUp={(e) => {
-            if (!isHoldKey(e)) return;
-            e.preventDefault();
-            onChange(false);
-          }}
-          onClick={(e) => {
-            // Pointer and keyboard presses are handled as holds above (keys preventDefault their
-            // click). A click with detail 0 is an assistive-technology "activate", which can't hold,
-            // so it latches the primer instead; the next activate or leaving the control stops it.
-            if (e.detail === 0) onChange(!on);
-          }}
-          onBlur={() => {
-            if (on) onChange(false);
-          }}
+          {...hold}
         >
           PRIME
         </button>
@@ -108,7 +77,7 @@ export function PrimerControl({
             <path d="M2 7.5 L5.5 11 L12 3.5" />
           </svg>
         )}
-        {CAPTION[state]}
+        {PRIMER_CAPTION[state]}
       </span>
     </div>
   );

@@ -78,6 +78,7 @@ function restingReadings(spec: ApplianceSpec): TruckState['readings'] {
     compoundKpa: 0,
     pumpFlowLpm: 0,
     reliefFlowLpm: 0,
+    pumpToTankLpm: 0,
     deliveryFlowLpm: zero(spec.deliveries),
     branchKpa: {},
     inletFlowLpm: zero(spec.inlets),

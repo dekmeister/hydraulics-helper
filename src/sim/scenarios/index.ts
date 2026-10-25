@@ -11,12 +11,13 @@ import { HYDRANT_SUPPLY } from './hydrantSupply';
 import { INCIDENT } from './incident';
 import { OPEN_RELAY } from './openRelay';
 import { TANK_ATTACK } from './tankAttack';
+import { TANK_REFILL } from './tankRefill';
 import { traceCsv } from './trace';
 import { supports, type Scenario, type SupportSpecs } from './types';
 
 export { APPLIANCES };
 
-/** Every scenario, in ladder order (ARCHITECTURE §5). */
+/** Every scenario, in ladder order (ARCHITECTURE §5), then the free-play-only ones. */
 export const SCENARIOS: readonly Scenario[] = [
   FIRST_LINE,
   TANK_ATTACK,
@@ -25,6 +26,7 @@ export const SCENARIOS: readonly Scenario[] = [
   CLOSED_RELAY,
   OPEN_RELAY,
   INCIDENT,
+  TANK_REFILL,
 ];
 
 export function getScenario(id: string): Scenario {

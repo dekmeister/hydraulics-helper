@@ -7,7 +7,7 @@ import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim
 import { settle, TANK_ATTACK_TARGET_KPA, throttleForKpa } from './panelStates';
 
 export type SourceStateId =
-  'draught-priming' | 'draught-working' | 'cavitating' | 'hydrant' | 'faults';
+  'draught-priming' | 'draught-working' | 'cavitating' | 'hydrant' | 'faults' | 'refilling';
 
 /** Scenario each state is built from, so the header picker shows it. */
 export const SOURCE_STATE_SCENARIO: Readonly<Record<SourceStateId, string>> = {
@@ -16,6 +16,7 @@ export const SOURCE_STATE_SCENARIO: Readonly<Record<SourceStateId, string>> = {
   cavitating: 'draughting',
   hydrant: 'hydrant-supply',
   faults: 'tank-attack',
+  refilling: 'tank-refill',
 };
 
 const inletOf = inletOfKind;
@@ -42,6 +43,7 @@ function primed(spec: ApplianceSpec, state: SimState): SimState {
  * 'draught-working': primed, the first line open at the working discharge. 'cavitating': both lines
  * open at full throttle. 'hydrant': the first line open on hydrant supply at the working discharge.
  * 'faults': tank attack churning with every delivery shut, casing hot, just after a water hammer.
+ * 'refilling': hydrant to tank open for 20 s on the tank-refill fireground.
  */
 export function sourceState(spec: ApplianceSpec, id: SourceStateId): SimState {
   const initial = getScenario(SOURCE_STATE_SCENARIO[id]).build(spec).state;
@@ -63,6 +65,8 @@ export function sourceState(spec: ApplianceSpec, id: SourceStateId): SimState {
       const t = throttleForKpa(initial, (x) => inputs(x, open), TANK_ATTACK_TARGET_KPA);
       return settle(initial, inputs(t, open));
     }
+    case 'refilling':
+      return settle(initial, inputs(0, [inletOf(spec, 'tankFill')]), 20);
     case 'faults': {
       const attack = TANK_ATTACK.build(spec).state;
       const flowing = settle(attack, inputs(0.6, [inletOf(spec, 'tank'), ...first]));

@@ -6,6 +6,7 @@ import {
   RELAY_MIN_RESIDUAL_KPA,
   VALVE_CLOSED_EPS,
 } from '../sim/constants';
+import { pumpInlets } from '../sim/appliances/controls';
 import { connectedSupplies } from '../sim/engine';
 import { isRigid } from '../sim/hose';
 import { draughtSupply } from '../sim/priming';
@@ -135,15 +136,15 @@ function supplyProblem(
   const hose = relayHoseProblem(sim, truck);
   if (hose !== undefined) return hose;
   if (!spec.deliveries.some((d) => isOpen(inputs.valves[d.id]))) return undefined;
-  const openInlets = spec.inlets.filter((i) => isOpen(inputs.valves[i.id]));
+  // Hydrant to tank fills the tank, not the pump, so it isn't a supply here.
+  const inlets = pumpInlets(spec);
+  const openInlets = inlets.filter((i) => isOpen(inputs.valves[i.id]));
   if (openInlets.length === 0) {
-    return caution(
-      `No supply: open ${spec.inlets.map((i) => i.label.toLowerCase()).join(' or ')}.`,
-    );
+    return caution(`No supply: open ${inlets.map((i) => i.label.toLowerCase()).join(' or ')}.`);
   }
   const relay = relayFlowProblem(sim, truck, inputs);
   if (relay !== undefined) return relay;
-  if (Object.values(truck.readings.inletFlowLpm).some((q) => q > 0)) return undefined;
+  if (inlets.some((i) => (truck.readings.inletFlowLpm[i.id] ?? 0) > 0)) return undefined;
   if (openInlets.some((i) => i.kind === 'tank')) return undefined;
   const supplies = connectedSupplies(sim, truck.id);
   const draught = draughtSupply(supplies);

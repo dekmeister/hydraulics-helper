@@ -7,6 +7,12 @@ import { getScenario } from '../../sim/scenarios';
 import { supports } from '../../sim/scenarios/types';
 import type { ApplianceSpec } from '../../sim/types';
 import { RELAY_STATE_SCENARIO, type RelayStateId } from './relayStates';
+import {
+  REALISTIC_APPLIANCES,
+  REALISTIC_STATE_SCENARIO,
+  realisticFixtureId,
+  type RealisticStateId,
+} from './realisticStates';
 import { SOURCE_STATE_SCENARIO, type SourceStateId } from './sourceStates';
 
 export type ViewportName = 'phone' | 'tablet' | 'desktop';
@@ -165,6 +171,12 @@ const SOURCE_CAPTIONS: Readonly<Record<SourceStateId, string>> = {
     'with no flow (churning), TEMP lamp red with a diamond (steady with a ring: reduced motion), ' +
     'HAMMER lamp amber with a triangle; messages "Pump hot…" and "Water hammer: Delivery 2 was ' +
     'shut too fast…". Scene lines all dry.',
+  refilling:
+    'Tank refill: hydrant to tank open (green handle, 100 %), every other valve shut, engine at ' +
+    'idle; discharge and compound 0, tank ~840 L of 3 000 and rising. Supply lamp off. Scene: red ' +
+    'hydrant on the track, green charged layflat from it to the hydrant-to-tank coupling on the ' +
+    'truck’s left side (forward of the suction coupling, which is capped); legend "Hydrant  ' +
+    'Charged · ~1 030 L/min".',
 } as const;
 
 export type SourceState = SourceStateId;
@@ -349,6 +361,52 @@ const DEBRIEF_FIXTURES: FixtureMeta[] = APPLIANCES.flatMap((spec) =>
   })),
 );
 
+const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
+  idle:
+    'Realistic bay at rest (header button REALISTIC pressed). Instrument panel: dark box with ' +
+    'compound and pressure dials (no readouts) on one centreline over red COMPOUND / PRESSURE ' +
+    'plates on one line, the tacho at idle, small oil temp / oil pressure dials, placards (idle, ' +
+    'limits, stopping) with their lines evenly spaced, fuses, stop / ign / alt / start under ' +
+    'equal plates, foam knobs and the air-cleaner indicator drawn plainly; the red SPEED switch ' +
+    'under the pressure gauge, toggle bat end-on in its bezel (centred), ▲ / ▼ above and below. ' +
+    'Bay: galvanised pipes with square ends on collars, couplings or flanges, none overrunning a ' +
+    'joint; tank feed and suction join into the red pump’s eye (centre); the discharge leaves ' +
+    'tangentially off the volute’s top edge at a flange, tees up (pump to tank, over the pump) ' +
+    'and down to the manifold; each outlet drop ends on its coupling’s centre. Green tank-to-' +
+    'pump lever far left pointing right (across its pipe, shut), blue pump-to-tank lever pointing ' +
+    'up (shut), green suction lever up (shut) by the big coupling low left, PRIME T-handle home; ' +
+    'three blue outlet levers pointing right (shut), D1 and D2 couplings open (laid), D3 capped ' +
+    'and its lever dimmed with NO LINE. Insets: Side of truck (hydrant-to-tank lever up, shut) ' +
+    'and Tank (sight tube full, float at the top). Warning strip below, no lamps lit.',
+  'tank-attack-700':
+    'As idle, but tank to pump open (green lever up along its pipe), the first line’s outlet ' +
+    'lever up along its drop (open, travel arc filled blue), pressure needle at ~700 kPa (low on ' +
+    'the 0–4000 face), tacho above idle, sight tube nearly full. No warnings.',
+  highlighted:
+    'As tank-attack-700, with the first line’s delivery picked out: its coupling has a double ' +
+    'focus ring and the number plate button is pressed; on the scene its hose and legend row are ' +
+    'highlighted.',
+  'draught-priming':
+    'Draughting fireground, primer held 8 s: the PRIME T-handle pulled out of its bezel, a ' +
+    'green vacuum bar part-filled under it, caption RUNNING; suction lever along its pipe ' +
+    '(open), compound needle into the vacuum sector. Scene: hard suction to the dam.',
+  refilling:
+    'Tank refill: the Side of truck inset’s hydrant-to-tank lever along its pipe (open); sight ' +
+    'tube about a quarter full and the float at the water line; every bay lever shut, engine at ' +
+    'idle, pressure 0. Scene: green layflat from the hydrant to the coupling on the truck’s side.',
+};
+
+const REALISTIC_FIXTURES: FixtureMeta[] = REALISTIC_APPLIANCES.flatMap((spec) =>
+  (Object.keys(REALISTIC_CAPTIONS) as RealisticStateId[])
+    .filter((state) => supports(getScenario(REALISTIC_STATE_SCENARIO[state]), spec))
+    .map((state) => ({
+      id: realisticFixtureId(spec.id, state),
+      expect: REALISTIC_CAPTIONS[state],
+      applianceId: spec.id,
+      surface: 'shell' as const,
+    })),
+);
+
 export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'shell/default',
@@ -377,6 +435,15 @@ export const FIXTURES: readonly FixtureMeta[] = [
     expect:
       'Three engine rpm gauges 0–4 (×1000), red 3.5–4, plate ENGINE. Needles at 800, 2 400 and ' +
       '3 700 rpm (in the red, red readout).',
+  },
+  {
+    id: 'gauge/cat1-faces',
+    expect:
+      'The Cat 1 fitted faces (spec scales, no psi). Two compounds −100…25 (×100) with the vacuum ' +
+      'sector, labels every 5 (500 kPa), amber −80…−70, red −100…−80: needles at −40 (in the ' +
+      'vacuum sector) and 300. A discharge 0–40 (×100) labelled every 5, amber 11–14 and no red band: ' +
+      'needle at 700, low on the face. Two tachos 0–4 (×1000), red 3–4: needles at 2 400 and ' +
+      '3 200 (in the red, red readout).',
   },
   {
     id: 'gauge/wake',
@@ -428,6 +495,7 @@ export const FIXTURES: readonly FixtureMeta[] = [
   ...LESSON_FIXTURES,
   ...DEBRIEF_FIXTURES,
   ...PANEL_FIXTURES,
+  ...REALISTIC_FIXTURES,
   ...SOURCE_FIXTURES,
   ...SCENE_FIXTURES,
   ...RELAY_FIXTURES,

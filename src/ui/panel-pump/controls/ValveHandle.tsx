@@ -1,8 +1,9 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useRef, type PointerEvent } from 'react';
 import { COLOR } from '../../theme/colors';
 import { formatPercent } from '../../format';
 import type { TapBehaviour } from '../../appliances/types';
-import { DRAG_THRESHOLD_PX, keyedPosition, valveAngleDeg, valveOpeningAt } from './controlMath';
+import { valveAngleDeg, valveOpeningAt } from './controlMath';
+import { useLeverGesture } from './useLeverGesture';
 import './controls.css';
 
 export interface ValveHandleProps {
@@ -24,13 +25,6 @@ const VIEW = { w: 200, h: 120 };
 const TRAVEL_R = 62;
 const TRAVEL_PATH = `M${String(PIVOT.x)} ${String(PIVOT.y - TRAVEL_R)} A${String(TRAVEL_R)} ${String(TRAVEL_R)} 0 0 1 ${String(PIVOT.x + TRAVEL_R)} ${String(PIVOT.y)}`;
 
-interface Gesture {
-  pointerId: number;
-  startX: number;
-  startY: number;
-  dragging: boolean;
-}
-
 function stateText(value: number): string {
   if (value <= 0) return 'closed';
   if (value >= 1) return 'open';
@@ -46,8 +40,6 @@ export function ValveHandle(props: ValveHandleProps) {
   const { label, value, onChange, tap, disabledReason } = props;
   const fn = props.function;
   const svgRef = useRef<SVGSVGElement>(null);
-  const gesture = useRef<Gesture | null>(null);
-  const [dragging, setDragging] = useState(false);
   const disabled = disabledReason !== undefined;
 
   const openingAtPointer = (e: PointerEvent): number => {
@@ -57,50 +49,13 @@ export function ValveHandle(props: ValveHandleProps) {
     const py = box.top + (PIVOT.y / VIEW.h) * box.height;
     return valveOpeningAt(e.clientX - px, e.clientY - py);
   };
-
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    if (disabled || gesture.current !== null) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    gesture.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      dragging: false,
-    };
-  };
-
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    const g = gesture.current;
-    if (g?.pointerId !== e.pointerId) return;
-    if (!g.dragging && Math.hypot(e.clientX - g.startX, e.clientY - g.startY) < DRAG_THRESHOLD_PX)
-      return;
-    if (!g.dragging) {
-      g.dragging = true;
-      setDragging(true);
-    }
-    onChange(openingAtPointer(e));
-  };
-
-  const endGesture = (e: PointerEvent<HTMLDivElement>, cancelled: boolean) => {
-    const g = gesture.current;
-    if (g?.pointerId !== e.pointerId) return;
-    gesture.current = null;
-    setDragging(false);
-    if (!g.dragging && !cancelled && tap === 'toggle') onChange(value >= 0.5 ? 0 : 1);
-  };
-
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (disabled) return;
-    const next =
-      tap === 'toggle' && (e.key === 'Enter' || e.key === ' ')
-        ? value >= 0.5
-          ? 0
-          : 1
-        : keyedPosition(e.key, value);
-    if (next === null) return;
-    e.preventDefault();
-    onChange(next);
-  };
+  const { dragging, handlers } = useLeverGesture({
+    value,
+    onChange,
+    tap,
+    disabled,
+    openingAt: openingAtPointer,
+  });
 
   const angle = valveAngleDeg(value);
   const handle = fn === 'inlet' ? COLOR.inlet : COLOR.outlet;
@@ -124,15 +79,7 @@ export function ValveHandle(props: ValveHandleProps) {
       }
       aria-disabled={disabled || undefined}
       data-function={fn}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={(e) => {
-        endGesture(e, false);
-      }}
-      onPointerCancel={(e) => {
-        endGesture(e, true);
-      }}
-      onKeyDown={onKeyDown}
+      {...handlers}
     >
       <svg
         ref={svgRef}

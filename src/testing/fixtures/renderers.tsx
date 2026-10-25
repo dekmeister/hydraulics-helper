@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import type { ApplianceSpec, ControlId, GaugeScaleSpec, SimState } from '../../sim/types';
+import { CAT1 } from '../../sim/appliances/cat1';
 import { SceneView } from '../../ui/panel-scene/SceneView';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { useStore } from '../../state/store';
@@ -18,8 +19,16 @@ import {
   SOURCE_FIXTURE_SETS,
 } from './catalog';
 import { RELAY_STATE_SCENARIO, relayState } from './relayStates';
+import {
+  REALISTIC_APPLIANCES,
+  REALISTIC_STATE_SCENARIO,
+  realisticFixtureId,
+  realisticState,
+  type RealisticStateId,
+} from './realisticStates';
 import { SOURCE_STATE_SCENARIO, sourceState, type SourceStateId } from './sourceStates';
 import {
+  DialsGallery,
   GaugeGallery,
   TankGallery,
   ThrottlePrimerGallery,
@@ -41,6 +50,22 @@ export interface FixtureRenderer {
 }
 
 /** Component galleries show Design sheet 02's faces, independent of any appliance. */
+/** The Cat 1's fitted faces (spec scales) at typical working readings and at their limits. */
+function cat1FaceCards() {
+  const scale = (id: string): GaugeScaleSpec => {
+    const instrument = CAT1.instruments.find((i) => i.id === id);
+    if (instrument === undefined || instrument.kind === 'tank') throw new Error(`no dial '${id}'`);
+    return instrument.scale;
+  };
+  return [
+    { dial: 'compound', scale: scale('compound'), value: -40, unit: 'kPa', label: 'Compound' },
+    { dial: 'compound', scale: scale('compound'), value: 300, unit: 'kPa', label: 'Compound' },
+    { dial: 'discharge', scale: scale('discharge'), value: 700, unit: 'kPa', label: 'Discharge' },
+    { dial: 'tacho', scale: scale('tacho'), value: 2400, unit: 'rpm', label: 'Engine rpm' },
+    { dial: 'tacho', scale: scale('tacho'), value: 3200, unit: 'rpm', label: 'Engine rpm' },
+  ] as const;
+}
+
 const SHEET_02 = {
   discharge: {
     fullScale: 1600,
@@ -67,6 +92,37 @@ function panelRenderers(): Record<string, FixtureRenderer> {
       out[panelFixtureId(spec.id, state)] = {
         state: () => panelState(spec, state satisfies PanelStateId),
         scenario: 'tank-attack',
+        render: () => <AppShell />,
+      };
+    }
+  }
+  return out;
+}
+
+/** The first laid line's delivery: what a highlighted fixture picks out. */
+function firstLineDelivery(sim: SimState): ControlId {
+  const first = sim.lines[0];
+  if (first === undefined) throw new Error('no line laid');
+  return first.deliveryId;
+}
+
+/** Show the realistic view, without saving the choice. */
+function showRealistic(): void {
+  useStore.setState((s) => ({
+    saved: { ...s.saved, settings: { ...s.saved.settings, panelView: 'realistic' } },
+  }));
+}
+
+/** Generated realistic-view renderers, one per catalogued realistic fixture. */
+function realisticRenderers(): Record<string, FixtureRenderer> {
+  const out: Record<string, FixtureRenderer> = {};
+  for (const spec of REALISTIC_APPLIANCES) {
+    for (const state of Object.keys(REALISTIC_STATE_SCENARIO) as RealisticStateId[]) {
+      out[realisticFixtureId(spec.id, state)] = {
+        state: () => realisticState(spec, state),
+        scenario: REALISTIC_STATE_SCENARIO[state],
+        setup: showRealistic,
+        ...(state === 'highlighted' ? { highlight: firstLineDelivery } : {}),
         render: () => <AppShell />,
       };
     }
@@ -220,11 +276,13 @@ export const FIXTURE_RENDERERS: Record<string, FixtureRenderer> = {
       />
     ),
   },
+  'gauge/cat1-faces': { render: () => <DialsGallery cards={cat1FaceCards()} /> },
   'gauge/wake': { render: () => <WakeGallery scale={SHEET_02} /> },
   'gauge/tank': { render: () => <TankGallery capacityL={3000} values={[3000, 2000, 600, 0]} /> },
   'controls/valves': { render: () => <ValveGallery /> },
   'controls/throttle-primer': { render: () => <ThrottlePrimerGallery /> },
   ...panelRenderers(),
+  ...realisticRenderers(),
   ...sourceRenderers(),
   ...sceneRenderers(),
   ...relayRenderers(),
