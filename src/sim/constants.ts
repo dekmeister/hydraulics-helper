@@ -111,6 +111,12 @@ export const BRANCH_OPTIMUM_KPA: Readonly<Record<number, number>> = {
 };
 
 /**
+ * How far a branch may sit from its Table 1 optimum and still count as "at working pressure" in a
+ * lesson objective: ±10 %, so 315–385 kPa for a 15 mm tip. // PLACEHOLDER — needs Dek
+ */
+export const BRANCH_BAND_FRACTION = 0.1;
+
+/**
  * Loss through a fully open 38 mm delivery valve, kPa per (L/min)²: ~10 kPa at 300 L/min.
  * Scales with (38/d)⁴ for other sizes (loss ∝ velocity², velocity ∝ 1/d²). // PLACEHOLDER — needs Dek
  */
