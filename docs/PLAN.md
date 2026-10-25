@@ -189,11 +189,11 @@ Work order (one commit each, `npm run verify` green at the end):
 
 ## M6 — Scenarios, tutorial, scoring, polish
 
-- [ ] Scenario data format + loader; objectives, triggers, pass/fail; the 7-scenario ladder from `ARCHITECTURE.md` §5. Scenarios name appliances by id or declare required capabilities (§9.6); loader validates them.
-- [ ] Tutorial coach-marks engine; scenario 1 fully guided.
-- [ ] Scoring + debrief screen ("you cavitated for 40 s; here's why").
-- [ ] Audio pass (engine note by RPM, primer, cavitation rattle, spray) — behind a mute toggle.
-- [ ] Settings + progress in `localStorage`; PWA manifest so it installs to a phone home screen.
+- [x] Scenario data format + loader; objectives, triggers, pass/fail; the 7-scenario ladder from `ARCHITECTURE.md` §5. Scenarios name appliances by id or declare required capabilities (§9.6); loader validates them.
+- [x] Tutorial coach-marks engine; scenario 1 fully guided.
+- [x] Scoring + debrief screen ("you cavitated for 40 s; here's why").
+- [x] Audio pass (engine note by RPM, primer, cavitation rattle, spray) — behind a mute toggle.
+- [x] Settings + progress in `localStorage`; PWA manifest so it installs to a phone home screen.
 
 **Demo:** a new player completes scenarios 1–3 unassisted.
 
@@ -226,6 +226,8 @@ Work order (one commit each, `npm run verify` green at the end):
 7. **Lesson dock and coach targets**; invariant update.
 8. **Audio**.
 9. **PWA**.
+
+As built (2026-10-25): the plan held, with these changes. Lesson fixtures are captured at the viewport (a fixed dock in a full-page shot lands mid-page). The closed-relay lesson needed the base pump to raise its pressure once both attack lines flow (the fill sequence), done as a lesson event; that moved the closed-relay traces from t = 40 s. The incident is traced from its operator solution, since its events wait on objectives. Scenario titles were kept (they name the fireground, and the picker shows them in every shell baseline), except draughting's, which contradicted its lesson. Failing a lesson earns its objective points only, and the penalty caps sum to the clean-running points so the score table adds up (found in review).
 10. **Fixtures + journeys**: menu (fresh, with progress), lesson dock (guided step, objectives with radio), debrief (passed, failed). Journeys: scenario 1 guided through the real controls to the debrief; scenarios 2 and 3 unassisted; progress survives a reload; the incident's events; sound setting persists.
 11. **Review loop**, baselines, docs (ARCHITECTURE §3/§5/§7/§8, TESTING, CALIBRATION "needs Dek", PLAN tick).
 
@@ -250,7 +252,7 @@ Work order (one commit each, `npm run verify` green at the end):
 * Multiple independent pumps on one appliance (`pumps: PumpSpec[]`, e.g. separate high-pressure reel pump) — deferred, see `ARCHITECTURE.md` §9.2.
 * Realistic bay view and zone C close-up (Design sheets 07–08, `Design/layouts/layout-a.json`) as a second view over the panel layout data.
 * Vernier-knob throttle variant (Layout A, Design OPEN_DECISIONS #4); M2 ships the T-handle only.
-* Warning lamp acknowledge (tap → steady, opens a coaching card); needs coaching cards (M6).
+* Warning lamp acknowledge (tap → steady, opens a coaching card). M6 built the coach as a dock, not cards; a lamp tap could open the lamp's explanation in the dock.
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
 * **Layout vocabulary gaps** (M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button (the sim treats its switch as "stroking"); an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` shows every lamp the sim can light (temperature, cavitation, hammer), whatever the truck actually fits.
 * Scene follow-ups (M3): hydraulic section view along a line (Design sheet 06) with pump, friction, head and branch figures; elevation terrain that matches line elevations; a pressure-scaled spray throw; hose casing swelling on over-pressure (Design §6 scene cues).
@@ -264,17 +266,25 @@ Work order (one commit each, `npm run verify` green at the end):
 * **PR #3 review follow-ups** (M5–M7):
   * Water hammer surge depends on the tick rate (CALIBRATION "needs Dek" 21): measure the closure against the line's 2L/a, not per tick, once Dek picks the model.
   * Priming is one `pump.primed` flag, so `validateSite` allows one static source per truck. Track priming per supply before an appliance with two suction inlets (M7).
-  * `Scenario.build()` scripts are hand-timed to Cat 1 (e.g. the primer released at t = 25 s). M6's data format needs triggers ("when primed") and a check that every scripted run succeeds on each eligible appliance.
-  * `SimState` has no schema version; add one before M6 persists anything.
+  * ~~`Scenario.build()` scripts hand-timed to Cat 1~~: done in M6 (`ScriptStep.when`, and `ladder.test.ts` passes every lesson's solution on every eligible appliance).
+  * `SimState` has no schema version; M6 persists only settings and results (versioned), so add one before saving a game in progress.
   * No CI workflow: `npm run verify` runs only locally, and baselines are tied to the pinned browser and OS.
 * **M5 follow-ups:**
-  * Repairing a burst relay length (crew replaces it) as a scenario event (M6); until then a burst relay needs a reload. Bursting delivery lines (not only relays) on over-pressure, and the tank-to-hydrant changeover surge, with the same peak model.
+  * Repairing a burst relay length is a lesson event (M6, closed-relay lesson); in free play a burst relay still needs a reload. Bursting delivery lines (not only relays) on over-pressure, and the tank-to-hydrant changeover surge, with the same peak model.
   * Support trucks hold fixed settings. AI operators (hold 700 kPa at the delivery, the fill sequence of 500 then 700 kPa, L3850–3853), radio calls between operators, and the booster-failure loss (~30 %, L3881) for the relay scenarios (M6).
   * The supplying truck has no lamp for a burst on its own delivery (the receiver's SUPPLY lamp, the scene and the Table 6 gauges show it). Decide with the lamp acknowledge / coaching cards work (M6).
   * Scene stations: trucks at the same relay depth spread across the route, and one farm dam and one hydrant are placed by the base pump's station; scenarios with several hydrants or dams, or trucks far apart, need placement data on the scenario (M6 data format). The relay hose is a map symbol labelled with its climb, not drawn to the lays' scale.
   * Closed-relay solve fits the supplying pump from last tick's flow; a pump far from a square law (several lines, relief, cavitating) settles over a few ticks. A second secant pass per tick would tighten it if a scenario needs it.
   * The e2e + review run is now ~2.1 + ~0.9 min with the relay fixtures and journeys (see the budget note above).
   * **PR #4 review follow-ups:** `advance(state, inputs, dt)` takes inputs for the active truck only, so a `ScriptStep` can't drive a support truck (the fill sequence, a booster failure) and an AI operator would have to write `truck.inputs` from outside `advance`. Change it to a per-truck inputs map (unlisted trucks keep their held inputs) before M6 builds scripts on it. The closed-relay fit reads last tick's `linkReadings` flow, so it's sim state: a save must keep it, which adds to the schema-version item above.
+* **M6 follow-ups:**
+  * Instructor-authored scenarios: the lesson is JSON-shaped already; the fireground is still a `build()` function. A JSON site format (trucks by role, lines by hose size, sources, supplies, relays, scene placement) and an import screen would finish it.
+  * AI support operators: support trucks change settings only through lesson events (`holdSettings`, throttle only). The parking-lot items above (fill sequence by pressure, booster failure, radio between operators) and `advance()` taking per-truck inputs remain.
+  * The tank-to-hydrant changeover surge isn't modelled, so the incident's changeover has no trap (CALIBRATION "needs Dek" 30).
+  * Lessons don't drive the scene beyond what the sim shows: no crew animation on a radio call, no marker on the coach's target when it's on the scene. Coach targets are panel items only.
+  * Lesson journeys run on the phone only; the e2e + review run is now ~2.2 + ~1.0 min (budget ~60 s, see above).
+  * The menu lists the player's appliance but can't change it (M7: appliance picker).
+  * Results are kept per appliance; a "resume a game in progress" save would need `SimState` versioning (above).
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 
 ## Risks
