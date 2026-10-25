@@ -7,8 +7,9 @@ import type { DialId } from '../panel-pump/gauge/dials';
 export type DeliveryGlyph = 'circle' | 'square' | 'bar' | 'hexagon';
 
 /**
- * What a tap does on a lever valve. 'toggle' snaps it fully open or shut; 'none' means drag only,
- * so a stray thumb never charges a line (Design §5).
+ * What a tap does on a lever valve, per appliance layout. 'toggle' snaps it fully open or shut;
+ * 'none' means drag only, so a stray thumb never charges a line (Design §5). Cat 1 toggles every
+ * valve, deliveries included (Dek, 2026-10-25).
  */
 export type TapBehaviour = 'toggle' | 'none';
 
@@ -51,8 +52,13 @@ export interface PanelSection {
   id: string;
   /** Section heading, e.g. 'Deliveries'; null for an untitled group. */
   title: string | null;
-  /** 'row' wraps items side by side; 'list' stacks full-width rows. */
-  arrangement: 'row' | 'list';
+  /**
+   * 'row' wraps items side by side; 'list' stacks full-width rows; 'cards' sets them side by side
+   * as cards where the panel is wide enough, else stacks them as rows.
+   */
+  arrangement: 'row' | 'list' | 'cards';
+  /** 'half': on a wide panel, consecutive half sections share a row. Full width when omitted. */
+  span?: 'half';
   items: PanelItem[];
 }
 

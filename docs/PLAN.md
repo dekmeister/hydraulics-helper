@@ -53,7 +53,7 @@ Decisions taken to keep M2 demoable without building past `Design/OPEN_DECISIONS
 
 * **Panel layout is grouped, not absolute.** `ui/appliances/<id>/layout.ts` is an ordered list of sections (instruments, throttle, inlets, deliveries…), each placing spec instruments and controls with label, gauge face and control variant. The renderer lays sections out with CSS grid / container queries so one layout works at 375, 768 and 1280 px; each component draws its own SVG in its own `viewBox`. The realistic bay and close-up views (Design sheets 07–08, `layout-a.json` coordinates) are a later view over the same data, not M2.
 * **Handle colour by function (OPEN_DECISIONS #1, option B, the designer's recommendation):** outlets blue, inlets green; delivery identity is carried by numeral and glyph only.
-* **Tap behaviour is layout data.** `tap: 'toggle'` (tank-to-pump: tap opens/closes) or `tap: 'none'` (deliveries: a stray thumb never charges a line, Design §5). ARCHITECTURE §7 said every valve toggles on tap and the Design spec says outlets ignore taps, so this is a per-item choice.
+* **Tap behaviour is layout data.** `tap: 'toggle'` (tank-to-pump: tap opens/closes) or `tap: 'none'` (deliveries: a stray thumb never charges a line, Design §5). ARCHITECTURE §7 said every valve toggles on tap and the Design spec says outlets ignore taps, so this is a per-item choice. Since 2026-10-25 every Cat 1 valve toggles (Dek); the test appliance keeps `'none'` deliveries so both branches stay tested.
 * **One throttle variant:** the push-pull T-handle (horizontal drag + − / + buttons). The vernier knob (Layout A, OPEN_DECISIONS #4) is parked.
 * **Instruments are `role="meter"`** (docs/TESTING.md), not `role="img"` (Design §9). `aria-valuenow` is the damped, displayed value.
 * **No per-delivery flow readouts on the panel**: the spec fits no flow meters. Line status ("NO LINE" when nothing is laid on a delivery) is shown, and those valves are disabled, per Design sheet 03.
@@ -240,7 +240,7 @@ From Dek's Cat 1 photos (`Resources/Photos/Cat1_*`, 2026-10-25), which corrected
 - [x] Sim: pump to tank (`ApplianceSpec.pumpToTank`) and hydrant to tank (`InletKind 'tankFill'`), tests first, contract cases, `tank-refill` free-play scenario and trace.
 - [x] Spec `TankDisplay` (sight tube / electronic bands).
 - [x] Realistic layout data, generic components (bay lever, pull-handle primer, speed switch, tank gauges, plate backdrop), the Simplified · Realistic switch (saved), fixtures, journeys, review.
-- [x] Polish (Dek, 2026-10-25): panel re-spaced on a grid, pipework terminated on fittings and flanges, radial pump (eye inlet, tangential outlet), plates sized from their text, speed switch as a face-on up/down toggle (swipe or press a half).
+- [x] Polish (Dek, 2026-10-25): panel re-spaced on a grid, pipework terminated on fittings and flanges, radial pump (eye inlet, tangential outlet), plates sized from their text, speed switch as a face-on up/down toggle (swipe or press a half). Simplified panel: deliveries as side-by-side cards, half-width sections so it fits a 1080 screen; every Cat 1 valve toggles on a tap.
 
 **Demo:** switch the Cat 1 to Realistic, run a tank attack with the bay levers and the speed controller, prime with the PRIME handle on the draughting fireground, refill at a hydrant through hydrant to tank.
 

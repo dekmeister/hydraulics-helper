@@ -43,7 +43,8 @@ const PANEL_CAPTIONS = {
     'engine rpm at idle; tank full (all segments lit). Every valve closed; deliveries with no ' +
     'line read NO LINE and are dimmed. Throttle at idle with chevrons. Supply section: tank to pump ' +
     'and suction inlet (green knobs, closed) and the primer (HOLD). Every lamp unlit, HAMMER ' +
-    'last. "No warnings."',
+    'last. "No warnings." Deliveries (Cat 1) as cards side by side, text over the valve, at 768 ' +
+    'and 1280 px; stacked rows, valve on the right, at 375 px.',
   'tank-attack-700':
     'Tank to pump open, the first line’s delivery fully open (lever along the pipe, travel arc ' +
     'filled), throttle part-way out. Discharge needle at ~700 kPa (a little under half sweep), ' +

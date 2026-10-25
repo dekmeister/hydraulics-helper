@@ -40,10 +40,18 @@
   color: var(--color-material-steel-dim);
 }
 
+.pump-panel__sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
 .panel-section {
   display: flex;
+  flex: 1 1 100%;
   flex-direction: column;
   gap: var(--space-3);
+  min-width: 0;
   padding-top: var(--space-3);
   border-top: var(--line-hairline) solid var(--color-material-rule);
 }
@@ -145,6 +153,68 @@
 .delivery-row .valve {
   flex: 0 0 auto;
   width: 150px;
+}
+
+.panel-section--cards .panel-section__items {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+/* Where the panel has room, deliveries sit side by side as cards: text over the valve. */
+@container (min-width: 560px) {
+  .panel-section--cards .panel-section__items {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+
+  .panel-section--cards .delivery-row {
+    flex-direction: column;
+    align-items: stretch;
+    height: 100%;
+  }
+
+  .panel-section--cards .delivery-row__text {
+    flex: 1 1 auto;
+    padding-right: 0;
+  }
+
+  .panel-section--cards .delivery-row .valve {
+    align-self: center;
+  }
+}
+
+/* A wide panel (a desktop screen) packs in to fit without scrolling: half sections pair up. */
+@container (min-width: 820px) {
+  .pump-panel {
+    gap: var(--space-3);
+  }
+
+  .pump-panel__sections {
+    gap: var(--space-3) var(--space-6);
+  }
+
+  .panel-section--half {
+    flex-basis: calc(50% - var(--space-6));
+  }
+
+  /* A half section that starts a row draws no rule over its partner's first row either. */
+  .panel-section--half:first-child + .panel-section--half {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .panel-section {
+    gap: var(--space-2);
+  }
+
+  /* Two big dials share half the panel. */
+  .panel-section--half .gauge:not(.gauge--medium) .gauge__dial {
+    width: clamp(140px, 21cqi, 210px);
+  }
+
+  .panel-section--row .valve {
+    width: 150px;
+  }
 }
 
 /* Lesson coach target (CoachAnchor): the focus double ring, never amber (Design §3). */

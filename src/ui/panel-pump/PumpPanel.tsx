@@ -25,7 +25,7 @@ function Section({ section }: { section: PanelSection }) {
       ))}
     </div>
   );
-  const className = `panel-section panel-section--${section.arrangement}`;
+  const className = `panel-section panel-section--${section.arrangement}${section.span === 'half' ? ' panel-section--half' : ''}`;
   if (section.title === null) return <div className={className}>{items}</div>;
   return (
     <section className={className} aria-labelledby={titleId}>
@@ -80,7 +80,11 @@ export function PumpPanel() {
       {realistic !== undefined && view === 'realistic' ? (
         <RealisticPanel layout={realistic} simple={layout} />
       ) : (
-        layout.sections.map((s) => <Section key={s.id} section={s} />)
+        <div className="pump-panel__sections">
+          {layout.sections.map((s) => (
+            <Section key={s.id} section={s} />
+          ))}
+        </div>
       )}
     </div>
   );
