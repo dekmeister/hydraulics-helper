@@ -1,0 +1,96 @@
+.app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) 0;
+}
+
+.app-bar__name {
+  margin: 0 0 0 var(--space-2);
+  font: 700 20px/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-material-steel);
+}
+
+.app-bar__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.app-bar__button,
+.paper-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: var(--line-hairline) solid var(--color-material-rule);
+  border-radius: var(--radius-card);
+  background: var(--color-material-raised);
+  color: var(--color-material-steel);
+  font: 600 15px/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.app-bar__sound[aria-checked='false'] {
+  color: var(--color-material-steel-dim);
+}
+
+.app-bar__button:focus-visible,
+.paper-button:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+}
+
+/* Paper: instructions and coaching sit on paper in ink (Design §1). */
+.paper {
+  background: var(--color-material-paper);
+  color: var(--color-material-ink);
+  border-radius: var(--radius-card);
+}
+
+.paper-button {
+  border-color: var(--color-material-ink);
+  background: var(--color-material-paper);
+  color: var(--color-material-ink);
+}
+
+.paper-button--primary {
+  background: var(--color-material-ink);
+  color: var(--color-material-paper);
+}
+
+.paper-button:disabled {
+  border-color: var(--color-material-pencil);
+  color: var(--color-material-pencil);
+  cursor: not-allowed;
+}
+
+.screen {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-2) var(--space-8);
+}
+
+.screen__title {
+  margin: 0 0 var(--space-1);
+  font: 700 26px/1.1 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-material-steel);
+}
+
+.screen__sub {
+  margin: 0 0 var(--space-4);
+  font: 400 15px/1.4 var(--font-body);
+  color: var(--color-material-steel-dim);
+}
+
+.stars {
+  font: 400 18px/1 var(--font-body);
+  letter-spacing: 0.1em;
+  color: var(--color-material-ink);
+}

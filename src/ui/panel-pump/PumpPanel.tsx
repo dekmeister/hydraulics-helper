@@ -2,10 +2,12 @@ import { activeTruck } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { getPanelLayout } from '../appliances/registry';
 import type { PanelItem, PanelSection } from '../appliances/types';
+import { CoachAnchor } from './CoachAnchor';
 import { PanelItemView } from './PanelItem';
 import './PumpPanel.css';
 
-function itemKey(item: PanelItem): string {
+/** A panel item's key, also how the lesson coach names what it points at (`state/lessonView.ts`). */
+export function itemKey(item: PanelItem): string {
   switch (item.kind) {
     case 'gauge':
     case 'tank-level':
@@ -25,7 +27,9 @@ function Section({ section }: { section: PanelSection }) {
   const items = (
     <div className="panel-section__items">
       {section.items.map((item) => (
-        <PanelItemView key={itemKey(item)} item={item} />
+        <CoachAnchor key={itemKey(item)} itemKey={itemKey(item)}>
+          <PanelItemView item={item} />
+        </CoachAnchor>
       ))}
     </div>
   );

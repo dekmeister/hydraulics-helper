@@ -3,6 +3,7 @@ import { FIXTURES } from '../src/testing/fixtures/catalog';
 import { SIDE_BY_SIDE_MIN_PX } from '../src/ui/layout/breakpoints';
 import { expect, gotoApp, test } from './fixtures';
 import {
+  expectDockReserved,
   expectNoHorizontalScroll,
   expectNoOverlaps,
   expectSceneRenderedOnce,
@@ -32,6 +33,9 @@ async function expectArrangement(page: Page, width: number) {
 test.describe('app shell layout invariants', () => {
   test('mobile floor and panel arrangement', async ({ page }) => {
     await gotoApp(page);
+    await page.evaluate(() => {
+      window.__pumpops?.load({ scenario: 'tank-attack' });
+    });
     const width = page.viewportSize()?.width ?? 0;
     await expectNoHorizontalScroll(page);
     await expectTouchTargets(page);
@@ -45,10 +49,39 @@ test.describe('app shell layout invariants', () => {
     for (const width of [SIDE_BY_SIDE_MIN_PX - 1, SIDE_BY_SIDE_MIN_PX]) {
       await page.setViewportSize({ width, height: 800 });
       await gotoApp(page);
+      await page.evaluate(() => {
+        window.__pumpops?.load({ scenario: 'tank-attack' });
+      });
       await expectNoHorizontalScroll(page);
       await expectArrangement(page, width);
     }
   });
+});
+
+test.describe('menu and lesson layout invariants', () => {
+  test('the scenario menu meets the mobile floor', async ({ page }) => {
+    await gotoApp(page);
+    await expect(page.getByRole('heading', { name: 'Scenarios', level: 1 })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchTargets(page);
+    await expectNoOverlaps(page);
+  });
+
+  for (const scenario of ['first-line', 'incident']) {
+    test(`a lesson in play (${scenario}) meets the mobile floor`, async ({ page }) => {
+      await gotoApp(page);
+      await page.evaluate((id) => {
+        window.__pumpops?.load({ scenario: id, lesson: true });
+      }, scenario);
+      await expect(page.getByRole('region', { name: 'Lesson' })).toBeVisible();
+      await page.getByRole('button', { name: /^Objectives/ }).click();
+      await expectNoHorizontalScroll(page);
+      await expectTouchTargets(page);
+      await expectNoOverlaps(page);
+      await expectDockReserved(page);
+      await expectSpecRenderedOnce(page, layoutFor(activeTruckOf(await getState(page)).spec.id));
+    });
+  }
 });
 
 // Every generated fixture, at every viewport (docs/TESTING.md §4 layout invariants): shell

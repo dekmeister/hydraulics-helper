@@ -1,5 +1,8 @@
 import { inletOfKind } from '../appliances/controls';
 import { createSiteState } from '../engine';
+import { RELAY_MIN_RESIDUAL_KPA } from '../constants';
+import { PUMP_DAMAGE } from '../lesson/common';
+import type { LessonDef } from '../lesson/types';
 import { attachLines, twoLines, type PlannedLine } from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay } from './relayTrucks';
 import { supportSpec, type Scenario, type SupportRole } from './types';
@@ -25,10 +28,85 @@ const DAM_L = 200_000;
  */
 const BASE_THROTTLE = 0.8;
 
+/**
+ * Throttle the base pump's operator raises to once the attack pump has both lines on (the fill
+ * sequence, L3850–3853: lower pressure until every pump has water, then working pressure): about
+ * 800 kPa at its delivery with both lines drawn, enough for the climb and the extra flow.
+ * // PLACEHOLDER — needs Dek
+ */
+const BASE_THROTTLE_RAISED = 0.9;
+
 const BASE: SupportRole = {
   id: BASE_ID,
   label: 'Base pump',
   requires: { tank: false, suction: true, minDeliveries: 1 },
+};
+
+/** Seconds the crew takes to replace a burst relay length. // PLACEHOLDER — needs Dek */
+const REPAIR_S = 30;
+
+const RESIDUAL = { kind: 'gauge', gauge: 'compound', min: RELAY_MIN_RESIDUAL_KPA } as const;
+
+const LESSON: LessonDef = {
+  ladder: 5,
+  brief:
+    'A base pump at the farm dam pushes water 20 m up four lengths of 65 mm into your suction ' +
+    'inlet. In a closed relay your compound shows the pressure left at the end of the relay hose: ' +
+    `keep it above ${String(RELAY_MIN_RESIDUAL_KPA)} kPa. Over-run the relay and the hose goes ` +
+    'soft; slam the inlet shut and the surge can burst a length.',
+  objectives: [
+    {
+      id: 'relay',
+      text: 'Open the suction inlet to take the base pump’s water: the compound shows the relay’s residual pressure.',
+      when: {
+        kind: 'all',
+        of: [{ kind: 'valve', valve: { inlet: 'suction' }, min: 0.9 }, RESIDUAL],
+      },
+    },
+    {
+      id: 'hold',
+      text: `Hold both branches at working pressure with at least ${String(RELAY_MIN_RESIDUAL_KPA)} kPa residual on the compound, for 30 s.`,
+      when: {
+        kind: 'all',
+        of: [{ kind: 'branch', line: 'line-65' }, { kind: 'branch', line: 'line-38' }, RESIDUAL],
+      },
+      holdS: 30,
+      after: ['relay'],
+    },
+  ],
+  failures: [...PUMP_DAMAGE],
+  events: [
+    {
+      id: 'pressure-up',
+      when: {
+        kind: 'all',
+        of: [
+          { kind: 'objective', objective: 'relay' },
+          { kind: 'flow', line: 'line-65', min: 50 },
+          { kind: 'flow', line: 'line-38', min: 50 },
+        ],
+      },
+      effects: [{ kind: 'holdSettings', truck: BASE_ID, throttle: BASE_THROTTLE_RAISED }],
+      radio: {
+        from: 'Base pump',
+        text: 'Both your lines are on. Bringing my pressure up to cover the climb.',
+      },
+    },
+    {
+      id: 'burst',
+      when: { kind: 'burst', link: 'relay' },
+      radio: {
+        from: 'Base pump',
+        text: 'Burst length on the relay! Shut your lines down; we’re replacing it.',
+      },
+    },
+    {
+      id: 'repaired',
+      when: { kind: 'since', event: 'burst', s: REPAIR_S },
+      effects: [{ kind: 'repairRelay', link: 'relay' }],
+      radio: { from: 'Base pump', text: 'Length replaced. Water’s on its way back up to you.' },
+    },
+  ],
 };
 
 /**
@@ -100,4 +178,15 @@ export const CLOSED_RELAY: Scenario = {
       durationS: 180,
     };
   },
+  lesson: LESSON,
+  solution: [
+    { open: { inlet: 'suction' } },
+    { until: { kind: 'objective', objective: 'relay' }, maxS: 30 },
+    { open: { line: 'line-65' } },
+    { open: { line: 'line-38' } },
+    { throttle: 0.4 },
+    { trim: { branch: 'line-38' } },
+    { gate: 'line-65' },
+    { until: { kind: 'objective', objective: 'hold' }, maxS: 180 },
+  ],
 };

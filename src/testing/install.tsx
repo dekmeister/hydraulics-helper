@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import type { Root } from 'react-dom/client';
 import { useStore } from '../state/store';
 import { registerPanelLayout, registerSceneArt } from '../ui/appliances/registry';
-import { AppShell } from '../ui/layout/AppShell';
+import { AppRoot } from '../ui/layout/AppRoot';
 import { createTestApi } from './api';
 import { TEST_APPLIANCE_LAYOUT } from './appliances/testApplianceLayout';
 import { TEST_APPLIANCE_SCENE_ART } from './appliances/testApplianceScene';
@@ -21,6 +21,7 @@ export function installTestHooks(root: Root): void {
     if (renderer?.state !== undefined) {
       useStore.getState().reset(renderer.state(), renderer.scenario ?? null);
     }
+    renderer?.setup?.();
     if (renderer?.highlight !== undefined) {
       const { sim, toggleHighlight } = useStore.getState();
       toggleHighlight(renderer.highlight(sim), 'panel');
@@ -29,6 +30,6 @@ export function installTestHooks(root: Root): void {
     if (steps !== undefined) useStore.getState().step(steps);
   }
   root.render(
-    <StrictMode>{fixtureId === null ? <AppShell /> : <FixtureView id={fixtureId} />}</StrictMode>,
+    <StrictMode>{fixtureId === null ? <AppRoot /> : <FixtureView id={fixtureId} />}</StrictMode>,
   );
 }

@@ -8,7 +8,7 @@ import './ui/theme/tokens.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { startRealTimeLoop } from './state/loop';
-import { AppShell } from './ui/layout/AppShell';
+import { AppRoot } from './ui/layout/AppRoot';
 
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('#root element missing from index.html');
@@ -20,10 +20,17 @@ if (import.meta.env.VITE_E2E) {
     installTestHooks(root);
   });
 } else {
+  // Installed to a home screen, the app should still open offline (PWA, PLAN M6). Production only:
+  // a service worker in dev would serve stale modules.
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
+    });
+  }
   startRealTimeLoop();
   root.render(
     <StrictMode>
-      <AppShell />
+      <AppRoot />
     </StrictMode>,
   );
 }

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Fail the production build if e2e-only test hooks leaked into it (docs/TESTING.md §3).
+// Fail the production build if e2e-only test hooks leaked into it (docs/TESTING.md §3), or if the
+// install-to-home-screen pieces (manifest, its icons, service worker) didn't ship.
 // Usage: node scripts/check-prod-bundle.mjs [distDir]   (default: dist)
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const distDir = process.argv[2] ?? 'dist';
@@ -26,4 +27,24 @@ if (leaks.length > 0) {
   );
   process.exit(1);
 }
-console.error(`check-prod-bundle: ${String(files.length)} file(s) clean`);
+const pwa = [];
+const manifestPath = join(distDir, 'manifest.webmanifest');
+if (!existsSync(manifestPath)) pwa.push('manifest.webmanifest missing');
+else {
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  for (const icon of manifest.icons ?? [])
+    if (!existsSync(join(distDir, icon.src))) pwa.push(`manifest icon ${icon.src} missing`);
+  for (const size of ['192x192', '512x512'])
+    if (!(manifest.icons ?? []).some((i) => i.sizes === size && i.type === 'image/png'))
+      pwa.push(`no ${size} PNG icon (needed to install)`);
+}
+if (!existsSync(join(distDir, 'sw.js'))) pwa.push('sw.js missing');
+if (!readFileSync(join(distDir, 'index.html'), 'utf8').includes('rel="manifest"'))
+  pwa.push('index.html has no manifest link');
+if (pwa.length > 0) {
+  console.error(`check-prod-bundle: PWA incomplete:\n  ${pwa.join('\n  ')}`);
+  process.exit(1);
+}
+console.error(
+  `check-prod-bundle: ${String(files.length)} file(s) clean; manifest, icons, sw.js ok`,
+);

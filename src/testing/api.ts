@@ -43,9 +43,29 @@ function buildSim({ scenario, appliance, support, state }: LoadOptions): SimStat
   return appliance === undefined ? undefined : createInitialState(specById(appliance));
 }
 
+/** Start a scenario's lesson on the chosen appliances, seeded like any other load. */
+function startLesson({ scenario, appliance, support, seed, state }: LoadOptions): void {
+  if (scenario === undefined || state !== undefined)
+    throw new Error('__pumpops.load: a lesson needs a scenario and no state');
+  const s = getScenario(scenario);
+  const spec = appliance !== undefined ? specById(appliance) : eligibleAppliances(s)[0];
+  if (spec === undefined) throw new Error(`__pumpops.load: no appliance can play '${scenario}'`);
+  const other = support === undefined ? undefined : specById(support);
+  const roles = Object.fromEntries((s.support ?? []).map((r) => [r.id, other ?? spec]));
+  flushSync(() => {
+    useStore.getState().startLesson(scenario, { spec, support: roles });
+    if (seed !== undefined) useStore.setState(({ sim }) => ({ sim: reseed(sim, seed) }));
+  });
+  snapAll();
+}
+
 export function createTestApi(): PumpOpsTestApi {
   return {
     load(opts) {
+      if (opts.lesson === true) {
+        startLesson(opts);
+        return;
+      }
       const sim = loadSim(opts);
       flushSync(() => {
         useStore.getState().reset(sim, sim === undefined ? undefined : (opts.scenario ?? null));
@@ -68,6 +88,10 @@ export function createTestApi(): PumpOpsTestApi {
     },
     getState() {
       return structuredClone(useStore.getState().sim);
+    },
+    getLesson() {
+      const lesson = useStore.getState().lesson;
+      return lesson === null ? null : structuredClone(lesson.progress);
     },
   };
 }
