@@ -332,6 +332,11 @@ export interface TruckReadings {
 export interface PumpState {
   /** Whether the suction side is full of water from a draught source. */
   primed: boolean;
+  /**
+   * Whether the casing and discharge manifold hold water. Fills whenever water reaches the pump and
+   * stays after the feed is shut, as a real pump stays full. Display only: no hydraulics read it.
+   */
+  casingWet: boolean;
   /** Vacuum the primer has pulled on the casing, kPa (positive number). */
   vacuumKpa: number;
   /** How long the primer has run without a break, s. */
