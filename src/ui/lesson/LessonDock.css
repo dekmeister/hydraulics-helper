@@ -1,0 +1,107 @@
+/* Docked to the foot of the viewport; the page keeps its height free (--dock-h, set by the dock). */
+.lesson-dock {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  display: grid;
+  gap: var(--space-2);
+  max-height: 45vh;
+  max-height: 45dvh;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4) var(--space-3);
+  border-top: var(--line-heavy) solid var(--color-material-ink);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  box-shadow: 0 -4px 12px rgb(0 0 0 / 35%);
+  font: 400 15px/1.45 var(--font-body);
+}
+
+html:has(.app-play--lesson) {
+  scroll-padding-bottom: var(--dock-h, 0px);
+}
+
+.app-play--lesson {
+  padding-bottom: var(--dock-h, 0px);
+}
+
+@media (min-width: 900px) {
+  .lesson-dock {
+    left: auto;
+    width: min(560px, 50vw);
+    right: var(--space-2);
+  }
+
+  /* Side by side the scene is sticky at viewport height: keep it above the dock. */
+  .app-play--lesson .app-shell > .app-panel:first-child {
+    height: calc(100dvh - 2 * var(--space-2) - var(--dock-h, 0px));
+  }
+}
+
+.lesson-dock__coach,
+.lesson-dock__end,
+.lesson-dock__now {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.lesson-dock__step,
+.lesson-dock__hold {
+  margin: 0;
+  font: 600 13px/1.2 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-material-pencil);
+}
+
+.lesson-dock__text {
+  margin: 0;
+}
+
+.lesson-dock__metrics {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 400 14px/1.35 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lesson-dock__metrics [data-met='false'] {
+  color: var(--color-material-pencil);
+}
+
+.lesson-dock__radio {
+  margin: 0;
+  font-style: italic;
+}
+
+.lesson-dock__radio:empty {
+  display: none;
+}
+
+.lesson-dock__from {
+  font-style: normal;
+  font-weight: 600;
+}
+
+.lesson-dock__bar {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.lesson-dock__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lesson-dock__list [data-state='waiting'] {
+  color: var(--color-material-pencil);
+}
+
+.lesson-dock__list[hidden] {
+  display: none;
+}

@@ -1,12 +1,18 @@
 import type { ReactElement } from 'react';
-import type { ControlId, GaugeScaleSpec, SimState } from '../../sim/types';
+import type { ApplianceSpec, ControlId, GaugeScaleSpec, SimState } from '../../sim/types';
 import { SceneView } from '../../ui/panel-scene/SceneView';
+import { APPLIANCES } from '../../sim/appliances/catalogue';
+import { useStore } from '../../state/store';
+import { defaultSaved } from '../../state/persist';
+import { AppRoot } from '../../ui/layout/AppRoot';
 import { AppShell } from '../../ui/layout/AppShell';
+import { lessonState, savedProgress, type LessonStateId } from './lessonStates';
 import {
   PANEL_FIXTURE_SETS,
   panelFixtureId,
   SCENE_FIXTURE_SETS,
   sceneFixtureId,
+  LESSON_FIXTURE_SETS,
   RELAY_FIXTURE_SETS,
   relayFixtureId,
   SOURCE_FIXTURE_SETS,
@@ -27,6 +33,8 @@ export interface FixtureRenderer {
   state?: () => SimState;
   /** Scenario the state comes from, so the header picker shows it. */
   scenario?: string;
+  /** Store set-up after the state loads (lessons, screens, saved progress). */
+  setup?: () => void;
   /** Delivery highlighted on the scene and panel after the state loads. */
   highlight?: (sim: SimState) => ControlId;
   render: () => ReactElement;
@@ -91,6 +99,48 @@ function relayRenderers(): Record<string, FixtureRenderer> {
         state: () => relayState(set.spec, state, support),
         scenario: RELAY_STATE_SCENARIO[state],
         render: () => <AppShell />,
+      };
+    }
+  }
+  return out;
+}
+
+/** Put a lesson state in the store, on `screen`. */
+function loadLesson(spec: ApplianceSpec, id: LessonStateId, screen: 'play' | 'debrief'): void {
+  const { sim, lesson, inputs } = lessonState(spec, id);
+  useStore.getState().reset(sim, lesson.scenarioId);
+  useStore.setState({ lesson, inputs, screen, saved: defaultSaved() });
+}
+
+/** Generated menu, lesson and debrief renderers. */
+function lessonRenderers(): Record<string, FixtureRenderer> {
+  const out: Record<string, FixtureRenderer> = {};
+  const menu = (saved: () => ReturnType<typeof defaultSaved>) => () => {
+    useStore.setState({ screen: 'menu', saved: saved() });
+  };
+  out['menu/fresh'] = { setup: menu(defaultSaved), render: () => <AppRoot /> };
+  out['menu/progress'] = {
+    setup: menu(() => savedProgress(useStore.getState().playerSpec)),
+    render: () => <AppRoot />,
+  };
+  for (const { spec, states } of LESSON_FIXTURE_SETS) {
+    for (const state of states) {
+      out[`lesson/${spec.id}/${state}`] = {
+        setup: () => {
+          loadLesson(spec, state, 'play');
+          if (state === 'incident') useStore.setState({ lessonListOpen: true });
+        },
+        render: () => <AppRoot />,
+      };
+    }
+  }
+  for (const spec of APPLIANCES) {
+    for (const state of ['passed', 'failed'] as const) {
+      out[`debrief/${spec.id}/${state}`] = {
+        setup: () => {
+          loadLesson(spec, state, 'debrief');
+        },
+        render: () => <AppRoot />,
       };
     }
   }
@@ -178,4 +228,5 @@ export const FIXTURE_RENDERERS: Record<string, FixtureRenderer> = {
   ...sourceRenderers(),
   ...sceneRenderers(),
   ...relayRenderers(),
+  ...lessonRenderers(),
 };

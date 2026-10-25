@@ -1,0 +1,112 @@
+import { SCENARIOS } from '../../sim/scenarios';
+import type { Scenario } from '../../sim/scenarios/types';
+import { useStore } from '../../state/store';
+import { missingCapabilities } from './requirements';
+import { Stars } from './Stars';
+import './ScenarioMenu.css';
+
+const LADDER: readonly Scenario[] = SCENARIOS.filter((s) => s.lesson !== undefined).sort(
+  (a, b) => (a.lesson?.ladder ?? 0) - (b.lesson?.ladder ?? 0),
+);
+
+/**
+ * The scenario ladder (ARCHITECTURE §5): each lesson with its brief, how the player has done on it
+ * with this appliance, and the next one to try marked. Free play loads the sandbox.
+ */
+export function ScenarioMenu() {
+  const spec = useStore((s) => s.playerSpec);
+  const results = useStore((s) => s.saved.results);
+  const startLesson = useStore((s) => s.startLesson);
+  const loadScenario = useStore((s) => s.loadScenario);
+  const resumable = useStore((s) => s.lesson?.progress.status === 'running');
+  const openPlay = useStore((s) => s.openPlay);
+  const playable = (s: Scenario) => missingCapabilities(s, spec).length === 0;
+  const next = LADDER.find((s) => playable(s) && results[s.id]?.[spec.id]?.passed !== true);
+  return (
+    <main className="screen menu" aria-labelledby="menu-title">
+      <h1 id="menu-title" className="screen__title">
+        Scenarios
+      </h1>
+      <p className="screen__sub">Your appliance: {spec.name}</p>
+      {resumable && (
+        <p className="menu__resume">
+          <button type="button" className="paper-button paper-button--primary" onClick={openPlay}>
+            Resume lesson
+          </button>
+        </p>
+      )}
+      <ol className="menu__ladder">
+        {LADDER.map((s) => {
+          const missing = missingCapabilities(s, spec);
+          const result = results[s.id]?.[spec.id];
+          const isNext = s === next;
+          const n = s.lesson?.ladder ?? 0;
+          return (
+            <li
+              key={s.id}
+              className={`menu-card paper${isNext ? ' menu-card--next' : ''}`}
+              data-scenario={s.id}
+            >
+              <div className="menu-card__head">
+                <span className="menu-card__number" aria-hidden="true">
+                  {n}
+                </span>
+                <h2 className="menu-card__title">{s.title}</h2>
+              </div>
+              <p className="menu-card__brief">{s.lesson?.brief}</p>
+              <div className="menu-card__foot">
+                <p className="menu-card__status">
+                  {s.lesson?.coach !== undefined && <span className="menu-card__tag">Guided</span>}
+                  {isNext && <span className="menu-card__tag menu-card__tag--next">Next up</span>}
+                  {missing.length > 0 ? (
+                    <span>Needs {missing.join(' and ')}</span>
+                  ) : result === undefined ? (
+                    <span>Not tried yet</span>
+                  ) : (
+                    <>
+                      <span>{result.passed ? 'Passed' : 'Not passed yet'}</span>
+                      {result.passed && (
+                        <>
+                          <Stars stars={result.bestStars} />
+                          <span>best {result.bestPoints}</span>
+                        </>
+                      )}
+                    </>
+                  )}
+                </p>
+                <button
+                  type="button"
+                  className={`paper-button${isNext ? ' paper-button--primary' : ''}`}
+                  aria-label={`Start ${String(n)}. ${s.title}`}
+                  disabled={missing.length > 0}
+                  onClick={() => {
+                    startLesson(s.id);
+                  }}
+                >
+                  {result === undefined ? 'Start' : 'Play again'}
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <section className="menu-card paper menu__free" aria-labelledby="free-play-title">
+        <h2 id="free-play-title" className="menu-card__title">
+          Free play
+        </h2>
+        <p className="menu-card__brief">
+          No objectives and no score: any scenario’s fireground, every control yours.
+        </p>
+        <button
+          type="button"
+          className="paper-button"
+          onClick={() => {
+            loadScenario(SCENARIOS.find((s) => s.id === 'tank-attack')?.id ?? LADDER[0]?.id ?? '');
+          }}
+        >
+          Free play
+        </button>
+      </section>
+    </main>
+  );
+}

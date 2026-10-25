@@ -81,6 +81,9 @@ interface PumpOpsStore {
   startLesson: (id: string, opts?: { spec?: ApplianceSpec; support?: SupportSpecs }) => void;
   /** The player has read the current coach step ('Got it'). */
   acknowledgeCoach: () => void;
+  /** The lesson dock's full objective list is open (UI state). */
+  lessonListOpen: boolean;
+  setLessonListOpen: (open: boolean) => void;
   /** Settings and progress, as saved. */
   saved: Saved;
   setSound: (on: boolean) => void;
@@ -156,6 +159,10 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
       const acked = acknowledge(lesson.def, lesson.progress, step.id);
       return { lesson: { ...lesson, progress: advanceCoach(lesson.def, acked, sim) } };
     });
+  },
+  lessonListOpen: false,
+  setLessonListOpen: (open) => {
+    set({ lessonListOpen: open });
   },
   saved: loadSaved(browserStorage()),
   setSound: (on) => {

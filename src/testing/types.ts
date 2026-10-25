@@ -7,6 +7,8 @@ export interface LoadOptions {
   support?: string;
   state?: SimState;
   seed?: number;
+  /** Start the scenario's lesson (objectives, coach, score) instead of free play. */
+  lesson?: boolean;
 }
 
 /** window.__pumpops, present only in the e2e build (docs/TESTING.md §3.1). No setInputs, by design. */

@@ -22,6 +22,11 @@ export interface FixtureMeta {
   viewports?: ViewportName[];
   /** Generated fixtures: the appliance shown, so layout specs can check its controls. */
   applianceId?: string;
+  /**
+   * 'viewport' captures what the player sees, at the scroll position the app chose (a lesson's
+   * fixed dock and coach scrolling); default the full page from the top.
+   */
+  capture?: 'viewport';
   /** What a generated fixture renders: the whole app shell, or the scene panel alone. */
   surface?: 'shell' | 'scene';
 }
@@ -281,6 +286,69 @@ const RELAY_FIXTURES: FixtureMeta[] = RELAY_FIXTURE_SETS.flatMap((set) =>
   }),
 );
 
+const LESSON_CAPTIONS = {
+  guided:
+    'Whole app in a lesson: app bar (PUMPOPS, SCENARIOS, SOUND ON). Scene header reads ' +
+    '"LESSON 1 First line…" instead of the picker. The tank-to-pump control has the focus double ' +
+    'ring (white inside ink) and is scrolled into view. A paper dock at the foot of the screen ' +
+    '(right half from 900 px): "STEP 2 OF 8", "Water comes from the truck’s tank first. Open Tank ' +
+    'to pump: tap its green handle." (the test appliance names its own valve), and OBJECTIVES 0/3 ' +
+    'and END buttons. Nothing hidden under the dock once scrolled.',
+  incident:
+    'Whole app in the incident lesson: one 38 mm line charged, the crew has just moved uphill. ' +
+    'Dock: the active objective "Crew 1 has moved 10 m up the slope…", a mono line "Branch on ' +
+    'Delivery …: ~2xx kPa · target 315 kPa–385 kPa" in pencil (not yet met), the radio call in ' +
+    'italics "Branch 1: Moving up the slope after a spot fire. We need more pressure up here.", ' +
+    'and the objective list expanded: ✓ first objective, ▸ the uphill one, ○ the rest in pencil.',
+} as const;
+
+export type LessonFixtureStateId = keyof typeof LESSON_CAPTIONS;
+
+/** Lesson fixtures: every catalogue appliance; the guided one on the test appliance too. */
+export const LESSON_FIXTURE_SETS: readonly {
+  spec: ApplianceSpec;
+  states: readonly LessonFixtureStateId[];
+}[] = [
+  ...APPLIANCES.map((spec) => ({
+    spec,
+    states: (Object.keys(LESSON_CAPTIONS) as LessonFixtureStateId[]).filter((state) =>
+      supports(getScenario(state === 'guided' ? 'first-line' : 'incident'), spec),
+    ),
+  })),
+  { spec: TEST_APPLIANCE, states: ['guided'] },
+];
+
+const LESSON_FIXTURES: FixtureMeta[] = LESSON_FIXTURE_SETS.flatMap(({ spec, states }) =>
+  states.map((state) => ({
+    id: `lesson/${spec.id}/${state}`,
+    expect: LESSON_CAPTIONS[state],
+    applianceId: spec.id,
+    surface: 'shell' as const,
+    capture: 'viewport' as const,
+  })),
+);
+
+const DEBRIEF_CAPTIONS = {
+  passed:
+    'Debrief on dark ironbark: "SCENARIO COMPLETE", "1. First line… · <appliance>". Paper cards in ' +
+    'ink: ★★★ and "100 points"; WHAT HAPPENED with one green-edged finding "Clean running"; ' +
+    'OBJECTIVES with three ✓; SCORE table (Objectives +60, Clean running +40, each penalty 0, ' +
+    'Total 100). Buttons: ' +
+    'NEXT SCENARIO (ink, filled), TRY AGAIN, BACK TO THE PANEL, ALL SCENARIOS.',
+  failed:
+    'Debrief: "SCENARIO FAILED", "2. Tank attack…". ☆☆☆ and 40 points; WHAT HAPPENED leads with ' +
+    'an amber-edged "Scenario failed / The tank ran dry with crews on the branches."; OBJECTIVES ' +
+    '✓ ✓ ○; SCORE Objectives +40, Clean running 0 (a failed run earns its objectives only), ' +
+    'each penalty 0, Total 40: the lines add up. No NEXT SCENARIO button.',
+} as const;
+
+const DEBRIEF_FIXTURES: FixtureMeta[] = APPLIANCES.flatMap((spec) =>
+  (Object.keys(DEBRIEF_CAPTIONS) as (keyof typeof DEBRIEF_CAPTIONS)[]).map((state) => ({
+    id: `debrief/${spec.id}/${state}`,
+    expect: DEBRIEF_CAPTIONS[state],
+  })),
+);
+
 export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'shell/default',
@@ -343,6 +411,22 @@ export const FIXTURES: readonly FixtureMeta[] = [
       'RUNNING (cap sunk, ring 40 % lit), CHECK SUCTION (amber ring and caption), PRIMED (green ' +
       'full ring, green check mark), COOLING (duty cut-out, ring 60 %).',
   },
+  {
+    id: 'menu/fresh',
+    expect:
+      'Scenario menu: app bar (PUMPOPS, SOUND ON; no SCENARIOS button here), "SCENARIOS", "Your ' +
+      'appliance: Category 1 tanker". Seven paper cards numbered 1–7 in ink discs, each with title, ' +
+      'brief and "Not tried yet"; card 1 has an ink border, GUIDED and NEXT UP tags and a filled ' +
+      'START button; the rest have outlined START buttons. A FREE PLAY card last.',
+  },
+  {
+    id: 'menu/progress',
+    expect:
+      'As menu/fresh, but card 1 reads "Passed ★★★ best 100" and card 2 "Passed ★★☆ best 82" ' +
+      '(PLAY AGAIN buttons), card 3 "Not passed yet" with NEXT UP and the ink border.',
+  },
+  ...LESSON_FIXTURES,
+  ...DEBRIEF_FIXTURES,
   ...PANEL_FIXTURES,
   ...SOURCE_FIXTURES,
   ...SCENE_FIXTURES,

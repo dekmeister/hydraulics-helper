@@ -8,7 +8,7 @@ import './ui/theme/tokens.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { startRealTimeLoop } from './state/loop';
-import { AppShell } from './ui/layout/AppShell';
+import { AppRoot } from './ui/layout/AppRoot';
 
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('#root element missing from index.html');
@@ -23,7 +23,7 @@ if (import.meta.env.VITE_E2E) {
   startRealTimeLoop();
   root.render(
     <StrictMode>
-      <AppShell />
+      <AppRoot />
     </StrictMode>,
   );
 }

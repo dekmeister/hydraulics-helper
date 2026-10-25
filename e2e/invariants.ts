@@ -7,6 +7,8 @@ export const TOUCH_MIN_PX = 44;
 
 interface Box {
   name: string;
+  /** Inside the lesson dock, which is fixed over the page (the page reserves its height). */
+  docked: boolean;
   x: number;
   y: number;
   width: number;
@@ -24,7 +26,8 @@ export async function interactiveBoxes(page: Page): Promise<Box[]> {
         const r = el.getBoundingClientRect();
         const name =
           el.getAttribute('aria-label') ?? (el.textContent.trim() || el.tagName.toLowerCase());
-        return { name, x: r.x, y: r.y, width: r.width, height: r.height };
+        const docked = el.closest('[data-dock]') !== null;
+        return { name, docked, x: r.x, y: r.y, width: r.width, height: r.height };
       })
       .filter((b) => b.width > 0 && b.height > 0);
   }, INTERACTIVE);
@@ -50,6 +53,8 @@ export async function expectNoOverlaps(page: Page): Promise<void> {
   const overlaps: string[] = [];
   boxes.forEach((a, i) => {
     boxes.slice(i + 1).forEach((b) => {
+      // The dock floats over the page; expectDockReserved checks the page can scroll clear of it.
+      if (a.docked !== b.docked) return;
       const intersects =
         a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
       if (intersects) overlaps.push(`${a.name} ∩ ${b.name}`);
@@ -116,4 +121,22 @@ export async function expectSceneRenderedOnce(page: Page, layout: PanelLayout): 
   for (const link of state.links) {
     await expect(page.getByTestId(`relay-lay-${link.id}`)).toHaveCount(1);
   }
+}
+
+/**
+ * With the lesson dock up, the page reserves at least its height at the foot, so every control can
+ * be scrolled clear of it; and nothing scrolls horizontally inside it.
+ */
+export async function expectDockReserved(page: Page): Promise<void> {
+  const dock = page.locator('[data-dock]');
+  if ((await dock.count()) === 0) return;
+  const { dockH, reserved } = await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>('[data-dock]');
+    const play = document.querySelector<HTMLElement>('.app-play--lesson');
+    return {
+      dockH: el?.offsetHeight ?? 0,
+      reserved: play === null ? 0 : parseFloat(getComputedStyle(play).paddingBottom),
+    };
+  });
+  expect(reserved, 'page reserves the dock height').toBeGreaterThanOrEqual(dockH - 1);
 }

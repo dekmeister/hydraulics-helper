@@ -8,7 +8,15 @@ import { debrief } from './debrief';
 const DEF = DRAUGHTING.lesson ?? { ladder: 0, brief: '', objectives: [] };
 
 function score(amounts: Partial<Record<string, number>>): Score {
-  const ids = ['objectives', 'cavitation', 'overheat', 'hammer', 'bursts', 'crewDry'] as const;
+  const ids = [
+    'objectives',
+    'clean',
+    'cavitation',
+    'overheat',
+    'hammer',
+    'bursts',
+    'crewDry',
+  ] as const;
   return {
     points: 50,
     stars: 1,

@@ -17,21 +17,22 @@ interface Penalty {
   cap: number;
 }
 
+/** The caps sum to `CLEAN_POINTS`, so the score's lines always add up to its total. */
 export const PENALTIES = {
-  cavitation: { per: 0.5, cap: 15 },
-  overheat: { per: 0.5, cap: 10 },
-  hammer: { per: 5, cap: 15 },
-  bursts: { per: 20, cap: 20 },
-  crewDry: { per: 0.5, cap: 15 },
+  cavitation: { per: 0.5, cap: 10 },
+  overheat: { per: 0.5, cap: 5 },
+  hammer: { per: 5, cap: 10 },
+  bursts: { per: 10, cap: 10 },
+  crewDry: { per: 0.5, cap: 5 },
 } as const satisfies Record<string, Penalty>;
 
-export type ScoreLineId = 'objectives' | keyof typeof PENALTIES;
+export type ScoreLineId = 'objectives' | 'clean' | keyof typeof PENALTIES;
 
 export interface ScoreLine {
   id: ScoreLineId;
   /** How much of it there was: objectives done, seconds, or events. */
   amount: number;
-  /** Points: positive for objectives, zero or negative for penalties. */
+  /** Points: positive for objectives and clean running, zero or negative for penalties. */
   points: number;
 }
 
@@ -61,20 +62,27 @@ export function scoreLesson(def: LessonDef, p: LessonProgress, state: SimState):
   const tally = p.final?.tally ?? truck?.tally;
   const bursts = p.final?.bursts ?? state.trucks.reduce((n, t) => n + t.tally.hoseBursts, 0);
   const done = def.objectives.filter((o) => p.objectives[o.id]?.doneAtS !== undefined).length;
-  const lines: ScoreLine[] = [
-    {
-      id: 'objectives',
-      amount: done,
-      points: Math.round((OBJECTIVE_POINTS * done) / Math.max(1, def.objectives.length)),
-    },
+  const failed = p.status === 'failed';
+  const objectives: ScoreLine = {
+    id: 'objectives',
+    amount: done,
+    points: Math.round((OBJECTIVE_POINTS * done) / Math.max(1, def.objectives.length)),
+  };
+  // A failed run earns its objectives only: clean running counts towards a finished job, so
+  // there is nothing to take penalties from (the faults are still listed, for the debrief).
+  const penalties = [
     penalty('cavitation', tally?.cavitationS ?? 0),
     penalty('overheat', tally?.overheatS ?? 0),
     penalty('hammer', tally?.waterHammer ?? 0),
     penalty('bursts', bursts),
     penalty('crewDry', p.stats.crewDryS),
+  ].map((l) => ({ ...l, points: failed ? 0 : Math.round(l.points) }));
+  const lines: ScoreLine[] = [
+    objectives,
+    { id: 'clean', amount: 0, points: failed ? 0 : CLEAN_POINTS },
+    ...penalties,
   ];
-  const clean = Math.max(0, CLEAN_POINTS + lines.slice(1).reduce((a, l) => a + l.points, 0));
-  const points = Math.round(lines[0]?.points ?? 0) + Math.round(clean);
+  const points = lines.reduce((a, l) => a + l.points, 0);
   const stars =
     p.status !== 'passed' ? 0 : points >= STAR_POINTS.three ? 3 : points >= STAR_POINTS.two ? 2 : 1;
   return { points, stars, lines };

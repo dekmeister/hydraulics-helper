@@ -1,7 +1,9 @@
 import { expect, gotoApp, test } from '../fixtures';
 
-test('app loads with both panels', async ({ page }) => {
+test('app opens on the scenario menu; free play shows both panels', async ({ page }) => {
   await gotoApp(page);
+  await expect(page.getByRole('heading', { name: 'Scenarios', level: 1 })).toBeVisible();
+  await page.getByRole('button', { name: 'Free play', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Scene' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Pump panel' })).toBeVisible();
 });

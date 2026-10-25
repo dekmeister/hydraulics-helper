@@ -56,9 +56,9 @@ describe('scoreLesson', () => {
 
   it('takes capped points off for each kind of fault', () => {
     const s = scoreLesson(DEF, ended({ cavitationS: 40, waterHammer: 1 }), STATE);
-    expect(s.lines.find((l) => l.id === 'cavitation')?.points).toBe(-15);
+    expect(s.lines.find((l) => l.id === 'cavitation')?.points).toBe(-10);
     expect(s.lines.find((l) => l.id === 'hammer')?.points).toBe(-5);
-    expect(s).toMatchObject({ points: 80, stars: 2 });
+    expect(s).toMatchObject({ points: 85, stars: 2 });
     const worst = scoreLesson(
       DEF,
       ended({ cavitationS: 999, overheatS: 999, waterHammer: 9, hoseBursts: 3 }, 999),
@@ -67,9 +67,21 @@ describe('scoreLesson', () => {
     expect(worst).toMatchObject({ points: 60, stars: 1 });
   });
 
-  it('a failed lesson earns no stars but keeps its objective points', () => {
+  it('adds up: the lines always sum to the total', () => {
+    for (const p of [
+      ended(),
+      ended({ cavitationS: 999, overheatS: 999, waterHammer: 9, hoseBursts: 3 }, 999),
+      ended({}, 0, ['a']),
+    ]) {
+      const s = scoreLesson(DEF, p, STATE);
+      expect(s.lines.reduce((a, l) => a + l.points, 0)).toBe(s.points);
+    }
+  });
+
+  it('a failed lesson earns its objective points only: no stars, no clean running', () => {
     const s = scoreLesson(DEF, ended({}, 0, ['a']), STATE);
-    expect(s).toMatchObject({ points: 70, stars: 0 });
+    expect(s).toMatchObject({ points: 30, stars: 0 });
+    expect(s.lines.find((l) => l.id === 'clean')?.points).toBe(0);
   });
 });
 
