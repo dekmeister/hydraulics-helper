@@ -70,6 +70,18 @@ describe('store: switching trucks', () => {
       useStore.getState().setActiveTruck('ghost');
     }).toThrow(/no truck 'ghost'/);
   });
+
+  it('builds the next scenario on the player’s appliance, not the support truck being operated', () => {
+    const player = activeTruck(useStore.getState().sim).spec;
+    const support = ALL.find((a) => a.id !== player.id);
+    if (support === undefined) throw new Error('needs a second appliance');
+    const s = getScenario('closed-relay').build(player, { base: support }).state;
+    useStore.getState().reset(s, 'closed-relay');
+    useStore.getState().setActiveTruck('base');
+    expect(useStore.getState().playerSpec.id).toBe(player.id);
+    useStore.getState().loadScenario('tank-attack');
+    expect(activeTruck(useStore.getState().sim).spec.id).toBe(player.id);
+  });
 });
 
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('relay selectors: %s', (_id, spec) => {

@@ -6,7 +6,13 @@ import { advance, switchTruck } from '../sim/engine';
 import { getScenario } from '../sim/scenarios';
 import { supports } from '../sim/scenarios/types';
 import { TANK_ATTACK } from '../sim/scenarios/tankAttack';
-import type { ControlId, InstrumentKind, PlayerInputs, SimState } from '../sim/types';
+import type {
+  ApplianceSpec,
+  ControlId,
+  InstrumentKind,
+  PlayerInputs,
+  SimState,
+} from '../sim/types';
 import { activeTruck, instrumentValue } from './selectors';
 
 /** Appliance loaded at start-up until scenario selection exists (M6). */
@@ -64,7 +70,12 @@ interface PumpOpsStore {
   reset: (sim?: SimState, scenarioId?: string | null) => void;
   /** Scenario the sim was loaded from, if any (the header picker shows it). */
   scenarioId: string | null;
-  /** Load a scenario's initial state on the active appliance; throws if it can't play it. */
+  /**
+   * The player's own appliance: the truck active when the sim was loaded. Scenarios are built
+   * and offered on it, whichever truck the player is operating now.
+   */
+  playerSpec: ApplianceSpec;
+  /** Load a scenario's initial state on the player's appliance; throws if it can't play it. */
   loadScenario: (id: string) => void;
   /** Displayed readings for the last `WAKE_HISTORY_S` of sim time, oldest first. */
   wake: readonly WakeSample[];
@@ -88,6 +99,7 @@ const initialSim = defaultSim();
 export const useStore = create<PumpOpsStore>()((set, get) => ({
   sim: initialSim,
   inputs: activeTruck(initialSim).inputs,
+  playerSpec: activeTruck(initialSim).spec,
   highlight: null,
   scenarioId: TANK_ATTACK.id,
   wake: [],
@@ -108,13 +120,14 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
     set({
       sim: next,
       inputs: activeTruck(next).inputs,
+      playerSpec: activeTruck(next).spec,
       highlight: null,
       wake: [],
       scenarioId: scenarioId !== undefined ? scenarioId : sim === undefined ? TANK_ATTACK.id : null,
     });
   },
   loadScenario: (id) => {
-    const spec = activeTruck(get().sim).spec;
+    const spec = get().playerSpec;
     const scenario = getScenario(id);
     if (!supports(scenario, spec)) throw new Error(`${spec.id} can’t play '${id}'`);
     get().reset(scenario.build(spec).state, id);
