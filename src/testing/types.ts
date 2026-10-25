@@ -3,6 +3,8 @@ import type { SimState } from '../sim/types';
 export interface LoadOptions {
   scenario?: string;
   appliance?: string;
+  /** Appliance for every support truck of a relay scenario; default the player's. */
+  support?: string;
   state?: SimState;
   seed?: number;
 }

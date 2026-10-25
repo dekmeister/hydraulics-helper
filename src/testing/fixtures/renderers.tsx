@@ -7,8 +7,11 @@ import {
   panelFixtureId,
   SCENE_FIXTURE_SETS,
   sceneFixtureId,
+  RELAY_FIXTURE_SETS,
+  relayFixtureId,
   SOURCE_FIXTURE_SETS,
 } from './catalog';
+import { RELAY_STATE_SCENARIO, relayState } from './relayStates';
 import { SOURCE_STATE_SCENARIO, sourceState, type SourceStateId } from './sourceStates';
 import {
   GaugeGallery,
@@ -71,6 +74,22 @@ function sourceRenderers(): Record<string, FixtureRenderer> {
       out[panelFixtureId(spec.id, state)] = {
         state: () => sourceState(spec, state satisfies SourceStateId),
         scenario: SOURCE_STATE_SCENARIO[state],
+        render: () => <AppShell />,
+      };
+    }
+  }
+  return out;
+}
+
+/** Generated relay renderers, one per catalogued relay fixture. */
+function relayRenderers(): Record<string, FixtureRenderer> {
+  const out: Record<string, FixtureRenderer> = {};
+  for (const set of RELAY_FIXTURE_SETS) {
+    const support = set.base === undefined ? undefined : { base: set.base };
+    for (const state of set.states) {
+      out[relayFixtureId(set, state)] = {
+        state: () => relayState(set.spec, state, support),
+        scenario: RELAY_STATE_SCENARIO[state],
         render: () => <AppShell />,
       };
     }
@@ -158,4 +177,5 @@ export const FIXTURE_RENDERERS: Record<string, FixtureRenderer> = {
   ...panelRenderers(),
   ...sourceRenderers(),
   ...sceneRenderers(),
+  ...relayRenderers(),
 };

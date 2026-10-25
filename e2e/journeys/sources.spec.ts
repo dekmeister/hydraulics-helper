@@ -1,12 +1,10 @@
 // M4 journeys (docs/TESTING.md §4): draughting and priming through the real primer, cavitation
 // induced and recovered with the throttle, hydrant over-run, churn overheat, water hammer.
-import type { Page, TestInfo } from '@playwright/test';
-import { inletOfKind, primerControlId } from '../../src/sim/appliances/controls';
+import { primerControlId as primerControl } from '../../src/sim/appliances/controls';
 import { CAVITATION_FLUTTER_COMPOUND_KPA } from '../../src/sim/constants';
 import { getScenario } from '../../src/sim/scenarios';
 import { supports } from '../../src/sim/scenarios/types';
-import type { ApplianceSpec } from '../../src/sim/types';
-import { expect, gotoApp, test } from '../fixtures';
+import { expect, test } from '../fixtures';
 import {
   activeTruckOf,
   controlName,
@@ -19,94 +17,17 @@ import {
   layoutFor,
   meterValue,
   stepAndSettle,
-  tapOrClick,
 } from '../panel';
-
-const load = async (page: Page, scenario: string, appliance: string) => {
-  await gotoApp(page);
-  await page.evaluate(
-    ([s, a]) => {
-      window.__pumpops?.load({ scenario: s, appliance: a, seed: 7 });
-    },
-    [scenario, appliance] as const,
-  );
-};
-
-const inletOf = inletOfKind;
-const primerControl = primerControlId;
-
-/** Tap an inlet valve (its tap toggles it) and check it opened. */
-async function openInlet(
-  page: Page,
-  spec: ApplianceSpec,
-  kind: 'tank' | 'suction',
-  info: TestInfo,
-) {
-  const valve = page.getByRole('slider', {
-    name: controlName(layoutFor(spec.id), inletOf(spec, kind)),
-  });
-  await valve.scrollIntoViewIfNeeded();
-  await tapOrClick(valve, info);
-  await expect(valve).toHaveAttribute('aria-valuenow', '100');
-}
-
-/** Hold the primer down with a finger (pointer) while `ticks` of sim time pass, then let go. */
-async function holdPrimer(page: Page, name: string, ticks: number) {
-  const primer = page.getByRole('switch', { name, exact: true });
-  await primer.scrollIntoViewIfNeeded();
-  const box = await primer.boundingBox();
-  if (box === null) throw new Error('primer not rendered');
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await expect(primer).toHaveAttribute('aria-checked', 'true');
-  await stepAndSettle(page, ticks);
-  return {
-    primer,
-    release: async () => {
-      await page.mouse.up();
-      await expect(primer).toHaveAttribute('aria-checked', 'false');
-    },
-  };
-}
-
-/** Prime the pump: hold the primer until it catches, or let a self-priming pump do it. */
-async function prime(page: Page, spec: ApplianceSpec) {
-  const id = primerControl(spec);
-  if (id === undefined) {
-    await stepAndSettle(page, 300);
-  } else {
-    const held = await holdPrimer(page, controlName(layoutFor(spec.id), id), 250);
-    await expect(page.locator('.primer', { has: held.primer })).toHaveAttribute(
-      'data-state',
-      'primed',
-    );
-    await held.release();
-  }
-  expect(activeTruckOf(await getState(page)).pump.primed).toBe(true);
-}
-
-const throttle = (page: Page) => page.getByRole('slider', { name: 'Throttle', exact: true });
-
-/**
- * What the compound gauge shows, or, on an appliance with none fitted, the inlet pressure the
- * sim reports (the lesson still holds; there is just no needle to read it from).
- */
-async function compoundShown(page: Page, spec: ApplianceSpec): Promise<number> {
-  const placed = spec.instruments.some((i) => i.kind === 'compound');
-  if (placed)
-    return meterValue(page, instrumentName(await getState(page), layoutFor(spec.id), 'compound'));
-  return activeTruckOf(await getState(page)).readings.compoundKpa;
-}
-
-/** The compound gauge's needle colour flag, where one is fitted. */
-async function expectCompoundAlert(page: Page, spec: ApplianceSpec, alert: boolean) {
-  if (!spec.instruments.some((i) => i.kind === 'compound')) return;
-  const name = instrumentName(await getState(page), layoutFor(spec.id), 'compound');
-  await expect(page.getByRole('meter', { name, exact: true })).toHaveAttribute(
-    'data-alert',
-    String(alert),
-  );
-}
+import {
+  compoundShown,
+  expectCompoundAlert,
+  holdPrimer,
+  inletOf,
+  load,
+  openInlet,
+  prime,
+  throttle,
+} from '../sources';
 
 for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('draughting'), s))) {
   test(`draught from the dam, then induce and recover cavitation on ${spec.id}`, async ({

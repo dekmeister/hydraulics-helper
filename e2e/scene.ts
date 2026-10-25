@@ -3,12 +3,36 @@ import type { Locator, Page, TestInfo } from '@playwright/test';
 import { deliveryIdentities } from '../src/ui/appliances/identity';
 import { layoutFor } from './panel';
 
+/** The scene groups of the truck being operated: delivery ids repeat between trucks. */
+export function activeTruckOnScene(page: Page): Locator {
+  return page.locator('[data-truck-active="true"]');
+}
+
 export function hoseLay(page: Page, deliveryId: string): Locator {
-  return page.getByTestId(`hose-lay-${deliveryId}`);
+  return activeTruckOnScene(page).getByTestId(`hose-lay-${deliveryId}`);
 }
 
 export function spray(page: Page, deliveryId: string): Locator {
-  return page.getByTestId(`spray-${deliveryId}`);
+  return activeTruckOnScene(page).getByTestId(`spray-${deliveryId}`);
+}
+
+export function relayLay(page: Page, linkId: string): Locator {
+  return page.getByTestId(`relay-lay-${linkId}`);
+}
+
+/**
+ * Tap a truck the player isn't operating, on the map, as a thumb would: the middle of its body.
+ * Mouse elsewhere.
+ */
+export async function tapTruck(page: Page, truckId: string, testInfo: TestInfo): Promise<void> {
+  const target = page.getByTestId(`truck-tap-${truckId}`);
+  await target.scrollIntoViewIfNeeded();
+  const box = await target.boundingBox();
+  if (box === null) throw new Error(`truck ${truckId} not on the map`);
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  if (testInfo.project.use.hasTouch === true) await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
 }
 
 /** Label of a delivery as the panel and scene name it. */

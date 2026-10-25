@@ -6,6 +6,7 @@ import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { getScenario } from '../../sim/scenarios';
 import { supports } from '../../sim/scenarios/types';
 import type { ApplianceSpec } from '../../sim/types';
+import { RELAY_STATE_SCENARIO, type RelayStateId } from './relayStates';
 import { SOURCE_STATE_SCENARIO, type SourceStateId } from './sourceStates';
 
 export type ViewportName = 'phone' | 'tablet' | 'desktop';
@@ -199,6 +200,87 @@ const SOURCE_FIXTURES: FixtureMeta[] = SOURCE_FIXTURE_SETS.flatMap(({ spec, stat
   }),
 );
 
+const RELAY_CAPTIONS: Readonly<Record<RelayStateId, string>> = {
+  'closed-working':
+    'Closed relay, attack pump operated. Scene: BASE PUMP by the dam (hard suction with a green ' +
+    'core), a charged blue relay hose labelled +20 m up the track to the ATTACK PUMP (label ' +
+    'inverted: the one operated), whose two lines spray towards the fire. Legend: both lines ' +
+    'charged, "Relay · Base pump → Attack pump  ~820 L/min · ~150 kPa at the inlet". Pump panel ' +
+    'header: two truck buttons, ATTACK PUMP pressed; panel reads "Attack pump · …"; compound ' +
+    'positive (~+150 kPa), discharge ~600 kPa. No lamps lit.',
+  'closed-over-run':
+    'As closed-working at full throttle: the attack pump over-runs the relay. Relay hose drawn ' +
+    'thin and dashed (soft), legend "Soft: over-running the relay"; compound at 0 with an amber ' +
+    'needle; SUPPLY lamp amber ("Relay residual low … 100 kPa … base pump"), CAVITATION lamp lit; ' +
+    'charged lines broken into gaps.',
+  burst:
+    'The relay inlet was slammed shut and opened again: a red burst marker with white jets on the ' +
+    'relay hose near the base pump, the hose dashed (dry) beyond; attack lines dry. SUPPLY lamp red ' +
+    'with a diamond, "Relay hose burst: no water from the base pump…". Legend "Burst: length 1".',
+  'open-dam':
+    'Open relay: the base pump stands by the hydrant (green layflat in), its blue relay hose ' +
+    'runs +10 m to a round portable dam by the attack pump, its level ring ~half lit; hard ' +
+    'suction (green core) from the attack pump into the dam; both lines spraying. Legend: relay ' +
+    '"~660 L/min in", "Portable dam  ~2 000 L of 5 000 L". Primer PRIMED, compound slightly ' +
+    'negative. No lamps lit.',
+  'base-panel':
+    'As closed-working, switched to the base pump: header BASE PUMP pressed, panel "Base pump · ' +
+    '…" with its throttle part out, suction valve open, primer PRIMED, compound in vacuum (~−50 ' +
+    'kPa: 2 m lift plus suction loss), discharge ~690 kPa; its relay delivery open and described "Relay · 4 × 30 m ' +
+    '65 mm lined · to Attack pump · 20 m uphill"; other deliveries NO LINE. Scene: BASE PUMP label ' +
+    'inverted; legend rows are the base pump’s deliveries (relay one "Relay · ~820 L/min").',
+};
+
+/** A relay fixture set: the player's appliance, and the base pump's when it differs. */
+export interface RelayFixtureSet {
+  spec: ApplianceSpec;
+  base?: ApplianceSpec;
+  states: readonly RelayStateId[];
+}
+
+/**
+ * Appliances that get generated relay fixtures: every catalogue appliance in each state its
+ * scenario allows, plus a closed relay mixing appliances (the test appliance as base pump), to
+ * prove the scene and panel handle two specs at once.
+ */
+export const RELAY_FIXTURE_SETS: readonly RelayFixtureSet[] = [
+  ...APPLIANCES.map((spec) => ({
+    spec,
+    states: (Object.keys(RELAY_CAPTIONS) as RelayStateId[]).filter((state) =>
+      supports(getScenario(RELAY_STATE_SCENARIO[state]), spec),
+    ),
+  })),
+  ...APPLIANCES.map((spec) => ({
+    spec,
+    base: TEST_APPLIANCE,
+    states: ['closed-working'] as const,
+  })),
+];
+
+/** 'relay/cat1-generic/burst', or 'relay/cat1-generic/with-test-2d/…' with another base pump. */
+export function relayFixtureId(set: RelayFixtureSet, state: string): string {
+  const pair = set.base === undefined ? set.spec.id : `${set.spec.id}/with-${set.base.id}`;
+  return `relay/${pair}/${state}`;
+}
+
+/** Sim ticks a relay fixture runs in the store before capture, so the Wake has history. */
+const RELAY_STEPS: Partial<Record<RelayStateId, number>> = { 'closed-over-run': 30 };
+
+const RELAY_FIXTURES: FixtureMeta[] = RELAY_FIXTURE_SETS.flatMap((set) =>
+  set.states.map((state) => {
+    const steps = RELAY_STEPS[state];
+    return {
+      id: relayFixtureId(set, state),
+      expect:
+        RELAY_CAPTIONS[state] +
+        (set.base === undefined ? '' : ` The base pump is the ${set.base.name}.`),
+      applianceId: set.spec.id,
+      surface: 'shell' as const,
+      ...(steps === undefined ? {} : { steps }),
+    };
+  }),
+);
+
 export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'shell/default',
@@ -264,6 +346,7 @@ export const FIXTURES: readonly FixtureMeta[] = [
   ...PANEL_FIXTURES,
   ...SOURCE_FIXTURES,
   ...SCENE_FIXTURES,
+  ...RELAY_FIXTURES,
 ];
 
 /** File-safe name for screenshots and contact sheets: 'shell/default' → 'shell-default'. */
