@@ -3,6 +3,7 @@
 // named symbolically (a line, an inlet kind, a gauge), never by a spec control id, so one lesson
 // plays on every appliance that can play the scenario.
 import type { HoseSegment, InletKind, InstrumentKind, WaterSource } from '../types';
+import type { LineKit } from '../scenarios/lay';
 
 /** A valve on a truck, named by what it does rather than its spec id. */
 export type ValveRef =
@@ -90,12 +91,9 @@ export interface Failure {
  * A line the crew lays during the scenario, on the free delivery closest in size; `light` is what
  * they run instead when every free outlet is smaller than `hose` (as `PlannedLine`).
  */
-export interface LineDef {
+export interface LineDef extends LineKit {
   id: string;
-  hose: string;
-  lengths: number;
-  tipMm: number;
-  light?: { hose: string; lengths: number; tipMm: number };
+  light?: LineKit;
   elevationM?: number;
   truck?: string;
 }

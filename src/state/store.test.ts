@@ -183,7 +183,7 @@ describe('store: the player’s appliance', () => {
     expect(useStore.getState().lesson).toBeNull();
     expect(() => {
       useStore.getState().setPlayerAppliance('test-2d');
-    }).toThrow(/no appliance/);
+    }).toThrow(/Unknown appliance/);
   });
 
   it('falls back to the default appliance for an unknown saved id', () => {

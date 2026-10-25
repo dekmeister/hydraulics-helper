@@ -13,8 +13,10 @@ export const CAT7: ApplianceSpec = {
   name: 'Category 7 tanker',
   pump: {
     shutoffKpa: 1400, // pressure rise at zero flow, max rpm // PLACEHOLDER — needs Dek
-    // Rated ~550 L/min at 700 kPa, max rpm: (1400 − 700) / 550². Sized so two 38 mm crew lines
-    // (15 and 12 mm tips) run at working pressure with some throttle in hand. // PLACEHOLDER — needs Dek
+    // Rated ~550 L/min at 700 kPa, max rpm: (1400 − 700) / 550². Sized so the lessons' two crew
+    // lines (38 mm with a 15 mm tip, the 25 mm light line with a 12 mm tip) run at working
+    // pressure with some throttle in hand: sized for the lessons, not read off the truck
+    // (CALIBRATION needs Dek 39). // PLACEHOLDER — needs Dek
     droopKpaPerLpm2: 700 / 550 ** 2,
     // The generic pump's fit to the manual's lift derate (Table 4), as for the Cat 1; the placard's
     // −80 kPa is the operating limit, drawn on the compound. // PLACEHOLDER — needs Dek

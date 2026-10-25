@@ -257,8 +257,7 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
     get().reset(scenario.build(spec).state, id);
   },
   setPlayerAppliance: (id) => {
-    const spec = APPLIANCES.find((a) => a.id === id);
-    if (spec === undefined) throw new Error(`setPlayerAppliance: no appliance '${id}'`);
+    const spec = getAppliance(id);
     const { screen, saved } = get();
     set({
       saved: persist(saved, { ...saved, settings: { ...saved.settings, applianceId: id } }),
