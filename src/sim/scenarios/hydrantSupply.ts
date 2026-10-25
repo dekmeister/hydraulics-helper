@@ -14,8 +14,8 @@ const LINES: readonly PlannedLine[] = [
 ];
 
 /** Hydrant figures follow C14 (L3127): 400 kPa static, 300 kPa residual at 1100 L/min. */
-const HYDRANT_STATIC_KPA = 400;
-const HYDRANT_MAIN_LOSS = (HYDRANT_STATIC_KPA - 300) / 1100 ** 2;
+export const HYDRANT_STATIC_KPA = 400;
+export const HYDRANT_MAIN_LOSS = (HYDRANT_STATIC_KPA - 300) / 1100 ** 2;
 
 export const HYDRANT_SUPPLY: Scenario = {
   id: 'hydrant-supply',

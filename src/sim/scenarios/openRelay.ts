@@ -1,5 +1,6 @@
 import { inletOfKind, primerControlId } from '../appliances/controls';
 import { createSiteState } from '../engine';
+import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
 import { attachLines, twoLines, type PlannedLine } from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay, lengths } from './relayTrucks';
 import { supportSpec, type Scenario, type ScriptStep, type SupportRole } from './types';
@@ -21,10 +22,6 @@ const PORTABLE_DAM_LIFT_M = 1;
 /** Relay from the hydrant to the dam: 4 lengths of 65 mm, 10 m up. */
 const RELAY_LENGTHS = 4;
 const RELAY_UPHILL_M = 10;
-
-/** Hydrant figures as in hydrant-supply (C14). */
-const HYDRANT_STATIC_KPA = 400;
-const HYDRANT_MAIN_LOSS = (HYDRANT_STATIC_KPA - 300) / 1100 ** 2;
 
 /**
  * Throttle the base pump's operator holds: the hydrant does most of the work, so the dam fills at
