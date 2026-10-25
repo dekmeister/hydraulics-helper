@@ -25,8 +25,9 @@ export function trucksOnScene(sim: SimState): SceneTruck[] {
 }
 
 /**
- * How the scene draws a relay hose. 'charged': water moving. 'soft': a closed relay over-run, its
- * layflat pulled flat. 'burst': a length has gone. 'dry': nothing flowing.
+ * How the scene draws a relay hose. 'charged': water moving, or a closed relay pressurised.
+ * 'soft': a closed relay over-run, its
+ * layflat pulled flat. 'burst': a length has gone. 'dry': no water in it.
  */
 export type RelayState = 'charged' | 'dry' | 'soft' | 'burst';
 
@@ -41,6 +42,12 @@ export interface RelayLay {
   /** What it runs to: a truck's label, or a dam's. */
   toLabel: string;
 }
+
+/**
+ * Pressure at the far end from which a closed relay counts as charged, kPa: pressurised hose is
+ * round and ready for the receiving pump even before it draws. A display threshold, not physics.
+ */
+export const CHARGED_MIN_KPA = 1;
 
 const NO_READING: RelayReading = { flowLpm: 0, startKpa: 0, endKpa: 0, collapsed: false };
 
@@ -68,7 +75,8 @@ export function relayLays(sim: SimState): RelayLay[] {
         ? 'burst'
         : reading.collapsed
           ? 'soft'
-          : reading.flowLpm >= CHARGED_MIN_LPM
+          : reading.flowLpm >= CHARGED_MIN_LPM ||
+              (link.to.kind === 'inlet' && reading.endKpa >= CHARGED_MIN_KPA)
             ? 'charged'
             : 'dry';
     return {

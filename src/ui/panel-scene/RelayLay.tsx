@@ -13,8 +13,8 @@ interface Props {
 const BURST_SPOKES = [0, 45, 90, 135, 180, 225, 270, 315]
   .map((deg) => {
     const a = (deg * Math.PI) / 180;
-    const r = deg % 90 === 0 ? 17 : 11;
-    return `M${(6 * Math.cos(a)).toFixed(1)} ${(6 * Math.sin(a)).toFixed(1)} L${(r * Math.cos(a)).toFixed(1)} ${(r * Math.sin(a)).toFixed(1)}`;
+    const r = deg % 90 === 0 ? 24 : 16;
+    return `M${(9 * Math.cos(a)).toFixed(1)} ${(9 * Math.sin(a)).toFixed(1)} L${(r * Math.cos(a)).toFixed(1)} ${(r * Math.sin(a)).toFixed(1)}`;
   })
   .join(' ');
 
@@ -53,7 +53,7 @@ export function RelayLay({ geometry, relay, highlighted }: Props) {
           transform={`translate(${burstAt.x.toFixed(1)} ${burstAt.y.toFixed(1)})`}
           data-testid={`relay-burst-${geometry.linkId}`}
         >
-          <circle className="scene-relay__burst-ring" r="9" />
+          <circle className="scene-relay__burst-ring" r="12" />
           <path className="scene-relay__burst" d={BURST_SPOKES} />
         </g>
       )}

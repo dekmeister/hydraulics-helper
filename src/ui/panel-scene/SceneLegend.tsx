@@ -121,7 +121,7 @@ function RelayRow({ relay }: { relay: RelayLay }) {
   const { name, status } = relayText(relay);
   return (
     <li
-      className={`scene-legend__info scene-legend__relay--${relay.state}`}
+      className={`scene-legend__info scene-legend__relay scene-legend__relay--${relay.state}`}
       data-relay={relay.link.id}
     >
       <span className="scene-legend__name">{name}</span>

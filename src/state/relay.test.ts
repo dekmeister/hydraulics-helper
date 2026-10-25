@@ -92,6 +92,14 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('relay selectors: %s'
     expect(lay?.reading.endKpa).toBeGreaterThan(0);
   });
 
+  it('reads a closed relay charged once the base pump pressurises it, before water flows', () => {
+    const s = run(closed, inputsWith(0, []), 50);
+    const [lay] = relayLays(s);
+    expect(lay?.reading.flowLpm).toBe(0);
+    expect(lay?.reading.endKpa).toBeGreaterThan(0);
+    expect(lay?.state).toBe('charged');
+  });
+
   it('reads a relay soft when over-run and burst once a length goes', () => {
     const soft = run(closed, attackInputs(1), 100);
     expect(relayLays(soft)[0]?.state).toBe('soft');

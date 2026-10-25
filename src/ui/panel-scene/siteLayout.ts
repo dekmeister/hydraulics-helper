@@ -22,7 +22,7 @@ import { ATTACK_AT, DAM, TRUCK_AT } from './site';
 const SAME_STATION_GAP_U = 110;
 
 /** How far a portable dam stands off the suction coupling that draws from it, drawing units. */
-const PORTABLE_DAM_OFFSET_U = 62;
+const PORTABLE_DAM_OFFSET_U = 85;
 
 /** Radius of a portable dam on the map, drawing units (a map symbol, not to scale). */
 export const PORTABLE_DAM_R_U = 26;

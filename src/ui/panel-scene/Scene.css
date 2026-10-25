@@ -486,6 +486,14 @@ circle.scene-highlight--outer {
   .scene-legend__row .scene-legend__status {
     grid-column: 3;
   }
+  /* A relay row names both trucks: give the name its own line, wrapping if it must. */
+  .scene-legend__relay {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+  .scene-legend__relay .scene-legend__name {
+    white-space: normal;
+  }
 }
 
 /* Relay hoses (M5): drawn like delivery hoses; burst lengths jet water. */
