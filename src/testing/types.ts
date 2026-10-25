@@ -1,3 +1,4 @@
+import type { LessonProgress } from '../sim/lesson/progress';
 import type { SimState } from '../sim/types';
 
 export interface LoadOptions {
@@ -21,6 +22,8 @@ export interface PumpOpsTestApi {
   settle(): void;
   /** Serialisable snapshot for assertions. */
   getState(): SimState;
+  /** The lesson's progress (objectives, coach, status), or null in free play. Read-only. */
+  getLesson(): LessonProgress | null;
 }
 
 declare global {

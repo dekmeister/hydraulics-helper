@@ -108,3 +108,29 @@ test('keyboard reaches the truck switcher and changes trucks with Enter', async 
   expect((await getState(page)).activeTruckId).toBe('base');
   await expect(page.getByRole('button', { name: /^Base pump/, pressed: true })).toBeVisible();
 });
+
+test('keyboard starts a lesson from the menu and works the coach', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'keyboard pass runs on desktop');
+  await gotoApp(page);
+  const focusedName = () =>
+    page.evaluate(
+      () =>
+        document.activeElement?.getAttribute('aria-label') ??
+        document.activeElement?.textContent.trim() ??
+        '',
+    );
+  const tabTo = async (name: RegExp) => {
+    for (let i = 0; i < 80; i++) {
+      await page.keyboard.press('Tab');
+      if (name.test(await focusedName())) return;
+    }
+    throw new Error(`Tab never reached ${String(name)}`);
+  };
+  await tabTo(/^Start 1\. /);
+  await page.keyboard.press('Enter');
+  const dock = page.getByRole('region', { name: 'Lesson' });
+  await expect(dock).toContainText('Step 1 of 8');
+  await tabTo(/^Got it$/);
+  await page.keyboard.press('Enter');
+  await expect(dock).toContainText('Step 2 of 8');
+});

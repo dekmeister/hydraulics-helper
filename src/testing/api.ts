@@ -89,5 +89,9 @@ export function createTestApi(): PumpOpsTestApi {
     getState() {
       return structuredClone(useStore.getState().sim);
     },
+    getLesson() {
+      const lesson = useStore.getState().lesson;
+      return lesson === null ? null : structuredClone(lesson.progress);
+    },
   };
 }
