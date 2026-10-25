@@ -11,6 +11,7 @@ export default tseslint.config(
       'Resources/',
       'dist/',
       'dist-e2e/',
+      'dist-deploy/',
       'review/',
       'test-results/',
       'playwright-report/',
