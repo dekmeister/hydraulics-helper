@@ -285,6 +285,15 @@ As built (2026-10-25): the plan held, with these changes. Lesson fixtures are ca
   * Lesson journeys run on the phone only; the e2e + review run is now ~2.2 + ~1.0 min (budget ~60 s, see above).
   * The menu lists the player's appliance but can't change it (M7: appliance picker).
   * Results are kept per appliance; a "resume a game in progress" save would need `SimState` versioning (above).
+  * **PR #5 review follow-ups** (fixed in the PR: the sim pauses off the play screen; a `holdSettings` event on the truck the player has switched to moves its panel; free play picks a scenario the appliance can play; the relay residual and "charged" figures come from one constant each; the guided fixture's scroll is stable):
+    * Coach copy names Cat 1 gestures and figures ("green handle", "700 kPa at the pump, 350 at the branch" in `firstLine.ts`). Take gesture hints from the panel layout data, and derive or assert the pressures against the golden trace (M7).
+    * No instrument capability: a `gauge` condition on the compound passes `validateCondition` on an appliance without one, so the lesson would load but a person couldn't read it. Add the instrument to `ScenarioRequirements` (M7).
+    * `ui/menu/requirements.ts` re-implements `meets()` from `sim/scenarios/types.ts` (a test keeps them in step). Have the sim return the missing list and derive the boolean from it.
+    * `FIRING_PER_REV` in `audio/params.ts` assumes a 6-cylinder four-stroke; it's per appliance, so it belongs in the spec (M7).
+    * The store boots a throwaway tank-attack sim on `cat1-generic`, and `playerSpec` changes only by loading a sim; the M7 picker needs a setter. Results are keyed by the player's appliance only, so a mixed-appliance relay shares one result.
+    * Event effects are validated in definition order but fire in condition order; one that throws at run time (no free delivery) throws inside `store.step`, every frame. Safe today because each event waits on the previous objective. Catch and end the lesson with the error, or validate in firing order.
+    * `ladder.test.ts` proves a passing run exists with a tuned operator; there's no per-scenario test that each failure condition fires. The closed-relay lesson's hand-tuned throttle bump is CALIBRATION "needs Dek" 31.
+    * `store.ts` is ~270 lines and mixes routing, lessons, settings and sim; `persist()` writes `localStorage` inside a `set` updater. Split when it next grows. The service worker is checked for its files only, not registration or offline behaviour.
 * Multiplayer relay (two humans, one relay) — architecture keeps state serialisable for this, but it's far off.
 
 ## Risks
