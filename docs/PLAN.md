@@ -248,9 +248,9 @@ From Dek's Cat 1 photos (`Resources/Photos/Cat1_*`, 2026-10-25), which corrected
 
 ## M7 — Second appliance (proves extensibility)
 
-- [ ] Add a second real appliance by following the `ARCHITECTURE.md` §9.7 checklist: spec, calibration section, layout, scene art. Choice and figures from Dek.
-- [ ] Appliance picker in scenario selection; generic scenarios playable on both.
-- [ ] Any engine change needed is a new spec field/enum, not an appliance special case. Record in `ARCHITECTURE.md` anything the spec didn't anticipate.
+- [x] Add a second real appliance by following the `ARCHITECTURE.md` §9.7 checklist: spec, calibration section, layout, scene art. Choice and figures from Dek.
+- [x] Appliance picker in scenario selection; generic scenarios playable on both.
+- [x] Any engine change needed is a new spec field/enum, not an appliance special case. Record in `ARCHITECTURE.md` anything the spec didn't anticipate.
 
 **Demo:** the same tank-attack scenario on two appliances with different panels and pump performance.
 
@@ -280,15 +280,25 @@ Work order (one commit each, `npm run verify` green at the end):
 8. **Fixtures + journeys**: picker journey (pick Cat 7, play tank attack, reload keeps it), vernier and hand-primer journeys on the realistic view; generated fixtures cover the rest.
 9. **Review loop**, baselines, docs (ARCHITECTURE §4.3/§4.4/§7/§9, CALIBRATION, TESTING, PLAN tick).
 
+As built (2026-10-25): the plan held, with these changes. Every ladder lesson ran a 65 mm line a Cat 7 has no outlet for and can't feed, so lessons gained light line kits, copy filled in from what was laid and flow targets as a fraction of working flow (ARCHITECTURE §9.8); the light line is 25 mm, because a 38 mm line with a 12 mm tip leaves its valve ~7 % open (the scripted operator now moves a gated valve at most half its opening a second, which shifted the incident traces a second or two). The Cat 7 pump was sized up to ~550 L/min at 700 kPa so its two crew lines run together (needs Dek 39). Generic over-run tests, journeys and fixtures check the physics first, since the Cat 7 can't over-run the lessons' hydrant, draught or relay. The tank attack is retitled "two lines on the tank". Baselines for the Cat 7 were captured on Chromium 1243 (the pinned 1248 can't be downloaded here) and need refreshing on the pinned browser, along with the menu and guided-lesson baselines that changed.
+
 ## Later / parking lot
 
 * Reactive firefighters (lose water → animate + radio call), incident escalation.
 * Instructor mode: author/import scenarios as JSON.
 * Replays and shareable debriefs.
-* Further appliances beyond M7 (Cat 7/9, bulk water, urban pumper, portable pump), pump-specific quirks.
+* Further appliances beyond M7 (Cat 9, bulk water, urban pumper, portable pump), pump-specific quirks.
+* **M7 follow-ups:**
+  * Cat 7 figures are mostly PLACEHOLDER (CALIBRATION Cat 7 section, needs Dek 38–40): pump curve, tank, idle, primer, where the tank level is shown, which side the suction is on.
+  * Foam: the 3-way valve's FOAM ON position (bleed back to the suction through the proportioner) and the proportioner's selection and metering; the Cat 7's crew protection sprays (wheel sprays, front sprays, ring mains) and hose reel; its engine controls (IGN, START, STOP, hour meter).
+  * Lessons on the Cat 7 are easier where the physics says so (it can't over-run the hydrant), so its hydrant and relay lessons don't teach over-running. A lesson variant per appliance class, or scenario hydrants sized to the pump, would restore it.
+  * Lesson titles are fixed text; a title naming hose sizes would need the same placeholders as the copy.
+  * The menu builds every lesson's fireground to fill its brief, once per pick; cheap now, worth caching if scenarios grow.
+  * Mixed relay lessons with a much smaller base pump than the attack pump aren't required to pass (`ladder.test.ts`); the app never offers them.
+  * The e2e + review run is now ~5.5 + ~4 min on this container (budget ~60 s): the Cat 7 doubled the per-appliance journeys and fixtures.
 * Cat 1 hose reels (two, each with its own blue lever off the discharge manifold; the right one is drawn inert on the realistic bay). Deferred from M1 (Dek, 2026-10-24). There is no discharge master on the Cat 1 (photos, 2026-10-25).
 * Engine key switch / engine stop; M1 assumes the pump engine is always running. The realistic Cat 1 panel draws stop, ignition, ALT lamp and start as not in the game yet; "to stop pump, ignition must be on" is on its placard.
-* Realistic-view future work (R1): oil temperature and oil pressure gauges (need an engine model), foam (bypass / foam-off / foam-on switch, selection and metering valves), fuses, the air-cleaner indicator, reels; a callouts toggle for a "find it yourself" mode (Design §8); a refill lesson on the `tank-refill` fireground; a hydrant feeding two hoses at once (shared main loss); relays into hydrant to tank; a realistic layout for the test appliance or M7's second truck; Cat 7 photos are in `Resources/Photos/` for when it's built.
+* Realistic-view future work (R1): oil temperature and oil pressure gauges (need an engine model), foam (bypass / foam-off / foam-on switch, selection and metering valves), fuses, the air-cleaner indicator, reels; a callouts toggle for a "find it yourself" mode (Design §8); a refill lesson on the `tank-refill` fireground; a hydrant feeding two hoses at once (shared main loss); relays into hydrant to tank; a realistic layout for the test appliance (the Cat 7 has one since M7).
 * Realistic water follow-ups: an accessible summary of where the water is (pipes are decorative, `aria-hidden`); a drain cock for trucks that have one; water rising up the hard suction while priming; the hose reels' water once reels are modelled.
 * **R1 review follow-ups:**
   * The speed controller ramps in the store (`state/throttleRamp.ts`), not the sim, so scripts, lessons and traces can't see it and lesson timing differs between views. Moving it into `advance` (a `PlayerInputs.throttleRate` of −1/0/+1) would make the Simplified view ramp too, which is a design call. Its rates are now in the spec (`EngineSpec.speedController`).
@@ -298,10 +308,10 @@ Work order (one commit each, `npm run verify` green at the end):
 * Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event.
 * Unlined hose in scenarios (the catalogue already has it); hose carried per appliance.
 * Multiple independent pumps on one appliance (`pumps: PumpSpec[]`, e.g. separate high-pressure reel pump) — deferred, see `ARCHITECTURE.md` §9.2.
-* Vernier-knob throttle variant (Design OPEN_DECISIONS #4); the Cat 1 turned out to have a speed controller (R1), so the knob waits for a truck that has one.
+* ~~Vernier-knob throttle variant (Design OPEN_DECISIONS #4)~~: the Cat 7 has one, built in M7 as a realistic variant; the simplified view keeps the T-handle.
 * Warning lamp acknowledge (tap → steady, opens a coaching card). M6 built the coach as a dock, not cards; a lamp tap could open the lamp's explanation in the dock.
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
-* **Layout vocabulary gaps** (M7, PR #1 review): `primer` items have no variant, but a diaphragm primer is a handle, not a hold-to-run button (the sim treats its switch as "stroking"); an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` shows every lamp the sim can light (temperature, cavitation, hammer), whatever the truck actually fits.
+* **Layout vocabulary gaps** (M7, PR #1 review): ~~`primer` items have no variant~~ (M7: the realistic `hand-pump` variant, and the simplified control says STROKING for a diaphragm primer); an adjustable relief needs its own set-pressure control kind rather than `valve` (open/closed, inlet/outlet colour); `{ kind: 'warnings' }` shows every lamp the sim can light (temperature, cavitation, hammer), whatever the truck actually fits.
 * Scene follow-ups (M3): hydraulic section view along a line (Design sheet 06) with pump, friction, head and branch figures; elevation terrain that matches line elevations; a pressure-scaled spray throw; hose casing swelling on over-pressure (Design §6 scene cues).
 * **Scene off-screen on a phone while operating** (PR #2 review): below 900 px the scene stacks above the panel, so turning a delivery valve and watching its branch stop needs a scroll (the scene↔panel locate buttons scroll both ways). Candidates: a compact sticky scene or line-state HUD strip on phones, or a panel/scene tab switch. Needs a design decision before M4 adds more to watch.
 * **Pressurised vs flowing** (with branch shut-off above, CALIBRATION row 13): `LineState` `charged` is "delivery flows"; once a branch can be shut, split it so the hose follows pressure (`DeliveryLine.branchKpa`) and the spray follows flow.
@@ -330,14 +340,14 @@ Work order (one commit each, `npm run verify` green at the end):
   * The tank-to-hydrant changeover surge isn't modelled, so the incident's changeover has no trap (CALIBRATION "needs Dek" 30).
   * Lessons don't drive the scene beyond what the sim shows: no crew animation on a radio call, no marker on the coach's target when it's on the scene. Coach targets are panel items only.
   * Lesson journeys run on the phone only; the e2e + review run is now ~2.2 + ~1.0 min (budget ~60 s, see above).
-  * The menu lists the player's appliance but can't change it (M7: appliance picker).
+  * ~~The menu lists the player's appliance but can't change it~~ (M7: appliance picker).
   * Results are kept per appliance; a "resume a game in progress" save would need `SimState` versioning (above).
   * **PR #5 review follow-ups** (fixed in the PR: the sim pauses off the play screen; a `holdSettings` event on the truck the player has switched to moves its panel; free play picks a scenario the appliance can play; the relay residual and "charged" figures come from one constant each; the guided fixture's scroll is stable):
-    * Coach copy names Cat 1 gestures and figures ("green handle", "700 kPa at the pump, 350 at the branch" in `firstLine.ts`). Take gesture hints from the panel layout data, and derive or assert the pressures against the golden trace (M7).
-    * No instrument capability: a `gauge` condition on the compound passes `validateCondition` on an appliance without one, so the lesson would load but a person couldn't read it. Add the instrument to `ScenarioRequirements` (M7).
-    * `ui/menu/requirements.ts` re-implements `meets()` from `sim/scenarios/types.ts` (a test keeps them in step). Have the sim return the missing list and derive the boolean from it.
-    * `FIRING_PER_REV` in `audio/params.ts` assumes a 6-cylinder four-stroke; it's per appliance, so it belongs in the spec (M7).
-    * The store boots a throwaway tank-attack sim on `cat1-generic`, and `playerSpec` changes only by loading a sim; the M7 picker needs a setter. Results are keyed by the player's appliance only, so a mixed-appliance relay shares one result.
+    * ~~Coach copy names Cat 1 gestures and figures~~ (M7: `{gesture}` from the layout; the 700/350 kPa figures asserted on every appliance in `ladder.test.ts`). Was: coach copy names Cat 1 gestures and figures ("green handle", "700 kPa at the pump, 350 at the branch" in `firstLine.ts`). Take gesture hints from the panel layout data, and derive or assert the pressures against the golden trace (M7).
+    * ~~No instrument capability~~ (M7: lessons need the gauges they read). Was: no instrument capability: a `gauge` condition on the compound passes `validateCondition` on an appliance without one, so the lesson would load but a person couldn't read it. Add the instrument to `ScenarioRequirements` (M7).
+    * ~~`ui/menu/requirements.ts` re-implements~~ (M7: the sim's `missingRequirements`). Was: `ui/menu/requirements.ts` re-implements `meets()` from `sim/scenarios/types.ts` (a test keeps them in step). Have the sim return the missing list and derive the boolean from it.
+    * ~~`FIRING_PER_REV`~~ (M7: `EngineSpec.cylinders`). Was: `FIRING_PER_REV` in `audio/params.ts` assumes a 6-cylinder four-stroke; it's per appliance, so it belongs in the spec (M7).
+    * ~~The store boots a throwaway tank-attack sim on `cat1-generic`, and `playerSpec` changes only by loading a sim; the M7 picker needs a setter~~ (M7: boots on the saved appliance; `setPlayerAppliance`). Results are keyed by the player's appliance only, so a mixed-appliance relay shares one result.
     * Event effects are validated in definition order but fire in condition order; one that throws at run time (no free delivery) throws inside `store.step`, every frame. Safe today because each event waits on the previous objective. Catch and end the lesson with the error, or validate in firing order.
     * `ladder.test.ts` proves a passing run exists with a tuned operator; there's no per-scenario test that each failure condition fires. The closed-relay lesson's hand-tuned throttle bump is CALIBRATION "needs Dek" 31.
     * `store.ts` is ~270 lines and mixes routing, lessons, settings and sim; `persist()` writes `localStorage` inside a `set` updater. Split when it next grows. The service worker is checked for its files only, not registration or offline behaviour.
