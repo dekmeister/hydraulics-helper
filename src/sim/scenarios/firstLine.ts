@@ -58,8 +58,8 @@ const LESSON: LessonDef = {
     {
       id: 'delivery',
       text:
-        'Now open {target}, the delivery the crew’s hose is on: drag the blue lever a quarter ' +
-        'turn. Deliveries ignore taps, so a stray thumb never charges a line.',
+        'Now open {target}, the delivery the crew’s hose is on: tap the blue lever, or drag it a ' +
+        'quarter turn to open it part way.',
       target: { valve: ON_LINE },
       done: { kind: 'valve', valve: ON_LINE, min: 0.9 },
     },

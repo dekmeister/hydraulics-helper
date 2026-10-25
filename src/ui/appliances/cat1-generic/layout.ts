@@ -12,6 +12,7 @@ export const CAT1_LAYOUT: PanelLayout = {
       id: 'pressures',
       title: null,
       arrangement: 'row',
+      span: 'half',
       items: [
         {
           kind: 'gauge',
@@ -33,16 +34,24 @@ export const CAT1_LAYOUT: PanelLayout = {
       id: 'engine',
       title: null,
       arrangement: 'row',
+      span: 'half',
       items: [
         { kind: 'gauge', instrument: 'tacho', dial: 'tacho', label: 'Engine rpm', size: 'medium' },
         { kind: 'tank-level', instrument: 'tank-level', label: 'Tank' },
       ],
     },
-    { id: 'warnings', title: 'Warnings', arrangement: 'row', items: [{ kind: 'warnings' }] },
+    {
+      id: 'warnings',
+      title: 'Warnings',
+      arrangement: 'row',
+      span: 'half',
+      items: [{ kind: 'warnings' }],
+    },
     {
       id: 'throttle',
       title: 'Throttle',
       arrangement: 'list',
+      span: 'half',
       items: [{ kind: 'throttle', variant: 't-handle', label: 'Throttle' }],
     },
     {
@@ -85,7 +94,7 @@ export const CAT1_LAYOUT: PanelLayout = {
     {
       id: 'deliveries',
       title: 'Deliveries',
-      arrangement: 'list',
+      arrangement: 'cards',
       items: [
         {
           kind: 'delivery',
@@ -93,7 +102,7 @@ export const CAT1_LAYOUT: PanelLayout = {
           label: 'Delivery 1',
           tag: 'D1',
           glyph: 'circle',
-          tap: 'none',
+          tap: 'toggle',
         },
         {
           kind: 'delivery',
@@ -101,7 +110,7 @@ export const CAT1_LAYOUT: PanelLayout = {
           label: 'Delivery 2',
           tag: 'D2',
           glyph: 'square',
-          tap: 'none',
+          tap: 'toggle',
         },
         {
           kind: 'delivery',
@@ -109,7 +118,7 @@ export const CAT1_LAYOUT: PanelLayout = {
           label: 'Delivery 3',
           tag: 'D3',
           glyph: 'bar',
-          tap: 'none',
+          tap: 'toggle',
         },
       ],
     },

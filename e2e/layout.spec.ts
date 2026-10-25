@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { APPLIANCES } from '../src/sim/appliances/catalogue';
 import { FIXTURES } from '../src/testing/fixtures/catalog';
 import { SIDE_BY_SIDE_MIN_PX } from '../src/ui/layout/breakpoints';
 import { expect, gotoApp, test } from './fixtures';
@@ -56,6 +57,32 @@ test.describe('app shell layout invariants', () => {
       await expectArrangement(page, width);
     }
   });
+});
+
+/** A maximised browser on a 1920 × 1080 screen: the viewport left under the window chrome. */
+const HD_SCREEN = { width: 1920, height: 960 };
+
+// Every real truck's simplified panel fits a desktop screen whole (the test appliance's layout
+// is there to prove the renderer generic, not to fit).
+test.describe('simplified panel on a 1080 screen', () => {
+  const real = new Set(APPLIANCES.map((a) => a.id));
+  const fixtures = FIXTURES.filter(
+    (f) => f.id.startsWith('panel/') && f.applianceId !== undefined && real.has(f.applianceId),
+  );
+  for (const fixture of fixtures) {
+    test(`${fixture.id} fits without scrolling`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== 'desktop', 'viewport-independent; run once');
+      await page.setViewportSize(HD_SCREEN);
+      await gotoApp(page, `?fixture=${encodeURIComponent(fixture.id)}`);
+      await page.evaluate(() => {
+        window.__pumpops?.settle();
+      });
+      const panel = await page.getByRole('region', { name: 'Pump panel' }).boundingBox();
+      if (panel === null) throw new Error('Pump panel region not rendered');
+      expect(panel.y + panel.height, 'pump panel bottom').toBeLessThanOrEqual(HD_SCREEN.height);
+      await expectNoOverlaps(page);
+    });
+  }
 });
 
 test.describe('menu and lesson layout invariants', () => {
