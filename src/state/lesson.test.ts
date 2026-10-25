@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { CAT1 } from '../sim/appliances/cat1';
 import { operate } from '../sim/lesson/operator';
 import { FIRST_LINE } from '../sim/scenarios/firstLine';
+import { BASE_ID } from '../sim/scenarios/relayTrucks';
 import { beginLesson, recordIfEnded } from './lesson';
 import { defaultSaved } from './persist';
 import { activeTruck } from './selectors';
@@ -53,6 +54,48 @@ describe('lessons in the store', () => {
     useStore.getState().startLesson('first-line');
     useStore.getState().openDebrief();
     expect(useStore.getState().screen).toBe('debrief');
+  });
+
+  it('pauses the sim and the lesson off the play screen', () => {
+    useStore.getState().startLesson('first-line');
+    for (const open of [useStore.getState().openMenu, useStore.getState().openDebrief]) {
+      open();
+      const before = useStore.getState();
+      useStore.getState().step(100);
+      expect(useStore.getState().sim).toBe(before.sim);
+      expect(useStore.getState().lesson).toBe(before.lesson);
+    }
+    useStore.getState().openPlay();
+    useStore.getState().step(10);
+    expect(useStore.getState().sim.timeS).toBeCloseTo(1, 9);
+  });
+
+  it('an event holding the truck the player has switched to moves its panel', () => {
+    useStore.getState().startLesson('closed-relay');
+    const { lesson } = useStore.getState();
+    if (lesson === null) throw new Error('no lesson');
+    const held = 0.9;
+    useStore.setState({
+      lesson: {
+        ...lesson,
+        def: {
+          ...lesson.def,
+          events: [
+            {
+              id: 'up',
+              when: { kind: 'time', min: 0.15 },
+              effects: [{ kind: 'holdSettings', truck: BASE_ID, throttle: held }],
+            },
+          ],
+        },
+      },
+    });
+    useStore.getState().setActiveTruck(BASE_ID);
+    expect(useStore.getState().inputs.throttle).not.toBe(held);
+    useStore.getState().step(5);
+    const s = useStore.getState();
+    expect(s.inputs.throttle).toBe(held);
+    expect(activeTruck(s.sim).inputs.throttle).toBe(held);
   });
 });
 

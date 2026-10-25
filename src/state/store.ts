@@ -93,7 +93,10 @@ interface PumpOpsStore {
    * truck's controls live in the sim (`TruckState.inputs`), where they're held.
    */
   inputs: PlayerInputs;
-  /** Run `ticks` fixed sim steps synchronously. The only way sim time moves. */
+  /**
+   * Run `ticks` fixed sim steps synchronously. The only way sim time moves, and only on the play
+   * screen: the menu and debrief pause the sim (and any lesson) where it stands.
+   */
   step: (ticks: number) => void;
   /**
    * Replace the sim state wholesale (free play, test fixtures) and show the panels; ends any
@@ -177,13 +180,21 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   scenarioId: TANK_ATTACK.id,
   wake: [],
   step: (ticks) => {
-    set(({ sim, inputs, wake, lesson, saved }) => {
+    set(({ screen, sim, inputs, wake, lesson, saved }) => {
+      if (screen !== 'play') return {};
       let next = sim;
+      let panel = inputs;
       let playing = lesson;
       const samples = [...wake];
       for (let i = 0; i < ticks; i++) {
-        next = advance(next, inputs, TICK_S);
-        if (playing !== null) ({ sim: next, lesson: playing } = stepActive(playing, next, TICK_S));
+        next = advance(next, panel, TICK_S);
+        if (playing !== null) {
+          const held = activeTruck(next).inputs;
+          ({ sim: next, lesson: playing } = stepActive(playing, next, TICK_S));
+          // An event that set the operated truck's controls (a support truck the player has
+          // switched to) moves the panel with them, or the next tick would undo it.
+          if (activeTruck(next).inputs !== held) panel = activeTruck(next).inputs;
+        }
         samples.push(wakeSample(next));
       }
       const cutoff = next.timeS - WAKE_HISTORY_S;
@@ -193,6 +204,7 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
           : persist(saved, recordIfEnded(lesson.progress, playing, next, saved));
       return {
         sim: next,
+        inputs: panel,
         lesson: playing,
         saved: recorded,
         wake: samples.filter((w) => w.tS >= cutoff),
