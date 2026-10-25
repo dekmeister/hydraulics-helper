@@ -27,6 +27,9 @@ export const CAT7: ApplianceSpec = {
     maxRpm: 3600, // panel placard: do not exceed 3600 r/min // doctrine-confirmed (photo)
     rpmLagS: 0.4, // a small engine spins up quicker than the Cat 1's // PLACEHOLDER — needs Dek
     cylinders: 1, // air-cooled pump engine, for the engine note // PLACEHOLDER — needs Dek
+    // THROTTLE is a vernier knob marked RELEASE · HOLD (photo). One twist moves it 4 % of its
+    // travel. // PLACEHOLDER — needs Dek
+    vernier: { throttlePerTurn: 0.04 },
   },
   tank: {
     capacityL: 1600, // PLACEHOLDER — needs Dek

@@ -40,9 +40,15 @@ describe.each(CATALOGUE_REALISTIC.map((l) => [l.applianceId, l] as const))(
     if (spec === undefined) throw new Error(`no appliance '${id}'`);
     const items = layout.plates.flatMap((p) => p.items);
 
-    it('draws a speed switch only where the spec has a speed controller', () => {
-      const switches = items.filter((i) => i.kind === 'throttle');
-      if (switches.length > 0) expect(spec.engine.speedController).toBeDefined();
+    it('draws the throttle and primer the spec has: a speed switch, a vernier, a hand pump', () => {
+      for (const i of items) {
+        if (i.kind === 'throttle' && i.variant === 'speed-switch')
+          expect(spec.engine.speedController).toBeDefined();
+        if (i.kind === 'throttle' && i.variant === 'vernier')
+          expect(spec.engine.vernier).toBeDefined();
+        if (i.kind === 'primer')
+          expect(spec.primer?.kind).toBe(i.variant === 'hand-pump' ? 'diaphragm' : 'rotaryVane');
+      }
     });
 
     it('places what the simplified panel places, each exactly once', () => {

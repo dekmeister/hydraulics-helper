@@ -32,7 +32,16 @@ export interface LeverGeometry {
 
 /** How an item that isn't in the game yet is drawn: simply, and labelled as future work. */
 export type InertLook =
-  'button' | 'toggle' | 'lamp' | 'dial' | 'knobs' | 'placard' | 'fuses' | 'indicator' | 'reel';
+  | 'button'
+  | 'toggle'
+  | 'lamp'
+  | 'dial'
+  | 'knobs'
+  | 'placard'
+  | 'fuses'
+  | 'indicator'
+  | 'reel'
+  | 'valve';
 
 export type RealItem =
   | { kind: 'gauge'; instrument: string; dial: DialId; box: RBox }
@@ -44,11 +53,20 @@ export type RealItem =
       control: ControlId;
       coupling: RBox;
     } & LeverGeometry)
-  | { kind: 'primer'; control: ControlId; variant: 'pull-handle'; box: RBox }
   | {
-      /** Momentary speed controller (`EngineSpec.speedController`): ramps while held. */
+      /** 'pull-handle': a T-handle pulled out (Cat 1). 'hand-pump': a hand primer's handle, stroked. */
+      kind: 'primer';
+      control: ControlId;
+      variant: 'pull-handle' | 'hand-pump';
+      box: RBox;
+    }
+  | {
+      /**
+       * 'speed-switch': a momentary speed controller (`EngineSpec.speedController`), ramps while
+       * held. 'vernier': a vernier knob (`EngineSpec.vernier`), pushed, pulled and twisted.
+       */
       kind: 'throttle';
-      variant: 'speed-switch';
+      variant: 'speed-switch' | 'vernier';
       box: RBox;
     }
   | {

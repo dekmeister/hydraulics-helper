@@ -332,3 +332,110 @@
   outline-offset: 2px;
   box-shadow: 0 0 0 6px var(--color-focus-outer);
 }
+
+/* Vernier throttle (Cat 7) */
+.vernier {
+  position: absolute;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  border-radius: var(--radius-card);
+}
+
+.vernier > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.vernier[data-gesture='pull'] {
+  cursor: ew-resize;
+}
+
+.vernier[data-gesture='twist'] {
+  cursor: ns-resize;
+}
+
+.vernier__knurl {
+  stroke: var(--color-material-galv-dark);
+  stroke-width: 3;
+}
+
+.vernier__tick {
+  stroke: var(--color-material-ink);
+  stroke-width: 2;
+}
+
+.vernier__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  fill: var(--color-material-paper);
+}
+
+.vernier:focus-visible,
+.hand-primer__handle:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+}
+
+/* Hand diaphragm primer (Cat 7) */
+.hand-primer {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hand-primer__handle {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.hand-primer__handle > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Stroked: tilted part way through a stroke, and working up and down where motion is welcome. */
+.hand-primer__arm--stroking {
+  transform: rotate(-14deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hand-primer__arm--stroking {
+    animation: hand-primer-stroke 0.9s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes hand-primer-stroke {
+  from {
+    transform: rotate(-18deg);
+  }
+
+  to {
+    transform: rotate(10deg);
+  }
+}
+
+.hand-primer__vacuum {
+  fill: var(--color-function-inlet);
+}
+
+.hand-primer__caption {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.hand-primer--check-suction .hand-primer__caption {
+  color: var(--color-signal-caution);
+}

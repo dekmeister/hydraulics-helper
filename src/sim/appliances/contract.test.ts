@@ -65,6 +65,10 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(spec.primer.displacementLps).toBeGreaterThan(0);
       }
       expect(spec.pump.cavitationInletKpa).toBeLessThan(0);
+      if (spec.engine.vernier !== undefined) {
+        expect(spec.engine.vernier.throttlePerTurn).toBeGreaterThan(0);
+        expect(spec.engine.vernier.throttlePerTurn).toBeLessThan(0.5);
+      }
       expect(Number.isInteger(spec.engine.cylinders)).toBe(true);
       expect(spec.engine.cylinders).toBeGreaterThan(0);
       if (spec.recirc !== undefined) {

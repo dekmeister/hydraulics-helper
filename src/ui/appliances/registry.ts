@@ -4,6 +4,7 @@ import { CAT1_REALISTIC } from './cat1-generic/realistic';
 import type { RealisticLayout } from './realistic';
 import { CAT1_SCENE_ART } from './cat1-generic/scene';
 import { CAT7_LAYOUT } from './cat7-generic/layout';
+import { CAT7_REALISTIC } from './cat7-generic/realistic';
 import { CAT7_SCENE_ART } from './cat7-generic/scene';
 
 /** Panel layout per catalogue appliance id. Every catalogue appliance must have one (tested). */
@@ -26,9 +27,11 @@ export function getPanelLayout(applianceId: string): PanelLayout {
  * Realistic layouts by appliance id. Optional: an appliance without one shows only the simplified
  * panel. Every one must match its appliance's spec and simplified layout (tested).
  */
-const REALISTIC = new Map<string, RealisticLayout>([[CAT1_REALISTIC.applianceId, CAT1_REALISTIC]]);
+export const CATALOGUE_REALISTIC: readonly RealisticLayout[] = [CAT1_REALISTIC, CAT7_REALISTIC];
 
-export const CATALOGUE_REALISTIC: readonly RealisticLayout[] = [CAT1_REALISTIC];
+const REALISTIC = new Map<string, RealisticLayout>(
+  CATALOGUE_REALISTIC.map((l) => [l.applianceId, l]),
+);
 
 export function getRealisticLayout(applianceId: string): RealisticLayout | undefined {
   return REALISTIC.get(applianceId);

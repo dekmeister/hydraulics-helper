@@ -40,6 +40,16 @@ export interface EngineSpec {
    * rather than a lever that stays put. Absent: a plain throttle.
    */
   speedController?: SpeedControllerSpec;
+  /**
+   * The throttle is a vernier cable: twist the knob for fine travel, hold its release button to
+   * push or pull it freely. Absent: not a vernier. The throttle input is the same 0–1 position.
+   */
+  vernier?: VernierSpec;
+}
+
+/** How far one full twist of a vernier throttle's knob moves the throttle, as a fraction of travel. */
+export interface VernierSpec {
+  throttlePerTurn: number;
 }
 
 /** How fast a held speed controller moves the engine, and how far one flick nudges it. */

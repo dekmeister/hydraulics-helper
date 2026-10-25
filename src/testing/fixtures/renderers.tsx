@@ -3,6 +3,8 @@ import type { ApplianceSpec, ControlId, GaugeScaleSpec, SimState } from '../../s
 import { CAT1 } from '../../sim/appliances/cat1';
 import { SceneView } from '../../ui/panel-scene/SceneView';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
+import { getScenario } from '../../sim/scenarios';
+import { supports } from '../../sim/scenarios/types';
 import { useStore } from '../../state/store';
 import { defaultSaved } from '../../state/persist';
 import { AppRoot } from '../../ui/layout/AppRoot';
@@ -118,6 +120,8 @@ function realisticRenderers(): Record<string, FixtureRenderer> {
   const out: Record<string, FixtureRenderer> = {};
   for (const spec of REALISTIC_APPLIANCES) {
     for (const state of Object.keys(REALISTIC_STATE_SCENARIO) as RealisticStateId[]) {
+      // As the catalogue: only the states whose fireground this appliance can play.
+      if (!supports(getScenario(REALISTIC_STATE_SCENARIO[state]), spec)) continue;
       out[realisticFixtureId(spec.id, state)] = {
         state: () => realisticState(spec, state),
         scenario: REALISTIC_STATE_SCENARIO[state],
