@@ -3,15 +3,16 @@ import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind } from '../appliances/controls';
 import { PUMP_DAMAGE } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, twoLines, type PlannedLine } from './lay';
+import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
 /**
  * A 65 mm attack line with a 25 mm branch (700 kPa, ~1100 L/min, Table 1), then a 38 mm line: more
- * than the hydrant can give at full throttle, so it over-runs (Table 7).
+ * than the hydrant can give at full throttle, so it over-runs (Table 7). A truck with no 65 mm
+ * outlet runs the light line; its targets are fractions of each line's working flow.
  */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 25 },
+  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 25, light: LIGHT_LINE },
   { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
 ];
 
@@ -27,6 +28,14 @@ export const HYDRANT_MAIN_LOSS = (HYDRANT_STATIC_KPA - 300) / 1100 ** 2;
 const RESERVE_KPA = 100;
 const MARGIN_KPA = 50;
 
+/**
+ * Flows the lesson asks for, as fractions of each line's working flow: on a Cat 1, 700 L/min on the
+ * 65 mm line (of ~1100), then 500 on it with 200 on the 38 mm (of ~280). Lesson tuning.
+ */
+const RESERVE_OF_WORKING = 0.635;
+const BOTH_65_OF_WORKING = 0.45;
+const BOTH_38_OF_WORKING = 0.71;
+
 const LESSON: LessonDef = {
   ladder: 3,
   brief:
@@ -36,7 +45,7 @@ const LESSON: LessonDef = {
   objectives: [
     {
       id: 'hydrant',
-      text: 'Take water from the hydrant: open the suction inlet and charge the 65 mm line.',
+      text: 'Take water from the hydrant: open the suction inlet and charge the {line:line-65}.',
       when: {
         kind: 'all',
         of: [
@@ -47,11 +56,11 @@ const LESSON: LessonDef = {
     },
     {
       id: 'reserve',
-      text: `Push the 65 mm line to 700 L/min or more with the compound above ${String(RESERVE_KPA)} kPa, for 20 s.`,
+      text: `Push the {line:line-65} to {flow:line-65:${String(RESERVE_OF_WORKING)}} or more with the compound above ${String(RESERVE_KPA)} kPa, for 20 s.`,
       when: {
         kind: 'all',
         of: [
-          { kind: 'flow', line: 'line-65', min: 700 },
+          { kind: 'flow', line: 'line-65', ofWorking: true, min: RESERVE_OF_WORKING },
           { kind: 'gauge', gauge: 'compound', min: RESERVE_KPA },
         ],
       },
@@ -61,13 +70,14 @@ const LESSON: LessonDef = {
     {
       id: 'both',
       text:
-        'Charge the 38 mm line as well without over-running the hydrant: both crews flowing ' +
-        `(38 mm 200 L/min or more) and the compound above ${String(MARGIN_KPA)} kPa, for 20 s.`,
+        'Charge the {line:line-38} as well without over-running the hydrant: both crews flowing ' +
+        `({flow:line-38:${String(BOTH_38_OF_WORKING)}} or more on it) and the compound above ` +
+        `${String(MARGIN_KPA)} kPa, for 20 s.`,
       when: {
         kind: 'all',
         of: [
-          { kind: 'flow', line: 'line-38', min: 200 },
-          { kind: 'flow', line: 'line-65', min: 500 },
+          { kind: 'flow', line: 'line-38', ofWorking: true, min: BOTH_38_OF_WORKING },
+          { kind: 'flow', line: 'line-65', ofWorking: true, min: BOTH_65_OF_WORKING },
           { kind: 'gauge', gauge: 'compound', min: MARGIN_KPA },
         ],
       },

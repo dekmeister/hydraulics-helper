@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getAppliance } from '../sim/appliances/catalogue';
+import { APPLIANCES, getAppliance } from '../sim/appliances/catalogue';
 import { switchControlIds, valveControlIds } from '../sim/appliances/controls';
 import { TICK_S } from '../sim/constants';
 import { advance, switchTruck } from '../sim/engine';
@@ -20,12 +20,17 @@ import { beginLesson, recordIfEnded, stepActive, type ActiveLesson } from './les
 import { browserStorage, loadSaved, writeSaved, type PanelView, type Saved } from './persist';
 import { activeTruck, instrumentValue } from './selectors';
 
-/** Appliance loaded at start-up until scenario selection exists (M6). */
+/** Appliance a new player trains on until they pick another on the menu. */
 export const DEFAULT_APPLIANCE_ID = 'cat1-generic';
 
-/** Start-up state: the tank-attack lines laid on the default appliance, every control shut. */
-export function defaultSim(): SimState {
-  return TANK_ATTACK.build(getAppliance(DEFAULT_APPLIANCE_ID)).state;
+/** The catalogue appliance with `id`, or the default for an unknown or missing id. */
+export function playerAppliance(id: string | undefined): ApplianceSpec {
+  return APPLIANCES.find((a) => a.id === id) ?? getAppliance(DEFAULT_APPLIANCE_ID);
+}
+
+/** Start-up state: the tank-attack lines laid on `spec` (default appliance), every control shut. */
+export function defaultSim(spec: ApplianceSpec = getAppliance(DEFAULT_APPLIANCE_ID)): SimState {
+  return TANK_ATTACK.build(spec).state;
 }
 
 function clamp01(x: number): number {
@@ -114,6 +119,11 @@ interface PumpOpsStore {
   playerSpec: ApplianceSpec;
   /** Load a scenario's initial state on the player's appliance for free play; throws if it can't play it. */
   loadScenario: (id: string) => void;
+  /**
+   * Train on another catalogue appliance (saved): ends any lesson and loads free play's tank attack
+   * on it, staying on the screen showing. Throws on an id not in the catalogue.
+   */
+  setPlayerAppliance: (id: string) => void;
   /** Displayed readings for the last `WAKE_HISTORY_S` of sim time, oldest first. */
   wake: readonly WakeSample[];
   setThrottle: (position: number) => void;
@@ -136,7 +146,8 @@ interface PumpOpsStore {
   toggleHighlight: (deliveryId: ControlId, from: HighlightSource) => void;
 }
 
-const initialSim = defaultSim();
+const initialSaved = loadSaved(browserStorage());
+const initialSim = defaultSim(playerAppliance(initialSaved.settings.applianceId));
 
 /** Save `saved` if it changed. */
 function persist(before: Saved, after: Saved): Saved {
@@ -174,7 +185,7 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   setLessonListOpen: (open) => {
     set({ lessonListOpen: open });
   },
-  saved: loadSaved(browserStorage()),
+  saved: initialSaved,
   setSound: (on) => {
     set(({ saved }) => ({
       saved: persist(saved, { ...saved, settings: { ...saved.settings, sound: on } }),
@@ -226,7 +237,7 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
     });
   },
   reset: (sim, scenarioId) => {
-    const next = sim ?? defaultSim();
+    const next = sim ?? defaultSim(get().playerSpec);
     set({
       screen: 'play',
       lesson: null,
@@ -244,6 +255,16 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
     const scenario = getScenario(id);
     if (!supports(scenario, spec)) throw new Error(`${spec.id} can’t play '${id}'`);
     get().reset(scenario.build(spec).state, id);
+  },
+  setPlayerAppliance: (id) => {
+    const spec = getAppliance(id);
+    const { screen, saved } = get();
+    set({
+      saved: persist(saved, { ...saved, settings: { ...saved.settings, applianceId: id } }),
+    });
+    if (get().playerSpec.id === id) return;
+    get().reset(defaultSim(spec), TANK_ATTACK.id);
+    set({ screen });
   },
   throttleRamp: null,
   pressSpeedSwitch: (direction, rates) => {

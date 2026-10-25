@@ -15,6 +15,8 @@ export interface Settings {
   sound: boolean;
   /** The pump panel view; an appliance without a realistic layout shows the simplified one. */
   panelView: PanelView;
+  /** The appliance the player trains on, by spec id; absent: the default. The store checks it. */
+  applianceId?: string;
 }
 
 /** Best result on one scenario with one appliance. */
@@ -63,8 +65,9 @@ export function parseSaved(text: string | null): Saved {
   }
   if (!isRecord(raw) || raw.version !== VERSION) return saved;
   if (isRecord(raw.settings)) {
-    const { sound, panelView } = raw.settings;
+    const { sound, panelView, applianceId } = raw.settings;
     if (typeof sound === 'boolean') saved.settings.sound = sound;
+    if (typeof applianceId === 'string') saved.settings.applianceId = applianceId;
     const view = PANEL_VIEWS.find((v) => v === panelView);
     if (view !== undefined) saved.settings.panelView = view;
   }

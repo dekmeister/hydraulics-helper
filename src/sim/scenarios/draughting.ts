@@ -2,12 +2,12 @@ import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind, primerControlId } from '../appliances/controls';
 import { PUMP_DAMAGE } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, twoLines, type PlannedLine } from './lay';
+import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario, ScriptStep } from './types';
 
-/** The tank-attack pair (38 mm then 65 mm, Table 1 tips), now fed from the dam. */
+/** The tank-attack pair (38 mm then 65 mm or the light line, Table 1 tips), now fed from the dam. */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20 },
+  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
   { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
 ];
 

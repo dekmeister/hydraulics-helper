@@ -84,6 +84,7 @@ export function dryReadings(
     pumpFlowLpm: 0,
     reliefFlowLpm: 0,
     pumpToTankLpm: 0,
+    recircLpm: 0,
     deliveryFlowLpm: Object.fromEntries(spec.deliveries.map((d) => [d.id, 0])),
     branchKpa: Object.fromEntries(lines.map((l) => [l.id, 0])),
     inletFlowLpm: Object.fromEntries(spec.inlets.map((i) => [i.id, 0])),
@@ -174,6 +175,7 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
   // Pump to tank discharges at atmospheric pressure: P = (k/open²)·Q².
   const pttR =
     ptt === undefined || pttOpen < VALVE_CLOSED_EPS ? 0 : ptt.lossKpaPerLpm2 / pttOpen ** 2;
+  const recircR = spec.recirc?.lossKpaPerLpm2 ?? 0;
 
   const demand = (pKpa: number) => {
     const flows = open.map(({ r, headKpa }) => outletFlowLpm(pKpa, r, headKpa));
@@ -183,10 +185,13 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
         ? 0
         : relief.slopeLpmPerKpa * Math.max(0, pKpa - setKpa);
     const pttLpm = pttR > 0 ? outletFlowLpm(pKpa, pttR, 0) : 0;
+    const recircLpm = recircR > 0 ? outletFlowLpm(pKpa, recircR, 0) : 0;
     // Relief dumped to the tank is drawn back in through the inlets; dumped to the inlet it isn't.
-    // Pump to tank always goes round through the tank.
-    const inletLpm = outLpm + pttLpm + (relief?.dumpTo === 'tank' ? reliefLpm : 0);
-    return { flows, outLpm, reliefLpm, pttLpm, inletLpm, pumpLpm: outLpm + pttLpm + reliefLpm };
+    // Pump to tank and recirculation always go round through the tank.
+    const returnLpm = pttLpm + recircLpm;
+    const inletLpm = outLpm + returnLpm + (relief?.dumpTo === 'tank' ? reliefLpm : 0);
+    const pumpLpm = outLpm + returnLpm + reliefLpm;
+    return { flows, outLpm, reliefLpm, pttLpm, recircLpm, inletLpm, pumpLpm };
   };
   const rise = (q: number) => pumpRiseKpa(spec.pump, spec.engine, rpm, q);
   // Past the cap the inlet pressure plunges, which pins the root at the capped flow.
@@ -257,6 +262,7 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
     pumpFlowLpm: d.pumpLpm,
     reliefFlowLpm: d.reliefLpm,
     pumpToTankLpm: d.pttLpm,
+    recircLpm: d.recircLpm,
     deliveryFlowLpm,
     branchKpa,
     inletFlowLpm,

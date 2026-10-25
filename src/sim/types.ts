@@ -33,11 +33,23 @@ export interface EngineSpec {
   maxRpm: number;
   /** First-order lag time constant, seconds. */
   rpmLagS: number;
+  /** Cylinders of the four-stroke engine driving the pump: sets the engine note (sound only). */
+  cylinders: number;
   /**
    * The truck's throttle is a momentary speed controller (hold to run the governor up or down)
    * rather than a lever that stays put. Absent: a plain throttle.
    */
   speedController?: SpeedControllerSpec;
+  /**
+   * The throttle is a vernier cable: twist the knob for fine travel, hold its release button to
+   * push or pull it freely. Absent: not a vernier. The throttle input is the same 0–1 position.
+   */
+  vernier?: VernierSpec;
+}
+
+/** How far one full twist of a vernier throttle's knob moves the throttle, as a fraction of travel. */
+export interface VernierSpec {
+  throttlePerTurn: number;
 }
 
 /** How fast a held speed controller moves the engine, and how far one flick nudges it. */
@@ -81,6 +93,18 @@ export interface PumpToTankSpec {
   label: string;
   sizeMm: number;
   /** Loss through the return with the valve fully open, kPa per (L/min)². */
+  lossKpaPerLpm2: number;
+}
+
+/**
+ * Tank recirculation: a fixed bleed from the discharge into the tank through a check valve (the
+ * Cat 7's 3-way valve set to TANK RECIRC). Not a control: it flows Q = √(P_d / k) whenever the pump
+ * has water, so a pump with no relief keeps cool churning with every delivery shut. The check valve
+ * keeps air out, so unlike pump to tank it doesn't stop the primer catching.
+ */
+export interface RecircSpec {
+  sizeMm: number;
+  /** Loss through the bleed and its check valve, kPa per (L/min)². */
   lossKpaPerLpm2: number;
 }
 
@@ -186,6 +210,8 @@ export interface ApplianceSpec {
   relief?: ReliefSpec;
   /** Return from the discharge into the tank; needs a tank. */
   pumpToTank?: PumpToTankSpec;
+  /** Fixed recirculation bleed from the discharge into the tank; needs a tank. */
+  recirc?: RecircSpec;
   instruments: InstrumentSpec[];
 }
 
@@ -310,12 +336,14 @@ export interface TruckReadings {
   dischargeKpa: number;
   /** Compound (inlet) gauge, kPa; negative is vacuum. */
   compoundKpa: number;
-  /** Total flow through the pump, including relief bypass, L/min. */
+  /** Total flow through the pump, including relief, pump to tank and recirculation, L/min. */
   pumpFlowLpm: number;
   /** Flow through the pressure relief bypass, L/min. */
   reliefFlowLpm: number;
   /** Flow back to the tank through pump to tank, L/min; 0 if none is fitted. */
   pumpToTankLpm: number;
+  /** Flow back to the tank through the recirculation bleed, L/min; 0 if none is fitted. */
+  recircLpm: number;
   /** Flow out of each delivery, keyed by delivery id, L/min. */
   deliveryFlowLpm: Record<ControlId, number>;
   /** Pressure at each branch, keyed by line id, kPa. */

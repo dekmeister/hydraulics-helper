@@ -16,8 +16,6 @@ export interface SoundParams {
   sprayGain: number;
 }
 
-/** Engine note: a diesel firing at rpm/60 × cylinders/2 (6-cylinder, 4-stroke). Sound design. */
-const FIRING_PER_REV = 3;
 /** Flow at which spray noise is full, L/min. Sound design. */
 const SPRAY_FULL_LPM = 1200;
 
@@ -35,7 +33,8 @@ export function soundParams(truck: TruckState, inputs: PlayerInputs): SoundParam
     !truck.pump.primerCutOut;
   const flowLpm = Object.values(truck.readings.deliveryFlowLpm).reduce((a, b) => a + b, 0);
   return {
-    engineHz: (truck.rpm / 60) * FIRING_PER_REV,
+    // A four-stroke fires each cylinder every other revolution.
+    engineHz: (truck.rpm / 60) * (engine.cylinders / 2),
     engineGain: 0.25 + 0.45 * load,
     primerGain: priming ? 0.35 : 0,
     rattleGain: 0.6 * Math.min(1, truck.readings.cavitation),

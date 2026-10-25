@@ -74,6 +74,7 @@ export function expectSaneTruck(t: TruckState): void {
     r.pumpFlowLpm,
     r.reliefFlowLpm,
     r.pumpToTankLpm,
+    r.recircLpm,
     ...Object.values(r.deliveryFlowLpm),
     ...Object.values(r.branchKpa),
     t.pump.tempC,
@@ -90,11 +91,29 @@ export function expectSaneTruck(t: TruckState): void {
   for (const q of Object.values(r.inletFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
   expect(r.dischargeKpa).toBeGreaterThanOrEqual(0);
   expect(r.pumpToTankLpm).toBeGreaterThanOrEqual(0);
+  expect(r.recircLpm).toBeGreaterThanOrEqual(0);
   for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
   expect(t.tankL).toBeGreaterThanOrEqual(0);
   expect(t.tankL).toBeLessThanOrEqual(t.spec.tank?.capacityL ?? 0);
   expect(t.rpm).toBeGreaterThanOrEqual(t.spec.engine.idleRpm - 1e-9);
   expect(t.rpm).toBeLessThanOrEqual(t.spec.engine.maxRpm + 1e-9);
+}
+
+/**
+ * `state` with every hose lay swapped for one length of 65 mm and a 32 mm branch: lines that take
+ * all a pump can give, to push any appliance past what its supply allows (a light tanker's crew
+ * lines can't over-run a hydrant or a 4 m draught).
+ */
+export function withBigLines(state: SimState): SimState {
+  return {
+    ...state,
+    lines: state.lines.map((l) => ({
+      ...l,
+      segments: [{ hose: '65L', lengthM: 30 }],
+      elevationM: 0,
+      branch: { tipMm: 32 },
+    })),
+  };
 }
 
 /** Every truck, relay reading and source in `state` sane (see `expectSaneTruck`). */

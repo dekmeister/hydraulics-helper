@@ -21,19 +21,22 @@ export type WaterState = 'flowing' | 'still' | 'empty';
  *   only toward an outlet that is open; omitted, it carries all of the pump's flow.
  * - `delivery`: from a delivery's valve to its coupling.
  * - `pumpToTank`: the return from its valve on into the tank.
+ * - `recirc`: the recirculation bleed from the discharge into the tank (`ApplianceSpec.recirc`).
  */
 export type WaterRef =
   | { at: 'tank' }
   | { at: 'inlet'; id: ControlId; side: 'source' | 'pump' }
   | { at: 'casing'; feeds?: readonly ControlId[] }
   | { at: 'delivery'; id: ControlId }
-  | { at: 'pumpToTank' };
+  | { at: 'pumpToTank' }
+  | { at: 'recirc' };
 
 /** A stable key for a stretch, e.g. 'inlet:suction:source', for tests and the DOM. */
 export function waterRefKey(ref: WaterRef): string {
   switch (ref.at) {
     case 'tank':
     case 'pumpToTank':
+    case 'recirc':
       return ref.at;
     case 'casing':
       return ref.feeds === undefined ? 'casing' : `casing:${ref.feeds.join('+')}`;
@@ -131,8 +134,10 @@ export function waterIn(sim: SimState, truck: TruckState, ref: WaterRef): WaterS
         flowing(r.deliveryFlowLpm[ref.id]),
         wet && (truck.inputs.valves[ref.id] ?? 0) >= VALVE_CLOSED_EPS,
       );
-    // It runs on into the tank, open to air: water only while it flows.
+    // Both run on into the tank, open to air: water only while it flows.
     case 'pumpToTank':
       return state(flowing(r.pumpToTankLpm), false);
+    case 'recirc':
+      return state(flowing(r.recircLpm), false);
   }
 }

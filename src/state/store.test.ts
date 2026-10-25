@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createInitialState } from '../sim/engine';
 import type { ApplianceSpec } from '../sim/types';
 import { activeTruck } from './selectors';
-import { useStore, WAKE_HISTORY_S } from './store';
+import { APPLIANCES } from '../sim/appliances/catalogue';
+import { DEFAULT_APPLIANCE_ID, playerAppliance, useStore, WAKE_HISTORY_S } from './store';
 
 describe('store', () => {
   beforeEach(() => {
@@ -149,5 +150,44 @@ describe('store: scenarios and the Wake', () => {
     expect(wake[0]?.values.discharge).toBeDefined();
     useStore.getState().reset();
     expect(useStore.getState().wake).toEqual([]);
+  });
+});
+
+describe('store: the player’s appliance', () => {
+  beforeEach(() => {
+    useStore.getState().setPlayerAppliance(DEFAULT_APPLIANCE_ID);
+    useStore.getState().reset();
+  });
+
+  it.each(APPLIANCES.map((a) => [a.id] as const))(
+    'trains on %s: free play reloads on it, lessons build on it, and it is saved',
+    (id) => {
+      useStore.getState().openMenu();
+      useStore.getState().setPlayerAppliance(id);
+      const s = useStore.getState();
+      expect(s.screen).toBe('menu');
+      expect(s.playerSpec.id).toBe(id);
+      expect(activeTruck(s.sim).spec.id).toBe(id);
+      expect(s.scenarioId).toBe('tank-attack');
+      expect(s.saved.settings.applianceId).toBe(id);
+      s.startLesson('first-line');
+      expect(activeTruck(useStore.getState().sim).spec.id).toBe(id);
+    },
+  );
+
+  it('ends a lesson in play when the appliance changes, and refuses one not in the catalogue', () => {
+    const other = APPLIANCES.find((a) => a.id !== DEFAULT_APPLIANCE_ID);
+    if (other === undefined) throw new Error('needs a second appliance');
+    useStore.getState().startLesson('first-line');
+    useStore.getState().setPlayerAppliance(other.id);
+    expect(useStore.getState().lesson).toBeNull();
+    expect(() => {
+      useStore.getState().setPlayerAppliance('test-2d');
+    }).toThrow(/Unknown appliance/);
+  });
+
+  it('falls back to the default appliance for an unknown saved id', () => {
+    expect(playerAppliance('no-such-truck').id).toBe(DEFAULT_APPLIANCE_ID);
+    expect(playerAppliance(undefined).id).toBe(DEFAULT_APPLIANCE_ID);
   });
 });

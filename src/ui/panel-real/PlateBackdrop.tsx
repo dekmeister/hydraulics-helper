@@ -147,6 +147,26 @@ function InertShape({ look, box, text }: { look: InertLook; box: RBox; text?: re
           ))}
         </g>
       );
+    case 'valve':
+      // A valve the game doesn't work yet: a hub with a plain steel handle, never function-coloured.
+      return (
+        <g>
+          <rect
+            x={cx - r * 0.9}
+            y={cy - r * 0.16}
+            width={r * 1.8}
+            height={r * 0.32}
+            rx={r * 0.16}
+            style={{ fill: COLOR.galvDark }}
+          />
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r * 0.3}
+            style={{ fill: COLOR.galvMid, stroke: COLOR.galvEdge }}
+          />
+        </g>
+      );
     case 'reel':
       return (
         <g>

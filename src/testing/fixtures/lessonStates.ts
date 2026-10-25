@@ -78,6 +78,8 @@ export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtu
             { open: { line: 'line-65' } },
             { throttle: 0.7 },
             { wait: 60 },
+            // A light tanker draws less: let it run on until the tank is dry.
+            { until: { kind: 'tank', max: 0 }, maxS: 240 },
           ],
         ),
       );

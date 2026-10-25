@@ -14,6 +14,8 @@ import { BayLever } from './BayLever';
 import { boxStyle, leverBox } from './geometry';
 import { PullHandlePrimer } from './PullHandlePrimer';
 import { SpeedSwitch } from './SpeedSwitch';
+import { HandPumpPrimer } from './HandPumpPrimer';
+import { VernierThrottle } from './VernierThrottle';
 import { TankGauge } from './TankGauge';
 
 // Realistic items take their accessible names, delivery tags and tap behaviour from the
@@ -149,18 +151,22 @@ function Primer({
   const setSwitch = useStore((s) => s.setSwitch);
   const state = useStore((s) => primerStatus(s.sim, s.inputs, item.control).state);
   const progress = useStore((s) => primerStatus(s.sim, s.inputs, item.control).progress);
-  return (
-    <PullHandlePrimer
-      label={label}
-      on={on}
-      onChange={(v) => {
-        setSwitch(item.control, v);
-      }}
-      state={state}
-      progress={progress}
-      style={boxStyle(item.box, plate)}
-    />
-  );
+  const props = {
+    label,
+    on,
+    onChange: (v: boolean) => {
+      setSwitch(item.control, v);
+    },
+    state,
+    progress,
+    style: boxStyle(item.box, plate),
+  };
+  switch (item.variant) {
+    case 'pull-handle':
+      return <PullHandlePrimer {...props} />;
+    case 'hand-pump':
+      return <HandPumpPrimer {...props} />;
+  }
 }
 
 function Throttle({
@@ -173,12 +179,24 @@ function Throttle({
   label: string;
 }) {
   const engine = useStore((s) => activeTruck(s.sim).spec.engine);
-  const controller = engine.speedController;
-  if (controller === undefined) throw new Error('a speed switch needs EngineSpec.speedController');
   const value = useStore((s) => s.inputs.throttle);
   const press = useStore((s) => s.pressSpeedSwitch);
   const release = useStore((s) => s.releaseSpeedSwitch);
   const setThrottle = useStore((s) => s.setThrottle);
+  if (item.variant === 'vernier') {
+    if (engine.vernier === undefined) throw new Error('a vernier knob needs EngineSpec.vernier');
+    return (
+      <VernierThrottle
+        label={label}
+        value={value}
+        onChange={setThrottle}
+        perTurn={engine.vernier.throttlePerTurn}
+        style={boxStyle(item.box, plate)}
+      />
+    );
+  }
+  const controller = engine.speedController;
+  if (controller === undefined) throw new Error('a speed switch needs EngineSpec.speedController');
   const rates = speedSwitchRates(engine, controller);
   return (
     <SpeedSwitch

@@ -1,6 +1,7 @@
 // Names the lesson dock uses, taken from the panel layout so it can't disagree with the panel.
 import type { Metric } from '../../state/lessonView';
 import type { SimState } from '../../sim/types';
+import type { RealisticLayout, RealItem } from '../appliances/realistic';
 import type { PanelLayout } from '../appliances/types';
 import { itemKey } from '../appliances/itemKey';
 
@@ -10,6 +11,46 @@ export function targetLabel(layout: PanelLayout, key: string): string {
   const item = layout.sections.flatMap((s) => s.items).find((i) => itemKey(i) === key);
   return item !== undefined && 'label' in item ? item.label : 'the control';
 }
+
+/**
+ * How to work the panel item with `key`, for a coach step's `{gesture}`, from the layout the player
+ * is looking at (`realistic` when the realistic view is showing): a lever's colour and whether a
+ * tap works, the throttle's kind. Lesson copy can't say this itself: it plays on every appliance.
+ */
+export function gestureHint(
+  layout: PanelLayout,
+  realistic: RealisticLayout | undefined,
+  key: string,
+): string {
+  const item = layout.sections.flatMap((s) => s.items).find((i) => itemKey(i) === key);
+  if (item === undefined) return 'use it';
+  switch (item.kind) {
+    case 'valve':
+    case 'delivery': {
+      const colour = item.kind === 'valve' && item.function === 'inlet' ? 'green' : 'blue';
+      return item.tap === 'toggle'
+        ? `tap its ${colour} handle, or drag it a quarter turn to open it part way`
+        : `drag its ${colour} handle a quarter turn`;
+    }
+    case 'throttle': {
+      const real = realistic?.plates.flatMap((p) => p.items).find((i) => i.kind === 'throttle');
+      if (real?.kind === 'throttle') return THROTTLE_HINTS[real.variant];
+      return 'the throttle’s − and + buttons';
+    }
+    case 'primer':
+      return 'hold it on';
+    default:
+      return 'use it';
+  }
+}
+
+/** How to trim a realistic throttle, by its variant. */
+const THROTTLE_HINTS: Readonly<Record<Extract<RealItem, { kind: 'throttle' }>['variant'], string>> =
+  {
+    'speed-switch': 'the speed switch: a flick up or down, or hold it',
+    vernier:
+      'the throttle knob: drag it along its shaft to push or pull it, or up and down to twist it fine',
+  };
 
 /** The delivery a line is on, by its panel label ('Delivery 1'), or the line id. */
 export function lineLabel(layout: PanelLayout, sim: SimState, line: string): string {

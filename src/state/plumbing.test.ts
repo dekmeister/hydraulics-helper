@@ -28,6 +28,7 @@ describe('waterRefKey', () => {
     );
     expect(waterRefKey({ at: 'delivery', id: 'd1' })).toBe('delivery:d1');
     expect(waterRefKey({ at: 'pumpToTank' })).toBe('pumpToTank');
+    expect(waterRefKey({ at: 'recirc' })).toBe('recirc');
   });
 });
 
@@ -46,8 +47,19 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('waterIn: %s', (_id, 
     expect(at(s, { at: 'casing' })).toBe('empty');
     expect(at(s, { at: 'delivery', id: d1 })).toBe('empty');
     expect(at(s, { at: 'pumpToTank' })).toBe('empty');
+    expect(at(s, { at: 'recirc' })).toBe('empty');
     expect(at(s, { at: 'inlet', id: 'no-such-inlet', side: 'source' })).toBe('empty');
   });
+
+  it.runIf(spec.recirc !== undefined && tankIn !== undefined)(
+    'recirculation flows whenever the pump moves water, every delivery shut, and empties after',
+    () => {
+      let s = run(createInitialState(spec, lines), tankAttackInputs(spec, 0.5, []), 30);
+      expect(at(s, { at: 'recirc' })).toBe('flowing');
+      s = run(s, inputsWith(0.5, []), 30);
+      expect(at(s, { at: 'recirc' })).toBe('empty');
+    },
+  );
 
   it.runIf(tankIn !== undefined)(
     'tank attack: the feed, the casing and the open line flow; a shut line stays empty',

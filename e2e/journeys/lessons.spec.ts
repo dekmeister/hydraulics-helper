@@ -1,7 +1,9 @@
 // Lesson journeys (PLAN M6 demo): a new player completes scenarios 1–3 from the menu, through the
 // real controls, and their progress survives a reload. Run on the phone, the baseline constraint.
 import type { Page, TestInfo } from '@playwright/test';
+import { APPLIANCES } from '../../src/sim/appliances/catalogue';
 import { inletOfKind } from '../../src/sim/appliances/controls';
+import { DEFAULT_APPLIANCE_ID } from '../../src/state/store';
 import { expect, gotoApp, test } from '../fixtures';
 import {
   band,
@@ -67,10 +69,13 @@ async function expectPassedDebrief(page: Page) {
 for (const spec of JOURNEY_APPLIANCES) {
   test(`scenario 1, guided by the coach, on ${spec.id}`, async ({ page }, testInfo) => {
     await gotoApp(page);
-    if (spec.id === 'cat1-generic') {
+    if (APPLIANCES.includes(spec)) {
+      // A catalogue truck is picked on the menu and its lesson started there, as a player would.
       await expect(page.getByRole('heading', { name: 'Scenarios', level: 1 })).toBeVisible();
+      await page.getByRole('radio', { name: new RegExp(`^${spec.name}`) }).check();
       await startButton(page, 1).click();
     } else {
+      // The test appliance isn't on the menu.
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'first-line', appliance, lesson: true });
       }, spec.id);
@@ -142,14 +147,6 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
     page,
     (p) => objectiveDone(p, 'both'),
     async (s) => {
-      console.log(
-        'DBG',
-        s.timeS.toFixed(0),
-        activeTruckOf(s).inputs.throttle.toFixed(3),
-        branchKpa(s, 'line-38').toFixed(0),
-        branchKpa(s, 'line-65').toFixed(0),
-        JSON.stringify(activeTruckOf(s).inputs.valves),
-      );
       await trimBranch(page, s, 'line-38');
       await gateBranch(page, s, 'line-65', bigName);
     },
@@ -251,3 +248,47 @@ test('the sound setting is kept across visits', async ({ page }) => {
     'false',
   );
 });
+
+// M7 demo: the same tank attack on another appliance, picked on the menu, with its own panel and
+// pump. Every catalogue appliance other than the default gets the journey.
+for (const spec of JOURNEY_APPLIANCES.filter(
+  (a) => a.id !== DEFAULT_APPLIANCE_ID && APPLIANCES.includes(a),
+)) {
+  test(`pick ${spec.id} on the menu and play the tank attack on it; the pick is kept`, async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(90_000);
+    await gotoApp(page);
+    const pick = page.getByRole('radio', { name: new RegExp(`^${spec.name}`) });
+    await pick.check();
+    await expect(pick).toBeChecked();
+    // Briefs name what this truck's crews run, filled in for it.
+    const card = page.locator('[data-scenario="tank-attack"]');
+    await expect(card).not.toContainText('{');
+    await startButton(page, 2).click();
+    await expect(page.locator('.pump-panel__appliance')).toContainText(spec.name);
+
+    await inlet(page, 'tank', testInfo);
+    const crew = await deliveryOf(page, 'line-38');
+    const second = await deliveryOf(page, 'line-65');
+    await dragValve(page, crew.valve, 1);
+    await dragValve(page, second.valve, 1);
+    await dragThrottle(page, 0.8);
+    const secondName = (await second.valve.getAttribute('aria-label')) ?? '';
+    await playUntil(
+      page,
+      (p) => objectiveDone(p, 'both'),
+      async (s) => {
+        await trimBranch(page, s, 'line-38');
+        await gateBranch(page, s, 'line-65', secondName);
+      },
+      150,
+    );
+    await expectPassedDebrief(page);
+
+    await page.reload();
+    await page.waitForFunction(() => window.__pumpops !== undefined);
+    await expect(page.getByRole('radio', { name: new RegExp(`^${spec.name}`) })).toBeChecked();
+    await expect(page.locator('[data-scenario="tank-attack"]')).toContainText('Passed');
+  });
+}

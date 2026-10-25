@@ -6,14 +6,14 @@ import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { getScenario } from '../../sim/scenarios';
 import { supports } from '../../sim/scenarios/types';
 import type { ApplianceSpec } from '../../sim/types';
-import { RELAY_STATE_SCENARIO, type RelayStateId } from './relayStates';
+import { RELAY_STATE_SCENARIO, relayState, type RelayStateId } from './relayStates';
 import {
   REALISTIC_APPLIANCES,
   REALISTIC_STATE_SCENARIO,
   realisticFixtureId,
   type RealisticStateId,
 } from './realisticStates';
-import { SOURCE_STATE_SCENARIO, type SourceStateId } from './sourceStates';
+import { SOURCE_STATE_SCENARIO, sourceState, type SourceStateId } from './sourceStates';
 
 export type ViewportName = 'phone' | 'tablet' | 'desktop';
 
@@ -184,7 +184,8 @@ export type SourceState = SourceStateId;
 
 /**
  * Appliances that get generated source fixtures: every catalogue appliance in each state its
- * scenario allows (a primer it can hold, for 'draught-priming'), plus the self-priming test
+ * scenario allows (a primer it can hold, for 'draught-priming'; a pump that can out-draw the lift,
+ * for 'cavitating'), plus the self-priming test
  * appliance draughting, to prove the panel and scene are generic.
  */
 export const SOURCE_FIXTURE_SETS: readonly {
@@ -196,7 +197,10 @@ export const SOURCE_FIXTURE_SETS: readonly {
     states: (Object.keys(SOURCE_CAPTIONS) as SourceState[]).filter(
       (state) =>
         supports(getScenario(SOURCE_STATE_SCENARIO[state]), spec) &&
-        (state !== 'draught-priming' || primerControlId(spec) !== undefined),
+        (state !== 'draught-priming' || primerControlId(spec) !== undefined) &&
+        // A pump too small to out-draw the lift at full throttle has no cavitating state to show.
+        (state !== 'cavitating' ||
+          (sourceState(spec, state).trucks[0]?.readings.cavitation ?? 0) > 0),
     ),
   })),
   { spec: TEST_APPLIANCE, states: ['draught-working'] },
@@ -257,15 +261,27 @@ export interface RelayFixtureSet {
 }
 
 /**
+ * Whether `spec`'s relay state shows what its caption says: a pump too small to out-draw the relay
+ * or to burst it with a slam has no over-run or burst to show.
+ */
+function shows(spec: ApplianceSpec, state: RelayStateId): boolean {
+  if (state !== 'closed-over-run' && state !== 'burst') return true;
+  const s = relayState(spec, state);
+  return state === 'burst'
+    ? s.links.some((l) => l.burst !== undefined)
+    : (s.trucks.find((t) => t.id === s.activeTruckId)?.readings.cavitation ?? 0) > 0;
+}
+
+/**
  * Appliances that get generated relay fixtures: every catalogue appliance in each state its
- * scenario allows, plus a closed relay mixing appliances (the test appliance as base pump), to
+ * scenario allows and shows, plus a closed relay mixing appliances (the test appliance as base pump), to
  * prove the scene and panel handle two specs at once.
  */
 export const RELAY_FIXTURE_SETS: readonly RelayFixtureSet[] = [
   ...APPLIANCES.map((spec) => ({
     spec,
-    states: (Object.keys(RELAY_CAPTIONS) as RelayStateId[]).filter((state) =>
-      supports(getScenario(RELAY_STATE_SCENARIO[state]), spec),
+    states: (Object.keys(RELAY_CAPTIONS) as RelayStateId[]).filter(
+      (state) => supports(getScenario(RELAY_STATE_SCENARIO[state]), spec) && shows(spec, state),
     ),
   })),
   ...APPLIANCES.map((spec) => ({
@@ -305,7 +321,8 @@ const LESSON_CAPTIONS = {
     '"LESSON 1 First line…" instead of the picker. The tank-to-pump control has the focus double ' +
     'ring (white inside ink) and is scrolled into view. A paper dock at the foot of the screen ' +
     '(right half from 900 px): "STEP 2 OF 8", "Water comes from the truck’s tank first. Open Tank ' +
-    'to pump: tap its green handle." (the test appliance names its own valve), and OBJECTIVES 0/3 ' +
+    'to pump: tap its green handle, or drag it a quarter turn to open it part way." (each truck ' +
+    'names its own valve; the hint comes from its layout), and OBJECTIVES 0/3 ' +
     'and END buttons. Nothing hidden under the dock once scrolled.',
   incident:
     'Whole app in the incident lesson: one 38 mm line charged, the crew has just moved uphill. ' +
@@ -508,8 +525,10 @@ export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'menu/fresh',
     expect:
-      'Scenario menu: app bar (PUMPOPS, SOUND ON; no SCENARIOS button here), "SCENARIOS", "Your ' +
-      'appliance: Category 1 tanker". Seven paper cards numbered 1–7 in ink discs, each with title, ' +
+      'Scenario menu: app bar (PUMPOPS, SOUND ON; no SCENARIOS button here), "SCENARIOS", "Pick ' +
+      'the truck you’re training on, then a scenario." A YOUR APPLIANCE card: one row per ' +
+      'catalogue truck (radio dot, name, fitout line such as "3 deliveries (65, 38, 38 mm) · 3000 L ' +
+      'tank · electric primer · tacho"), Category 1 tanker checked with an ink border. Seven paper cards numbered 1–7 in ink discs, each with title, ' +
       'brief and "Not tried yet"; card 1 has an ink border, GUIDED and NEXT UP tags and a filled ' +
       'START button; the rest have outlined START buttons. A FREE PLAY card last.',
   },
@@ -518,6 +537,13 @@ export const FIXTURES: readonly FixtureMeta[] = [
     expect:
       'As menu/fresh, but card 1 reads "Passed ★★★ best 100" and card 2 "Passed ★★☆ best 82" ' +
       '(PLAY AGAIN buttons), card 3 "Not passed yet" with NEXT UP and the ink border.',
+  },
+  {
+    id: 'menu/resume',
+    expect:
+      'As menu/fresh, with a lesson in progress: the YOUR APPLIANCE card ends with "Changing ' +
+      'truck ends the lesson in progress." under the truck rows, and a filled RESUME LESSON ' +
+      'button sits between that card and the ladder.',
   },
   ...LESSON_FIXTURES,
   ...DEBRIEF_FIXTURES,

@@ -1,7 +1,7 @@
 // Appliance contract suite (ARCHITECTURE §9.5): every registered appliance, plus a test-only one
 // with a different shape, must pass these. Generic behaviour belongs here, not in per-truck tests.
 import { describe, expect, it } from 'vitest';
-import { BRANCH_OPTIMUM_KPA, HOSES } from '../constants';
+import { BRANCH_OPTIMUM_KPA, HOSES, PUMP_TEMP_CAUTION_C, TICK_S } from '../constants';
 import {
   DEFAULT_TRUCK_ID,
   createIdleInputs,
@@ -65,6 +65,16 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(spec.primer.displacementLps).toBeGreaterThan(0);
       }
       expect(spec.pump.cavitationInletKpa).toBeLessThan(0);
+      if (spec.engine.vernier !== undefined) {
+        expect(spec.engine.vernier.throttlePerTurn).toBeGreaterThan(0);
+        expect(spec.engine.vernier.throttlePerTurn).toBeLessThan(0.5);
+      }
+      expect(Number.isInteger(spec.engine.cylinders)).toBe(true);
+      expect(spec.engine.cylinders).toBeGreaterThan(0);
+      if (spec.recirc !== undefined) {
+        expect(spec.tank).toBeDefined();
+        expect(spec.recirc.lossKpaPerLpm2).toBeGreaterThan(0);
+      }
       if (spec.pumpToTank !== undefined) {
         expect(spec.tank).toBeDefined();
         expect(spec.pumpToTank.lossKpaPerLpm2).toBeGreaterThan(0);
@@ -318,6 +328,17 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(truckOf(s).tankL).toBeGreaterThan(0);
         expect(truckOf(s).readings.pumpFlowLpm).toBe(0);
         expectSane(s);
+      },
+    );
+
+    it.runIf(spec.recirc !== undefined && tankInlets.length > 0)(
+      'its recirculation keeps it below the temperature lamp churning at full rpm, every delivery shut',
+      () => {
+        const tenMin = Math.round(600 / TICK_S);
+        const s = run(createInitialState(spec), tankAttackInputs(spec, 1, []), tenMin);
+        expect(truckOf(s).readings.recircLpm).toBeGreaterThan(0);
+        expect(truckOf(s).pump.tempC).toBeLessThan(PUMP_TEMP_CAUTION_C);
+        expect(truckOf(s).tankL).toBeCloseTo(spec.tank?.capacityL ?? 0, 6);
       },
     );
 

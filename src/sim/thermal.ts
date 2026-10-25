@@ -6,7 +6,7 @@ export interface ThermalContext {
   rpm: number;
   /** Water is reaching the pump; a dry pump churns nothing. */
   wet: boolean;
-  /** Water leaving the pump's loop (deliveries, relief to tank), carrying heat away, L/min. */
+  /** Water leaving the pump's loop (deliveries, returns to the tank), carrying heat away, L/min. */
   throughLpm: number;
 }
 

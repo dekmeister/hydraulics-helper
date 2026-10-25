@@ -15,7 +15,7 @@ export const TEST_APPLIANCE: ApplianceSpec = {
     casingVolumeL: 8,
     churnKw: 8,
   },
-  engine: { idleRpm: 1000, maxRpm: 2800, rpmLagS: 1 },
+  engine: { idleRpm: 1000, maxRpm: 2800, rpmLagS: 1, cylinders: 4 },
   tank: { capacityL: 1500 },
   inlets: [
     { id: 'tank-valve', label: 'Tank valve', kind: 'tank', lossKpaPerLpm2: 3e-5 },

@@ -1,7 +1,7 @@
 // Evaluating and checking lesson conditions. Pure functions of the sim state and lesson facts.
 import { VALVE_CLOSED_EPS } from '../constants';
-import type { SimState, TruckState } from '../types';
-import { branchBand, branchKpa, hoseById, resolveValve, truckOf } from './refs';
+import type { InstrumentKind, SimState, TruckState } from '../types';
+import { branchBand, branchKpa, hoseById, resolveValve, truckOf, workingFlowLpm } from './refs';
 import type { Condition, GaugeId, Range } from './types';
 
 /** What the lesson knows beyond the sim state: whose truck, what's been acknowledged, done, fired. */
@@ -32,6 +32,11 @@ function gauge(truck: TruckState, id: GaugeId): number {
     case 'rpm':
       return truck.rpm;
   }
+}
+
+/** The instrument a person reads a gauge condition on. */
+export function gaugeInstrument(id: GaugeId): InstrumentKind {
+  return id === 'rpm' ? 'tacho' : id;
 }
 
 /** Whether `c` holds now. A condition naming something that isn't there is false. */
@@ -65,7 +70,11 @@ export function holds(c: Condition, state: SimState, facts: LessonFacts): boolea
     case 'flow': {
       const hose = hoseById(state, c.line);
       const t = hose === undefined ? undefined : truck(hose.truckId);
-      return hose !== undefined && within(t?.readings.deliveryFlowLpm[hose.deliveryId] ?? 0, c);
+      const q = t?.readings.deliveryFlowLpm[hose?.deliveryId ?? ''] ?? 0;
+      if (hose === undefined) return false;
+      if (c.ofWorking !== true) return within(q, c);
+      const working = workingFlowLpm(state, c.line);
+      return working !== undefined && within(q / working, c);
     }
     case 'primed':
       return truck(c.truck)?.pump.primed === true;
@@ -137,9 +146,18 @@ export function validateCondition(
         ? [`line '${c.line}': no Table 1 pressure for its tip`]
         : [];
     case 'flow':
+      if (c.ofWorking === true && workingFlowLpm(state, c.line) === undefined)
+        return [`line '${c.line}': no working flow (not a lay with a Table 1 tip)`];
       return line(c.line);
+    case 'gauge': {
+      const t = truckOf(state, playerTruckId, c.truck);
+      if (t === undefined) return truck(c.truck);
+      const kind = gaugeInstrument(c.gauge);
+      return t.spec.instruments.some((i) => i.kind === kind)
+        ? []
+        : [`no ${kind} gauge on '${t.id}' to read`];
+    }
     case 'throttle':
-    case 'gauge':
     case 'tank':
     case 'primed':
     case 'cavitating':

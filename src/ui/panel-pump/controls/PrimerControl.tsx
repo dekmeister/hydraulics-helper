@@ -12,6 +12,11 @@ export interface PrimerControlProps {
   state?: PrimerState;
   /** Vacuum as a fraction of the primer's best, 0–1: the ring round the button. */
   progress?: number;
+  /**
+   * 'switch': an electric primer, running while held. 'handle': a hand primer, stroked while held
+   * (the sim takes its switch as the stroking). Changes the words, not the gesture.
+   */
+  kind?: 'switch' | 'handle';
 }
 
 /** What the primer is doing, as its caption says it. */
@@ -39,6 +44,7 @@ export function PrimerControl({
   onChange,
   state = on ? 'running' : 'idle',
   progress = 0,
+  kind = 'switch',
 }: PrimerControlProps) {
   const hold = useHoldSwitch(on, onChange);
   const captionId = useId();
@@ -77,7 +83,7 @@ export function PrimerControl({
             <path d="M2 7.5 L5.5 11 L12 3.5" />
           </svg>
         )}
-        {PRIMER_CAPTION[state]}
+        {kind === 'handle' && state === 'running' ? 'STROKING' : PRIMER_CAPTION[state]}
       </span>
     </div>
   );

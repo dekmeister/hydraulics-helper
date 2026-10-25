@@ -164,6 +164,48 @@ The tank runs dry at t = 250 s, and every gauge then drops to zero. M4 appended 
 
 Pump to tank (2026-10-25) added a `pumpToTankLpm` column (after `reliefLpm`) to every Cat 1 trace; it is 0 throughout, and no other value moved. Its behaviour is asserted in `sim/tankFill.test.ts`: Q = open·√(P_d/k), recirculating on tank holds the level, refilling from a hydrant at the return flow, overflowing when full, cooling a churning pump (5 min at 0.8 throttle: > 10 °C cooler cracked 20 %), and blocking the primer.
 
+## Cat 7 tanker (`sim/appliances/cat7.ts`, id `cat7-generic`)
+
+From Dek's photos (`Resources/Photos/Cat7_*`, 2026-10-25): the pump's own panel, the bay, and the hydraulic diagram plate on the locker door. Figures not in the photos are sized for a small single-stage pump that can run two crew lines.
+
+| Figure | Value | Status |
+|---|---|---|
+| Pump drive | Separate air-cooled diesel with its own panel: IGN / ALT / START, oil lamp, STOP T-handle, hour meter, vernier THROTTLE (RELEASE · HOLD) | doctrine-confirmed (photo); engine controls not modelled |
+| Engine max | 3600 rpm (placard: "do not exceed 3600 r/min") | doctrine-confirmed (photo) |
+| Engine idle | 1200 rpm | PLACEHOLDER — needs Dek |
+| Throttle → rpm lag | τ = 0.4 s | PLACEHOLDER — needs Dek |
+| Cylinders (engine note) | 1 | PLACEHOLDER — needs Dek |
+| Pump shutoff (zero flow, max rpm) | 1400 kPa | PLACEHOLDER — needs Dek |
+| Pump droop | 700/550² kPa/(L/min)², i.e. rated ~550 L/min at 700 kPa | PLACEHOLDER — needs Dek (sized so the 38 mm crew line and the light line run together, row 39) |
+| Tank | 1600 L | PLACEHOLDER — needs Dek |
+| Deliveries | d1, d2: two outlets with blue ball-valve levers on the manifold; 38 mm from the couplings | arrangement doctrine-confirmed (photo); size PLACEHOLDER — needs Dek; the hose reel's valve is deferred |
+| Tank to pump | Butterfly valve with a yellow, green-tipped lever on the pipe down from the tank; 6 kPa at 400 L/min | valve doctrine-confirmed (photo, diagram); loss PLACEHOLDER — needs Dek |
+| Suction inlet | 65 mm on a butterfly valve with a notched yellow lever, then a check valve and the DN65 Y-strainer on the pump's eye; 10 kPa at 400 L/min | arrangement and size doctrine-confirmed (photo: strainer marked DN65); loss PLACEHOLDER — needs Dek |
+| Pump to tank | Ball valve from the discharge up into the tank; 25 mm, ~200 L/min at 700 kPa | function doctrine-confirmed (diagram); size and loss PLACEHOLDER — needs Dek |
+| Tank recirculation (`recirc`) | The 3-way valve at TANK RECIRC: a bleed through a check valve into the tank, ~30 L/min at 700 kPa, always flowing | function doctrine-confirmed (diagram, tag on the pump); flow PLACEHOLDER — needs Dek (row 38) |
+| Relief | None fitted | doctrine-confirmed (photos, diagram) |
+| Primer | Hand diaphragm (`diaphragm`), the red pump with a long handle left of the outlets; best vacuum 75 kPa, 0.6 L/s | that it is the primer and its performance PLACEHOLDER — needs Dek |
+| Cavitation inlet pressure | −84 kPa (the generic Table 4 fit); the placard's −80 kPa is drawn red on the compound | PLACEHOLDER — needs Dek |
+| Casing volume / churn heat | 4 L; 5 kW at max rpm | PLACEHOLDER — needs Dek |
+| Gauge scales | compound −100…1600, pressure 0–1600 kPa (the fitted faces), compound red past −80 (placard), no tacho | doctrine-confirmed (photo) |
+| Tank gauge | A sight tube, assumed | PLACEHOLDER — needs Dek (none shows in the photos) |
+
+**Recirculation** (asserted in `sim/recirc.test.ts` and the contract suite): Q = √(P_d/k) whenever the pump has water; drawn through the inlets and back into the tank (the level holds on tank supply, the tank fills while draughting); it cools a churning pump with no relief (10 min at full rpm with every delivery shut stays under the 60 °C lamp; without it the pump passes it); behind its check valve it lets no air in, so the primer still catches. It adds a `recircLpm` column (after `pumpToTankLpm`) to every Cat 7 trace.
+
+**Lesson lines** (`scenarios/lay.ts` `LIGHT_LINE`): the Cat 7 has no 65 mm outlet, so where a lesson runs a 65 mm line the crew runs two lengths of 25 mm with a 12 mm branch (250 kPa, ~150 L/min; 25 mm loses ~250 kPa a length at that flow, L928). With the 38 mm crew line (3 lengths, 15 mm, ~280 L/min at ~710 kPa) that's ~460 L/min at ~720 kPa: within the pump with some throttle in hand, and both lines want nearly the same pump pressure.
+
+**Tank-attack trace** (`tank-attack.cat7-generic.csv`): the 38 mm line on d1, the light line on d2.
+
+| Phase | Discharge | Flows (d1 / d2) | Branch (38 / light) |
+|---|---|---|---|
+| 38 mm only, throttle 0.6 | 572 kPa | 250 / 0 L/min | 278 kPa |
+| Second line opened, throttle 0.6 | 445 kPa (sag 127) | 221 / 117 L/min | 217 / 148 kPa |
+| Throttle 0.8 | 622 kPa | 261 / 138 L/min | 302 / 207 kPa |
+
+Recirculation takes 24–28 L/min throughout. Against the Cat 1 (669 kPa and 270 L/min on the 38 mm line at the same throttle) the smaller pump makes less pressure at the same throttle, and the lesson's operator holds both branches in band at ~0.9 throttle.
+
+**Other traces:** on the 400 kPa hydrant the Cat 7 can't over-run it (at full throttle with both lines: compound +285 kPa, 543 L/min; its pump tops out near 780 L/min); draughting at 4 m: primed at t ≈ 32 s by the hand primer (the Cat 1’s electric primer: ≈ 16 s), both lines at full throttle −64 kPa and 483 L/min, no cavitation; closed relay (Cat 7 base pump at the dam): residual 345 kPa with both lines at 0.6, 118 kPa at full throttle (not over-run); open relay: the base pump at throttle 0.2 on the hydrant fills the portable dam at ~415 L/min, about what both lines draw at full throttle (489 L/min), so the dam falls slowly. The scripts' "push it past its supply" phases don't cavitate a pump this size; that is the physics, and the generic over-run tests use bigger lines or a weaker hydrant (`withBigLines`, `state/warnings.test.ts`).
+
 ---
 
 ## Needs Dek
@@ -205,3 +247,7 @@ Pump to tank (2026-10-25) added a `pumpToTankLpm` column (after `reliefLpm`) to 
 35. **Hydrant to tank** (`InletKind 'tankFill'`): which side of the Cat 1 is it on and where (the scene puts it on the left, forward of the suction)? Its loss is taken as 30 kPa at 1000 L/min and the water climbs 2 m into the tank, so a 400 kPa hydrant on two lengths of 65 mm fills at ~1030 L/min, over twice what the pump-to-tank route gives at a gentle throttle. Realistic? A hydrant may feed only one hose for now (two hoses on one main would share its loss, which isn't coupled yet).
 36. **Speed controller** (realistic Cat 1 panel, `EngineSpec.speedController` in `sim/appliances/cat1.ts`): held, it runs the governor at 400 rpm/s (idle to max in ~5.5 s); a flick moves it ~50 rpm. How fast does the real one ramp, and how big is a flick?
 37. **Realistic Cat 1 arrangement** (photo-derived; things not visible were placed by me): the tank-to-pump lever low on the far-left feed, and pump to tank on a return above the suction rising into the tank; hydrant to tank and the sight tube are insets, not placed on the body. The oil temperature / oil pressure dials, ignition, stop/start, ALT lamp, foam and air cleaner are drawn but inert. The "extended idle 1200 rpm" placard is shown, but idle in the sim is 800 rpm (row: Engine idle / max): should idle be 1200?
+38. **Cat 7 tank recirculation** (`ApplianceSpec.recirc`): the 3-way valve set to TANK RECIRC is taken as an always-open bleed through a check valve into the tank, ~30 L/min at 700 kPa. Is that the flow? Is it there to keep the pump cool (it's how a pump with no relief survives churning here)? FOAM ON (the bleed back to the suction through the proportioner) isn't modelled; the selector is drawn inert.
+39. **Cat 7 pump and lessons**: the pump is sized at ~550 L/min at 700 kPa (shutoff 1400) so that the 38 mm crew line and a light line run together at working pressure. Where a lesson runs a 65 mm line, a Cat 7 crew runs two lengths of 25 mm with a 12 mm branch (`LIGHT_LINE`). What does a Cat 7 pump really deliver, and what would its second crew run? The 25 mm is chosen so both lines want the same pump pressure; with 38 mm and a 12 mm tip the gated delivery sits ~7 % open, which is very touchy. Note this is calibration driven by lesson content, not by the truck: the pump was sized up until the lessons could be won. The lesson flow targets are tuned the same way (`RESERVE_OF_WORKING`, `BOTH_65_OF_WORKING`, `BOTH_38_OF_WORKING` in `scenarios/hydrantSupply.ts` reproduce the Cat 1's 700 / 500 / 200 L/min); on the Cat 7 they come out at ~100 L/min on the light line. And the Cat 7 can't over-run the hydrant, draught or relay those lessons are built round, so it passes them without meeting their point: should those lessons be hidden or marked on a truck that can't show it, until there is a per-class variant?
+40. **Cat 7 unknowns from the photos**: is the red diaphragm pump left of the outlets the primer (the diagram shows none)? Where is the tank level shown (a sight tube is assumed)? Are the outlets 38 mm? Which side of the truck is the bay's suction coupling (the scene puts it on the left at the rear)? Idle rpm, tank capacity, engine cylinders.
+41. **Source tags for photo-read figures**: facts read off the Cat 7 photos (no relief valve, the dial faces, the 3600 r/min placard) carry `// doctrine-confirmed (photo)`. They are observations of one truck, not doctrine. Should they get their own tag (e.g. `// photo-read`), with CLAUDE.md rule 3 updated to match?

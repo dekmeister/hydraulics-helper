@@ -3,13 +3,13 @@ import { createSiteState } from '../engine';
 import { RELAY_MIN_RESIDUAL_KPA } from '../constants';
 import { PUMP_DAMAGE } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, twoLines, type PlannedLine } from './lay';
+import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay } from './relayTrucks';
 import { supportSpec, type Scenario, type SupportRole } from './types';
 
 /** The attack pump's two lines: the tank-attack pair (Table 1 tips). */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20 },
+  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
   { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
 ];
 

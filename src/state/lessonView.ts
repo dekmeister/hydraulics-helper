@@ -7,6 +7,7 @@ import {
   resolvePrimer,
   resolveValve,
   truckOf,
+  workingFlowLpm,
 } from '../sim/lesson/refs';
 import type { CoachStep, Condition, GaugeId } from '../sim/lesson/types';
 import type { SimState } from '../sim/types';
@@ -61,12 +62,17 @@ function metrics(c: Condition, sim: SimState, player: string): Metric[] {
       const hose = hoseById(sim, c.line);
       const t = hose === undefined ? undefined : truckOf(sim, player, hose.truckId);
       if (hose === undefined || t === undefined) return [];
+      // A target given as a fraction of the line's working flow reads in L/min, as the copy does.
+      const scale = c.ofWorking === true ? (workingFlowLpm(sim, c.line) ?? 0) : 1;
       return [
         {
           kind: 'flow',
           line: c.line,
           lpm: t.readings.deliveryFlowLpm[hose.deliveryId] ?? 0,
-          ...range(c),
+          ...range({
+            ...(c.min === undefined ? {} : { min: c.min * scale }),
+            ...(c.max === undefined ? {} : { max: c.max * scale }),
+          }),
         },
       ];
     }

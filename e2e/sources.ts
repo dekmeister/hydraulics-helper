@@ -2,7 +2,10 @@
 // priming through the real primer, and reading the compound gauge on any appliance.
 import type { Page, TestInfo } from '@playwright/test';
 import { inletOfKind, primerControlId } from '../src/sim/appliances/controls';
-import type { ApplianceSpec } from '../src/sim/types';
+import { TICK_S } from '../src/sim/constants';
+import { advance } from '../src/sim/engine';
+import { getScenario } from '../src/sim/scenarios';
+import type { ApplianceSpec, PlayerInputs, SimState } from '../src/sim/types';
 import { expect, gotoApp } from './fixtures';
 import {
   activeTruckOf,
@@ -74,11 +77,11 @@ export async function prime(page: Page, spec: ApplianceSpec) {
   if (id === undefined) {
     await stepAndSettle(page, 300);
   } else {
-    const held = await holdPrimer(page, controlName(layoutFor(spec.id), id), 250);
-    await expect(page.locator('.primer, .pull-primer', { has: held.primer })).toHaveAttribute(
-      'data-state',
-      'primed',
-    );
+    // Long enough for the slowest primer (a hand diaphragm, ~32 s at 4 m).
+    const held = await holdPrimer(page, controlName(layoutFor(spec.id), id), 450);
+    await expect(
+      page.locator('.primer, .pull-primer, .hand-primer', { has: held.primer }),
+    ).toHaveAttribute('data-state', 'primed');
     await held.release();
   }
   expect(activeTruckOf(await getState(page)).pump.primed).toBe(true);
@@ -105,4 +108,53 @@ export async function expectCompoundAlert(page: Page, spec: ApplianceSpec, alert
     'data-alert',
     String(alert),
   );
+}
+
+/**
+ * The scenario's fireground on `spec` after `ticks` with the player's suction inlet and every line
+ * open at `throttle`, the pump primed: headless, to ask the sim what a journey will see.
+ */
+function pushed(scenario: string, spec: ApplianceSpec, throttle: number, ticks: number): SimState {
+  const built = getScenario(scenario).build(spec).state;
+  const player = built.activeTruckId;
+  let s: SimState = {
+    ...built,
+    trucks: built.trucks.map((t) =>
+      t.id === player ? { ...t, pump: { ...t.pump, primed: true, casingWet: true } } : t,
+    ),
+  };
+  const open = [
+    inletOf(spec, 'suction'),
+    ...s.lines.filter((l) => l.truckId === player).map((l) => l.deliveryId),
+  ];
+  const inputs: PlayerInputs = {
+    throttle,
+    valves: Object.fromEntries(open.map((id) => [id, 1])),
+    switches: {},
+  };
+  for (let i = 0; i < ticks; i++) s = advance(s, inputs, TICK_S);
+  return s;
+}
+
+/**
+ * Whether full throttle with every line open runs `spec` past its supply on the scenario's
+ * fireground (cavitation). A small pump can't over-run a good hydrant, a 4 m draught or a relay
+ * with its crew lines: that's physics, so a journey checks before it asks for it.
+ */
+export function overRuns(scenario: string, spec: ApplianceSpec): boolean {
+  const s = pushed(scenario, spec, 1, 100);
+  return (s.trucks.find((t) => t.id === s.activeTruckId)?.readings.cavitation ?? 0) > 0;
+}
+
+/** Whether snapping the closed relay's inlet shut at 0.6 throttle bursts the relay on `spec`. */
+export function relayBurstsOnSlam(spec: ApplianceSpec): boolean {
+  let s = pushed('closed-relay', spec, 0.6, 150);
+  const player = s.trucks.find((t) => t.id === s.activeTruckId);
+  if (player === undefined) return false;
+  const inputs = {
+    ...player.inputs,
+    valves: { ...player.inputs.valves, [inletOf(spec, 'suction')]: 0 },
+  };
+  s = advance(s, inputs, TICK_S);
+  return s.links.some((l) => l.burst !== undefined);
 }

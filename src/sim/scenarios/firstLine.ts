@@ -51,15 +51,13 @@ const LESSON: LessonDef = {
     },
     {
       id: 'tank',
-      text: 'Water comes from the truck’s tank first. Open {target}: tap its green handle.',
+      text: 'Water comes from the truck’s tank first. Open {target}: {gesture}.',
       target: { valve: TANK },
       done: { kind: 'valve', valve: TANK, min: 0.9 },
     },
     {
       id: 'delivery',
-      text:
-        'Now open {target}, the delivery the crew’s hose is on: tap the blue lever, or drag it a ' +
-        'quarter turn to open it part way.',
+      text: 'Now open {target}, the delivery the crew’s hose is on: {gesture}.',
       target: { valve: ON_LINE },
       done: { kind: 'valve', valve: ON_LINE, min: 0.9 },
     },
@@ -88,7 +86,7 @@ const LESSON: LessonDef = {
       id: 'hold',
       text:
         'Hold the branch at working pressure for 20 s. The objective shows the branch pressure ' +
-        'against its target: trim with the throttle’s − and + buttons.',
+        'against its target: trim with {gesture}.',
       target: { throttle: true },
       done: { kind: 'objective', objective: 'pressure' },
     },

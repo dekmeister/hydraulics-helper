@@ -8,7 +8,7 @@ import { APPLIANCES } from '../sim/appliances/catalogue';
 import { primerControlId } from '../sim/appliances/controls';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { getScenario } from '../sim/scenarios';
-import { inputsWith, primedState, run, suctionInletOf } from '../sim/testUtils';
+import { inputsWith, primedState, run, suctionInletOf, withBigLines } from '../sim/testUtils';
 import type { ApplianceSpec, PlayerInputs, SimState, TruckState } from '../sim/types';
 import { activeTruck, instrumentValue } from './selectors';
 import { CHECK_SUCTION_S, primerStatus, supplyLays } from './supply';
@@ -41,6 +41,11 @@ describe('supply lamp with a tank-fill inlet', () => {
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_id, spec) => {
   const draught = getScenario('draughting').build(spec).state;
   const hydrant = getScenario('hydrant-supply').build(spec).state;
+  // A weak hydrant on big lines: one any pump can over-run, a light tanker's included.
+  const weakHydrant = withBigLines({
+    ...hydrant,
+    sources: hydrant.sources.map((x) => (x.kind === 'hydrant' ? { ...x, staticKpa: 150 } : x)),
+  });
   const suction = suctionInletOf(spec);
   const deliveries = draught.lines.map((l) => l.deliveryId);
   const allOpen = inputsWith(1, [suction, ...deliveries]);
@@ -52,7 +57,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
   });
 
   it('lights the cavitation lamp with a lift message when a draught is pushed too hard', () => {
-    const s = run(primedState(draught), allOpen, 100);
+    const s = run(primedState(withBigLines(draught)), allOpen, 100);
     const w = lamp(s, allOpen, 'cavitation');
     expect(w?.level).not.toBe('off');
     expect(w?.message).toMatch(/lift/);
@@ -60,7 +65,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
   });
 
   it('calls a hydrant over-run by name', () => {
-    const s = run(hydrant, allOpen, 100);
+    const s = run(weakHydrant, allOpen, 100);
     expect(lamp(s, allOpen, 'cavitation')?.message).toMatch(/hydrant/i);
   });
 
@@ -112,7 +117,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
     expect(supplyLays(primedState(draught), shut).map((s) => s.state)).toEqual(['primed']);
     const some = inputsWith(0.3, [suction]);
     expect(supplyLays(run(hydrant, some, 20), some)[0]?.state).toBe('charged');
-    expect(supplyLays(run(hydrant, allOpen, 50), allOpen)[0]?.state).toBe('soft');
+    expect(supplyLays(run(weakHydrant, allOpen, 50), allOpen)[0]?.state).toBe('soft');
   });
 
   it('reads the inlet valve from the inputs the player holds, like the lamps do', () => {

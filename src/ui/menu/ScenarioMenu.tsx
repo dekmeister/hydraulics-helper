@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { SCENARIOS } from '../../sim/scenarios';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
-import type { Scenario } from '../../sim/scenarios/types';
+import { missingRequirements, supports, type Scenario } from '../../sim/scenarios/types';
+import { lessonBrief } from '../../sim/scenarios/load';
 import { useStore } from '../../state/store';
-import { missingCapabilities } from './requirements';
+import { AppliancePicker } from './AppliancePicker';
 import { Stars } from './Stars';
 import './ScenarioMenu.css';
 
@@ -21,16 +23,19 @@ export function ScenarioMenu() {
   const loadScenario = useStore((s) => s.loadScenario);
   const resumable = useStore((s) => s.lesson?.progress.status === 'running');
   const openPlay = useStore((s) => s.openPlay);
-  const playable = (s: Scenario) => missingCapabilities(s, spec).length === 0;
+  // Each brief names what this truck's crews run, so it's built on the truck: once per pick.
+  const briefs = useMemo(() => new Map(LADDER.map((s) => [s.id, lessonBrief(s, spec)])), [spec]);
+  const playable = (s: Scenario) => missingRequirements(s, spec, {}, true).length === 0;
   const next = LADDER.find((s) => playable(s) && results[s.id]?.[spec.id]?.passed !== true);
   // The sandbox is tank attack, or the first fireground this appliance can play.
-  const sandbox = [TANK_ATTACK, ...SCENARIOS].find(playable);
+  const sandbox = [TANK_ATTACK, ...SCENARIOS].find((s) => supports(s, spec));
   return (
     <main className="screen menu" aria-labelledby="menu-title">
       <h1 id="menu-title" className="screen__title">
         Scenarios
       </h1>
-      <p className="screen__sub">Your appliance: {spec.name}</p>
+      <p className="screen__sub">Pick the truck you’re training on, then a scenario.</p>
+      <AppliancePicker />
       {resumable && (
         <p className="menu__resume">
           <button type="button" className="paper-button paper-button--primary" onClick={openPlay}>
@@ -40,7 +45,7 @@ export function ScenarioMenu() {
       )}
       <ol className="menu__ladder">
         {LADDER.map((s) => {
-          const missing = missingCapabilities(s, spec);
+          const missing = missingRequirements(s, spec, {}, true);
           const result = results[s.id]?.[spec.id];
           const isNext = s === next;
           const n = s.lesson?.ladder ?? 0;
@@ -56,7 +61,7 @@ export function ScenarioMenu() {
                 </span>
                 <h2 className="menu-card__title">{s.title}</h2>
               </div>
-              <p className="menu-card__brief">{s.lesson?.brief}</p>
+              <p className="menu-card__brief">{briefs.get(s.id)}</p>
               <div className="menu-card__foot">
                 <p className="menu-card__status">
                   {s.lesson?.coach !== undefined && <span className="menu-card__tag">Guided</span>}

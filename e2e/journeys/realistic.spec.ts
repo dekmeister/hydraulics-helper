@@ -1,10 +1,11 @@
 // Realistic-view journeys (docs/TESTING.md §4): the same jobs as on the simplified panel, done on
-// the truck's own arrangement through its real controls: bay levers, the speed controller, the
-// PRIME pull handle and hydrant to tank on the side of the truck.
+// the truck's own arrangement through its real controls: bay levers, its throttle (a speed
+// controller or a vernier knob), its primer (a pull handle or a hand pump) and hydrant to tank.
 import { inletOfKind } from '../../src/sim/appliances/controls';
 import { getScenario } from '../../src/sim/scenarios';
 import { supports } from '../../src/sim/scenarios/types';
 import { REALISTIC_APPLIANCES } from '../../src/testing/fixtures/realisticStates';
+import { getRealisticLayout } from '../../src/ui/appliances/registry';
 import { expect, gotoApp, test } from '../fixtures';
 import {
   activeTruckOf,
@@ -27,6 +28,46 @@ const showRealistic = async (page: Page) => {
   await page.getByRole('button', { name: 'Realistic', exact: true }).click();
   await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
 };
+
+/** The realistic throttle's variant on `applianceId`. */
+function throttleVariant(applianceId: string) {
+  const item = getRealisticLayout(applianceId)
+    ?.plates.flatMap((p) => p.items)
+    .find((i) => i.kind === 'throttle');
+  if (item?.kind !== 'throttle') throw new Error(`${applianceId} has no realistic throttle`);
+  return item.variant;
+}
+
+/** Drag the vernier knob by a fraction of its box: sideways pulls or pushes, up or down twists. */
+async function dragVernier(page: Page, along: 'pull' | 'twist', fraction: number) {
+  const knob = throttle(page);
+  await knob.scrollIntoViewIfNeeded();
+  const box = await knob.boundingBox();
+  if (box === null) throw new Error('vernier not rendered');
+  const x = box.x + box.width * 0.6;
+  const y = box.y + box.height * 0.45;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  const steps = 8;
+  for (let i = 1; i <= steps; i++) {
+    const f = (fraction * i) / steps;
+    if (along === 'pull') await page.mouse.move(x + box.width * f, y);
+    else await page.mouse.move(x, y - box.height * f);
+  }
+  await page.mouse.up();
+}
+
+/** Bring the engine up on the realistic throttle, whatever kind it is. */
+async function throttleUp(page: Page, applianceId: string) {
+  if (throttleVariant(applianceId) === 'vernier') await dragVernier(page, 'pull', 0.3);
+  else await holdSpeedSwitch(page, 'up', 20);
+}
+
+/** Bring the engine back to idle on the realistic throttle. */
+async function throttleIdle(page: Page, applianceId: string) {
+  if (throttleVariant(applianceId) === 'vernier') await dragVernier(page, 'pull', -0.6);
+  else await holdSpeedSwitch(page, 'down', 40);
+}
 
 /** Hold one half of the speed controller while `ticks` of sim time pass. */
 async function holdSpeedSwitch(page: Page, direction: 'up' | 'down', ticks: number) {
@@ -77,18 +118,22 @@ for (const spec of REALISTIC_APPLIANCES) {
 
       await openInlet(page, spec, 'tank', info);
       await stepAndSettle(page, 1);
-      await expect(casing).toHaveAttribute('data-water', 'still');
+      // A recirculation bleed keeps water moving through the pump with every outlet shut.
+      await expect(casing).toHaveAttribute(
+        'data-water',
+        spec.recirc === undefined ? 'still' : 'flowing',
+      );
       await expect(drop).toHaveAttribute('data-water', 'empty');
 
       const delivery = page.getByRole('slider', { name: controlName(layout, first.deliveryId) });
       await dragValve(page, delivery, 1);
-      await holdSpeedSwitch(page, 'up', 20);
+      await throttleUp(page, spec.id);
       await stepAndSettle(page, 20);
       await expect(casing).toHaveAttribute('data-water', 'flowing');
       await expect(drop).toHaveAttribute('data-water', 'flowing');
 
       // Shut it all down: the line empties, the pump stays full.
-      await holdSpeedSwitch(page, 'down', 40);
+      await throttleIdle(page, spec.id);
       await dragValve(page, delivery, 0);
       const tank = page.getByRole('slider', {
         name: controlName(layout, inletOfKind(spec, 'tank')),
@@ -100,6 +145,7 @@ for (const spec of REALISTIC_APPLIANCES) {
     });
 
     test('tank attack through the bay levers and the speed controller', async ({ page }, info) => {
+      test.skip(throttleVariant(spec.id) !== 'speed-switch', 'no speed controller');
       await load(page, 'tank-attack', spec.id);
       await showRealistic(page);
       const layout = layoutFor(spec.id);
@@ -146,7 +192,47 @@ for (const spec of REALISTIC_APPLIANCES) {
       await expect(locate).toHaveAttribute('aria-pressed', 'true');
     });
 
-    test('draught: prime with the PRIME pull handle', async ({ page }, info) => {
+    test('tank attack through the bay levers and the vernier throttle', async ({ page }, info) => {
+      test.skip(throttleVariant(spec.id) !== 'vernier', 'no vernier throttle');
+      await load(page, 'tank-attack', spec.id);
+      await showRealistic(page);
+      const layout = layoutFor(spec.id);
+      const initial = await getState(page);
+      const [first] = initial.lines;
+      if (first === undefined) throw new Error('tank attack needs a line');
+      const discharge = instrumentName(initial, layout, 'discharge');
+      await openInlet(page, spec, 'tank', info);
+      const delivery = page.getByRole('slider', { name: controlName(layout, first.deliveryId) });
+      await dragValve(page, delivery, 1);
+
+      // Release held, the knob pulls out a long way; let go, it stays.
+      await dragVernier(page, 'pull', 0.3);
+      await stepAndSettle(page, 1);
+      const pulled = activeTruckOf(await getState(page)).inputs.throttle;
+      expect(pulled).toBeGreaterThan(0.4);
+      await stepAndSettle(page, 100);
+      expect(activeTruckOf(await getState(page)).inputs.throttle).toBe(pulled);
+      const shown = await meterValue(page, discharge);
+      expect(shown).toBeGreaterThan(300);
+      await expectStatus(page, 'No warnings.');
+
+      // A twist down fine-tunes: a little less, a little lower on the gauge.
+      await dragVernier(page, 'twist', -0.5);
+      await stepAndSettle(page, 1);
+      const twisted = activeTruckOf(await getState(page)).inputs.throttle;
+      expect(twisted).toBeLessThan(pulled);
+      expect(twisted).toBeGreaterThan(pulled - 0.05);
+      await stepAndSettle(page, 50);
+      expect(await meterValue(page, discharge)).toBeLessThan(shown);
+
+      const locate = page.getByRole('button', {
+        name: `Show ${controlName(layout, first.deliveryId)} on scene`,
+      });
+      await tapOrClick(locate, info);
+      await expect(locate).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('draught: prime with the primer on the bay', async ({ page }, info) => {
       test.skip(!supports(getScenario('draughting'), spec), 'no draught');
       await load(page, 'draughting', spec.id);
       await showRealistic(page);
@@ -158,9 +244,7 @@ for (const spec of REALISTIC_APPLIANCES) {
       );
     });
 
-    test('keyboard reaches every control, and arrows flick the speed controller', async ({
-      page,
-    }, info) => {
+    test('keyboard reaches every control, and arrows move the throttle', async ({ page }, info) => {
       test.skip(info.project.name !== 'desktop', 'keyboard pass runs on desktop');
       await load(page, 'tank-attack', spec.id);
       await showRealistic(page);
@@ -198,6 +282,7 @@ for (const spec of REALISTIC_APPLIANCES) {
     });
 
     test('a held speed controller stops when the bay goes away', async ({ page }) => {
+      test.skip(throttleVariant(spec.id) !== 'speed-switch', 'no speed controller');
       await load(page, 'tank-attack', spec.id);
       await showRealistic(page);
       const sw = throttle(page);
