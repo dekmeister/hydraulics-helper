@@ -14,8 +14,6 @@ export interface HandPumpPrimerProps {
   on: boolean;
   onChange: (on: boolean) => void;
   state: PrimerState;
-  /** Vacuum as a fraction of the primer's best, 0–1. */
-  progress: number;
   style: CSSProperties;
 }
 
@@ -23,17 +21,10 @@ export interface HandPumpPrimerProps {
  * A hand diaphragm primer (Cat 7 bay): a red pump body with a long handle. Hold it to stroke it,
  * let go to stop; the sim takes the held switch as steady stroking. Same switch semantics as the
  * panel's PRIME button (press-and-hold by pointer or Space/Enter, an assistive "activate" latches
- * it). The handle works up and down while held (still under reduced motion); the vacuum fills a
- * bar on the body.
+ * it). The handle works up and down while held (still under reduced motion). No vacuum readout:
+ * as on the truck, the compound gauge shows it.
  */
-export function HandPumpPrimer({
-  label,
-  on,
-  onChange,
-  state,
-  progress,
-  style,
-}: HandPumpPrimerProps) {
+export function HandPumpPrimer({ label, on, onChange, state, style }: HandPumpPrimerProps) {
   const hold = useHoldSwitch(on, onChange);
   const captionId = useId();
   return (
@@ -79,17 +70,6 @@ export function HandPumpPrimer({
             strokeWidth={3}
           />
           <circle cx={PIVOT_X} cy={PIVOT_Y} r={9} style={{ fill: COLOR.galvMid }} />
-          <rect x={35} y={228} width={80} height={6} rx={3} style={{ fill: COLOR.galvDark }} />
-          {progress > 0 && (
-            <rect
-              className="hand-primer__vacuum"
-              x={35}
-              y={228}
-              width={80 * Math.min(1, Math.max(0, progress))}
-              height={6}
-              rx={3}
-            />
-          )}
         </svg>
       </button>
       <span className="panel-caption hand-primer__caption" id={captionId}>

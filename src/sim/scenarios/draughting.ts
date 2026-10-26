@@ -1,4 +1,4 @@
-import { START_UP, shutDown, startEngineSteps } from './engineSteps';
+import { START_UP, chargeLines, shutDown, startEngineSteps } from './engineSteps';
 import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind, primerControlId } from '../appliances/controls';
 import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
@@ -118,8 +118,7 @@ export const DRAUGHTING: Scenario = {
     { primer: true },
     { until: { kind: 'primed' }, maxS: 90 },
     { primer: false },
-    { open: { line: 'line-65' } },
-    { open: { line: 'line-38' } },
+    ...chargeLines(['line-65', 'line-38']),
     { throttle: 0.6 },
     { trim: { branch: 'line-38' } },
     { gate: 'line-65' },

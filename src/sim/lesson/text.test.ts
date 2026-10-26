@@ -104,7 +104,7 @@ describe('flow as a fraction of working flow', () => {
         trucks: [
           {
             ...truck,
-            readings: { ...truck.readings, deliveryFlowLpm: { [lay.deliveryId]: q } },
+            readings: { ...truck.readings, branchFlowLpm: { [lay.id]: q } },
           },
         ],
       });

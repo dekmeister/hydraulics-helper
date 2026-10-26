@@ -50,11 +50,12 @@ export function TruckSupplies({
   geometry: SiteTruckGeometry;
   supplies: readonly SupplyLayState[];
 }) {
-  const stateOf = new Map(supplies.map((s) => [s.supply.id, s.state]));
+  const byId = new Map(supplies.map((s) => [s.supply.id, s]));
+  const dry = { state: 'dry', level: 0, flowing: false } as const;
   return (
     <g {...groupProps(truck, active)}>
       {geometry.supplies.map((lay) => (
-        <SupplyLay key={lay.supplyId} lay={lay} state={stateOf.get(lay.supplyId) ?? 'dry'} />
+        <SupplyLay key={lay.supplyId} lay={lay} water={byId.get(lay.supplyId) ?? dry} />
       ))}
     </g>
   );
@@ -80,16 +81,21 @@ export function SceneTruck(props: TruckProps) {
   const w = labelWidth(label);
   return (
     <g {...groupProps(truck, active)}>
-      {geometry.lines.map((lay) => (
-        <HoseLay
-          key={lay.lineId}
-          lay={lay}
-          state={byDelivery.get(lay.deliveryId)?.state === 'charged' ? 'charged' : 'dry'}
-          highlighted={active && highlighted === lay.deliveryId}
-          cavitating={props.cavitating}
-          onTap={tap(lay.deliveryId)}
-        />
-      ))}
+      {geometry.lines.map((lay) => {
+        const d = byDelivery.get(lay.deliveryId);
+        return (
+          <HoseLay
+            key={lay.lineId}
+            lay={lay}
+            state={d === undefined || d.state === 'none' ? 'dry' : d.state}
+            level={d?.level ?? 0}
+            moving={d?.moving ?? false}
+            highlighted={active && highlighted === lay.deliveryId}
+            cavitating={props.cavitating}
+            onTap={tap(lay.deliveryId)}
+          />
+        );
+      })}
       <ApplianceArt
         art={art}
         pose={pose}

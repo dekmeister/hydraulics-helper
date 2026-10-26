@@ -94,7 +94,8 @@ export const CAT7: ApplianceSpec = {
     kind: 'diaphragm',
     id: 'primer',
     maxVacuumKpa: 75, // primes to ~7.5 m // PLACEHOLDER — needs Dek
-    displacementLps: 0.6, // slower than the Cat 1's electric primer // PLACEHOLDER — needs Dek
+    // Slower than the Cat 1's electric primer: ~30 s at 4 m on 6 m of 65 mm. // PLACEHOLDER — needs Dek
+    displacementLps: 1.3,
   },
   // No relief valve in the photos or on the diagram. // doctrine-confirmed (photos)
   // Dial markings: the faces fitted (photo), −100…1600 compound and 0–1600 pressure. The placard

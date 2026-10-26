@@ -1,4 +1,4 @@
-import { START_UP, shutDown, startEngineSteps } from './engineSteps';
+import { START_UP, chargeLines, shutDown, startEngineSteps } from './engineSteps';
 import { inletOfKind } from '../appliances/controls';
 import { createSiteState } from '../engine';
 import { RELAY_MIN_RESIDUAL_KPA } from '../constants';
@@ -187,8 +187,7 @@ export const CLOSED_RELAY: Scenario = {
     ...START_UP,
     { open: { inlet: 'suction' } },
     { until: { kind: 'objective', objective: 'relay' }, maxS: 30 },
-    { open: { line: 'line-65' } },
-    { open: { line: 'line-38' } },
+    ...chargeLines(['line-65', 'line-38']),
     { throttle: 0.4 },
     { trim: { branch: 'line-38' } },
     { gate: 'line-65' },

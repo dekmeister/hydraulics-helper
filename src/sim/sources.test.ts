@@ -1,7 +1,7 @@
 // Water sources at the pump inlet (ARCHITECTURE §4.3): hydrant, tank and draught paths in
 // parallel, the cavitation floor and soft-hose collapse.
 import { describe, expect, it } from 'vitest';
-import { createInitialState, type SiteOptions } from './engine';
+import { chargeLines, createInitialState, type SiteOptions } from './engine';
 import { inletKpaFor, inletPaths, supplyLpm } from './inlets';
 import {
   draughtSite,
@@ -59,7 +59,7 @@ const settle = (
   primed = false,
   ticks = 50,
 ) => {
-  const s = createInitialState(SPEC, lines, site);
+  const s = chargeLines(createInitialState(SPEC, lines, site));
   return truckOf(run(primed ? primedState(s) : s, inputs, ticks));
 };
 
@@ -90,7 +90,7 @@ describe('hydrant supply', () => {
   });
 
   it('refills the tank through the relief when every delivery is shut', () => {
-    const half = createInitialState(SPEC, ONE, hydrantSite(SPEC));
+    const half = chargeLines(createInitialState(SPEC, ONE, hydrantSite(SPEC)));
     const s = { ...half, trucks: half.trucks.map((t) => ({ ...t, tankL: 1500 })) };
     const t = truckOf(run(s, inputsWith(1, ['suction']), 100));
     expect(t.readings.reliefFlowLpm).toBeGreaterThan(0);
@@ -178,7 +178,9 @@ describe('draught supply', () => {
   });
 
   it('primed, reads −10 kPa per m of lift less suction losses, and draws down the dam', () => {
-    const s0 = primedState(createInitialState(SPEC, ONE, draughtSite(SPEC, 3, 50_000)));
+    const s0 = primedState(
+      chargeLines(createInitialState(SPEC, ONE, draughtSite(SPEC, 3, 50_000))),
+    );
     const s1 = run(s0, inputsWith(0.6, ['suction', 'a']), 100);
     const r = truckOf(s1).readings;
     expect(r.pumpFlowLpm).toBeGreaterThan(300);

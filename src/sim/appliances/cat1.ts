@@ -91,7 +91,9 @@ export const CAT1: ApplianceSpec = {
     // Pulls up to 80 kPa vacuum (primes to just under 8 m lift; manual: 7.5 m max attempted,
     // L1162). // PLACEHOLDER — needs Dek
     maxVacuumKpa: 80,
-    displacementLps: 1.5, // air moved, L/s: ~15 s to prime at 4 m on 6 m of hard suction // PLACEHOLDER — needs Dek
+    // Air moved, L/s: set for ~14 s to prime at 4 m on 6 m of 65 mm hard suction, counting the
+    // air the rising column squeezes (sim/priming.ts). // PLACEHOLDER — needs Dek
+    displacementLps: 2.9,
   },
   relief: {
     kind: 'preset', // Cat 1 relief is preset, not adjustable, and dumps to tank (L2322–2336) // doctrine-confirmed

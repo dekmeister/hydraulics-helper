@@ -4,7 +4,7 @@ import type { DeliveryLine } from '../../state/selectors';
 import type { SupplyLay } from '../../state/supply';
 import type { TankLevelState } from '../../state/tankLevel';
 import type { DeliveryIdentity } from '../appliances/identity';
-import { formatWhole } from '../format';
+import { formatPercent, formatWhole } from '../format';
 import { DeliveryTag } from '../panel-pump/DeliveryTag';
 
 export interface LegendRow {
@@ -34,7 +34,11 @@ function statusText(d: DeliveryLine, cavitating: boolean): string {
   }
   switch (d.state) {
     case 'charged':
-      return `Charged · ${formatWhole(d.flowLpm)} L/min${cavitating ? ' · cavitating' : ''}`;
+      return `Charged · ${formatWhole(d.branchFlowLpm)} L/min${cavitating ? ' · cavitating' : ''}`;
+    case 'filling':
+      return `Filling · ${formatPercent(d.level)}${cavitating ? ' · cavitating' : ''}`;
+    case 'holding':
+      return d.branchFlowLpm > 0 ? 'Draining' : 'Holding water';
     case 'dry':
       return 'Laid, dry';
     case 'none':
@@ -61,6 +65,13 @@ function Swatch({ state }: { state: DeliveryLine['state'] }) {
           <path className="scene-hose__core" d="M5 7 h26" />
         </>
       )}
+      {(state === 'filling' || state === 'holding') && (
+        <>
+          <path className="scene-hose__dry" d="M18 7 h14" />
+          <path className="scene-hose__casing" d="M5 7 h13" />
+          <path className="scene-hose__core" d="M5 7 h13" />
+        </>
+      )}
       {state === 'dry' && <path className="scene-hose__dry" d="M4 7 h28" />}
       {state === 'none' && (
         <circle className="scene-coupling scene-coupling--capped" cx="18" cy="7" r="5" />
@@ -79,7 +90,9 @@ function supplyText(s: SupplyLay): { name: string; status: string } {
         status:
           s.state === 'primed'
             ? `Primed${flow}`
-            : `Not primed · ${formatWhole(s.source.liftM)} m lift`,
+            : s.level > 0
+              ? `Priming · water ${formatWhole(s.level * s.source.liftM)} of ${formatWhole(s.source.liftM)} m`
+              : `Not primed · ${formatWhole(s.source.liftM)} m lift`,
       };
     case 'hydrant': {
       const status =

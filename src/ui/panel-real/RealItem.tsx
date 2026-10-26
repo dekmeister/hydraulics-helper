@@ -151,7 +151,6 @@ function Primer({
   const on = useStore((s) => s.inputs.switches[item.control] ?? false);
   const setSwitch = useStore((s) => s.setSwitch);
   const state = useStore((s) => primerStatus(s.sim, s.inputs, item.control).state);
-  const progress = useStore((s) => primerStatus(s.sim, s.inputs, item.control).progress);
   const props = {
     label,
     on,
@@ -159,7 +158,6 @@ function Primer({
       setSwitch(item.control, v);
     },
     state,
-    progress,
     style: boxStyle(item.box, plate),
   };
   switch (item.variant) {

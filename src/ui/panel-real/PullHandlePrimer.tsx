@@ -9,25 +9,16 @@ export interface PullHandlePrimerProps {
   on: boolean;
   onChange: (on: boolean) => void;
   state: PrimerState;
-  /** Vacuum as a fraction of the primer's best, 0–1. */
-  progress: number;
   style: CSSProperties;
 }
 
 /**
  * A T-handle primer on the bumper (Cat 1): pull and hold to prime, let go to stop. Same switch
  * semantics as the panel's PRIME button (press-and-hold by pointer or Space/Enter, an assistive
- * "activate" latches it); drawn as a handle that comes out of its bezel while held, with the
- * vacuum as a bar under it.
+ * "activate" latches it); drawn as a handle that comes out of its bezel while held. No vacuum
+ * readout: as on the truck, the compound gauge shows it.
  */
-export function PullHandlePrimer({
-  label,
-  on,
-  onChange,
-  state,
-  progress,
-  style,
-}: PullHandlePrimerProps) {
+export function PullHandlePrimer({ label, on, onChange, state, style }: PullHandlePrimerProps) {
   const hold = useHoldSwitch(on, onChange);
   const captionId = useId();
   const pull = on ? 34 : 0;
@@ -61,17 +52,6 @@ export function PullHandlePrimer({
             style={{ fill: COLOR.galvLight, stroke: COLOR.galvEdge }}
             strokeWidth={2}
           />
-          <rect x={30} y={140} width={90} height={6} rx={3} style={{ fill: COLOR.galvDark }} />
-          {progress > 0 && (
-            <rect
-              className="pull-primer__vacuum"
-              x={30}
-              y={140}
-              width={90 * Math.min(1, Math.max(0, progress))}
-              height={6}
-              rx={3}
-            />
-          )}
         </svg>
       </button>
       <span className="panel-caption pull-primer__caption" id={captionId}>

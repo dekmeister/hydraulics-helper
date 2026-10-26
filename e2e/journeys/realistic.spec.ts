@@ -24,6 +24,7 @@ import {
   tapOrClick,
 } from '../panel';
 import { load, openInlet, prime, throttle } from '../sources';
+import { stepUntilCharged } from '../scene';
 import type { Page } from '@playwright/test';
 
 /** The realistic throttle's variant on `applianceId`. */
@@ -226,6 +227,7 @@ for (const spec of REALISTIC_APPLIANCES) {
       await openInlet(page, spec, 'tank', info);
       const delivery = page.getByRole('slider', { name: controlName(layout, first.deliveryId) });
       await dragValve(page, delivery, 1);
+      await stepUntilCharged(page, first.deliveryId);
 
       // Release held, the knob pulls out a long way; let go, it stays.
       await dragVernier(page, 'pull', 0.3);

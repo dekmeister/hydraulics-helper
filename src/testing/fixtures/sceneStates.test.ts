@@ -31,8 +31,24 @@ describe.each([...APPLIANCES, TEST_APPLIANCE].map((s) => [s.id, s] as const))(
       for (const d of deliveryLines(s)) if (d.state !== 'none') expect(d.state).toBe('charged');
     });
 
-    it('tank-empty leaves every line dry', () => {
-      for (const d of states('tank-empty')) expect(d.state).toBe('dry');
+    it('tank-empty leaves the water standing in every line: nothing flows', () => {
+      for (const d of states('tank-empty')) {
+        expect(d.state).toBe('holding');
+        expect(d.branchFlowLpm).toBe(0);
+      }
+    });
+
+    it('line-filling has the first line half full and still charging, nothing at its branch', () => {
+      const s = sceneState(spec, 'line-filling');
+      const opened = s.lines[0]?.deliveryId;
+      const first = states('line-filling').find((d) => d.deliveryId === opened);
+      const rest = states('line-filling').filter((d) => d.deliveryId !== opened);
+      expect(first?.state).toBe('filling');
+      expect(first?.level).toBeGreaterThanOrEqual(0.5);
+      expect(first?.level).toBeLessThan(0.75);
+      expect(first?.branchFlowLpm).toBe(0);
+      for (const d of rest) expect(d.state).toBe('dry');
+      expect(activeTruck(s).readings.cavitation).toBe(0);
     });
   },
 );

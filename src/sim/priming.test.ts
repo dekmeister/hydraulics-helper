@@ -1,10 +1,22 @@
 // Priming (ARCHITECTURE §4.6): every primer kind, the vacuum test, air leaks, duty cycle, loss of
 // prime. Inline specs so placeholders elsewhere can be re-tuned without moving these.
 import { describe, expect, it } from 'vitest';
+import { CAT1 } from './appliances/cat1';
+import { CAT7 } from './appliances/cat7';
 import { primerSwitchIds } from './appliances/controls';
-import { TICK_S } from './constants';
-import { createInitialState } from './engine';
-import { draughtSite, inputsWith, layLine, run, truckOf, TEST_STARTING } from './testUtils';
+import { ATMOSPHERIC_KPA, HEAD_KPA_PER_M, TICK_S, VACUUM_HOLD_TAU_S } from './constants';
+import { connectedSupplies, createInitialState } from './engine';
+import { hoseVolumeL } from './hose';
+import { draughtSupply, suctionWaterFraction } from './priming';
+import {
+  draughtSite,
+  inputsWith,
+  layLine,
+  run,
+  suctionInletOf,
+  truckOf,
+  TEST_STARTING,
+} from './testUtils';
 import type { ApplianceSpec, PlayerInputs, PrimerSpec, SimState } from './types';
 
 const PERF = { maxVacuumKpa: 80, displacementLps: 1.5 };
@@ -154,5 +166,95 @@ describe('rotary vane duty cycle (max 1 min on in 3, L1890)', () => {
     expect(truckOf(s).pump.primerRunS).toBeCloseTo(5, 6);
     s = run(s, inputsWith(0, []), 1);
     expect(truckOf(s).pump.primerRunS).toBe(0);
+  });
+});
+
+describe('water rising up the hard suction (issue #8)', () => {
+  const LIFT_M = 4;
+  const suctionL = hoseVolumeL(draughtSite(ROTARY, LIFT_M).supplies?.[0]?.segments ?? []);
+  const level = (s: SimState) => {
+    const t = truckOf(s);
+    return suctionWaterFraction(t.pump, draughtSupply(connectedSupplies(s, t.id)));
+  };
+
+  it('stands at the height the vacuum holds it, 10 kPa per m, until the pump catches', () => {
+    const s = run(draught(ROTARY, LIFT_M), priming(ROTARY), 50);
+    const { pump } = truckOf(s);
+    expect(pump.primed).toBe(false);
+    expect(level(s)).toBeGreaterThan(0);
+    expect(level(s)).toBeLessThan(1);
+    expect(level(s)).toBeCloseTo(pump.vacuumKpa / (HEAD_KPA_PER_M * LIFT_M), 9);
+  });
+
+  it('fills the suction once primed, and stays full with the suction valve shut', () => {
+    const primed = run(draught(ROTARY, LIFT_M), priming(ROTARY), 300);
+    expect(truckOf(primed).pump.primed).toBe(true);
+    expect(level(primed)).toBe(1);
+    expect(level(run(primed, inputsWith(0, []), 50))).toBe(1);
+  });
+
+  it('never lifts water with the suction valve shut: the primer only empties the casing', () => {
+    const shut = run(draught(ROTARY, LIFT_M), inputsWith(0, [], ['primer']), 50);
+    expect(truckOf(shut).pump.vacuumKpa).toBeGreaterThan(30);
+    expect(level(shut)).toBe(0);
+  });
+
+  it('shutting the suction valve traps the column where it stands', () => {
+    const part = run(draught(ROTARY, LIFT_M), priming(ROTARY), 80);
+    const before = level(part);
+    expect(before).toBeGreaterThan(0.2);
+    expect(before).toBeLessThan(1);
+    // Primer still running on the casing alone, and then let go: the hose holds its water.
+    // It sinks only as slowly as a sound pump's vacuum leaks (VACUUM_HOLD_TAU_S), ~4 % in 5 s.
+    const shut = run(part, inputsWith(0, [], ['primer']), 50);
+    expect(level(shut)).toBeCloseTo(before * Math.exp(-5 / VACUUM_HOLD_TAU_S), 3);
+    expect(level(run(shut, inputsWith(0, []), 50))).toBeCloseTo(
+      before * Math.exp(-10 / VACUUM_HOLD_TAU_S),
+      3,
+    );
+  });
+
+  it('reopening shares the vacuum between casing and hose: the column settles to the mix', () => {
+    const part = run(draught(ROTARY, LIFT_M), priming(ROTARY), 80);
+    const before = level(part);
+    // The casing pulled harder while shut: opening lifts the column further, short of the casing's.
+    const harder = run(part, inputsWith(0, [], ['primer']), 30);
+    const casingKpa = truckOf(harder).pump.vacuumKpa;
+    const opened = run(harder, inputsWith(0, ['suction']), 1);
+    expect(level(opened)).toBeGreaterThan(before);
+    expect(truckOf(opened).pump.vacuumKpa).toBeLessThan(casingKpa);
+    // A delivery opened while shut vents the casing: opening drops the column, not to empty.
+    const vented = run(part, inputsWith(0, ['a']), 5);
+    expect(truckOf(vented).pump.vacuumKpa).toBe(0);
+    expect(level(vented)).toBeCloseTo(before, 1);
+    const dropped = run(vented, inputsWith(0, ['suction']), 1);
+    expect(level(dropped)).toBeLessThan(before);
+    expect(level(dropped)).toBeGreaterThan(0);
+  });
+
+  it('slows priming: the rising column squeezes the air left, so more must be pumped out', () => {
+    const { maxVacuumKpa, displacementLps } = PERF;
+    const catchKpa = HEAD_KPA_PER_M * LIFT_M;
+    const toCatch = Math.log(maxVacuumKpa / (maxVacuumKpa - catchKpa));
+    // Rigid volume (no column): τ = V/D. Column at atmospheric pressure all the way: the upper bound.
+    const rigidS = ((10 + suctionL) / displacementLps) * toCatch;
+    const columnL = (ATMOSPHERIC_KPA * suctionL) / (HEAD_KPA_PER_M * LIFT_M);
+    const boundS = ((10 + suctionL + columnL) / displacementLps) * toCatch;
+    const t = timeToPrime(draught(ROTARY, LIFT_M), priming(ROTARY)) ?? Infinity;
+    expect(t).toBeGreaterThan(rigidS * 1.3);
+    expect(t).toBeLessThan(boundS);
+  });
+});
+
+describe('appliance prime times at 4 m on 2 × 3 m of 65 mm hard suction (CALIBRATION)', () => {
+  // The primers' displacements are PLACEHOLDERs set to give these times; ±0.5 s.
+  it.each([
+    [CAT1.id, CAT1, 13.9],
+    [CAT7.id, CAT7, 30.4],
+  ] as const)('%s', (_id, spec, wantS) => {
+    const s = createInitialState(spec, [], draughtSite(spec, 4));
+    const t = timeToPrime(s, inputsWith(0, [suctionInletOf(spec)], primerSwitchIds(spec)));
+    expect(t).toBeGreaterThan(wantS - 0.5);
+    expect(t).toBeLessThan(wantS + 0.5);
   });
 });

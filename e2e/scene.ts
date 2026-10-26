@@ -1,7 +1,8 @@
 // Helpers for the scene panel (docs/TESTING.md §3.3: hose lays by data-testid, keyed by spec id).
 import type { Locator, Page, TestInfo } from '@playwright/test';
 import { deliveryIdentities } from '../src/ui/appliances/identity';
-import { layoutFor } from './panel';
+import { expect } from './fixtures';
+import { layoutFor, stepAndSettle } from './panel';
 
 /** The scene groups of the truck being operated: delivery ids repeat between trucks. */
 export function activeTruckOnScene(page: Page): Locator {
@@ -10,6 +11,16 @@ export function activeTruckOnScene(page: Page): Locator {
 
 export function hoseLay(page: Page, deliveryId: string): Locator {
   return activeTruckOnScene(page).getByTestId(`hose-lay-${deliveryId}`);
+}
+
+/** Step the sim until the hose on `deliveryId` has charged (water at its branch). */
+export async function stepUntilCharged(page: Page, deliveryId: string, maxTicks = 1500) {
+  const hose = hoseLay(page, deliveryId);
+  for (let t = 0; t < maxTicks; t += 50) {
+    if ((await hose.getAttribute('data-state')) === 'charged') return;
+    await stepAndSettle(page, 50);
+  }
+  await expect(hose).toHaveAttribute('data-state', 'charged');
 }
 
 export function spray(page: Page, deliveryId: string): Locator {

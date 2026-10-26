@@ -1,9 +1,14 @@
 import type { LineState } from '../../state/selectors';
 import type { LayGeometry } from './geometry';
+import { HoseWater } from './HoseWater';
 
 interface Props {
   lay: LayGeometry;
   state: Exclude<LineState, 'none'>;
+  /** How full the hose is, 0–1 from the truck. */
+  level: number;
+  /** Water moving into it from the delivery. */
+  moving: boolean;
   highlighted: boolean;
   /** The pump is cavitating: the charged core breaks into gaps (Design §6). */
   cavitating?: boolean;
@@ -11,31 +16,42 @@ interface Props {
 }
 
 /**
- * One hose lay (Design §7): laid but dry is thin dashed canvas; charged is an ink casing with an
- * outlet-blue core and a white flow highlight (animated only without reduced motion). A wide
- * invisible stroke takes taps; the legend is the keyboard and screen-reader route to the same act.
+ * One hose lay (Design §7): laid but dry is thin dashed canvas; the part with water in it is an
+ * ink casing round an outlet-blue core, filling from the truck while it charges, with a white flow
+ * highlight while water moves (animated only without reduced motion). A wide invisible stroke
+ * takes taps; the legend is the keyboard and screen-reader route to the same act.
  */
-export function HoseLay({ lay, state, highlighted, cavitating = false, onTap }: Props) {
+export function HoseLay({
+  lay,
+  state,
+  level,
+  moving,
+  highlighted,
+  cavitating = false,
+  onTap,
+}: Props) {
+  const gapped = cavitating && state === 'charged';
   return (
     <g
-      className={`scene-hose scene-hose--${state}${cavitating && state === 'charged' ? ' scene-hose--gapped' : ''}`}
+      className={`scene-hose scene-hose--${state}${gapped ? ' scene-hose--gapped' : ''}`}
       data-testid={`hose-lay-${lay.deliveryId}`}
       data-state={state}
-      data-cavitating={cavitating && state === 'charged'}
+      data-level={level.toFixed(2)}
+      data-moving={moving}
+      data-cavitating={gapped}
       data-highlighted={highlighted}
       onClick={onTap}
     >
       {highlighted && <path className="scene-highlight scene-highlight--outer" d={lay.path} />}
       {highlighted && <path className="scene-highlight" d={lay.path} />}
-      {state === 'charged' ? (
-        <>
-          <path className="scene-hose__casing" d={lay.path} />
-          <path className="scene-hose__core" d={lay.path} />
-          <path className="scene-hose__flow" d={lay.path} />
-        </>
-      ) : (
-        <path className="scene-hose__dry" d={lay.path} />
-      )}
+      {level < 1 && <path className="scene-hose__dry" d={lay.path} />}
+      <HoseWater
+        curve={lay.curve}
+        level={level}
+        from="start"
+        moving={moving && !gapped}
+        variant="outlet"
+      />
       <path className="scene-hose__hit" data-part="hit" d={lay.path} />
     </g>
   );

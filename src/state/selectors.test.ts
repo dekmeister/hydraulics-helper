@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { warmStart } from '../sim/engine';
+import { chargeLines, warmStart } from '../sim/engine';
 import { APPLIANCES } from '../sim/appliances/catalogue';
 import { idleInputs } from '../sim/appliances/controls';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
@@ -116,27 +116,46 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('delivery lines: %s',
     }
   });
 
-  it('charges exactly the lines whose delivery is flowing', () => {
-    const lines = byId(run([first.deliveryId]));
+  it('fills a line from the truck: water moving, part full, nothing at the branch yet', () => {
+    let s = sim;
+    const valves = { [tankInlet.id]: 1, [first.deliveryId]: 1 };
+    for (let i = 0; i < 5; i++) s = advance(s, { throttle: 0.5, valves, switches: {} }, TICK_S);
+    const a = byId(s).get(first.deliveryId);
+    expect(a?.state).toBe('filling');
+    expect(a?.moving).toBe(true);
+    expect(a?.level).toBeGreaterThan(0);
+    expect(a?.level).toBeLessThan(1);
+    expect(a?.branchFlowLpm).toBe(0);
+    expect(a?.branchKpa).toBe(0);
+    expect(byId(s).get(second.deliveryId)?.state).toBe('dry');
+  });
+
+  it('charges a full line once water leaves its branch', () => {
+    const lines = byId(run([first.deliveryId], chargeLines(sim, [first.id])));
     const a = lines.get(first.deliveryId);
     expect(a?.state).toBe('charged');
-    expect(a?.flowLpm).toBeGreaterThanOrEqual(CHARGED_MIN_LPM);
+    expect(a?.level).toBe(1);
+    expect(a?.branchFlowLpm).toBeGreaterThanOrEqual(CHARGED_MIN_LPM);
     expect(a?.branchKpa).toBeGreaterThan(0);
     expect(lines.get(second.deliveryId)?.state).toBe('dry');
   });
 
-  it('turning a delivery off takes its line back to dry and leaves the other charged', () => {
-    const both = run([first.deliveryId, second.deliveryId]);
+  it('turning a delivery off leaves its line holding water and the other charged', () => {
+    const both = run([first.deliveryId, second.deliveryId], chargeLines(sim));
     expect(byId(both).get(first.deliveryId)?.state).toBe('charged');
     const oneOff = byId(run([second.deliveryId], both));
-    expect(oneOff.get(first.deliveryId)?.state).toBe('dry');
-    expect(oneOff.get(first.deliveryId)?.flowLpm).toBe(0);
+    expect(oneOff.get(first.deliveryId)).toMatchObject({
+      state: 'holding',
+      level: 1,
+      moving: false,
+      flowLpm: 0,
+    });
     expect(oneOff.get(second.deliveryId)?.state).toBe('charged');
   });
 
-  it('every line goes dry when the tank is empty', () => {
-    const empty = run([first.deliveryId, second.deliveryId], withTank(sim, 0));
-    expect(deliveryLines(empty).filter((d) => d.state === 'charged')).toEqual([]);
+  it('no line flows when the tank is empty: the water stands in them', () => {
+    const empty = run([first.deliveryId, second.deliveryId], withTank(chargeLines(sim), 0));
+    for (const d of deliveryLines(empty)) if (d.line !== undefined) expect(d.state).toBe('holding');
   });
 
   it('reports the tank fraction, clamped to 0–1, and 0 for an appliance with no tank', () => {

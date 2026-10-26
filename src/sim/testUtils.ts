@@ -2,7 +2,13 @@
 import { expect } from 'vitest';
 import { STANDARD_LENGTH_M, TICK_S } from './constants';
 import { inletOfKind } from './appliances/controls';
-import { DEFAULT_TRUCK_ID, advance, createSiteState, type SiteOptions } from './engine';
+import {
+  DEFAULT_TRUCK_ID,
+  advance,
+  chargeLines,
+  createSiteState,
+  type SiteOptions,
+} from './engine';
 import { nextRandom } from './rng';
 import type {
   ApplianceSpec,
@@ -275,18 +281,20 @@ export function closedRelayPair(
     truckId: 'attack',
   }));
   const tankIn = base.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
-  const state = createSiteState(
-    [
-      { id: 'attack', label: 'Attack pump', spec: receiver },
-      {
-        id: 'base',
-        label: 'Base pump',
-        spec: base,
-        inputs: inputsWith(baseThrottle, [...tankIn, out]),
-      },
-    ],
-    lines,
-    { links: [link] },
+  const state = chargeLines(
+    createSiteState(
+      [
+        { id: 'attack', label: 'Attack pump', spec: receiver },
+        {
+          id: 'base',
+          label: 'Base pump',
+          spec: base,
+          inputs: inputsWith(baseThrottle, [...tankIn, out]),
+        },
+      ],
+      lines,
+      { links: [link] },
+    ),
   );
   const attackInputs = (throttle: number, open = receiver.deliveries.map((d) => d.id)) =>
     inputsWith(throttle, [inlet, ...open]);

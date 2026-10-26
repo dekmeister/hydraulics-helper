@@ -2,6 +2,7 @@
 // drawn. Pure functions of the scene art and the sim's lines; no React.
 import type { ControlId, HoseLine, WaterSource } from '../../sim/types';
 import type { SceneArt } from '../appliances/types';
+import { cubicPath, type Cubic } from './cubic';
 import { DAM, FIRE_HEADING_DEG, HYDRANT, TRUCK_AT } from './site';
 
 /** Scene drawing space (SVG viewBox). */
@@ -58,6 +59,8 @@ export interface LayGeometry {
   deliveryId: ControlId;
   /** SVG path from the coupling to the branch. */
   path: string;
+  /** The same hose as a cubic, for drawing the part water fills. */
+  curve: Cubic;
   branch: Point;
   /** Way the branch points (and sprays), degrees. */
   headingDeg: number;
@@ -69,6 +72,8 @@ export interface SupplyGeometry {
   inletId: ControlId;
   sourceKind: WaterSource['kind'];
   path: string;
+  /** The same hose as a cubic, for drawing the part water fills. */
+  curve: Cubic;
   /** The source end: strainer in the dam, or the hydrant. */
   end: Point;
 }
@@ -94,7 +99,6 @@ export interface SceneGeometry {
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const dir = (deg: number): Point => ({ x: Math.cos(rad(deg)), y: Math.sin(rad(deg)) });
-const fmt = (n: number) => n.toFixed(1);
 
 /** A truck-local point (art frame) in scene coordinates. */
 export function toScene(pose: TruckPose, local: Point): Point {
@@ -153,14 +157,16 @@ function sourcePoint(kind: WaterSource['kind']): Point {
 }
 
 /** A supply hose: out of its coupling along its facing, then into the source. */
-export function supplyPath(coupling: CouplingPoint, end: Point): string {
+export function supplyCurve(coupling: CouplingPoint, end: Point): Cubic {
   const lead = dir(coupling.facingDeg);
   const c1 = { x: coupling.x + INLET_LEAD_U * lead.x, y: coupling.y + INLET_LEAD_U * lead.y };
   const c2 = { x: (c1.x + end.x) / 2, y: Math.max(c1.y, end.y) };
-  return (
-    `M${fmt(coupling.x)} ${fmt(coupling.y)} ` +
-    `C${fmt(c1.x)} ${fmt(c1.y)}, ${fmt(c2.x)} ${fmt(c2.y)}, ${fmt(end.x)} ${fmt(end.y)}`
-  );
+  return { p0: { x: coupling.x, y: coupling.y }, c1, c2, p3: end };
+}
+
+/** A supply hose's SVG path (`supplyCurve`). */
+export function supplyPath(coupling: CouplingPoint, end: Point): string {
+  return cubicPath(supplyCurve(coupling, end));
 }
 
 /** What a truck's fan of lays looks like before the map scale is known. */
@@ -227,10 +233,15 @@ function fanLays(pose: TruckPose, fan: Fan, unitsPerM: number): LayGeometry[] {
     };
     const approach = dir(headingDeg + (i % 2 === 0 ? 14 : -14));
     const c2 = { x: branch.x - 0.35 * reach * approach.x, y: branch.y - 0.35 * reach * approach.y };
-    const path =
-      `M${fmt(coupling.x)} ${fmt(coupling.y)} ` +
-      `C${fmt(c1.x)} ${fmt(c1.y)}, ${fmt(c2.x)} ${fmt(c2.y)}, ${fmt(branch.x)} ${fmt(branch.y)}`;
-    return { lineId: line.id, deliveryId: line.deliveryId, path, branch, headingDeg };
+    const curve = { p0: { x: coupling.x, y: coupling.y }, c1, c2, p3: branch };
+    return {
+      lineId: line.id,
+      deliveryId: line.deliveryId,
+      path: cubicPath(curve),
+      curve,
+      branch,
+      headingDeg,
+    };
   });
 }
 
@@ -249,6 +260,7 @@ function supplyLays(
         inletId: s.inletId,
         sourceKind: s.sourceKind,
         path: supplyPath(coupling, end),
+        curve: supplyCurve(coupling, end),
         end,
       },
     ];

@@ -151,7 +151,8 @@ export const INCIDENT: Scenario = {
     { trim: { branch: FIRST.id } },
     { until: { kind: 'objective', objective: 'uphill' }, maxS: 150 },
     { wait: 2 },
-    { open: { line: SECOND.id } },
+    // Ease the second line on: an empty hose takes all the pump gives and the uphill line would stop.
+    { ease: { line: SECOND.id }, to: 1, overS: 15 },
     { gate: SECOND.id },
     { until: { kind: 'objective', objective: 'second' }, maxS: 120 },
     { wait: 2 },

@@ -1,4 +1,4 @@
-import { START_UP, shutDown, startEngineSteps } from './engineSteps';
+import { START_UP, chargeLines, shutDown, startEngineSteps } from './engineSteps';
 import { STANDARD_LENGTH_M } from '../constants';
 import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind } from '../appliances/controls';
@@ -140,11 +140,11 @@ export const HYDRANT_SUPPLY: Scenario = {
   solution: [
     ...START_UP,
     { open: { inlet: 'suction' } },
-    { open: { line: 'line-65' } },
+    ...chargeLines(['line-65']),
     { throttle: 0.3 },
     { trim: { compoundKpa: RESERVE_KPA + 50 } },
     { until: { kind: 'objective', objective: 'reserve' }, maxS: 120 },
-    { open: { line: 'line-38' } },
+    { ease: { line: 'line-38' }, to: 1, overS: 10 },
     { trim: { compoundKpa: MARGIN_KPA + 40 } },
     { until: { kind: 'objective', objective: 'both' }, maxS: 120 },
     ...shutDown(['line-65', 'line-38']),

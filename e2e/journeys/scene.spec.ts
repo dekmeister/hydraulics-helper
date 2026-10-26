@@ -11,12 +11,14 @@ import {
   startEngine,
   stepAndSettle,
 } from '../panel';
+import { hoseVolumeL } from '../../src/sim/hose';
 import {
   deliveryLabel,
   hoseLay,
   legendButton,
   panelLocateButton,
   spray,
+  stepUntilCharged,
   tapHoseLay,
 } from '../scene';
 
@@ -30,7 +32,7 @@ for (const spec of JOURNEY_APPLIANCES) {
       await startEngine(page);
     });
 
-    test('turn off a delivery and its branch stops spraying; the other keeps going', async ({
+    test('charge two lines: they fill, then spray; turn one off and it holds its water', async ({
       page,
     }) => {
       const layout = layoutFor(spec.id);
@@ -49,7 +51,16 @@ for (const spec of JOURNEY_APPLIANCES) {
       await dragValve(page, valve(first.deliveryId), 1);
       await dragValve(page, valve(second.deliveryId), 1);
       await dragThrottle(page, 0.6);
-      await stepAndSettle(page, 100);
+      // Charging takes time: the water front runs out along each hose before the branch flows.
+      await stepAndSettle(page, 10);
+      for (const line of [first, second]) {
+        await expect(hoseLay(page, line.deliveryId)).toHaveAttribute('data-state', 'filling');
+        await expect(spray(page, line.deliveryId)).toHaveCount(0);
+      }
+      await expect(
+        legendButton(page, deliveryLabel(spec.id, first.deliveryId)),
+      ).toHaveAccessibleDescription(/^Filling · \d+ %$/);
+      for (const line of [first, second]) await stepUntilCharged(page, line.deliveryId);
       for (const line of [first, second]) {
         await expect(hoseLay(page, line.deliveryId)).toHaveAttribute('data-state', 'charged');
         await expect(spray(page, line.deliveryId)).toBeVisible();
@@ -57,22 +68,25 @@ for (const spec of JOURNEY_APPLIANCES) {
 
       await dragValve(page, valve(first.deliveryId), 0);
       await stepAndSettle(page, 10);
-      await expect(hoseLay(page, first.deliveryId)).toHaveAttribute('data-state', 'dry');
+      await expect(hoseLay(page, first.deliveryId)).toHaveAttribute('data-state', 'holding');
       await expect(spray(page, first.deliveryId)).toHaveCount(0);
       await expect(hoseLay(page, second.deliveryId)).toHaveAttribute('data-state', 'charged');
       await expect(spray(page, second.deliveryId)).toBeVisible();
       await expect(
         legendButton(page, deliveryLabel(spec.id, first.deliveryId)),
-      ).toHaveAccessibleDescription('Laid, dry');
+      ).toHaveAccessibleDescription('Holding water');
     });
 
-    test('every line goes dry when the tank runs out', async ({ page }) => {
+    test('a charged line stops when the tank runs out: its water stands in the hose', async ({
+      page,
+    }) => {
       const layout = layoutFor(spec.id);
       const state = await getState(page);
       const [first] = state.lines;
       const tankInlet = spec.inlets.find((i) => i.kind === 'tank');
       if (first === undefined || tankInlet === undefined) throw new Error('no line or tank inlet');
       for (const t of state.trucks) t.tankL = 60;
+      state.lineWaterL[first.id] = hoseVolumeL(first.segments);
       await page.evaluate((s) => {
         window.__pumpops?.load({ state: s });
       }, state);
@@ -83,7 +97,7 @@ for (const spec of JOURNEY_APPLIANCES) {
       await stepAndSettle(page, 5);
       await expect(hoseLay(page, first.deliveryId)).toHaveAttribute('data-state', 'charged');
       await stepAndSettle(page, 600);
-      await expect(hoseLay(page, first.deliveryId)).toHaveAttribute('data-state', 'dry');
+      await expect(hoseLay(page, first.deliveryId)).toHaveAttribute('data-state', 'holding');
       await expect(spray(page, first.deliveryId)).toHaveCount(0);
     });
 

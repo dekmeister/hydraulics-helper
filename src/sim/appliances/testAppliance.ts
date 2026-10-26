@@ -31,7 +31,7 @@ export const TEST_APPLIANCE: ApplianceSpec = {
     { id: 'tank-valve', label: 'Tank valve', kind: 'tank', lossKpaPerLpm2: 3e-5 },
     { id: 'intake', label: 'Intake', kind: 'suction', sizeMm: 75, lossKpaPerLpm2: 8e-6 },
   ],
-  primer: { kind: 'selfPriming', maxVacuumKpa: 78, displacementLps: 1 },
+  primer: { kind: 'selfPriming', maxVacuumKpa: 78, displacementLps: 2 },
   deliveries: [
     { id: 'left', label: 'Left', sizeMm: 38 },
     { id: 'right', label: 'Right', sizeMm: 65 },

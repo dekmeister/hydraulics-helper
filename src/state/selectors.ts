@@ -10,6 +10,7 @@ import {
   type EnginePhase,
 } from '../sim/engineControl';
 import { CREW_WATER_MIN_LPM } from '../sim/lesson/progress';
+import { lineFill } from '../sim/lineFill';
 import { activeTruck } from './activeTruck';
 import type {
   ControlId,
@@ -84,8 +85,13 @@ export { selectWarnings, type Warning, type WarningId, type WarningLevel } from 
  */
 export const CHARGED_MIN_LPM = CREW_WATER_MIN_LPM;
 
-/** How the scene draws a delivery: a flowing line, a laid but dry line, or a blank cap. */
-export type LineState = 'charged' | 'dry' | 'none';
+/**
+ * How the scene draws a delivery. A lay: 'filling' (water going in, the front part way),
+ * 'charged' (full, water at the branch), 'holding' (water standing in it: shut, or the pump
+ * stopped; a downhill line drains), 'dry' (empty). A relay: 'charged' while it flows, else 'dry'.
+ * 'none': a blank cap.
+ */
+export type LineState = 'none' | 'dry' | 'filling' | 'charged' | 'holding';
 
 export interface DeliveryLine {
   deliveryId: ControlId;
@@ -95,14 +101,27 @@ export interface DeliveryLine {
   relay?: RelayLink;
   /** Flow out of the delivery, L/min. */
   flowLpm: number;
+  /** Water leaving the branch, L/min; 0 with no lay, and until the lay has charged. */
+  branchFlowLpm: number;
   /** Pressure at the branch, kPa; 0 when no line is laid. */
   branchKpa: number;
+  /** How full the hose is, 0–1 from the delivery end (a relay is full while charged). */
+  level: number;
+  /** Water moving through the delivery into the hose. */
+  moving: boolean;
   state: LineState;
 }
 
+function layState(level: number, moving: boolean, branchFlowLpm: number): LineState {
+  if (level >= 1 && branchFlowLpm >= CHARGED_MIN_LPM) return 'charged';
+  if (level < 1 && moving) return 'filling';
+  return level > 0 ? 'holding' : 'dry';
+}
+
 /**
- * Every delivery of a truck (default: the active one), in spec order, with its line or relay and
- * whether it is charged. Branches can't be shut yet, so a charged (pressurised) line is a flowing one.
+ * Every delivery of a truck (default: the active one), in spec order, with its line or relay, how
+ * full it is and whether it is charged. Branches can't be shut yet, so a charged (pressurised)
+ * line is a flowing one.
  */
 export function deliveryLines(sim: SimState, truckId = sim.activeTruckId): DeliveryLine[] {
   const truck = sim.trucks.find((t) => t.id === truckId);
@@ -111,19 +130,28 @@ export function deliveryLines(sim: SimState, truckId = sim.activeTruckId): Deliv
     const line = lineOnDelivery(sim, d.id, truckId);
     const relay = relayOnDelivery(sim, d.id, truckId);
     const flowLpm = truck.readings.deliveryFlowLpm[d.id] ?? 0;
-    const state: LineState =
-      line === undefined && relay === undefined
-        ? 'none'
-        : flowLpm >= CHARGED_MIN_LPM
-          ? 'charged'
-          : 'dry';
+    const moving = flowLpm >= CHARGED_MIN_LPM;
     const branchKpa = line === undefined ? 0 : (truck.readings.branchKpa[line.id] ?? 0);
+    const branchFlowLpm = line === undefined ? 0 : (truck.readings.branchFlowLpm[line.id] ?? 0);
+    let state: LineState;
+    let level: number;
+    if (line !== undefined) {
+      level = lineFill(line, sim.lineWaterL[line.id] ?? 0).fraction;
+      state = layState(level, moving, branchFlowLpm);
+    } else {
+      // A relay fills at once (backlog): charged while it flows.
+      state = relay === undefined ? 'none' : moving ? 'charged' : 'dry';
+      level = state === 'charged' ? 1 : 0;
+    }
     return {
       deliveryId: d.id,
       ...(line === undefined ? {} : { line }),
       ...(relay === undefined ? {} : { relay }),
       flowLpm,
+      branchFlowLpm,
       branchKpa,
+      level,
+      moving,
       state,
     };
   });

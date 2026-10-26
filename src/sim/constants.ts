@@ -8,6 +8,12 @@ export const TICK_S = 0.1;
 /** Pressure per metre of head, kPa/m. Doctrine rounds 9.8 to 10 (L702–741). // doctrine-confirmed */
 export const HEAD_KPA_PER_M = 10;
 
+/**
+ * Atmospheric pressure, kPa absolute (standard atmosphere). Physics, not doctrine: the air the
+ * primer works on starts here. // doctrine-confirmed
+ */
+export const ATMOSPHERIC_KPA = 101.3;
+
 /** Standard length of delivery hose, m. Scenarios lay hose in multiples of this (L823). // doctrine-confirmed */
 export const STANDARD_LENGTH_M = 30;
 

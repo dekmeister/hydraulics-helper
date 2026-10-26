@@ -372,6 +372,11 @@ export interface TruckReadings {
   deliveryFlowLpm: Record<ControlId, number>;
   /** Pressure at each branch, keyed by line id, kPa. */
   branchKpa: Record<string, number>;
+  /**
+   * Water leaving each branch, keyed by line id, L/min: water on the fire. 0 while the line fills;
+   * a shut downhill line's drain flow. Delivery flow is what leaves the pump.
+   */
+  branchFlowLpm: Record<string, number>;
   /** Flow in through each inlet, keyed by inlet id, L/min. */
   inletFlowLpm: Record<ControlId, number>;
   /** Whether each inlet's layflat supply is pulled flat (soft hose, "inlet zero"), keyed by inlet id. */
@@ -391,6 +396,12 @@ export interface PumpState {
   casingWet: boolean;
   /** Vacuum the primer has pulled on the casing, kPa (positive number). */
   vacuumKpa: number;
+  /**
+   * Vacuum above the water in the hard suction, kPa: it holds the column `vacuum/10` m up. The
+   * same as the casing's while the suction valve is open; shut, the hose keeps its own (the column
+   * is trapped), and the two mix when it opens again.
+   */
+  suctionVacuumKpa: number;
   /** How long the primer has run without a break, s. */
   primerRunS: number;
   /** Rotary vane duty used, s: rises while running, falls at the rest rate. */
@@ -456,6 +467,8 @@ export interface SimState {
   activeTruckId: string;
   trucks: TruckState[];
   lines: HoseLine[];
+  /** Water in each lay, keyed by line id, L (0 to the hose's volume; missing is dry). */
+  lineWaterL: Record<string, number>;
   sources: WaterSource[];
   supplies: SupplyLine[];
   /** Relay hoses between trucks, and into tanks and dams. */

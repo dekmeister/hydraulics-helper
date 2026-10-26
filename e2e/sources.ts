@@ -3,7 +3,7 @@
 import type { Page, TestInfo } from '@playwright/test';
 import { inletOfKind, primerControlId } from '../src/sim/appliances/controls';
 import { TICK_S } from '../src/sim/constants';
-import { advance, warmStart } from '../src/sim/engine';
+import { advance, chargeLines, warmStart } from '../src/sim/engine';
 import { getScenario } from '../src/sim/scenarios';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../src/sim/types';
 import { expect, gotoApp } from './fixtures';
@@ -126,7 +126,8 @@ export async function expectCompoundAlert(page: Page, spec: ApplianceSpec, alert
  * open at `throttle`, the pump primed: headless, to ask the sim what a journey will see.
  */
 function pushed(scenario: string, spec: ApplianceSpec, throttle: number, ticks: number): SimState {
-  const built = warmStart(getScenario(scenario).build(spec).state);
+  // Steady over-run: the lines start charged, so the fill's rush isn't counted.
+  const built = chargeLines(warmStart(getScenario(scenario).build(spec).state));
   const player = built.activeTruckId;
   let s: SimState = {
     ...built,

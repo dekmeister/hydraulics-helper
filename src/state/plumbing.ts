@@ -5,8 +5,8 @@ import { VALVE_CLOSED_EPS } from '../sim/constants';
 import { CREW_WATER_MIN_LPM } from '../sim/lesson/progress';
 import type { ControlId, SimState, TruckState } from '../sim/types';
 
-/** Flow at or above which a pipe is drawn flowing, L/min: the scene's charged-line threshold. */
-const FLOWING_MIN_LPM = CREW_WATER_MIN_LPM;
+/** Flow at or above which a pipe or hose is drawn flowing, L/min: the scene's charged-line threshold. */
+export const FLOWING_MIN_LPM = CREW_WATER_MIN_LPM;
 
 export type WaterState = 'flowing' | 'still' | 'empty';
 

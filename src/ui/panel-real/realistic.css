@@ -301,10 +301,6 @@
   fill: var(--color-material-ink);
 }
 
-.pull-primer__vacuum {
-  fill: var(--color-function-inlet);
-}
-
 .pull-primer__caption {
   font-size: 11px;
   white-space: nowrap;
@@ -437,10 +433,6 @@
   to {
     transform: rotate(10deg);
   }
-}
-
-.hand-primer__vacuum {
-  fill: var(--color-function-inlet);
 }
 
 .hand-primer__caption {

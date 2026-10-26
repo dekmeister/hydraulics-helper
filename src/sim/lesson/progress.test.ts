@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CAT1 } from '../appliances/cat1';
 import { TEST_APPLIANCE } from '../appliances/testAppliance';
 import { TICK_S } from '../constants';
-import { advance, createInitialState, DEFAULT_TRUCK_ID } from '../engine';
+import { advance, chargeLines, createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { layLine, tankAttackInputs } from '../testUtils';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../types';
 import { acknowledge, startLesson, stepLesson, type LessonProgress } from './progress';
@@ -13,7 +13,9 @@ const P = DEFAULT_TRUCK_ID;
 function site(spec: ApplianceSpec, tankL?: number): SimState {
   const [d] = spec.deliveries;
   if (d === undefined) throw new Error('no delivery');
-  const s = createInitialState(spec, [{ ...layLine(d.id, '38L', 3, 15), id: 'line-1' }]);
+  const s = chargeLines(
+    createInitialState(spec, [{ ...layLine(d.id, '38L', 3, 15), id: 'line-1' }]),
+  );
   return tankL === undefined ? s : { ...s, trucks: s.trucks.map((t) => ({ ...t, tankL })) };
 }
 

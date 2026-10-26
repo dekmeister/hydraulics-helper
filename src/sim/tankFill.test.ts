@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { valveControlIds } from './appliances/controls';
 import { HEAD_KPA_PER_M, STANDARD_LENGTH_M, TICK_S } from './constants';
-import { DEFAULT_TRUCK_ID, createInitialState, type SiteOptions } from './engine';
+import { DEFAULT_TRUCK_ID, chargeLines, createInitialState, type SiteOptions } from './engine';
 import { hoseResistance } from './hose';
 import { draughtSite, hydrantSite, inputsWith, run, truckOf, TEST_STARTING } from './testUtils';
 import type { ApplianceSpec, SimState } from './types';
@@ -183,7 +183,7 @@ describe('hydrant to tank', () => {
         branch: { tipMm: 15 },
       },
     ];
-    const s0 = withTank(createInitialState(SPEC, lines, fillSite()), 1000);
+    const s0 = withTank(chargeLines(createInitialState(SPEC, lines, fillSite())), 1000);
     const t = truckOf(run(s0, inputsWith(0.6, ['tank', 'h2t', 'a']), 600));
     const net = t.readings.inletFlowLpm.h2t ?? 0;
     const draw = t.readings.inletFlowLpm.tank ?? 0;

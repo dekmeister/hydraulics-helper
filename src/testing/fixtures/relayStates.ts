@@ -5,7 +5,7 @@ import { switchTruck } from '../../sim/engine';
 import { getScenario } from '../../sim/scenarios';
 import type { SupportSpecs } from '../../sim/scenarios/types';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
-import { settle } from './panelStates';
+import { chargedFor, settle } from './panelStates';
 
 export type RelayStateId =
   'closed-working' | 'closed-over-run' | 'burst' | 'open-dam' | 'base-panel';
@@ -41,10 +41,12 @@ export function relayState(
   id: RelayStateId,
   support?: SupportSpecs,
 ): SimState {
-  const initial = getScenario(RELAY_STATE_SCENARIO[id]).build(spec, support).state;
+  const built = getScenario(RELAY_STATE_SCENARIO[id]).build(spec, support).state;
   const inlet = inletOfKind(spec, 'suction');
-  const lines = initial.lines.map((l) => l.deliveryId);
+  const lines = built.lines.map((l) => l.deliveryId);
   const working = inputs(WORKING_THROTTLE, [inlet, ...lines]);
+  // Every fixture here works the attack lines: they start charged (the fill is the scene's fixture).
+  const initial = chargedFor(built, working);
   switch (id) {
     case 'closed-working':
       return settle(initial, working, 15);

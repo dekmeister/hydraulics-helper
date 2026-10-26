@@ -1,6 +1,7 @@
 // Derived supply-side state for the UI: primer status and the supply hoses on the scene.
 import { VALVE_CLOSED_EPS } from '../sim/constants';
 import { connectedSupplies } from '../sim/engine';
+import { suctionWaterFraction } from '../sim/priming';
 import type {
   ControlId,
   PlayerInputs,
@@ -10,6 +11,7 @@ import type {
   WaterSource,
 } from '../sim/types';
 import { activeTruck } from './activeTruck';
+import { FLOWING_MIN_LPM } from './plumbing';
 
 /**
  * Seconds of running unprimed before the primer shows CHECK SUCTION (Design §5). A coaching cue,
@@ -54,6 +56,16 @@ export interface SupplyLay {
   flowLpm: number;
   /** Whether the inlet valve it feeds is open. */
   open: boolean;
+  /**
+   * How full the hose is, 0–1 from the source end: water rising up a hard suction while priming
+   * (`suctionWaterFraction`); a hydrant's layflat is charged before the job starts (0 when soft).
+   */
+  level: number;
+  /**
+   * Water moving through it towards the pump: drawn by the pump, or a suction's column climbing
+   * while the primer pulls.
+   */
+  flowing: boolean;
 }
 
 function supplyState(truck: TruckState, supply: SupplyLine, source: WaterSource): SupplyState {
@@ -76,12 +88,27 @@ export function supplyLays(
 ): SupplyLay[] {
   const truck = sim.trucks.find((t) => t.id === truckId);
   if (truck === undefined) throw new Error(`No truck '${truckId}'`);
-  const valves = truckId === sim.activeTruckId ? inputs.valves : truck.inputs.valves;
-  return connectedSupplies(sim, truck.id).map(({ supply, source }) => ({
-    supply,
-    source,
-    state: supplyState(truck, supply, source),
-    flowLpm: truck.readings.inletFlowLpm[supply.inletId] ?? 0,
-    open: (valves[supply.inletId] ?? 0) >= VALVE_CLOSED_EPS,
-  }));
+  const held = truckId === sim.activeTruckId ? inputs : truck.inputs;
+  return connectedSupplies(sim, truck.id).map(({ supply, source }) => {
+    const state = supplyState(truck, supply, source);
+    const flowLpm = truck.readings.inletFlowLpm[supply.inletId] ?? 0;
+    const level =
+      source.kind === 'static'
+        ? suctionWaterFraction(truck.pump, { supply, source })
+        : state === 'soft'
+          ? 0
+          : 1;
+    const open = (held.valves[supply.inletId] ?? 0) >= VALVE_CLOSED_EPS;
+    // The primer ran this tick with the suction open, so the column below the pump climbed.
+    const climbing = open && level > 0 && level < 1 && truck.pump.primerRunS > 0;
+    return {
+      supply,
+      source,
+      state,
+      flowLpm,
+      open,
+      level,
+      flowing: flowLpm >= FLOWING_MIN_LPM || climbing,
+    };
+  });
 }

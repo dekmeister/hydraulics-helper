@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { HOSE_WORKING_KPA } from '../sim/constants';
-import { warmStart } from '../sim/engine';
+import { chargeLines, warmStart } from '../sim/engine';
 import { getScenario } from '../sim/scenarios';
 import { inputsWith, run, suctionInletOf, truck, withBigLines } from '../sim/testUtils';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../sim/types';
@@ -86,7 +86,7 @@ describe('store: switching trucks', () => {
 });
 
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('relay selectors: %s', (_id, spec) => {
-  const closed = warmStart(getScenario('closed-relay').build(spec).state);
+  const closed = chargeLines(warmStart(getScenario('closed-relay').build(spec).state));
   const suction = suctionInletOf(spec);
   const lines = closed.lines.map((l) => l.deliveryId);
   const attackInputs = (throttle: number) => inputsWith(throttle, [suction, ...lines]);

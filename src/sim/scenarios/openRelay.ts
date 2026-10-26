@@ -1,4 +1,4 @@
-import { START_UP, shutDown, startEngineSteps } from './engineSteps';
+import { START_UP, chargeLines, shutDown, startEngineSteps } from './engineSteps';
 import { inletOfKind, primerControlId } from '../appliances/controls';
 import { createSiteState } from '../engine';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
@@ -194,8 +194,7 @@ export const OPEN_RELAY: Scenario = {
     { primer: true },
     { until: { kind: 'primed' }, maxS: 90 },
     { primer: false },
-    { open: { line: 'line-65' } },
-    { open: { line: 'line-38' } },
+    ...chargeLines(['line-65', 'line-38']),
     { throttle: 0.6 },
     { trim: { branch: 'line-38' } },
     { gate: 'line-65' },

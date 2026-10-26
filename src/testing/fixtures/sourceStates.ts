@@ -4,7 +4,7 @@ import { inletOfKind, primerSwitchIds } from '../../sim/appliances/controls';
 import { getScenario } from '../../sim/scenarios';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
-import { settle, TANK_ATTACK_TARGET_KPA, throttleForKpa } from './panelStates';
+import { chargedFor, settle, TANK_ATTACK_TARGET_KPA, throttleForKpa } from './panelStates';
 
 export type SourceStateId =
   'draught-priming' | 'draught-working' | 'cavitating' | 'hydrant' | 'faults' | 'refilling';
@@ -56,20 +56,23 @@ export function sourceState(spec: ApplianceSpec, id: SourceStateId): SimState {
       const s = primed(spec, initial);
       const open = [inletOf(spec, 'suction'), ...first];
       const t = throttleForKpa(s, (x) => inputs(x, open), TANK_ATTACK_TARGET_KPA);
-      return settle(s, inputs(t, open));
+      return settle(chargedFor(s, inputs(t, open)), inputs(t, open));
     }
-    case 'cavitating':
-      return settle(primed(spec, initial), inputs(1, [inletOf(spec, 'suction'), ...lines]));
+    case 'cavitating': {
+      const full = inputs(1, [inletOf(spec, 'suction'), ...lines]);
+      return settle(chargedFor(primed(spec, initial), full), full);
+    }
     case 'hydrant': {
       const open = [inletOf(spec, 'suction'), ...first];
       const t = throttleForKpa(initial, (x) => inputs(x, open), TANK_ATTACK_TARGET_KPA);
-      return settle(initial, inputs(t, open));
+      return settle(chargedFor(initial, inputs(t, open)), inputs(t, open));
     }
     case 'refilling':
       return settle(initial, inputs(0, [inletOf(spec, 'tankFill')]), 20);
     case 'faults': {
       const attack = TANK_ATTACK.build(spec).state;
-      const flowing = settle(attack, inputs(0.6, [inletOf(spec, 'tank'), ...first]));
+      const open = inputs(0.6, [inletOf(spec, 'tank'), ...first]);
+      const flowing = settle(chargedFor(attack, open), open);
       // Slam the line shut on the last tick: the hammer lamp is fresh.
       const s = settle(flowing, inputs(0.6, [inletOf(spec, 'tank')]), 0.1);
       return { ...s, trucks: s.trucks.map((t) => ({ ...t, pump: { ...t.pump, tempC: 85 } })) };

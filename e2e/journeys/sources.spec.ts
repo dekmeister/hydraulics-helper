@@ -6,6 +6,7 @@ import { CAVITATION_FLUTTER_COMPOUND_KPA } from '../../src/sim/constants';
 import { getScenario } from '../../src/sim/scenarios';
 import { supports } from '../../src/sim/scenarios/types';
 import { expect, test } from '../fixtures';
+import { stepUntilCharged } from '../scene';
 import {
   activeTruckOf,
   controlName,
@@ -47,20 +48,34 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('draugh
     await expect(supply).toHaveAttribute('data-state', 'dry');
 
     await openInlet(page, spec, 'suction', info);
+    const primerId = primerControl(spec);
+    if (primerId !== undefined) {
+      // Part way: the water stands part way up the hard suction, still dry at the pump.
+      const held = await holdPrimer(page, controlName(layout, primerId), 30);
+      const level = Number(await supply.getAttribute('data-level'));
+      expect(level).toBeGreaterThan(0);
+      expect(level).toBeLessThan(1);
+      await expect(supply).toHaveAttribute('data-state', 'dry');
+      await held.release();
+    }
     await prime(page, spec);
     await expect(supply).toHaveAttribute('data-state', 'primed');
+    await expect(supply).toHaveAttribute('data-level', '1.00');
     // Primed, nothing flowing: the compound shows the lift, 10 kPa per m (C11).
     const lift = initial.sources.find((s) => s.kind === 'static');
     const liftM = lift?.kind === 'static' ? lift.liftM : 0;
     expect(Math.abs((await compoundShown(page, spec)) + 10 * liftM)).toBeLessThanOrEqual(1);
 
+    // Charge the line at idle, then build pressure: an empty hose would run the draught out.
     await dragValve(
       page,
       page.getByRole('slider', { name: controlName(layout, first.deliveryId) }),
       1,
     );
+    await stepUntilCharged(page, first.deliveryId);
     await dragThrottle(page, 0.6);
     await stepAndSettle(page, 100);
+    await expect(supply).toHaveAttribute('data-flowing', 'true');
     expect(await meterValue(page, discharge)).toBeGreaterThan(300);
     expect(await compoundShown(page, spec)).toBeLessThan(-10 * liftM);
     await expectStatus(page, 'No warnings.');
@@ -79,6 +94,7 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('draugh
       page.getByRole('slider', { name: controlName(layout, second.deliveryId) }),
       1,
     );
+    await stepUntilCharged(page, second.deliveryId);
     await throttle(page).focus();
     await page.keyboard.press('End');
     await stepAndSettle(page, 50);
@@ -127,6 +143,7 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('hydran
       page.getByRole('slider', { name: controlName(layout, first.deliveryId) }),
       1,
     );
+    await stepUntilCharged(page, first.deliveryId);
     await dragThrottle(page, 0.4);
     await stepAndSettle(page, 50);
     expect(await compoundShown(page, spec)).toBeGreaterThan(50);
@@ -138,6 +155,7 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('hydran
       page.getByRole('slider', { name: controlName(layout, second.deliveryId) }),
       1,
     );
+    await stepUntilCharged(page, second.deliveryId);
     await throttle(page).focus();
     await page.keyboard.press('End');
     await stepAndSettle(page, 50);

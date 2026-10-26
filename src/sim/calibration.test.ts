@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { branchFlowLpm } from './branch';
 import { HEAD_KPA_PER_M, STANDARD_LENGTH_M } from './constants';
 import { hoseFrictionKpa } from './hose';
-import { createInitialState } from './engine';
+import { chargeLines, createInitialState } from './engine';
 import {
   draughtSite,
   expectWithinRel,
@@ -100,7 +100,9 @@ const DRAUGHT_SPEC: ApplianceSpec = {
 
 /** Readings after drawing from a primed draught at `liftM` for 5 s. */
 function draughtAt(liftM: number, throttle: number, lines: HoseLine[]) {
-  const s = primedState(createInitialState(DRAUGHT_SPEC, lines, draughtSite(DRAUGHT_SPEC, liftM)));
+  const s = primedState(
+    chargeLines(createInitialState(DRAUGHT_SPEC, lines, draughtSite(DRAUGHT_SPEC, liftM))),
+  );
   return truckOf(run(s, inputsWith(throttle, ['suction', 'a', 'b']), 50)).readings;
 }
 

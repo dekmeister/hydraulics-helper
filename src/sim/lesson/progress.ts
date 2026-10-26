@@ -2,7 +2,8 @@
 // moves on, failures end it, and the debrief's statistics accumulate. Pure and deterministic.
 import { VALVE_CLOSED_EPS } from '../constants';
 import { connectedSupplies } from '../engine';
-import type { FaultTally, SimState, TruckState } from '../types';
+import { lineFill } from '../lineFill';
+import type { FaultTally, HoseLine, SimState, TruckState } from '../types';
 import { holds, type LessonFacts } from './conditions';
 import { applyEffect } from './effects';
 import { truckOf } from './refs';
@@ -126,11 +127,15 @@ function stepStats(
   windingDown: boolean,
 ): LessonStats {
   const lines = state.lines.filter((l) => l.truckId === truck.id);
-  const flow = (deliveryId: string) => truck.readings.deliveryFlowLpm[deliveryId] ?? 0;
+  const atBranch = (id: string) => truck.readings.branchFlowLpm[id] ?? 0;
+  // Water going into a line that hasn't filled (fresh lengths added) is on its way: not a fault.
+  const charging = (l: HoseLine) =>
+    (truck.readings.deliveryFlowLpm[l.deliveryId] ?? 0) >= CREW_WATER_MIN_LPM &&
+    !lineFill(l, state.lineWaterL[l.id] ?? 0).full;
   const watered = [
     ...stats.watered,
     ...lines
-      .filter((l) => !stats.watered.includes(l.id) && flow(l.deliveryId) >= CREW_WATER_MIN_LPM)
+      .filter((l) => !stats.watered.includes(l.id) && atBranch(l.id) >= CREW_WATER_MIN_LPM)
       .map((l) => l.id),
   ];
   const dry =
@@ -139,7 +144,8 @@ function stepStats(
       (l) =>
         watered.includes(l.id) &&
         (truck.inputs.valves[l.deliveryId] ?? 0) >= VALVE_CLOSED_EPS &&
-        flow(l.deliveryId) < CREW_WATER_MIN_LPM,
+        atBranch(l.id) < CREW_WATER_MIN_LPM &&
+        !charging(l),
     );
   const add = <K extends string>(m: Partial<Record<K, number>>, k: K) => ({
     ...m,

@@ -28,6 +28,25 @@ export function stopEngineSteps(spec: ApplianceSpec, tS: number): ScriptStep[] {
   ];
 }
 
+/** Longest a solution waits for a line to charge, s. */
+const CHARGE_MAX_S = 120;
+
+/**
+ * Open `lines` with the pump at idle and wait until water reaches every branch: charge before
+ * building pressure. An empty hose takes all a pump can give, so charging at working revs runs a
+ * draught, hydrant or relay supply out (issue #6).
+ */
+export function chargeLines(lines: readonly string[]): OperatorStep[] {
+  return [
+    { throttle: 0 },
+    ...lines.map((line): OperatorStep => ({ open: { line } })),
+    ...lines.map((line): OperatorStep => ({
+      until: { kind: 'flow', line, min: 1 },
+      maxS: CHARGE_MAX_S,
+    })),
+  ];
+}
+
 /** A solution's opening: ignition on, crank until it fires. */
 export const START_UP: readonly OperatorStep[] = [{ ignition: true }, { crank: true }];
 

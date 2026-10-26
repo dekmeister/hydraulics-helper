@@ -35,6 +35,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 * **Does the primer need the engine?** (needs Dek, CALIBRATION 43) Priming is independent of the engine today. The manual calls the Cat 1's rotary vane primer electric, but if ours is engine-driven it can't prime with the engine stopped; that would be a `PrimerSpec` field (needs engine running / needs ignition only), handled for every primer kind.
 * Closed-relay solve fits the supplying pump from last tick's flow; a pump far from a square law (several lines, relief, cavitating) settles over a few ticks. A second secant pass per tick would tighten it if a scenario needs it.
 * A hydrant feeding two hoses at once (shared main loss); relays into hydrant to tank. Until then `validateSite` allows one hose per hydrant while it fills a tank (`site.ts`).
+* **Hoses that still fill at once** (issue #6 did delivery lays): relay hoses (an open relay could reuse `lineFill.ts`; a closed relay couples two pumps through the fit) and a hydrant's layflat (charged before the job starts). The surge as a water front reaches the branch (CALIBRATION 44c). Branch shut-off turns filling from venting air to compressing it: the same `lineWaterL`, with an air-pressure term in the fill load.
 * Priming is one `pump.primed` flag, so `validateSite` allows one static source per truck. Track priming per supply before an appliance with two suction inlets.
 
 ## Appliances
@@ -49,7 +50,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 ## Panels and scene
 
 * **Realistic view:** foam (bypass / foam-off / foam-on switch, selection and metering valves), fuses, the air-cleaner indicator, reels; a callouts toggle for a "find it yourself" mode (Design §8).
-* **Realistic water:** an accessible summary of where the water is (pipes are decorative, `aria-hidden`); a drain cock for trucks that have one; water rising up the hard suction while priming; the hose reels' water once reels are modelled.
+* **Realistic water:** an accessible summary of where the water is (pipes are decorative, `aria-hidden`); a drain cock for trucks that have one; the hose reels' water once reels are modelled.
 * **Speed controller ramp** lives in the store (`state/throttleRamp.ts`), not the sim, so scripts, lessons and traces can't see it and lesson timing differs between views. Moving it into `advance` (a `PlayerInputs.throttleRate` of −1/0/+1) would make the Simplified view ramp too, which is a design call. Its rates are in the spec (`EngineSpec.speedController`).
 * **Phone legibility of the realistic bay:** plate text is 18–26 viewBox units, ~6–9 px at 320 px, so placards are unreadable and "NO LINE" clips at the plate edge; `e2e/layout.spec.ts` doesn't check text size. The desktop bay is ~1350 px tall, so it can't be seen with the scene.
 * **Scene off-screen on a phone while operating:** below 900 px the scene stacks above the panel, so turning a delivery valve and watching its branch stop needs a scroll (the scene↔panel locate buttons scroll both ways). Candidates: a compact sticky scene or line-state HUD strip on phones, or a panel/scene tab switch. Needs a design decision.

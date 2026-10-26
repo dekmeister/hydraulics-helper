@@ -1,7 +1,8 @@
 // Sim states for the generated panel and scene fixtures (docs/TESTING.md §3.2). Pure sim calls, built per
 // appliance from the tank-attack scenario so every appliance gets the same set.
-import { TICK_S } from '../../sim/constants';
-import { advance, warmStart } from '../../sim/engine';
+import { TICK_S, VALVE_CLOSED_EPS } from '../../sim/constants';
+import { advance, chargeLines, warmStart } from '../../sim/engine';
+import { lineFill } from '../../sim/lineFill';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
 
@@ -42,6 +43,18 @@ export function settle(state: SimState, inputs: PlayerInputs, seconds = RUN_S): 
   const ticks = Math.round(seconds / TICK_S);
   for (let i = 0; i < ticks; i++) s = advance(s, on, TICK_S);
   return s;
+}
+
+/**
+ * `state` with the lays on the deliveries `inputs` opens already charged: fixtures of steady flow
+ * start past the fill (the `line-filling` scene fixture shows the fill itself).
+ */
+export function chargedFor(state: SimState, inputs: PlayerInputs): SimState {
+  const open = state.lines.filter((l) => (inputs.valves[l.deliveryId] ?? 0) >= VALVE_CLOSED_EPS);
+  return chargeLines(
+    state,
+    open.map((l) => l.id),
+  );
 }
 
 /** `state` run for `seconds` with only the named engine switches on: no warm start. */
@@ -103,7 +116,8 @@ export function throttleForKpa(
   let hi = 1;
   for (let i = 0; i < 20; i++) {
     const mid = (lo + hi) / 2;
-    if (discharge(settle(initial, inputsAt(mid))) < targetKpa) lo = mid;
+    const inputs = inputsAt(mid);
+    if (discharge(settle(chargedFor(initial, inputs), inputs)) < targetKpa) lo = mid;
     else hi = mid;
   }
   return (lo + hi) / 2;
@@ -139,20 +153,25 @@ export function panelState(spec: ApplianceSpec, id: PanelStateId): SimState {
   const inputs = attackInputs(spec, [line.deliveryId], throttle);
   switch (id) {
     case 'tank-attack-700':
-      return settle(initial, inputs);
+      return settle(chargedFor(initial, inputs), inputs);
     case 'tank-low':
       // Starts at a fifth of a tank; 10 s at the branch's flow leaves it just under.
-      return settle(withTankL(initial, 0.2 * capacityL), inputs);
+      return settle(chargedFor(withTankL(initial, 0.2 * capacityL), inputs), inputs);
     case 'tank-empty':
-      return settle(withTankL(initial, 0), inputs);
+      return settle(chargedFor(withTankL(initial, 0), inputs), inputs);
   }
 }
 
-export type SceneStateId = 'all-charged' | 'one-line-off' | 'tank-low' | 'tank-empty';
+export type SceneStateId =
+  'all-charged' | 'one-line-off' | 'tank-low' | 'tank-empty' | 'line-filling';
+
+/** Most the 'line-filling' fixture runs waiting for the front to pass half way, s. */
+const FILLING_MAX_S = 60;
 
 /**
  * Sim state for a generated scene fixture: every tank-attack line open at the throttle that holds
  * the working discharge, then the first line shut ('one-line-off') or the tank run low or empty.
+ * 'line-filling': only the first line opened, dry, at that throttle until it is half full.
  */
 export function sceneState(spec: ApplianceSpec, id: SceneStateId): SimState {
   const initial = TANK_ATTACK.build(spec).state;
@@ -162,12 +181,25 @@ export function sceneState(spec: ApplianceSpec, id: SceneStateId): SimState {
   const inputs = attackInputs(spec, all, throttle);
   switch (id) {
     case 'all-charged':
-      return settle(initial, inputs);
-    case 'one-line-off':
-      return settle(initial, attackInputs(spec, all.slice(1), throttle));
+      return settle(chargedFor(initial, inputs), inputs);
+    case 'one-line-off': {
+      const some = attackInputs(spec, all.slice(1), throttle);
+      return settle(chargedFor(initial, some), some);
+    }
     case 'tank-low':
-      return settle(withTankL(initial, 0.2 * capacityL), inputs);
+      return settle(chargedFor(withTankL(initial, 0.2 * capacityL), inputs), inputs);
     case 'tank-empty':
-      return settle(withTankL(initial, 0), inputs);
+      return settle(chargedFor(withTankL(initial, 0), inputs), inputs);
+    case 'line-filling': {
+      const line = initial.lines[0];
+      if (line === undefined) throw new Error(`tank attack laid no line on ${spec.id}`);
+      const one = attackInputs(spec, [line.deliveryId], throttle);
+      let s = settle(initial, one, TICK_S);
+      for (let i = 0; i < FILLING_MAX_S / TICK_S; i++) {
+        if (lineFill(line, s.lineWaterL[line.id] ?? 0).fraction >= 0.5) return s;
+        s = settle(s, one, TICK_S);
+      }
+      throw new Error(`${spec.id}: the first line never filled half way`);
+    }
   }
 }

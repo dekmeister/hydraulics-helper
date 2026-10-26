@@ -10,6 +10,7 @@ import { FLUTTER_KICK, FLUTTER_MEMORY, PUMP_TEMP_CAUTION_C, VALVE_CLOSED_EPS } f
 import { stepEngine } from './engineControl';
 import { detectHammer } from './hammer';
 import { inletPaths, type ConnectedSupply, type RelayFeed } from './inlets';
+import { drainOut, stepLineWater } from './lineFill';
 import type { TruckSolveInput } from './network';
 import { stepPrime } from './priming';
 import { checkBursts, solveSite } from './relay';
@@ -31,6 +32,7 @@ import type {
 
 export {
   DEFAULT_TRUCK_ID,
+  chargeLines,
   reseed,
   type EngineStart,
   restingPump,
@@ -74,6 +76,7 @@ export function createSiteState(
     primed: truck.pump.primed,
     supplies: connectedSupplies(state, truck.id),
     relayIn,
+    lineWaterL: state.lineWaterL,
   }));
   return {
     ...state,
@@ -173,6 +176,7 @@ function prepareTruck(
       supplies,
       vacuumKpa: pump.vacuumKpa,
       relayIn,
+      lineWaterL: state.lineWaterL,
     },
   };
 }
@@ -255,6 +259,33 @@ function finishTruck(
 }
 
 /**
+ * A truck's lays after `dtS`: each holds what came in through its delivery less what left by its
+ * branch (`lineFill.ts`). A line with nothing coming in empties through its branch under its own
+ * head, which the branch readings then show.
+ */
+function stepLines(
+  lines: readonly HoseLine[],
+  waterL: Readonly<Record<string, number>>,
+  readings: TruckReadings,
+  dtS: number,
+): { readings: TruckReadings; waterL: Record<string, number> } {
+  const branchKpa = { ...readings.branchKpa };
+  const branchFlowLpm = { ...readings.branchFlowLpm };
+  const next: Record<string, number> = {};
+  for (const line of lines) {
+    const w = waterL[line.id] ?? 0;
+    const inLpm = readings.deliveryFlowLpm[line.deliveryId] ?? 0;
+    if (inLpm <= 0) {
+      const drain = drainOut(line, w);
+      branchKpa[line.id] = drain.branchKpa;
+      branchFlowLpm[line.id] = drain.flowLpm;
+    }
+    next[line.id] = stepLineWater(line, w, inLpm, branchFlowLpm[line.id] ?? 0, dtS);
+  }
+  return { readings: { ...readings, branchKpa, branchFlowLpm }, waterL: next };
+}
+
+/**
  * Static sources after `dtS`: drawn by every truck's supplies on them, filled by open relays into
  * them. A dam with a capacity (a portable dam) overflows at it.
  */
@@ -287,7 +318,9 @@ function stepSources(
  * Advance the sim by `dtS` seconds. Pure and deterministic: returns new state, never mutates.
  * `inputs` apply to the active truck; other trucks keep their held inputs. Trucks are prepared
  * (engine, priming) in relay order, the whole site is solved (`solveSite`), each truck's slow
- * states move, and relay hoses are checked for over-pressure (`checkBursts`). Noise comes from each truck's own seeded PRNG stream, one draw per tick.
+ * states move (tank, lays filling or draining, temperature), and relay hoses are checked for
+ * over-pressure (`checkBursts`). Noise comes from each truck's own seeded PRNG stream, one draw per
+ * tick.
  */
 export function advance(state: SimState, inputs: PlayerInputs, dtS: number): SimState {
   const timeS = state.timeS + dtS;
@@ -298,11 +331,15 @@ export function advance(state: SimState, inputs: PlayerInputs, dtS: number): Sim
     prepared.set(truck.id, p.prepared);
     return p.input;
   });
+  const lineWaterL: Record<string, number> = {};
   const finished = state.trucks.map((truck) => {
     const p = prepared.get(truck.id);
-    const readings = site.readings.get(truck.id);
-    if (p === undefined || readings === undefined) throw new Error(`Truck '${truck.id}' unsolved`);
-    return finishTruck(state, p, readings, site.linkReadings, timeS, dtS);
+    const solved = site.readings.get(truck.id);
+    if (p === undefined || solved === undefined) throw new Error(`Truck '${truck.id}' unsolved`);
+    const lines = state.lines.filter((l) => l.truckId === truck.id);
+    const stepped = stepLines(lines, state.lineWaterL, solved, dtS);
+    Object.assign(lineWaterL, stepped.waterL);
+    return finishTruck(state, p, stepped.readings, site.linkReadings, timeS, dtS);
   });
   const valvesOf = (trucks: readonly TruckState[]) => (id: string) =>
     trucks.find((t) => t.id === id)?.inputs.valves ?? {};
@@ -325,6 +362,7 @@ export function advance(state: SimState, inputs: PlayerInputs, dtS: number): Sim
     ...state,
     timeS,
     trucks,
+    lineWaterL,
     sources: stepSources(state, trucks, site.linkReadings, dtS),
     links,
     linkReadings: site.linkReadings,

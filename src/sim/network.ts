@@ -10,6 +10,7 @@ import {
   VALVE_LOSS_REF_MM,
 } from './constants';
 import { hoseResistance } from './hose';
+import { fillingLoad, lineFill } from './lineFill';
 import {
   inletKpaFor,
   inletPaths,
@@ -87,6 +88,7 @@ export function dryReadings(
     recircLpm: 0,
     deliveryFlowLpm: Object.fromEntries(spec.deliveries.map((d) => [d.id, 0])),
     branchKpa: Object.fromEntries(lines.map((l) => [l.id, 0])),
+    branchFlowLpm: Object.fromEntries(lines.map((l) => [l.id, 0])),
     inletFlowLpm: Object.fromEntries(spec.inlets.map((i) => [i.id, 0])),
     inletCollapsed: Object.fromEntries(spec.inlets.map((i) => [i.id, false])),
     cavitation: 0,
@@ -109,6 +111,11 @@ export interface TruckSolveInput {
   relayIn?: readonly RelayFeed[];
   /** Relay hoses leaving this truck's deliveries. */
   relayOut?: readonly RelayOutlet[];
+  /**
+   * Water in each lay, L (`SimState.lineWaterL`). Omitted, every line is taken as full: the
+   * steady-state solve the calibration rows are written against.
+   */
+  lineWaterL?: Readonly<Record<string, number>>;
 }
 
 /** Root of a decreasing function on [lo, hi] by fixed-count bisection (deterministic). */
@@ -159,11 +166,19 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
       const delivery = spec.deliveries.find((d) => d.id === line.deliveryId);
       const valve = inputs.valves[line.deliveryId] ?? 0;
       if (delivery === undefined || valve < VALVE_CLOSED_EPS) return [];
+      const waterL = truck.lineWaterL?.[line.id];
+      if (waterL !== undefined && !lineFill(line, waterL).full) {
+        // Still filling: the valve, the wet length and the head to the front; the branch vents air.
+        const load = fillingLoad(line, waterL);
+        const r = valveLossCoeff(delivery.sizeMm) / (valve * valve) + load.hoseR;
+        return [{ deliveryId: line.deliveryId, line, r, headKpa: load.headKpa, filling: true }];
+      }
       const r = lineResistance(line, delivery, valve);
-      return [{ deliveryId: line.deliveryId, line, r, headKpa: HEAD_KPA_PER_M * line.elevationM }];
+      const headKpa = HEAD_KPA_PER_M * line.elevationM;
+      return [{ deliveryId: line.deliveryId, line, r, headKpa, filling: false }];
     }),
     ...(truck.relayOut ?? []).flatMap((o) =>
-      o.kind === 'open' ? [{ ...o, line: undefined }] : [],
+      o.kind === 'open' ? [{ ...o, line: undefined, filling: false }] : [],
     ),
   ];
   const fixed = (truck.relayOut ?? []).flatMap((o) => (o.kind === 'fixed' ? [o] : []));
@@ -238,10 +253,13 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
     spec.deliveries.map((x) => [x.id, 0]),
   );
   const branchKpa: Record<string, number> = Object.fromEntries(lines.map((l) => [l.id, 0]));
-  open.forEach(({ deliveryId, line }, i) => {
+  const branchFlowLpm: Record<string, number> = Object.fromEntries(lines.map((l) => [l.id, 0]));
+  open.forEach(({ deliveryId, line, filling }, i) => {
     const q = d.flows[i] ?? 0;
     deliveryFlowLpm[deliveryId] = (deliveryFlowLpm[deliveryId] ?? 0) + q;
-    if (line !== undefined) branchKpa[line.id] = branchPressureKpa(line.branch, q);
+    if (line === undefined || filling) return;
+    branchKpa[line.id] = branchPressureKpa(line.branch, q);
+    branchFlowLpm[line.id] = q;
   });
   for (const o of fixed)
     deliveryFlowLpm[o.deliveryId] = (deliveryFlowLpm[o.deliveryId] ?? 0) + o.flowLpm;
@@ -265,6 +283,7 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
     recircLpm: d.recircLpm,
     deliveryFlowLpm,
     branchKpa,
+    branchFlowLpm,
     inletFlowLpm,
     inletCollapsed,
     cavitation,

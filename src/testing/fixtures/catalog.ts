@@ -130,9 +130,14 @@ const SCENE_CAPTIONS = {
     'amber fill and an amber triangle; legend "Tank water" status amber with a triangle, ' +
     'ending "· low".',
   'tank-empty':
-    'As all-charged, but the tank is empty: every hose is dashed canvas (dry), no sprays, the ' +
-    'tank bar is dark with a red outline; legend says "Laid, dry" on every line and the tank ' +
-    'status is red with a diamond, "0 L of … · empty".',
+    'As all-charged, but the tank is empty: every hose still holds its water (ink casing, blue ' +
+    'core, no white streaks), no sprays, the tank bar is dark with a red outline; legend says ' +
+    '"Holding water" on every line and the tank status is red with a diamond, "0 L of … · empty".',
+  'line-filling':
+    'Tank attack, only the first line’s delivery open, charging from dry: that hose is ink casing ' +
+    'and blue core with white streaks from its coupling a little over half way along, ending in ' +
+    'a rounded front; beyond the front it is thin dashed canvas to a crew with no spray. Other ' +
+    'lines dashed canvas. Legend: first line "Filling · 5N %", others "Laid, dry".',
 } as const;
 
 export type SceneState = keyof typeof SCENE_CAPTIONS;
@@ -172,14 +177,15 @@ const SOURCE_CAPTIONS: Readonly<Record<SourceStateId, string>> = {
   'draught-priming':
     'Draughting scenario, primer held for 8 s with the suction inlet valve open: compound needle ' +
     'pulled into the grey vacuum sector (~−25 kPa), discharge and flow zero, rpm idle. Primer ' +
-    'RUNNING with its ring about a third lit. Scene: hard suction (ink and galvanised, no green ' +
-    'core) from the green suction coupling to a strainer in the dam; lines dry; legend "Suction · ' +
-    'Dam  Not primed · 4 m lift". No lamps lit.',
+    'RUNNING with its ring about a third lit. Scene: hard suction (ink and galvanised) from the ' +
+    'green suction coupling to a strainer in the dam, with a green water core rising from the ' +
+    'strainer part way up it, white streaks running up it towards the pump; lines dry; legend "Suction · Dam  Priming · water N of ' +
+    '4 m". No lamps lit.',
   'draught-working':
     'Draughting, primed: primer PRIMED with a green check and full green ring; suction inlet ' +
     'open; the first line’s delivery open at ~700 kPa discharge, compound ~−60 kPa (vacuum ' +
-    'sector). Scene: hard suction with a green water core into the dam, first line charged and ' +
-    'spraying; legend "Primed · ~630 L/min". No lamps lit.',
+    'sector). Scene: hard suction with a green water core into the dam and white streaks along ' +
+    'it, first line charged and spraying; legend "Primed · ~630 L/min". No lamps lit.',
   cavitating:
     'Draughting at full throttle with both lines open, run 3 s so the Wake fills: compound needle ' +
     'amber near −85 kPa (readout red: alarm band) with a small Wake fan; discharge ~760 kPa with a band either side; rpm at ' +
@@ -188,17 +194,19 @@ const SOURCE_CAPTIONS: Readonly<Record<SourceStateId, string>> = {
   hydrant:
     'Hydrant supply: suction inlet open, the first line open at ~700 kPa discharge; compound ' +
     'positive (~+150 kPa, right of the 0 break tick). Scene: red hydrant on the track below the ' +
-    'truck, green layflat from it to the suction coupling; legend "Hydrant  Charged · ~860 L/min". ' +
+    'truck, green layflat with white streaks from it to the suction coupling; legend "Hydrant  ' +
+    'Charged · ~860 L/min". ' +
     'Tank stays full. No lamps lit.',
   faults:
     'Tank attack, every delivery just slammed shut with the throttle still up: discharge ~700 kPa ' +
     'with no flow (churning), TEMP lamp red with a diamond (steady with a ring: reduced motion), ' +
     'HAMMER lamp amber with a triangle; messages "Pump hot…" and "Water hammer: Delivery 2 was ' +
-    'shut too fast…". Scene lines all dry.',
+    'shut too fast…". Scene: the first line holds its water (blue core, no streaks, no spray), ' +
+    'legend "Holding water"; the other line dry.',
   refilling:
     'Tank refill: hydrant to tank open (green handle, 100 %), every other valve shut, engine at ' +
     'idle; discharge and compound 0, tank ~840 L of 3 000 and rising. Supply lamp off. Scene: red ' +
-    'hydrant on the track, green charged layflat from it to the hydrant-to-tank coupling on the ' +
+    'hydrant on the track, green charged layflat with white streaks from it to the hydrant-to-tank coupling on the ' +
     'truck’s left side (forward of the suction coupling, which is capped); legend "Hydrant  ' +
     'Charged · ~1 030 L/min".',
 } as const;

@@ -1,7 +1,8 @@
 // Building a fireground state (ARCHITECTURE §4.8): trucks, lays, sources, supplies and relays.
 import { idleInputs, sanitiseInputs, validateInputs } from './appliances/controls';
-import { AMBIENT_C } from './constants';
+import { AMBIENT_C, VALVE_CLOSED_EPS } from './constants';
 import { DEFAULT_SEED } from './rng';
+import { hoseVolumeL } from './hose';
 import { validateSite } from './site';
 import type {
   ApplianceSpec,
@@ -65,12 +66,28 @@ export function warmStart(state: SimState): SimState {
   };
 }
 
+/**
+ * `state` with its lays (default: every one; otherwise those with ids in `lineIds`) full of water,
+ * as if already charged: for tests and fixtures about steady flow rather than the fill.
+ */
+export function chargeLines(state: SimState, lineIds?: readonly string[]): SimState {
+  const charged = state.lines.filter((l) => lineIds === undefined || lineIds.includes(l.id));
+  return {
+    ...state,
+    lineWaterL: {
+      ...state.lineWaterL,
+      ...Object.fromEntries(charged.map((l) => [l.id, hoseVolumeL(l.segments)])),
+    },
+  };
+}
+
 /** A pump at rest: not primed, no vacuum, primer rested, casing at ambient. */
 export function restingPump(): PumpState {
   return {
     primed: false,
     casingWet: false,
     vacuumKpa: 0,
+    suctionVacuumKpa: 0,
     primerRunS: 0,
     primerDutyS: 0,
     primerCutOut: false,
@@ -107,6 +124,7 @@ function restingReadings(spec: ApplianceSpec): TruckState['readings'] {
     recircLpm: 0,
     deliveryFlowLpm: zero(spec.deliveries),
     branchKpa: {},
+    branchFlowLpm: {},
     inletFlowLpm: zero(spec.inlets),
     inletCollapsed: Object.fromEntries(spec.inlets.map((i) => [i.id, false])),
     cavitation: 0,
@@ -158,11 +176,19 @@ export function siteState(
   if (activeTruckId === undefined || !trucks.some((t) => t.id === activeTruckId)) {
     throw new Error(`Site has no truck '${activeTruckId ?? ''}' to make active`);
   }
+  // A lay on a delivery the scenario leaves open has been flowing: it starts charged. The rest are dry.
+  const openAtStart = (line: HoseLine) => {
+    const t = trucks.find((x) => x.id === line.truckId);
+    return (t?.inputs.valves[line.deliveryId] ?? 0) >= VALVE_CLOSED_EPS;
+  };
   return {
     timeS: 0,
     activeTruckId,
     trucks,
     lines: structuredClone([...lines]),
+    lineWaterL: Object.fromEntries(
+      lines.map((l) => [l.id, openAtStart(l) ? hoseVolumeL(l.segments) : 0]),
+    ),
     sources,
     supplies,
     links,

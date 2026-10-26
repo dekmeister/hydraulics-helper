@@ -4,6 +4,7 @@ import {
   branchBand,
   branchKpa,
   hoseById,
+  hoseFlowLpm,
   resolveEngineSwitch,
   resolvePrimer,
   resolveValve,
@@ -69,7 +70,7 @@ function metrics(c: Condition, sim: SimState, player: string): Metric[] {
         {
           kind: 'flow',
           line: c.line,
-          lpm: t.readings.deliveryFlowLpm[hose.deliveryId] ?? 0,
+          lpm: hoseFlowLpm(sim, hose),
           ...range({
             ...(c.min === undefined ? {} : { min: c.min * scale }),
             ...(c.max === undefined ? {} : { max: c.max * scale }),

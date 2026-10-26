@@ -2,7 +2,15 @@
 import { VALVE_CLOSED_EPS } from '../constants';
 import { ignitionOn } from '../engineControl';
 import type { InstrumentKind, SimState, TruckState } from '../types';
-import { branchBand, branchKpa, hoseById, resolveValve, truckOf, workingFlowLpm } from './refs';
+import {
+  branchBand,
+  branchKpa,
+  hoseById,
+  hoseFlowLpm,
+  resolveValve,
+  truckOf,
+  workingFlowLpm,
+} from './refs';
 import type { Condition, GaugeId, Range } from './types';
 
 /** What the lesson knows beyond the sim state: whose truck, what's been acknowledged, done, fired. */
@@ -78,9 +86,8 @@ export function holds(c: Condition, state: SimState, facts: LessonFacts): boolea
     }
     case 'flow': {
       const hose = hoseById(state, c.line);
-      const t = hose === undefined ? undefined : truck(hose.truckId);
-      const q = t?.readings.deliveryFlowLpm[hose?.deliveryId ?? ''] ?? 0;
       if (hose === undefined) return false;
+      const q = hoseFlowLpm(state, hose);
       if (c.ofWorking !== true) return within(q, c);
       const working = workingFlowLpm(state, c.line);
       return working !== undefined && within(q / working, c);

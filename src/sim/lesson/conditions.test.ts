@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CAT1 } from '../appliances/cat1';
 import { TEST_APPLIANCE } from '../appliances/testAppliance';
-import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
+import { chargeLines, createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { layLine, run, tankAttackInputs } from '../testUtils';
 import type { ApplianceSpec, SimState } from '../types';
 import { holds, noFacts, validateCondition, type LessonFacts } from './conditions';
@@ -13,7 +13,9 @@ const P = DEFAULT_TRUCK_ID;
 function attack(spec: ApplianceSpec, throttle: number): SimState {
   const [d] = spec.deliveries;
   if (d === undefined) throw new Error('no delivery');
-  const state = createInitialState(spec, [{ ...layLine(d.id, '38L', 3, 15), id: 'line-38' }]);
+  const state = chargeLines(
+    createInitialState(spec, [{ ...layLine(d.id, '38L', 3, 15), id: 'line-38' }]),
+  );
   return run(state, tankAttackInputs(spec, throttle, [d.id]), 100);
 }
 

@@ -20,7 +20,7 @@ import {
   stepAndSettle,
   tapOrClick,
 } from '../panel';
-import { relayLay, tapTruck } from '../scene';
+import { relayLay, tapTruck, stepUntilCharged } from '../scene';
 import {
   compoundShown,
   inletOf,
@@ -52,6 +52,8 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
           1,
         );
       }
+      // Charge the attack lines at idle: empty hoses would out-draw the relay.
+      for (const line of lines) await stepUntilCharged(page, line.deliveryId);
       await dragThrottle(page, 0.6);
       await stepAndSettle(page, 150);
       expect(await compoundShown(page, spec)).toBeGreaterThan(RELAY_MIN_RESIDUAL_KPA);
@@ -97,6 +99,8 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
           1,
         );
       }
+      // Charge the attack lines at idle: empty hoses would out-draw the relay.
+      for (const line of lines) await stepUntilCharged(page, line.deliveryId);
       await dragThrottle(page, 0.6);
       await stepAndSettle(page, 150);
       await expect(relayLay(page, 'relay')).toHaveAttribute('data-state', 'charged');

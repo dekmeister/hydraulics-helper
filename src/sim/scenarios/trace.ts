@@ -9,7 +9,7 @@ function fmt(x: number, dp: number): string {
 
 interface Columns<T> {
   header: string[];
-  row: (sample: T) => string[];
+  row: (sample: T, state: SimState) => string[];
 }
 
 /** A truck's columns (ids from its spec and its lines), each header prefixed by `prefix`. */
@@ -37,8 +37,11 @@ function truckColumns(
       'vacuumKpa',
       'cavitation',
       'pumpTempC',
+      // Appended with line fill (issue #6): water at the branch and in the hose.
+      ...lineIds.map((id) => `branchLpm.${id}`),
+      ...lineIds.map((id) => `waterL.${id}`),
     ].map((h) => prefix + h),
-    row: (t) => {
+    row: (t, state) => {
       const r = t.readings;
       return [
         fmt(t.rpm, 0),
@@ -55,6 +58,8 @@ function truckColumns(
         fmt(t.pump.vacuumKpa, 1),
         fmt(r.cavitation, 2),
         fmt(t.pump.tempC, 1),
+        ...lineIds.map((id) => fmt(r.branchFlowLpm[id] ?? 0, 1)),
+        ...lineIds.map((id) => fmt(state.lineWaterL[id] ?? 0, 1)),
       ];
     },
   };
@@ -115,9 +120,9 @@ export function traceCsv(samples: readonly TraceSample[], lines: readonly HoseLi
     ...perTruck.flatMap(({ id, cols }) => {
       const t = multi ? state.trucks.find((x) => x.id === id) : truck;
       if (t === undefined) throw new Error(`No truck '${id}' in the trace`);
-      return cols.row(t);
+      return cols.row(t, state);
     }),
-    ...site.row(state),
+    ...site.row(state, state),
   ]);
   return [header, ...rows].map((row) => row.join(',')).join('\n') + '\n';
 }

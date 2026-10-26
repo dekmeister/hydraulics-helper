@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CAT1 } from './appliances/cat1';
 import { TICK_S } from './constants';
-import { advance, createIdleInputs, createInitialState } from './engine';
+import { advance, chargeLines, createIdleInputs, createInitialState } from './engine';
 import { lineOnEveryDelivery, run, tankAttackInputs, truckOf } from './testUtils';
 
 describe('createInitialState', () => {
@@ -35,7 +35,7 @@ describe('advance', () => {
 
   it('drains the tank by the delivered flow', () => {
     const s0 = run(
-      createInitialState(CAT1, lineOnEveryDelivery(CAT1)),
+      chargeLines(createInitialState(CAT1, lineOnEveryDelivery(CAT1))),
       tankAttackInputs(CAT1, 0.5, ['d2']),
       50,
     );

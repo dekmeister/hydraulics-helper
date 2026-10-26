@@ -83,6 +83,18 @@ export function workingFlowLpm(state: SimState, line: string): number | undefine
     : branchFlowLpm(lay.branch, band.targetKpa);
 }
 
+/**
+ * Water a hose delivers now, L/min: a lay's branch flow (nothing until it has charged), or what a
+ * relay's delivery sends down it. 0 for an unknown hose.
+ */
+export function hoseFlowLpm(state: SimState, hose: HoseLine | RelayLink): number {
+  const truck = state.trucks.find((t) => t.id === hose.truckId);
+  const isLay = state.lines.some((l) => l.id === hose.id);
+  return isLay
+    ? (truck?.readings.branchFlowLpm[hose.id] ?? 0)
+    : (truck?.readings.deliveryFlowLpm[hose.deliveryId] ?? 0);
+}
+
 /** Pressure at the branch on `line` now, kPa (0 for an unknown line). */
 export function branchKpa(state: SimState, line: string): number {
   const lay = state.lines.find((l) => l.id === line);

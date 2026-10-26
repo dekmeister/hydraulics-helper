@@ -95,6 +95,16 @@ Table 4 is reproduced by one figure, the inlet pressure the pump cavitates at: t
 
 Not yet asserted (it needs a later milestone): C15 open-water capacity (M6).
 
+### Filling hoses (issues #6, #8; asserted in `lineFill.test.ts`, `priming.test.ts`)
+
+| # | Setup | Expected | Sim | Basis |
+|---|---|---|---|---|
+| F1 | Cat 1 on tank, throttle 0.5, one 30 m length of 38 mm (34 L) from dry | fills when ∫Q dt = V; no branch flow before; steady C-row values after | to ±1 tick | conservation |
+| F2 | Prime at 4 m on 2 × 3 m of 65 mm hard suction | Cat 1 ≈ 14 s, Cat 7 ≈ 30 s | 13.9 / 30.4 (±0.5) | placeholder targets |
+
+* **Delivery lines** hold water (`SimState.lineWaterL`), conserved each tick: in through the delivery, out by the branch. While filling, the pump sees the valve, friction of the wet length only and the head up to the front; the branch vents air (orifice loss ∝ density, air ~1/830 of water), so no branch term. Full, the line solves as before. With nothing coming in, a downhill line drains through its branch under the head of the water left in it; a flat or uphill line keeps its water. In the traces: 3 × 38 mm (102 L) charges in ~14–18 s, 3 × 65 mm (299 L) in ~20 s; afterwards every reading matches the old steady values, except that the water now held in the hoses has come out of the tank or dam (tank attack runs dry at t = 239 s instead of 250).
+* **Hard suction**: the water stands vacuum/10 m up it (`suctionWaterFraction`). The primer's air balance counts the air the rising column squeezes (isothermal: `(V_air + p·V_hose/(10·lift))·dp/dt = −p·D`, `ATMOSPHERIC_KPA` = 101.3), which roughly doubles the time to prime at a given displacement; the displacements were re-tuned to keep F2 (Cat 1 1.5 → 2.9 L/s, Cat 7 0.6 → 1.3 L/s, test appliance 1 → 2 L/s). At the open relay's 1 m lift the column fills the suction at low vacuum, so the attack pump catches about a second later than before.
+
 ### Relay (asserted in `relay.test.ts`)
 
 | # | Setup | Manual | Sim | Source |
@@ -142,7 +152,7 @@ These are the manual's gauge-response rules (L3379–3386, L3504–3511):
 | Pump to tank | Blue lever above the suction inlet: a valved return from the discharge into the tank, ~500 L/min at 700 kPa (k = 2.8e-3 kPa/(L/min)²), 38 mm | function doctrine-confirmed (Dek, 2026-10-25); size and loss PLACEHOLDER — needs Dek #34 |
 | Hydrant to tank | 65 mm coupling with a green lever on the side of the truck, straight into the tank past the pump; 30 kPa at 1000 L/min through it, water climbs 2 m into the tank | function and size doctrine-confirmed (Dek, 2026-10-25); loss, fill height and position PLACEHOLDER — needs Dek #35 |
 | Cavitation inlet pressure | −84 kPa (the Table 4 fit for a generic pump) | PLACEHOLDER — needs Dek (the Cat 1 pump's own) |
-| Primer performance | best vacuum 80 kPa (primes to just under 8 m), 1.5 L/s of air (≈ 15 s at 4 m on 6 m of hard suction) | PLACEHOLDER — needs Dek |
+| Primer performance | best vacuum 80 kPa (primes to just under 8 m), 2.9 L/s of air (≈ 14 s at 4 m on 6 m of hard suction, counting the rising column; was 1.5 L/s before it was counted) | PLACEHOLDER — needs Dek |
 | Casing volume / churn heat | 10 L; 10 kW at max rpm (≈ 4–5 min churning to the amber lamp at 0.8 throttle) | PLACEHOLDER — needs Dek |
 
 **Tank-attack trace** (`src/sim/scenarios/__traces__/tank-attack.cat1-generic.csv`): a 38 mm line, 3 × 30 m, 15 mm branch on d2; a 65 mm line, 3 × 30 m, 20 mm branch on d1.
@@ -153,7 +163,7 @@ These are the manual's gauge-response rules (L3379–3386, L3504–3511):
 | Second line opened, throttle 0.6 | 471 kPa (sag 198) | 227 / 514 L/min | 229 / 371 kPa |
 | Throttle 0.8 | 687 kPa | 274 / 620 L/min | 334 / 541 kPa |
 
-The tank runs dry at t = 250 s, and every gauge then drops to zero. M4 appended columns (per-inlet flow, primed, vacuum, cavitation, pump temperature); the earlier columns are unchanged.
+The tank runs dry at t = 239 s (250 before lines held water, issue #6), and every gauge then drops to zero. M4 appended columns (per-inlet flow, primed, vacuum, cavitation, pump temperature); the earlier columns are unchanged.
 
 **Hydrant trace** (`hydrant-supply.cat1-generic.csv`): 400 kPa hydrant, 2 × 30 m 65 mm layflat; a 65 mm line with a 25 mm branch, then a 38 mm line. At throttle 0.4: compound +233 kPa, discharge 474. Both lines, full throttle: over-run, compound 0, 1090 L/min, cavitation 0.35; throttle 0.5 recovers (compound +148).
 
@@ -190,7 +200,7 @@ From Dek's photos (`Resources/Photos/Cat7_*`, 2026-10-25): the pump's own panel,
 | Pump to tank | Ball valve from the discharge up into the tank; 25 mm, ~200 L/min at 700 kPa | function doctrine-confirmed (diagram); size and loss PLACEHOLDER — needs Dek |
 | Tank recirculation (`recirc`) | The 3-way valve at TANK RECIRC: a bleed through a check valve into the tank, ~30 L/min at 700 kPa, always flowing | function doctrine-confirmed (diagram, tag on the pump); flow PLACEHOLDER — needs Dek (row 38) |
 | Relief | None fitted | doctrine-confirmed (photos, diagram) |
-| Primer | Hand diaphragm (`diaphragm`), the red pump with a long handle left of the outlets; best vacuum 75 kPa, 0.6 L/s | that it is the primer and its performance PLACEHOLDER — needs Dek |
+| Primer | Hand diaphragm (`diaphragm`), the red pump with a long handle left of the outlets; best vacuum 75 kPa, 1.3 L/s (≈ 30 s at 4 m; was 0.6 before the rising column was counted) | that it is the primer and its performance PLACEHOLDER — needs Dek |
 | Cavitation inlet pressure | −84 kPa (the generic Table 4 fit); the placard's −80 kPa is drawn red on the compound | PLACEHOLDER — needs Dek |
 | Casing volume / churn heat | 4 L; 5 kW at max rpm | PLACEHOLDER — needs Dek |
 | Gauge scales | compound −100…1600, pressure 0–1600 kPa (the fitted faces), compound red past −80 (placard), no tacho | doctrine-confirmed (photo) |
@@ -259,3 +269,5 @@ Recirculation takes 24–28 L/min throughout. Against the Cat 1 (669 kPa and 270
 41. **Source tags for photo-read figures**: facts read off the Cat 7 photos (no relief valve, the dial faces, the 3600 r/min placard) carry `// doctrine-confirmed (photo)`. They are observations of one truck, not doctrine. Should they get their own tag (e.g. `// photo-read`), with CLAUDE.md rule 3 updated to match?
 42. **Engine start and stop** (issue #19): cranking 1.5 s at 200 rpm (Cat 1) / 1.2 s at 300 rpm (Cat 7) before it fires; with STOP held the engine runs down with τ 0.8 s / 0.5 s and is stopped below 400 / 600 rpm (let go above that and it picks up again); a diesel stops dead below a tenth of idle (`ENGINE_AT_REST_FRACTION_OF_IDLE`). Real crank times, how long STOP must be held, and the speed below which letting go no longer restarts it? Does a cold engine need a preheat step (not modelled)?
 43. **Primer and the engine** (issue #19, also in `docs/BACKLOG.md`): priming is independent of the engine. The manual calls the Cat 1's rotary vane primer electric (L1853–1908), which suggests it needs only the ignition, but is it engine-driven on our trucks, so no prime with the engine stopped?
+44. **Line filling simplifications** (issue #6, `sim/lineFill.ts`): (a) no fluid inertia: the front moves at the quasi-steady flow (ρ·L·v/Δp ≲ 0.6 s on 120 m of 38 mm, against fills of 10–40 s); (b) plug flow, no water running ahead under the air at low flow; (c) **no surge when the front reaches the branch**: the column decelerating at the orifice gives a real spike, not modelled (and not counted as water hammer); how big is it on a 38 mm line at working pressure, and should it be taught?; (d) the branch is always open (a shut branch would fill by compressing the trapped air); (e) water leaves a line only by its branch, under its own head: a flat or uphill line shut down keeps its water, and nothing runs back through a stopped pump. Does a shut-down layflat on the flat really hold most of its water? An empty hose takes all a pump gives, so charging at working revs runs a draught, hydrant or relay out (the ladder's solutions now charge at idle, and the incident eases its second line on). Is that the doctrine you'd teach?
+45. **Suction column** (issue #8, `sim/priming.ts`): the hard suction is taken to rise evenly over the lift from the strainer; shutting the suction valve traps the column (`PumpState.suctionVacuumKpa`, leaking as slowly as a sound pump's vacuum), and reopening it mixes the hose's air with the casing's, isothermally by volume, so the column settles to the shared vacuum; the primer displacements are re-tuned to keep the old prime times (F2), so the times are still the placeholders to confirm (row 15).

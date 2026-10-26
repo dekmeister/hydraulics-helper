@@ -76,7 +76,7 @@ describe.each([CAT1, TEST_APPLIANCE])('effects on $id', (spec) => {
     expect(line?.elevationM).toBe(10);
     const d = line?.deliveryId ?? '';
     const inputs = tankAttackInputs(spec, 0.6, [d]);
-    const kpa = (s: SimState) => run(s, inputs, 50).trucks[0]?.readings.branchKpa['line-1'] ?? 0;
+    const kpa = (s: SimState) => run(s, inputs, 300).trucks[0]?.readings.branchKpa['line-1'] ?? 0;
     expect(kpa(moved)).toBeLessThan(kpa(before) - 50);
   });
 

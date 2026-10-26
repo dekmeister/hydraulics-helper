@@ -11,7 +11,13 @@ import {
   RELAY_MIN_RESIDUAL_KPA,
   STANDARD_LENGTH_M,
 } from './constants';
-import { createIdleInputs, createSiteState, switchTruck, type TruckSetup } from './engine';
+import {
+  chargeLines,
+  createIdleInputs,
+  createSiteState,
+  switchTruck,
+  type TruckSetup,
+} from './engine';
 import { hoseResistance } from './hose';
 import { valveLossCoeff } from './network';
 import { relayEndKpa, relayOrder } from './relay';
@@ -399,14 +405,16 @@ function openRelay(
     to,
   };
   const tankIn = base.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
-  const state = createSiteState(
-    [receiver, { id: 'base', spec: base, inputs: inputsWith(throttle, [...tankIn, out]) }],
-    receiver.spec.deliveries.map((d) => ({
-      ...layLine(d.id, '38L', 2, 15),
-      id: `attack-${d.id}`,
-      truckId: 'attack',
-    })),
-    { links: [link], sources, supplies },
+  const state = chargeLines(
+    createSiteState(
+      [receiver, { id: 'base', spec: base, inputs: inputsWith(throttle, [...tankIn, out]) }],
+      receiver.spec.deliveries.map((d) => ({
+        ...layLine(d.id, '38L', 2, 15),
+        id: `attack-${d.id}`,
+        truckId: 'attack',
+      })),
+      { links: [link], sources, supplies },
+    ),
   );
   return { state, link, out };
 }
