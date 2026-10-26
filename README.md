@@ -60,3 +60,7 @@ Where to read next:
 - [`docs/TESTING.md`](docs/TESTING.md): the testing approach, fixtures and the screenshot review loop.
 - [`Design/`](Design/README.md): the visual design spec, tokens and reference art.
 - [`CLAUDE.md`](CLAUDE.md): working rules for AI coding agents on this repo (also a decent summary of the house rules for anyone).
+
+## License
+
+[MIT](LICENSE).
