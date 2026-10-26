@@ -67,6 +67,17 @@ export const CAT7: ApplianceSpec = {
       // 10 kPa at 400 L/min through the valve, check valve and strainer. // PLACEHOLDER — needs Dek
       lossKpaPerLpm2: 10 / 400 ** 2,
     },
+    {
+      // Hydrant to tank: a coupling and valve straight into the tank past the pump (Dek,
+      // 2026-10-27). // function doctrine-confirmed
+      id: 'hydrant-to-tank',
+      label: 'Hydrant to tank',
+      kind: 'tankFill',
+      sizeMm: 65, // hydrant connections are always 65 mm (Dek, 2026-10-27) // doctrine-confirmed
+      // 60 kPa at 400 L/min through the valve and the pipe up into the tank. // PLACEHOLDER — needs Dek
+      lossKpaPerLpm2: 60 / 400 ** 2,
+      fillHeightM: 1.5, // coupling to the top of the tank // PLACEHOLDER — needs Dek
+    },
   ],
   deliveries: [
     // Two outlets with blue ball-valve levers on the manifold (photos). Size from the couplings:

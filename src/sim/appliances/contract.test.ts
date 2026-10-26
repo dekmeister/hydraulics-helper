@@ -2,17 +2,12 @@
 // with a different shape, must pass these. Generic behaviour belongs here, not in per-truck tests.
 import { describe, expect, it } from 'vitest';
 import { BRANCH_OPTIMUM_KPA, HOSES, PUMP_TEMP_CAUTION_C, TICK_S } from '../constants';
-import {
-  DEFAULT_TRUCK_ID,
-  createIdleInputs,
-  createInitialState,
-  switchTruck,
-  type SiteOptions,
-} from '../engine';
+import { createIdleInputs, createInitialState, switchTruck } from '../engine';
 import {
   closedRelayPair,
   draughtSite,
   expectSane,
+  hydrantFillSite,
   hydrantSite,
   inputsWith,
   layLine,
@@ -413,31 +408,83 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
 
     const fill = spec.inlets.find((i) => i.kind === 'tankFill')?.id;
 
-    it.runIf(fill !== undefined && spec.tank !== undefined)(
-      'a tank-fill inlet refills the tank from a hydrant with the pump idle',
-      () => {
-        const site: SiteOptions = {
-          sources: [
-            { id: 'h', kind: 'hydrant', label: 'H', staticKpa: 400, mainLossKpaPerLpm2: 1e-4 },
-          ],
-          supplies: [
-            {
-              id: 'fill',
-              truckId: DEFAULT_TRUCK_ID,
-              inletId: fill ?? '',
-              sourceId: 'h',
-              segments: [{ hose: '65L', lengthM: 30 }],
-            },
-          ],
-        };
-        let s = createInitialState(spec, [], site);
-        s = { ...s, trucks: s.trucks.map((t) => ({ ...t, tankL: 0 })) };
-        s = run(s, inputsWith(0, [fill ?? '']), 300);
-        expect(truckOf(s).tankL).toBeGreaterThan(0);
+    describe.runIf(fill !== undefined && spec.tank !== undefined)('hydrant to tank', () => {
+      const id = fill ?? '';
+      const capacityL = spec.tank?.capacityL ?? 0;
+      const fillState = (
+        tankL: number,
+        lines: HoseLine[] = [],
+        engine: 'off' | 'running' = 'off',
+      ) => {
+        const s = createInitialState(spec, lines, { ...hydrantFillSite(spec), engine });
+        return { ...s, trucks: s.trucks.map((t) => ({ ...t, tankL })) };
+      };
+      const valve = (open: number, extra: Record<string, number> = {}): PlayerInputs => ({
+        throttle: 0,
+        valves: { [id]: open, ...extra },
+        switches: {},
+      });
+      const fillLpm = (s: ReturnType<typeof fillState>) =>
+        truckOf(s).readings.inletFlowLpm[id] ?? 0;
+
+      it('fills nothing while shut', () => {
+        const s = run(fillState(100), valve(0), 300);
+        expect(fillLpm(s)).toBe(0);
+        expect(truckOf(s).tankL).toBe(100);
+      });
+
+      it('fills the tank with the engine off and the pump dry; half open fills slower', () => {
+        const full = run(fillState(0), valve(1), 100);
+        const half = run(fillState(0), valve(0.5), 100);
+        expect(fillLpm(full)).toBeGreaterThan(fillLpm(half));
+        expect(fillLpm(half)).toBeGreaterThan(0);
+        expect(truckOf(full).tankL).toBeGreaterThan(truckOf(half).tankL);
+        expect(truckOf(full).readings.pumpFlowLpm).toBe(0);
+        expect(truckOf(full).rpm).toBe(0);
+        expectSane(full);
+      });
+
+      it('stops the next tick it is shut, and fills again when reopened', () => {
+        const open = run(fillState(0), valve(1), 50);
+        const shut = run(open, valve(0), 1);
+        expect(fillLpm(shut)).toBe(0);
+        const held = run(shut, valve(0), 100);
+        expect(truckOf(held).tankL).toBe(truckOf(shut).tankL);
+        const reopened = run(held, valve(1), 1);
+        expect(fillLpm(reopened)).toBeCloseTo(fillLpm(open), 6);
+        expect(truckOf(reopened).tankL).toBeGreaterThan(truckOf(held).tankL);
+      });
+
+      it('overflows a full tank rather than overfilling it', () => {
+        const s = run(fillState(capacityL), valve(1), 300);
+        expect(fillLpm(s)).toBeGreaterThan(0);
+        expect(truckOf(s).tankL).toBe(capacityL);
+      });
+
+      it('never feeds the pump: with tank to pump shut a delivery stays dry', () => {
+        const d = spec.deliveries[0]?.id ?? '';
+        const lines = [layLine(d, '38L', 2, 15)];
+        const s = run(fillState(0, lines, 'running'), inputsWith(0.6, [id, d]), 300);
+        expect(fillLpm(s)).toBeGreaterThan(0);
         expect(truckOf(s).readings.pumpFlowLpm).toBe(0);
-        expectSane(s);
-      },
-    );
+      });
+
+      it.runIf(tankInlets.length > 0)(
+        'with tank to pump open, the tank changes by what goes in less what the pump draws',
+        () => {
+          const d = spec.deliveries[0]?.id ?? '';
+          const inputs = tankAttackInputs(spec, 0.6, [id, d]);
+          const lines = [layLine(d, '38L', 2, 15)];
+          const settled = run(fillState(capacityL / 2, lines, 'running'), inputs, 300);
+          const before = truckOf(settled);
+          const after = truckOf(run(settled, inputs, Math.round(10 / TICK_S)));
+          const draw = tankInlets.reduce((q, i) => q + (before.readings.inletFlowLpm[i] ?? 0), 0);
+          expect(draw).toBeGreaterThan(50);
+          // 10 s at steady flows, L/min ÷ 6.
+          expect(after.tankL - before.tankL).toBeCloseTo((fillLpm(settled) - draw) / 6, -1);
+        },
+      );
+    });
 
     it.runIf(spec.recirc !== undefined && tankInlets.length > 0)(
       'its recirculation keeps it below the temperature lamp churning at full rpm, every delivery shut',

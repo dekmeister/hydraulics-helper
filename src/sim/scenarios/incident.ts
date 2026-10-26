@@ -15,11 +15,11 @@ const SECOND: LineDef = { id: 'line-2', hose: '65L', lengths: 3, tipMm: 20, ligh
 const UPHILL_M = 10;
 
 const LESSON: LessonDef = {
-  ladder: 7,
+  ladder: 8,
   brief:
     'A full incident on the tank. Crew 1 starts on a 38 mm line, then moves up the slope; a ' +
-    'second crew runs out {hose:line-2}; and when a hydrant is connected you change over before the tank ' +
-    'runs dry. Listen to the radio and keep both crews in water.',
+    'second crew runs out {hose:line-2}; and when a hydrant is connected you open it into the tank ' +
+    'before the tank runs dry. Listen to the radio and keep both crews in water.',
   objectives: [
     {
       id: 'attack',
@@ -57,14 +57,13 @@ const LESSON: LessonDef = {
     {
       id: 'changeover',
       text:
-        'Change over to the hydrant before the tank runs dry: open the suction inlet, then shut ' +
-        'tank-to-pump. Keep both crews in water for 20 s.',
+        'Open hydrant to tank before the tank runs dry; leave tank to pump open. Keep both crews ' +
+        'in water for 20 s.',
       when: {
         kind: 'all',
         of: [
           { kind: 'since', event: 'hydrant', s: 1 },
-          { kind: 'valve', valve: { inlet: 'suction' }, min: 0.9 },
-          { kind: 'valve', valve: { inlet: 'tank' }, max: 0 },
+          { kind: 'valve', valve: { inlet: 'tankFill' }, min: 0.9 },
           { kind: 'flow', line: FIRST.id, min: 50 },
           { kind: 'flow', line: SECOND.id, min: 50 },
         ],
@@ -113,6 +112,7 @@ const LESSON: LessonDef = {
           supply: {
             id: 'hydrant-line',
             sourceId: 'hydrant',
+            inlet: 'tankFill',
             segments: [
               { hose: '65L', lengthM: STANDARD_LENGTH_M },
               { hose: '65L', lengthM: STANDARD_LENGTH_M },
@@ -122,17 +122,17 @@ const LESSON: LessonDef = {
       ],
       radio: {
         from: 'OIC',
-        text: 'Hydrant’s connected to your suction inlet. Change over before the tank runs dry.',
+        text: 'Hydrant’s connected to your hydrant-to-tank inlet. Open it before the tank runs dry.',
       },
     },
   ],
 };
 
-/** Ladder step 7: a full incident driven by events (ARCHITECTURE §5). */
+/** Ladder step 8: a full incident driven by events (ARCHITECTURE §5). */
 export const INCIDENT: Scenario = {
   id: 'incident',
-  title: 'Full incident: crews move, a line goes in, change over to a hydrant',
-  requires: { tank: true, suction: true, minDeliveries: 2 },
+  title: 'Full incident: crews move, a line goes in, a hydrant tops up the tank',
+  requires: { tank: true, tankFill: true, minDeliveries: 2 },
   build(spec) {
     const lines = attachLines(spec, [FIRST]);
     return {
@@ -156,9 +156,7 @@ export const INCIDENT: Scenario = {
     { gate: SECOND.id },
     { until: { kind: 'objective', objective: 'second' }, maxS: 120 },
     { wait: 2 },
-    { open: { inlet: 'suction' } },
-    { wait: 2 },
-    { ease: { inlet: 'tank' }, to: 0, overS: 3 },
+    { open: { inlet: 'tankFill' } },
     { until: { kind: 'objective', objective: 'changeover' }, maxS: 90 },
     ...shutDown([FIRST.id, SECOND.id]),
   ],

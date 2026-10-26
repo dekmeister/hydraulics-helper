@@ -11,7 +11,8 @@ const LEVER_U = 128;
  * recirculation line and the 3-way valve on top, then the strainer into the eye, where the tank
  * feed (from above) and the suction (from the coupling below) meet. Levers swing in the drawing's
  * plane: across the pipe is shut, along it open. The tank's sight tube sits beside the panel:
- * where the Cat 7 shows its level isn't in the photos (CALIBRATION needs Dek 40).
+ * where the Cat 7 shows its level isn't in the photos (CALIBRATION needs Dek 40). Hydrant to tank
+ * is off the bay, in an inset; where it sits on the Cat 7 isn't in the photos either.
  */
 export const CAT7_REALISTIC: RealisticLayout = {
   applianceId: 'cat7-generic',
@@ -192,6 +193,40 @@ export const CAT7_REALISTIC: RealisticLayout = {
             coupling: { x: x - 70, y: 350, w: 140, h: 140 },
           };
         }),
+      ],
+    },
+    {
+      id: 'side',
+      caption: 'Side of truck',
+      viewBox: { w: 500, h: 300 },
+      place: 'inset',
+      art: [
+        {
+          kind: 'pipe',
+          d: 'M90 190 H230',
+          widthU: 34,
+          water: { at: 'inlet', id: 'hydrant-to-tank', side: 'source' },
+        },
+        {
+          kind: 'pipe',
+          d: 'M230 190 H500',
+          widthU: 34,
+          water: { at: 'inlet', id: 'hydrant-to-tank', side: 'pump' },
+        },
+        { kind: 'flange', x: 494, y: 190, widthU: 34, along: 'h' },
+        { kind: 'coupling', cx: 90, cy: 190, r: 60 },
+        { kind: 'text', x: 430, y: 150, text: 'TO TANK' },
+        { kind: 'plate', x: 280, y: 262, text: 'HYDRANT TO TANK' },
+      ],
+      items: [
+        {
+          kind: 'lever',
+          control: 'hydrant-to-tank',
+          pivot: { x: 230, y: 190 },
+          shutDeg: 0,
+          openDeg: 90,
+          lengthU: LEVER_U,
+        },
       ],
     },
   ],

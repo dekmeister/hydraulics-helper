@@ -18,7 +18,7 @@ const LIFT_M = 4;
 const DAM_L = 200_000;
 
 const LESSON: LessonDef = {
-  ladder: 4,
+  ladder: 5,
   brief:
     'No hydrant here: you draught from a farm dam 4 m below the pump through hard suction. Prime ' +
     'with the deliveries shut, then supply two lines. The compound now reads vacuum, and the lift ' +

@@ -87,6 +87,13 @@ export const CAT7_LAYOUT: PanelLayout = {
           tap: 'toggle',
         },
         { kind: 'primer', control: 'primer', label: 'Hand primer' },
+        {
+          kind: 'valve',
+          control: 'hydrant-to-tank',
+          label: 'Hydrant to tank',
+          function: 'inlet',
+          tap: 'toggle',
+        },
       ],
     },
     {

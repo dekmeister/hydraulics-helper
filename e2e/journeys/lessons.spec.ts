@@ -10,11 +10,9 @@ import {
   branchKpa,
   gateBranch,
   getLesson,
-  lineFlow,
   nudgeThrottle,
   objectiveDone,
   playUntil,
-  presses,
   shutDownLesson,
   startButton,
   trimBranch,
@@ -55,7 +53,7 @@ async function deliveryOf(page: Page, line: string) {
   return { id, valve: await valveFor(page, id) };
 }
 
-async function inlet(page: Page, kind: 'tank' | 'suction', testInfo: TestInfo) {
+async function inlet(page: Page, kind: 'tank' | 'suction' | 'tankFill', testInfo: TestInfo) {
   const spec = activeTruckOf(await getState(page)).spec;
   const valve = await valveFor(page, inletOfKind(spec, kind));
   await valve.scrollIntoViewIfNeeded();
@@ -186,36 +184,32 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
   await shutDownLesson(page, [small.valve, big.valve]);
   await expectPassedDebrief(page);
 
-  // 3, from the debrief: water from the hydrant without over-running it.
+  // 3, from the debrief: the hydrant fills the tank while two lines work off it.
   await page.getByRole('button', { name: 'Next scenario' }).click();
-  await expect(dock(page)).toContainText('Take water from the hydrant');
+  await expect(dock(page)).toContainText('Open hydrant to tank');
+  await inlet(page, 'tankFill', testInfo);
   await startEngine(page);
-  await inlet(page, 'suction', testInfo);
-  const attack = await deliveryOf(page, 'line-65');
-  await dragValve(page, attack.valve, 1);
-  await dragThrottle(page, 0.3);
-  const compound = (s: Awaited<ReturnType<typeof getState>>) =>
-    activeTruckOf(s).readings.compoundKpa;
-  // Push the 65 mm line hard, watching the compound for the hydrant's reserve.
-  await playUntil(
-    page,
-    (p) => objectiveDone(p, 'reserve'),
-    async (s) => {
-      if (lineFlow(s, 'line-65') < 730 && compound(s) > 140) await nudgeThrottle(page, 4);
-      else if (compound(s) < 120) await nudgeThrottle(page, -3);
-    },
-  );
-  const second = await deliveryOf(page, 'line-38');
-  await dragValve(page, second.valve, 1);
+  await inlet(page, 'tank', testInfo);
+  const small3 = await deliveryOf(page, 'line-38');
+  const big3 = await deliveryOf(page, 'line-65');
+  await dragValve(page, small3.valve, 1);
+  await dragValve(page, big3.valve, 1);
+  await dragThrottle(page, 0.7);
+  const big3Name = (await big3.valve.getAttribute('aria-label')) ?? '';
   await playUntil(
     page,
     (p) => objectiveDone(p, 'both'),
     async (s) => {
-      if (compound(s) < 75) await nudgeThrottle(page, presses(compound(s) - 90, 8));
-      else if (lineFlow(s, 'line-38') < 220 && compound(s) > 100) await nudgeThrottle(page, 2);
+      await trimBranch(page, s, 'line-38');
+      await gateBranch(page, s, 'line-65', big3Name);
     },
+    150,
   );
-  await shutDownLesson(page, [attack.valve, second.valve]);
+  // Both branches in band, the hydrant keeps up: the tank is rising.
+  const tankBefore = activeTruckOf(await getState(page)).tankL;
+  await stepAndSettle(page, 50);
+  expect(activeTruckOf(await getState(page)).tankL).toBeGreaterThan(tankBefore);
+  await shutDownLesson(page, [small3.valve, big3.valve]);
   await expectPassedDebrief(page);
 
   // Back on the menu, and after a reload: 2 and 3 passed; 1, never tried, is up next.
@@ -226,7 +220,8 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
     await expect(card('first-line')).toContainText('Not tried yet');
     await expect(card('first-line')).toContainText('Next up');
     await expect(card('tank-attack')).toContainText('Passed');
-    await expect(card('hydrant-supply')).toContainText('Passed');
+    await expect(card('hydrant-tank')).toContainText('Passed');
+    await expect(card('hydrant-supply')).toContainText('Not tried yet');
     await expect(card('draughting')).toContainText('Not tried yet');
   }
 });

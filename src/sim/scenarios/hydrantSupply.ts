@@ -38,9 +38,11 @@ const BOTH_65_OF_WORKING = 0.45;
 const BOTH_38_OF_WORKING = 0.71;
 
 const LESSON: LessonDef = {
-  ladder: 3,
+  ladder: 4,
   brief:
-    'A hydrant feeds your suction inlet through two lengths of 65 mm. On a hydrant the compound ' +
+    'Usually a hydrant fills the tank. Sometimes, as in village firefighting on a good main, it ' +
+    'goes straight into the pump instead: here it feeds your suction inlet through two lengths ' +
+    'of 65 mm. Pumping direct from a hydrant the compound ' +
     'gauge reads positive: the higher it sits, the more water the hydrant has left. Take as much ' +
     'as the crews need without over-running it.',
   objectives: [
@@ -92,7 +94,7 @@ const LESSON: LessonDef = {
 
 export const HYDRANT_SUPPLY: Scenario = {
   id: 'hydrant-supply',
-  title: 'Hydrant supply: two lengths of 65 mm to the suction inlet',
+  title: 'Hydrant to suction: pumping direct from the main',
   requires: { tank: false, suction: true, minDeliveries: LINES.length },
   build(spec) {
     const lines = attachLines(spec, LINES);

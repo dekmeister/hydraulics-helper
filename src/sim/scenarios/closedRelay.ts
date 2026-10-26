@@ -49,7 +49,7 @@ const REPAIR_S = 30;
 const RESIDUAL = { kind: 'gauge', gauge: 'compound', min: RELAY_MIN_RESIDUAL_KPA } as const;
 
 const LESSON: LessonDef = {
-  ladder: 5,
+  ladder: 6,
   brief:
     'A base pump at the farm dam pushes water 20 m up four lengths of 65 mm into your suction ' +
     'inlet. In a closed relay your compound shows the pressure left at the end of the relay hose: ' +
@@ -112,7 +112,7 @@ const LESSON: LessonDef = {
 };
 
 /**
- * Closed relay uphill (ARCHITECTURE §5 ladder step 5): a base pump already primed at the dam
+ * Closed relay uphill (ARCHITECTURE §5 ladder step 6): a base pump already primed at the dam
  * pushes water 20 m up 4 lengths of 65 mm into the attack pump's suction inlet. The player opens
  * the relay inlet and two lines, keeps the compound above 100 kPa residual, over-runs the relay at
  * full throttle (inlet zero, hose soft) and recovers.

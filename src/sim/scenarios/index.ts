@@ -8,6 +8,7 @@ import { CLOSED_RELAY } from './closedRelay';
 import { DRAUGHTING } from './draughting';
 import { FIRST_LINE } from './firstLine';
 import { HYDRANT_SUPPLY } from './hydrantSupply';
+import { HYDRANT_TANK } from './hydrantTank';
 import { INCIDENT } from './incident';
 import { OPEN_RELAY } from './openRelay';
 import { TANK_ATTACK } from './tankAttack';
@@ -21,6 +22,7 @@ export { APPLIANCES };
 export const SCENARIOS: readonly Scenario[] = [
   FIRST_LINE,
   TANK_ATTACK,
+  HYDRANT_TANK,
   HYDRANT_SUPPLY,
   DRAUGHTING,
   CLOSED_RELAY,

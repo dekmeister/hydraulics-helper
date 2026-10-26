@@ -303,9 +303,19 @@ for (const spec of REALISTIC_APPLIANCES) {
       });
       await dragValve(page, fill, 1);
       await stepAndSettle(page, 300);
-      // 30 s at the hydrant's ~1000 L/min.
-      expect(await meterValue(page, tank)).toBeGreaterThan(before + 400);
+      // 30 s at the hydrant's ~750–1000 L/min.
+      const filled = await meterValue(page, tank);
+      expect(filled).toBeGreaterThan(before + 300);
       expect(activeTruckOf(await getState(page)).readings.pumpFlowLpm).toBe(0);
+      // Shut, the fill stops and the level holds.
+      await dragValve(page, fill, 0);
+      await stepAndSettle(page, 100);
+      const shut = await meterValue(page, tank);
+      await stepAndSettle(page, 100);
+      expect(await meterValue(page, tank)).toBe(shut);
+      expect(
+        activeTruckOf(await getState(page)).readings.inletFlowLpm[inletOfKind(spec, 'tankFill')],
+      ).toBe(0);
     });
   });
 }

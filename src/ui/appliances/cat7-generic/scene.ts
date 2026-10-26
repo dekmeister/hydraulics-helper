@@ -17,5 +17,7 @@ export const CAT7_SCENE_ART: SceneArt = {
     { control: 'd1', kind: 'delivery', x: -48, y: 9, facingDeg: 180 },
     { control: 'd2', kind: 'delivery', x: -48, y: -1, facingDeg: 180 },
     { control: 'suction', kind: 'inlet', x: -40, y: -19, facingDeg: -90 },
+    // Hydrant to tank on the same side, ahead of the bay. // PLACEHOLDER — needs Dek
+    { control: 'hydrant-to-tank', kind: 'inlet', x: -8, y: -19, facingDeg: -90 },
   ],
 };

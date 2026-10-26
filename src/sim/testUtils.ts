@@ -221,6 +221,13 @@ export function hydrantSite(
   };
 }
 
+/** `hydrantSite`, but the layflat goes to the spec's hydrant-to-tank inlet; throws if it has none. */
+export function hydrantFillSite(spec: ApplianceSpec, staticKpa = 400): SiteOptions {
+  const site = hydrantSite(spec, staticKpa);
+  const inletId = inletOfKind(spec, 'tankFill');
+  return { ...site, supplies: (site.supplies ?? []).map((s) => ({ ...s, inletId })) };
+}
+
 /** Inputs with the given valves open (1) and switches on. */
 export function inputsWith(
   throttle: number,

@@ -27,21 +27,23 @@ const RELAY_LENGTHS = 4;
 const RELAY_UPHILL_M = 10;
 
 /**
- * Throttle the base pump's operator holds: the hydrant does most of the work, so the dam fills at
- * ~650 L/min, more than one line draws and less than two at full throttle. // PLACEHOLDER — needs Dek
+ * Throttle the base pump's operator holds, pumping from its tank while the hydrant keeps the tank
+ * topped up through hydrant to tank: on a Cat 1 the dam fills at ~650 L/min, more than one line
+ * draws and less than two at full throttle, and well within the ~1000 L/min the hydrant puts
+ * back. // PLACEHOLDER — needs Dek
  */
-const BASE_THROTTLE = 0.2;
+const BASE_THROTTLE = 0.45;
 
 const BASE: SupportRole = {
   id: BASE_ID,
   label: 'Base pump',
-  requires: { tank: false, suction: true, minDeliveries: 1 },
+  requires: { tank: true, tankFill: true, minDeliveries: 1 },
 };
 
 const LESSON: LessonDef = {
-  ladder: 6,
+  ladder: 7,
   brief:
-    'The base pump on the hydrant fills a portable dam beside you; you draught from it. The pumps ' +
+    'The base pump at the hydrant fills a portable dam beside you; you draught from it. The pumps ' +
     'aren’t coupled: what you can use is what’s in the dam. Two lines draw more than the relay ' +
     'brings, so watch the dam level as well as your gauges.',
   objectives: [
@@ -88,8 +90,9 @@ const LESSON: LessonDef = {
 };
 
 /**
- * Open relay via a portable dam (ARCHITECTURE §5 ladder step 6): a base pump on the hydrant fills a
- * portable dam beside the attack pump, which primes and draughts from it. The pumps are decoupled:
+ * Open relay via a portable dam (ARCHITECTURE §5 ladder step 7): a base pump at the hydrant, its
+ * tank topped up through hydrant to tank, fills a portable dam beside the attack pump, which
+ * primes and draughts from it. The pumps are decoupled:
  * the lesson is the dam level, filled at one rate and drawn at another.
  */
 export const OPEN_RELAY: Scenario = {
@@ -106,7 +109,8 @@ export const OPEN_RELAY: Scenario = {
       kind: 'dam',
       sourceId: 'portable-dam',
     });
-    const baseSuction = inletOfKind(base, 'suction', 'open-relay base');
+    const baseFill = inletOfKind(base, 'tankFill', 'open-relay base');
+    const baseTank = inletOfKind(base, 'tank', 'open-relay base');
     const primerId = primerControlId(spec);
     // The primer runs until the pump catches, whatever the appliance takes to prime.
     const prime = (on: boolean): ScriptStep[] =>
@@ -126,7 +130,7 @@ export const OPEN_RELAY: Scenario = {
           spec: base,
           inputs: {
             throttle: BASE_THROTTLE,
-            valves: { [baseSuction]: 1, [relay.deliveryId]: 1 },
+            valves: { [baseFill]: 1, [baseTank]: 1, [relay.deliveryId]: 1 },
             // Its crew started it: the engine is running with the ignition on.
             switches: { [base.engine.controls.ignition]: true },
           },
@@ -155,7 +159,7 @@ export const OPEN_RELAY: Scenario = {
           {
             id: 'base-hydrant-line',
             truckId: BASE_ID,
-            inletId: baseSuction,
+            inletId: baseFill,
             sourceId: 'hydrant',
             segments: lengths('65L', 2),
           },

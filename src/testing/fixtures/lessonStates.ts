@@ -94,6 +94,6 @@ export function savedProgress(spec: ApplianceSpec): Saved {
   let saved = defaultSaved();
   saved = recordResult(saved, 'first-line', spec.id, { passed: true, points: 100, stars: 3 });
   saved = recordResult(saved, 'tank-attack', spec.id, { passed: true, points: 82, stars: 2 });
-  saved = recordResult(saved, 'hydrant-supply', spec.id, { passed: false, points: 40, stars: 0 });
+  saved = recordResult(saved, 'hydrant-tank', spec.id, { passed: false, points: 40, stars: 0 });
   return saved;
 }

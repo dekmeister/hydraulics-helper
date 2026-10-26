@@ -115,11 +115,17 @@ export type Effect =
   | { kind: 'layLine'; line: LineDef }
   /** The crew moves the branch: extra standard lengths of the line's last hose, a new height. */
   | { kind: 'moveBranch'; line: string; addLengths?: number; elevationM?: number }
-  /** A source (if new) and a supply hose to a truck's suction inlet. */
+  /** A source (if new) and a supply hose to a truck's suction (default) or hydrant-to-tank inlet. */
   | {
       kind: 'connectSupply';
       source?: WaterSource;
-      supply: { id: string; sourceId: string; truck?: string; segments: HoseSegment[] };
+      supply: {
+        id: string;
+        sourceId: string;
+        truck?: string;
+        inlet?: 'suction' | 'tankFill';
+        segments: HoseSegment[];
+      };
     }
   | { kind: 'repairRelay'; link: string }
   /** A support truck's operator changes the settings it holds. */

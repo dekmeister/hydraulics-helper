@@ -65,9 +65,10 @@ function connectSupply(
   e: Extract<Effect, { kind: 'connectSupply' }>,
 ): SimState {
   const truck = truckOf(state, playerTruckId, e.supply.truck);
-  const inlet = truck?.spec.inlets.find((i) => i.kind === 'suction');
+  const kind = e.supply.inlet ?? 'suction';
+  const inlet = truck?.spec.inlets.find((i) => i.kind === kind);
   if (truck === undefined || inlet === undefined)
-    throw new Error(`connectSupply '${e.supply.id}': no suction inlet`);
+    throw new Error(`connectSupply '${e.supply.id}': no ${kind} inlet`);
   const sources = e.source === undefined ? state.sources : [...state.sources, e.source];
   const supply = {
     id: e.supply.id,

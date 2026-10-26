@@ -271,7 +271,8 @@ const RELAY_CAPTIONS: Readonly<Record<RelayStateId, string>> = {
     'relay hose near the base pump, the hose dashed (dry) beyond; attack lines dry. SUPPLY lamp red ' +
     'with a diamond, "Relay hose burst: no water from the base pump…". Legend "Burst: length 1".',
   'open-dam':
-    'Open relay: the base pump stands by the hydrant (green layflat in), its blue relay hose ' +
+    'Open relay: the base pump stands by the hydrant (green layflat into its hydrant-to-tank ' +
+    'coupling), its blue relay hose ' +
     'runs +10 m to a round portable dam by the attack pump, its level ring ~half lit; hard ' +
     'suction (green core) from the attack pump into the dam; both lines spraying. Legend: relay ' +
     '"~660 L/min in", "Portable dam  ~2 000 L of 5 000 L". Primer PRIMED, compound slightly ' +
@@ -428,7 +429,7 @@ const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
     'up (shut), green suction lever up (shut) by the big coupling low left, PRIME T-handle home; ' +
     'three blue outlet levers pointing right (shut), D1 and D2 couplings open (laid), D3 capped ' +
     'and its lever dimmed with NO LINE. Right of the instrument panel, level with it and as tall, ' +
-    'a narrow column with a TANK plate over the sight tube (full, float at the top); the Cat 1’s ' +
+    'a narrow column with a TANK plate over the sight tube (full, float at the top); the ' +
     'Side of truck inset (hydrant-to-tank lever up, shut) alone under the bay. Warning strip below, no lamps lit. Water ' +
     '(x-ray, drawn like a charged hose): only the tank feed above the tank-to-pump lever shows a ' +
     'still blue core (no streaks); every other pipe and the pump are plain metal (empty).',
@@ -570,7 +571,7 @@ export const FIXTURES: readonly FixtureMeta[] = [
       'Scenario menu: app bar (PUMPOPS, SOUND ON; no SCENARIOS button here), "SCENARIOS", "Pick ' +
       'the truck you’re training on, then a scenario." A YOUR APPLIANCE card: one row per ' +
       'catalogue truck (radio dot, name, fitout line such as "3 deliveries (65, 38, 38 mm) · 3000 L ' +
-      'tank · electric primer · tacho"), Category 1 tanker checked with an ink border. Seven paper cards numbered 1–7 in ink discs, each with title, ' +
+      'tank · electric primer · tacho"), Category 1 tanker checked with an ink border. Eight paper cards numbered 1–8 in ink discs, each with title, ' +
       'brief and "Not tried yet"; card 1 has an ink border, GUIDED and NEXT UP tags and a filled ' +
       'START button; the rest have outlined START buttons. A FREE PLAY card last.',
   },

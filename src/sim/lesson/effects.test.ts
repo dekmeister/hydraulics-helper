@@ -103,6 +103,26 @@ describe.each([CAT1, TEST_APPLIANCE])('effects on $id', (spec) => {
     expect(after.trucks[0]?.readings.compoundKpa).toBeGreaterThan(0);
   });
 
+  it('connects a hydrant to the hydrant-to-tank inlet, and it fills the tank', () => {
+    const empty = oneLine(spec);
+    const start = { ...empty, trucks: empty.trucks.map((t) => ({ ...t, tankL: 0 })) };
+    const s = applyEffect(start, P, {
+      kind: 'connectSupply',
+      source: hydrant,
+      supply: {
+        id: 'hydrant-line',
+        sourceId: 'hydrant',
+        inlet: 'tankFill',
+        segments: [{ hose: '65L', lengthM: 30 }],
+      },
+    });
+    const supply = s.supplies[0];
+    expect(spec.inlets.find((i) => i.id === supply?.inletId)?.kind).toBe('tankFill');
+    const after = run(s, { throttle: 0, valves: { [supply?.inletId ?? '']: 1 }, switches: {} }, 50);
+    expectSane(after);
+    expect(after.trucks[0]?.tankL).toBeGreaterThan(0);
+  });
+
   it('refuses a supply to a source that does not exist', () => {
     expect(() =>
       applyEffect(oneLine(spec), P, {

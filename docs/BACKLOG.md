@@ -25,6 +25,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 * Lesson titles are fixed text; a title naming hose sizes would need the same placeholders as the copy. Lesson copy names a line by its first segment's hose (`lesson/text.ts`); a line of mixed hose would need to say so.
 * Mixed relay lessons with a much smaller base pump than the attack pump aren't required to pass (`ladder.test.ts`); the app never offers them.
 * A refill lesson on the `tank-refill` fireground.
+* `hydrant-tank` can't ask "hold the tank level" or "the tank is rising": conditions see only the tank fraction. A tank-trend condition (rate over a window) would let the lesson teach reading the tank gauge against the hydrant, e.g. a second crew that out-draws the fill.
 * "Resume a game in progress" (needs `SimState` versioning, see code health).
 
 ## Sim and hydraulics
@@ -45,7 +46,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 * **Cat 7 figures** are mostly PLACEHOLDER (CALIBRATION Cat 7 section, needs Dek 38–40): pump curve, tank, idle, primer, where the tank level is shown, which side the suction is on.
 * **Cat 7 unmodelled kit:** the 3-way valve's FOAM ON position (bleed back to the suction through the proportioner) and the proportioner's selection and metering; crew protection sprays (wheel sprays, front sprays, ring mains) and hose reel; the hour meter.
 * **Cat 1 hose reels** (two, each with its own blue lever off the discharge manifold; the right one is drawn inert on the realistic bay). Deferred from M1 (Dek, 2026-10-24). There is no discharge master on the Cat 1 (photos, 2026-10-25).
-* `TEST_APPLIANCE` has no pump to tank, hydrant to tank or realistic layout, so those paths are proven on Cat 1 only, and the electronic `bands` tank gauge has no fixture. Adding them adds the test appliance's tank-refill eligibility, trace columns and fixtures, and needs a review pass.
+* `TEST_APPLIANCE` has no pump to tank or realistic layout, so those paths are proven on Cat 1 only, and the electronic `bands` tank gauge has no fixture. Adding them adds trace columns and fixtures, and needs a review pass.
 
 ## Panels and scene
 
