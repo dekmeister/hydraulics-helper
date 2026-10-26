@@ -1,7 +1,8 @@
+import { START_UP, shutDown, startEngineSteps } from './engineSteps';
 import { STANDARD_LENGTH_M } from '../constants';
 import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind } from '../appliances/controls';
-import { PUMP_DAMAGE } from '../lesson/common';
+import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
 import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
@@ -84,6 +85,7 @@ const LESSON: LessonDef = {
       holdS: 20,
       after: ['reserve'],
     },
+    shutdownObjective(['both'], ['line-65', 'line-38']),
   ],
   failures: [...PUMP_DAMAGE],
 };
@@ -97,6 +99,7 @@ export const HYDRANT_SUPPLY: Scenario = {
     const suction = inletOfKind(spec, 'suction', 'hydrant-supply');
     const [a, b] = twoLines(lines, 'hydrant-supply');
     const state = createInitialState(spec, lines, {
+      engine: 'off',
       sources: [
         {
           id: 'hydrant',
@@ -122,6 +125,7 @@ export const HYDRANT_SUPPLY: Scenario = {
     return {
       state,
       script: [
+        ...startEngineSteps(spec),
         { tS: 0, valves: { [suction]: 1 } },
         { tS: 2, valves: { [a.deliveryId]: 1 } },
         { tS: 5, throttle: 0.4 },
@@ -134,6 +138,7 @@ export const HYDRANT_SUPPLY: Scenario = {
   },
   lesson: LESSON,
   solution: [
+    ...START_UP,
     { open: { inlet: 'suction' } },
     { open: { line: 'line-65' } },
     { throttle: 0.3 },
@@ -142,5 +147,6 @@ export const HYDRANT_SUPPLY: Scenario = {
     { open: { line: 'line-38' } },
     { trim: { compoundKpa: MARGIN_KPA + 40 } },
     { until: { kind: 'objective', objective: 'both' }, maxS: 120 },
+    ...shutDown(['line-65', 'line-38']),
   ],
 };

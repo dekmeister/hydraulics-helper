@@ -8,7 +8,15 @@ import {
 } from './constants';
 import { createInitialState } from './engine';
 import { surgeKpa } from './hammer';
-import { draughtSite, inputsWith, layLine, primedState, run, truckOf } from './testUtils';
+import {
+  draughtSite,
+  inputsWith,
+  layLine,
+  primedState,
+  run,
+  truckOf,
+  TEST_STARTING,
+} from './testUtils';
 import { stepTempC } from './thermal';
 import type { ApplianceSpec, PlayerInputs, SimState } from './types';
 
@@ -22,7 +30,7 @@ const SPEC: ApplianceSpec = {
     casingVolumeL: 10,
     churnKw: 10,
   },
-  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 },
+  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
   tank: { capacityL: 3000 },
   inlets: [
     { id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 15e-6 },

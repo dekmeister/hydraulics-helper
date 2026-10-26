@@ -4,6 +4,7 @@ import { HOSES } from './constants';
 import { hoseFrictionKpa, hoseType } from './hose';
 import { lagRpm, pumpRiseKpa, targetRpm } from './pump';
 import { drainTankL } from './tank';
+import { TEST_STARTING } from './testUtils';
 
 const PUMP = {
   shutoffKpa: 1400,
@@ -12,7 +13,7 @@ const PUMP = {
   casingVolumeL: 10,
   churnKw: 10,
 };
-const ENGINE = { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 };
+const ENGINE = { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING };
 
 describe('hose friction', () => {
   it('is quadratic in flow (manual law 3, L798)', () => {

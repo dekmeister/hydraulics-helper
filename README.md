@@ -6,7 +6,7 @@ A part-task trainer for fire appliance pump operation, built as a browser game. 
 
 ## What you can do
 
-- **Work a pump panel.** Gauges (discharge, compound, tacho, tank), delivery and inlet valves, throttle and primer, in either a **simplified** panel or a **realistic** one drawn like the real pump bay.
+- **Work a pump panel.** Gauges (discharge, compound, tacho, tank), delivery and inlet valves, throttle and primer, in either a **simplified** panel or a **realistic** one drawn like the real pump bay. Every job starts with the pump engine cold and ends with it shut down: ignition on, hold START until it fires, and at the end hold STOP until it has stopped (let go too soon and it picks up again).
 - **See the fireground.** A map of the truck, hose lays, branches and crews, water sources and other trucks. Lines charge when water flows; tap a hose to find its delivery on the panel.
 - **Play the lesson ladder.** Seven scenarios, from your first 38 mm line on tank through hydrant supply, draughting, closed and open relays, to a changing incident. The first one is fully guided. Each ends with a debrief that tells you what went wrong and why ("you cavitated for 40 s: the lift was too high for that flow").
 - **Free play.** Any scenario's setup with no objectives, to experiment.

@@ -35,7 +35,10 @@ export function soundParams(truck: TruckState, inputs: PlayerInputs): SoundParam
   return {
     // A four-stroke fires each cylinder every other revolution.
     engineHz: (truck.rpm / 60) * (engine.cylinders / 2),
-    engineGain: 0.25 + 0.45 * load,
+    // Not firing (on the starter or running down) it only turns over, quieter as it slows.
+    engineGain: truck.engine.running
+      ? 0.25 + 0.45 * load
+      : 0.15 * Math.min(1, truck.rpm / engine.idleRpm),
     primerGain: priming ? 0.35 : 0,
     rattleGain: 0.6 * Math.min(1, truck.readings.cavitation),
     sprayGain: 0.3 * Math.min(1, flowLpm / SPRAY_FULL_LPM),

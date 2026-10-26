@@ -10,6 +10,7 @@ import {
   layoutItems,
   showRealistic,
   sliderValue,
+  startEngine,
 } from '../panel';
 import { load, throttle } from '../sources';
 
@@ -20,12 +21,14 @@ for (const spec of JOURNEY_APPLIANCES) {
     await page.evaluate((appliance) => {
       window.__pumpops?.load({ scenario: 'tank-attack', appliance });
     }, spec.id);
+    await startEngine(page);
     const state = await getState(page);
     const laid = new Set(state.lines.map((l) => l.deliveryId));
     const expected = layoutItems(layoutFor(spec.id)).flatMap((i) => {
       switch (i.kind) {
         case 'valve':
         case 'primer':
+        case 'engine-switch':
           return [i.label];
         case 'delivery': {
           // Every delivery can be found on the scene and back; NO LINE valves are disabled.
@@ -66,6 +69,7 @@ for (const spec of JOURNEY_APPLIANCES) {
     await page.evaluate((appliance) => {
       window.__pumpops?.load({ scenario: 'tank-attack', appliance });
     }, spec.id);
+    await startEngine(page);
     const laid = new Set((await getState(page)).lines.map((l) => l.deliveryId));
     const items = layoutItems(layoutFor(spec.id));
 
@@ -115,6 +119,7 @@ for (const spec of REALISTIC_APPLIANCES) {
         case 'valve':
         case 'primer':
         case 'throttle':
+        case 'engine-switch':
           return [i.label];
         case 'delivery': {
           const locate = [`Show ${i.label} on scene`, `Show ${i.label} on panel`];
@@ -151,6 +156,7 @@ test('keyboard reaches the truck switcher and changes trucks with Enter', async 
   await page.evaluate(() => {
     window.__pumpops?.load({ scenario: 'closed-relay' });
   });
+  await startEngine(page);
   const onBase = async () =>
     page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.truck === 'base');
   for (let i = 0; i < 60 && !(await onBase()); i++) await page.keyboard.press('Tab');
@@ -180,8 +186,8 @@ test('keyboard starts a lesson from the menu and works the coach', async ({ page
   await tabTo(/^Start 1\. /);
   await page.keyboard.press('Enter');
   const dock = page.getByRole('region', { name: 'Lesson' });
-  await expect(dock).toContainText('Step 1 of 8');
+  await expect(dock).toContainText('Step 1 of 12');
   await tabTo(/^Got it$/);
   await page.keyboard.press('Enter');
-  await expect(dock).toContainText('Step 2 of 8');
+  await expect(dock).toContainText('Step 2 of 12');
 });

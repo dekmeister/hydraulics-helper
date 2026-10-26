@@ -8,7 +8,7 @@ describe.each([CAT1, TEST_APPLIANCE])('lesson view on $id', (spec) => {
   it('lists objectives: the first active with its readings, the rest waiting', () => {
     const { sim, lesson } = beginLesson('tank-attack', spec);
     const rows = objectiveRows(lesson, sim);
-    expect(rows.map((r) => r.state)).toEqual(['active', 'active', 'waiting']);
+    expect(rows.map((r) => r.state)).toEqual(['active', 'active', 'waiting', 'waiting']);
     expect(rows[0]?.metrics).toEqual([{ kind: 'flow', line: 'line-38', lpm: 0, min: 50 }]);
     expect(rows[2]?.metrics).toEqual([]);
     expect(rows[2]?.holdS).toBe(30);
@@ -42,19 +42,23 @@ describe.each([CAT1, TEST_APPLIANCE])('lesson view on $id', (spec) => {
 
   it('points the coach at the panel item for its target', () => {
     const { sim, lesson } = beginLesson('first-line', spec);
-    expect(coachView(lesson, sim)).toMatchObject({ number: 1, count: 8 });
+    expect(coachView(lesson, sim)).toMatchObject({ number: 1, count: 12 });
     expect(coachView(lesson, sim)?.targetKey).toBeUndefined();
     const at = (i: number) =>
       coachView({ ...lesson, progress: { ...lesson.progress, coachIndex: i } }, sim)?.targetKey;
     const tank = spec.inlets.find((i) => i.kind === 'tank')?.id ?? '';
     const line = sim.lines[0]?.deliveryId ?? '';
     const discharge = spec.instruments.find((i) => i.kind === 'discharge')?.id ?? '';
-    expect([at(1), at(2), at(3), at(4), at(5)]).toEqual([
+    const { ignition, start, stop } = spec.engine.controls;
+    expect([at(1), at(2), at(3), at(4), at(5), at(6), at(7)]).toEqual([
+      `c:${ignition}`,
+      `c:${start}`,
       `c:${tank}`,
       `c:${line}`,
       'throttle',
       `i:${discharge}`,
       'warnings',
     ]);
+    expect([at(10), at(11)]).toEqual([`c:${stop.id}`, `c:${ignition}`]);
   });
 });

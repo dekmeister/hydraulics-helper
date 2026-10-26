@@ -23,6 +23,17 @@ export const TEST_APPLIANCE_LAYOUT: PanelLayout = {
       ],
     },
     {
+      id: 'engine',
+      title: 'Engine',
+      arrangement: 'row',
+      items: [
+        { kind: 'engine-switch', control: 'key', role: 'ignition', label: 'Key' },
+        { kind: 'engine-switch', control: 'crank', role: 'start', label: 'Crank' },
+        { kind: 'engine-switch', control: 'kill', role: 'stop', label: 'Kill' },
+        { kind: 'engine-status' },
+      ],
+    },
+    {
       id: 'lines',
       title: 'Deliveries',
       arrangement: 'list',

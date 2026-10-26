@@ -3,7 +3,7 @@ import { primerControlId } from '../appliances/controls';
 import { branchFlowLpm } from '../branch';
 import { BRANCH_BAND_FRACTION, BRANCH_OPTIMUM_KPA } from '../constants';
 import type { ControlId, HoseLine, RelayLink, SimState, TruckState } from '../types';
-import type { ValveRef } from './types';
+import type { EngineSwitch, ValveRef } from './types';
 
 /** A truck by id, or the player's truck when `id` is undefined. */
 export function truckOf(
@@ -42,6 +42,17 @@ export function resolveValve(
 export function resolvePrimer(state: SimState, playerTruckId: string): ControlId | undefined {
   const truck = truckOf(state, playerTruckId, undefined);
   return truck === undefined ? undefined : primerControlId(truck.spec);
+}
+
+/** Control id of one of the player's engine switches. */
+export function resolveEngineSwitch(
+  state: SimState,
+  playerTruckId: string,
+  which: EngineSwitch,
+): ControlId | undefined {
+  const controls = truckOf(state, playerTruckId, undefined)?.spec.engine.controls;
+  if (controls === undefined) return undefined;
+  return which === 'stop' ? controls.stop.id : controls[which];
 }
 
 /** A branch's working band, kPa: its tip's Table 1 optimum ± `BRANCH_BAND_FRACTION`. */

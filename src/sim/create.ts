@@ -39,6 +39,30 @@ export interface TruckSetup {
   inputs?: PlayerInputs;
   /** Start with the suction already primed (a support truck already set up at its dam). */
   primed?: boolean;
+  /** Engine at t = 0: running at idle (default), or cold and stopped for the player to start. */
+  engine?: EngineStart;
+}
+
+/** How a truck's engine is left at t = 0. */
+export type EngineStart = 'running' | 'off';
+
+/**
+ * `state` with every truck's engine already running at idle and its ignition on, as if each crew
+ * had started it: for fixtures and tests about what happens after the start.
+ */
+export function warmStart(state: SimState): SimState {
+  return {
+    ...state,
+    trucks: state.trucks.map((t) => ({
+      ...t,
+      rpm: t.engine.running ? t.rpm : t.spec.engine.idleRpm,
+      engine: { running: true, crankS: 0 },
+      inputs: {
+        ...t.inputs,
+        switches: { ...t.inputs.switches, [t.spec.engine.controls.ignition]: true },
+      },
+    })),
+  };
 }
 
 /** A pump at rest: not primed, no vacuum, primer rested, casing at ambient. */
@@ -104,7 +128,8 @@ export function buildTrucks(setups: readonly TruckSetup[], seed: number): TruckS
       id: setup.id,
       label: setup.label ?? `Truck ${String(i + 1)}`,
       spec: structuredClone(spec),
-      rpm: spec.engine.idleRpm,
+      rpm: setup.engine === 'off' ? 0 : spec.engine.idleRpm,
+      engine: { running: setup.engine !== 'off', crankS: 0 },
       tankL: spec.tank?.capacityL ?? 0,
       inputs: setup.inputs === undefined ? idleInputs(spec) : sanitiseInputs(spec, setup.inputs),
       readings: restingReadings(spec),

@@ -13,6 +13,7 @@ import {
   layoutItems,
   meterValue,
   sliderValue,
+  startEngine,
   stepAndSettle,
   tapOrClick,
 } from '../panel';
@@ -24,6 +25,7 @@ for (const spec of JOURNEY_APPLIANCES) {
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'tank-attack', appliance });
       }, spec.id);
+      await startEngine(page);
     });
 
     test('open tank-to-pump, open a delivery, throttle up; a second line sags', async ({

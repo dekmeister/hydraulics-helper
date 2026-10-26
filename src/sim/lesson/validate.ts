@@ -2,7 +2,7 @@
 import type { InstrumentKind, SimState } from '../types';
 import { gaugeInstrument, validateCondition, type LessonNames } from './conditions';
 import { applyEffect } from './effects';
-import { resolvePrimer, resolveValve, truckOf } from './refs';
+import { resolveEngineSwitch, resolvePrimer, resolveValve, truckOf } from './refs';
 import { lessonTextProblems } from './text';
 import type { CoachTarget, Condition, LessonDef } from './types';
 
@@ -17,6 +17,10 @@ function targetProblems(state: SimState, player: string, target: CoachTarget): s
       : [];
   if ('primer' in target)
     return resolvePrimer(state, player) === undefined ? ['coach target: no primer control'] : [];
+  if ('engine' in target)
+    return resolveEngineSwitch(state, player, target.engine) === undefined
+      ? [`coach target: no ${target.engine} switch`]
+      : [];
   if ('gauge' in target) {
     const kind: InstrumentKind = target.gauge;
     const fitted = truckOf(state, player, undefined)?.spec.instruments.some((i) => i.kind === kind);

@@ -22,6 +22,17 @@ describe.each([CAT1, TEST_APPLIANCE])('sound on $id', (spec) => {
     expect([low.primerGain, low.rattleGain, low.sprayGain]).toEqual([0, 0, 0]);
   });
 
+  it('is silent stopped, turns over quietly on the starter, and idles louder once it runs', () => {
+    const stopped = { running: false, crankS: 0 };
+    expect(soundParams(truckOf(spec, { rpm: 0, engine: stopped }), idle).engineGain).toBe(0);
+    const cranking = soundParams(
+      truckOf(spec, { rpm: spec.engine.crankRpm, engine: stopped }),
+      idle,
+    );
+    expect(cranking.engineGain).toBeGreaterThan(0);
+    expect(cranking.engineGain).toBeLessThan(soundParams(truckOf(spec), idle).engineGain);
+  });
+
   it('fires each cylinder every other revolution: the note follows the spec’s engine', () => {
     const p = soundParams(truckOf(spec, { rpm: 1200 }), idle);
     expect(p.engineHz).toBeCloseTo((1200 / 60) * (spec.engine.cylinders / 2), 9);

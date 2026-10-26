@@ -44,7 +44,24 @@ const PANEL_CAPTIONS = {
     'line read NO LINE and are dimmed. Throttle at idle with chevrons. Supply section: tank to pump ' +
     'and suction inlet (green knobs, closed) and the primer (HOLD). Every lamp unlit, HAMMER ' +
     'last. "No warnings." Deliveries (Cat 1) as cards side by side, text over the valve, at 768 ' +
-    'and 1280 px; stacked rows, valve on the right, at 375 px.',
+    'and 1280 px; stacked rows, valve on the right, at 375 px. Engine section: status "Running", ' +
+    'IGN pressed in with ON under it, START and STOP up with HOLD under them.',
+  'engine-cold':
+    'As idle, but the engine is cold: Engine status "Stopped · ignition off", IGN up with OFF, ' +
+    'START and STOP up (HOLD); the tacho (where fitted) and every pressure needle on its zero stop.',
+  'ignition-on':
+    'As engine-cold with the ignition on: IGN pressed in with a lit rim and ON under it; status ' +
+    '"Stopped · ignition on"; needles still at zero.',
+  cranking:
+    'Ignition on and START held (pressed in, lit rim): status "Cranking: hold until it fires"; ' +
+    'the tacho (where fitted) a little off its stop at the starter’s speed, a few hundred rpm.',
+  stopping:
+    'Engine at idle with IGN on and STOP held (pressed in, red rim): status "Stopping: hold until ' +
+    'it stops"; the tacho (where fitted) just under idle.',
+  'stop-without-ignition':
+    'The ignition trap (a solenoid stop, Cat 1): engine running at idle, IGN up with OFF, STOP ' +
+    'held (red rim) but doing nothing: status in amber "Running · STOP needs the ignition on"; ' +
+    'the tacho still at idle.',
   'tank-attack-700':
     'Tank to pump open, the first line’s delivery fully open (lever along the pipe, travel arc ' +
     'filled), throttle part-way out. Discharge needle at ~700 kPa (a little under half sweep), ' +
@@ -73,8 +90,14 @@ const ALL_PANEL_STATES = Object.keys(PANEL_CAPTIONS) as PanelState[];
  * generic; its tank states would only repeat the reference appliance's).
  */
 export const PANEL_FIXTURE_SETS: readonly PanelFixtureSet[] = [
-  ...APPLIANCES.map((spec) => ({ spec, states: ALL_PANEL_STATES })),
-  { spec: TEST_APPLIANCE, states: ['idle', 'tank-attack-700'] },
+  ...APPLIANCES.map((spec) => ({
+    spec,
+    // The ignition trap only where STOP needs the ignition.
+    states: ALL_PANEL_STATES.filter(
+      (s) => s !== 'stop-without-ignition' || spec.engine.controls.stop.needsIgnition,
+    ),
+  })),
+  { spec: TEST_APPLIANCE, states: ['idle', 'tank-attack-700', 'cranking'] },
 ];
 
 export function panelFixtureId(applianceId: string, state: string): string {
@@ -384,8 +407,10 @@ const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
     'Realistic bay at rest (header button REALISTIC pressed). Instrument panel: dark box with ' +
     'compound and pressure dials (no readouts) on one centreline over red COMPOUND / PRESSURE ' +
     'plates on one line, the tacho at idle, small oil temp / oil pressure dials, placards (idle, ' +
-    'limits, stopping) with their lines evenly spaced, fuses, stop / ign / alt / start under ' +
-    'equal plates, foam knobs and the air-cleaner indicator drawn plainly; the red SPEED switch ' +
+    'limits, stopping) with their lines evenly spaced, fuses, STOP (red cap) and IGN (black boss, ' +
+    'bar pointing right: on) side by side under the stopping placard, the ALT lamp (dark glass) ' +
+    'and START (dark green cap) below them, each under an equal plate; foam knobs and the ' +
+    'air-cleaner indicator drawn plainly; the red SPEED switch ' +
     'under the pressure gauge, toggle bat end-on in its bezel (centred), ▲ / ▼ above and below. ' +
     'Bay: galvanised pipes with square ends on collars, couplings or flanges, none overrunning a ' +
     'joint; tank feed and suction join into the red pump’s eye (centre); the discharge leaves ' +
@@ -399,6 +424,14 @@ const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
     'Side of truck inset (hydrant-to-tank lever up, shut) alone under the bay. Warning strip below, no lamps lit. Water ' +
     '(x-ray, drawn like a charged hose): only the tank feed above the tank-to-pump lever shows a ' +
     'still blue core (no streaks); every other pipe and the pump are plain metal (empty).',
+  'engine-cold':
+    'As idle, but the engine is cold: the tacho (Cat 1) at 0, the ignition switch’s bar pointing ' +
+    'up (off), START and STOP caps unpressed, the ALT lamp (and on the Cat 7 the oil lamp) dark ' +
+    'glass. Cat 7: IGN, the lamps and START in a row under their plates, the red STOP T-handle ' +
+    'beside the throttle knob.',
+  'ignition-on':
+    'As engine-cold with the ignition on: its bar turned to point right; the ALT lamp (and on ' +
+    'the Cat 7 the oil lamp) lit red with a glow. Nothing else moves.',
   'tank-attack-700':
     'As idle, but tank to pump open (green lever up along its pipe), the first line’s outlet ' +
     'lever up along its drop (open, travel arc filled blue), pressure needle at ~700 kPa (low on ' +

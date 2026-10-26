@@ -124,8 +124,11 @@ export function interactiveBoxes(item: RealItem): { name: string; box: RBox }[] 
       return [{ name: item.control, box: item.box }];
     case 'throttle':
       return [{ name: 'throttle', box: item.box }];
+    case 'engine-switch':
+      return [{ name: item.control, box: item.box }];
     case 'gauge':
     case 'tank-gauge':
+    case 'engine-lamp':
     case 'inert':
       return [];
   }

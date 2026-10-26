@@ -32,6 +32,17 @@ export const CAT7: ApplianceSpec = {
     // THROTTLE is a vernier knob marked RELEASE · HOLD (photo). One twist moves it 4 % of its
     // travel. // PLACEHOLDER — needs Dek
     vernier: { throttlePerTurn: 0.04 },
+    // IGN and START switches and a STOP T-handle (photo). The handle pulls the fuel rack by cable,
+    // so it works with the ignition off. // doctrine-confirmed (photo, Dek)
+    controls: {
+      ignition: 'ignition',
+      start: 'start',
+      stop: { id: 'stop', needsIgnition: false },
+    },
+    crankS: 1.2, // cranking before a warm diesel fires // PLACEHOLDER — needs Dek
+    crankRpm: 300, // starter speed // PLACEHOLDER — needs Dek
+    refireRpm: 600, // let go of STOP above this and it picks up again // PLACEHOLDER — needs Dek
+    runDownS: 0.5, // a small engine runs down quicker than the Cat 1's // PLACEHOLDER — needs Dek
   },
   tank: {
     capacityL: 1600, // PLACEHOLDER — needs Dek

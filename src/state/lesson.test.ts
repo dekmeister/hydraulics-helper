@@ -42,8 +42,8 @@ describe('lessons in the store', () => {
     // A step that waits on a control isn't acknowledged away.
     useStore.getState().acknowledgeCoach();
     expect(index()).toBe(1);
-    const tank = activeTruck(useStore.getState().sim).spec.inlets.find((i) => i.kind === 'tank');
-    useStore.getState().setValve(tank?.id ?? '', 1);
+    const { ignition } = activeTruck(useStore.getState().sim).spec.engine.controls;
+    useStore.getState().setSwitch(ignition, true);
     useStore.getState().step(1);
     expect(index()).toBe(2);
   });

@@ -27,7 +27,7 @@ import {
 } from '../testUtils';
 import type { ApplianceSpec, HoseLine, PlayerInputs } from '../types';
 import { APPLIANCES } from './catalogue';
-import { controlIds, switchControlIds, validateInputs } from './controls';
+import { controlIds, primerSwitchIds, validateInputs } from './controls';
 import { TEST_APPLIANCE } from './testAppliance';
 
 const ALL: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
@@ -192,8 +192,116 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
       expectSane(s);
     });
 
+    describe('engine start and stop', () => {
+      const { ignition, start, stop } = spec.engine.controls;
+      const ticksFor = (s: number) => Math.round(s / TICK_S);
+      /** Tank attack at `throttle` on every delivery, with the named engine switches held on. */
+      const attack = (throttle: number, held: Record<string, boolean>): PlayerInputs => {
+        const base = tankAttackInputs(spec, throttle, allDeliveries(spec));
+        return { ...base, switches: { ...base.switches, ...held } };
+      };
+      const cold = () =>
+        createInitialState(spec, lineOnEveryDelivery(spec), { engine: 'off' as const });
+      /** Long enough to crank it, fire and settle at the throttle. */
+      const startS = spec.engine.crankS + 6 * spec.engine.rpmLagS;
+      const started = () =>
+        run(
+          run(cold(), attack(0, { [ignition]: true, [start]: true }), ticksFor(startS)),
+          attack(0, { [ignition]: true }),
+          ticksFor(2),
+        );
+
+      it('sits cold: no rpm and no pressure on tank, with every valve open', () => {
+        const s = run(cold(), attack(0.6, {}), ticksFor(3));
+        expect(truckOf(s).engine.running).toBe(false);
+        expect(truckOf(s).rpm).toBe(0);
+        expect(truckOf(s).readings.dischargeKpa).toBeLessThan(5);
+        expectSane(s);
+      });
+
+      it('starts with the ignition on and START held through the crank, and settles at idle', () => {
+        const s = started();
+        expect(truckOf(s).engine.running).toBe(true);
+        expect(truckOf(s).rpm).toBeCloseTo(spec.engine.idleRpm, -1); // ±5 rpm
+        expect(truckOf(s).readings.dischargeKpa).toBeGreaterThan(0);
+      });
+
+      it('does not start if START is let go before it fires, or with the ignition off', () => {
+        const early = run(
+          cold(),
+          attack(0, { [ignition]: true, [start]: true }),
+          ticksFor(spec.engine.crankS * 0.6),
+        );
+        expect(truckOf(early).rpm).toBeGreaterThan(0); // the starter turned it
+        const released = run(early, attack(0, { [ignition]: true }), ticksFor(3));
+        expect(truckOf(released).engine.running).toBe(false);
+        expect(truckOf(released).rpm).toBe(0);
+        // A second short crank starts the count again: two short goes don't add up.
+        const again = run(
+          released,
+          attack(0, { [ignition]: true, [start]: true }),
+          ticksFor(spec.engine.crankS * 0.6),
+        );
+        expect(truckOf(again).engine.running).toBe(false);
+        const noIgnition = run(cold(), attack(0, { [start]: true }), ticksFor(startS));
+        expect(truckOf(noIgnition).engine.running).toBe(false);
+        expect(truckOf(noIgnition).rpm).toBe(0);
+      });
+
+      it('ignores START while it runs, and keeps running with the ignition switched off', () => {
+        const s = started();
+        const cranked = run(s, attack(0, { [ignition]: true, [start]: true }), ticksFor(3));
+        expect(truckOf(cranked).rpm).toBeCloseTo(spec.engine.idleRpm, -1); // ±5 rpm
+        const ignOff = run(s, attack(0.5, {}), ticksFor(5));
+        expect(truckOf(ignOff).engine.running).toBe(true);
+        expect(truckOf(ignOff).rpm).toBeGreaterThan(spec.engine.idleRpm);
+      });
+
+      it('stops while STOP is held, and stays stopped once let go', () => {
+        const held = run(started(), attack(0, { [ignition]: true, [stop.id]: true }), ticksFor(5));
+        expect(truckOf(held).engine.running).toBe(false);
+        expect(truckOf(held).rpm).toBe(0);
+        const after = run(held, attack(0, { [ignition]: true }), ticksFor(5));
+        expect(truckOf(after).engine.running).toBe(false);
+        expect(truckOf(after).rpm).toBe(0);
+        expect(truckOf(after).readings.dischargeKpa).toBeLessThan(5);
+      });
+
+      it('picks up again if STOP is let go before the engine has run down', () => {
+        const s = run(started(), attack(0.5, { [ignition]: true }), ticksFor(3));
+        // One tick of fuel cut drops it a little, nowhere near the refire speed.
+        const tapped = run(s, attack(0.5, { [ignition]: true, [stop.id]: true }), 1);
+        expect(truckOf(tapped).rpm).toBeLessThan(truckOf(s).rpm);
+        expect(truckOf(tapped).engine.running).toBe(true);
+        const settle = ticksFor(12 * spec.engine.rpmLagS);
+        const back = run(tapped, attack(0.5, { [ignition]: true }), settle);
+        const untouched = run(s, attack(0.5, { [ignition]: true }), settle + 1);
+        expect(truckOf(back).rpm).toBeCloseTo(truckOf(untouched).rpm, -1); // ±5 rpm
+      });
+
+      it(`STOP with the ignition off ${stop.needsIgnition ? 'does nothing (solenoid stop)' : 'still stops it (mechanical stop)'}`, () => {
+        const s = run(started(), attack(0, { [stop.id]: true }), ticksFor(5));
+        expect(truckOf(s).engine.running).toBe(stop.needsIgnition);
+      });
+
+      it('replays a start and a stop exactly', () => {
+        const go = () =>
+          run(started(), attack(0, { [ignition]: true, [stop.id]: true }), ticksFor(2));
+        expect(go()).toStrictEqual(go());
+      });
+
+      it('has starting figures that make sense together', () => {
+        expect(new Set([ignition, start, stop.id]).size).toBe(3);
+        expect(spec.engine.crankS).toBeGreaterThan(0);
+        expect(spec.engine.crankRpm).toBeGreaterThan(0);
+        expect(spec.engine.crankRpm).toBeLessThan(spec.engine.refireRpm);
+        expect(spec.engine.refireRpm).toBeLessThan(spec.engine.idleRpm);
+        expect(spec.engine.runDownS).toBeGreaterThan(0);
+      });
+    });
+
     const hasSuction = spec.inlets.some((i) => i.kind === 'suction');
-    const primerIds = switchControlIds(spec);
+    const primerIds = primerSwitchIds(spec);
 
     /** Prime from a dam at `liftM` with the primer (or self-priming), within `maxTicks`. */
     const primeAt = (liftM: number, volumeL = 1e6, maxTicks = 1200) => {

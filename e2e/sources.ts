@@ -3,7 +3,7 @@
 import type { Page, TestInfo } from '@playwright/test';
 import { inletOfKind, primerControlId } from '../src/sim/appliances/controls';
 import { TICK_S } from '../src/sim/constants';
-import { advance } from '../src/sim/engine';
+import { advance, warmStart } from '../src/sim/engine';
 import { getScenario } from '../src/sim/scenarios';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../src/sim/types';
 import { expect, gotoApp } from './fixtures';
@@ -14,12 +14,22 @@ import {
   instrumentName,
   layoutFor,
   meterValue,
+  startEngine,
   stepAndSettle,
   tapOrClick,
 } from './panel';
 
-/** Open the app on `scenario` with the player on `appliance` (support trucks on `support`). */
-export async function load(page: Page, scenario: string, appliance: string, support?: string) {
+/**
+ * Open the app on `scenario` with the player on `appliance` (support trucks on `support`), and
+ * start the player's engine from its panel (`cold` leaves it as the scenario does: stopped).
+ */
+export async function load(
+  page: Page,
+  scenario: string,
+  appliance: string,
+  support?: string,
+  { cold = false }: { cold?: boolean } = {},
+) {
   await gotoApp(page);
   await page.evaluate(
     ([s, a, b]) => {
@@ -32,6 +42,7 @@ export async function load(page: Page, scenario: string, appliance: string, supp
     },
     [scenario, appliance, support ?? ''] as const,
   );
+  if (!cold) await startEngine(page);
 }
 
 export const inletOf = inletOfKind;
@@ -115,7 +126,7 @@ export async function expectCompoundAlert(page: Page, spec: ApplianceSpec, alert
  * open at `throttle`, the pump primed: headless, to ask the sim what a journey will see.
  */
 function pushed(scenario: string, spec: ApplianceSpec, throttle: number, ticks: number): SimState {
-  const built = getScenario(scenario).build(spec).state;
+  const built = warmStart(getScenario(scenario).build(spec).state);
   const player = built.activeTruckId;
   let s: SimState = {
     ...built,

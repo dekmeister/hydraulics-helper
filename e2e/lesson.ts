@@ -5,7 +5,14 @@ import { BRANCH_BAND_FRACTION, BRANCH_OPTIMUM_KPA } from '../src/sim/constants';
 import type { LessonProgress } from '../src/sim/lesson/progress';
 import type { SimState } from '../src/sim/types';
 import { expect } from './fixtures';
-import { activeTruckOf, getState, stepAndSettle } from './panel';
+import {
+  activeTruckOf,
+  dragThrottle,
+  dragValve,
+  getState,
+  stepAndSettle,
+  stopEngine,
+} from './panel';
 
 export async function getLesson(page: Page): Promise<LessonProgress> {
   const p = await page.evaluate(() => window.__pumpops?.getLesson());
@@ -117,4 +124,21 @@ export async function fineDragValve(page: Page, valve: Locator, opening: number)
   for (const f of [away, (away + opening) / 2, opening])
     await page.mouse.move(at(f).x, at(f).y, { steps: 4 });
   await page.mouse.up();
+}
+
+/**
+ * A lesson's shutdown objective, as a player would do it: throttle to idle, ease each line's valve
+ * shut in steps, then hold STOP until the engine has stopped and switch the ignition off.
+ */
+export async function shutDownLesson(page: Page, valves: readonly Locator[]): Promise<void> {
+  await dragThrottle(page, 0);
+  await stepAndSettle(page, 30);
+  for (const valve of valves) {
+    for (const open of [0.5, 0.2, 0]) {
+      await dragValve(page, valve, open);
+      await stepAndSettle(page, 10);
+    }
+  }
+  await stopEngine(page);
+  await stepAndSettle(page, 1);
 }

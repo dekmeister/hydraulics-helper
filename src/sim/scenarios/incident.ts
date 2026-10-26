@@ -1,6 +1,7 @@
+import { START_UP, shutDown } from './engineSteps';
 import { STANDARD_LENGTH_M } from '../constants';
 import { createInitialState } from '../engine';
-import { PUMP_DAMAGE, TANK_DRY } from '../lesson/common';
+import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
 import type { LessonDef, LineDef } from '../lesson/types';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
 import { attachLines, LIGHT_LINE, type PlannedLine } from './lay';
@@ -71,6 +72,7 @@ const LESSON: LessonDef = {
       holdS: 20,
       after: ['second'],
     },
+    shutdownObjective(['changeover'], [FIRST.id, SECOND.id]),
   ],
   failures: [
     { ...TANK_DRY, text: 'The tank ran dry before the changeover: both crews lost water.' },
@@ -134,7 +136,7 @@ export const INCIDENT: Scenario = {
   build(spec) {
     const lines = attachLines(spec, [FIRST]);
     return {
-      state: createInitialState(spec, lines),
+      state: createInitialState(spec, lines, { engine: 'off' }),
       // Traced from the solution: its events wait on the player reaching objectives.
       script: [],
       durationS: 0,
@@ -142,6 +144,7 @@ export const INCIDENT: Scenario = {
   },
   lesson: LESSON,
   solution: [
+    ...START_UP,
     { open: { inlet: 'tank' } },
     { open: { line: FIRST.id } },
     { throttle: 0.5 },
@@ -156,5 +159,6 @@ export const INCIDENT: Scenario = {
     { wait: 2 },
     { ease: { inlet: 'tank' }, to: 0, overS: 3 },
     { until: { kind: 'objective', objective: 'changeover' }, maxS: 90 },
+    ...shutDown([FIRST.id, SECOND.id]),
   ],
 };

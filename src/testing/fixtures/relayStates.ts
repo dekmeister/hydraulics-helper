@@ -1,6 +1,6 @@
 // Sim states for the M5 relay fixtures (docs/TESTING.md §3.2): pure sim calls on the closed- and
 // open-relay scenarios, the player's appliance and the base pump's chosen per fixture set.
-import { inletOfKind, switchControlIds } from '../../sim/appliances/controls';
+import { inletOfKind, primerSwitchIds } from '../../sim/appliances/controls';
 import { switchTruck } from '../../sim/engine';
 import { getScenario } from '../../sim/scenarios';
 import type { SupportSpecs } from '../../sim/scenarios/types';
@@ -56,7 +56,7 @@ export function relayState(
     }
     case 'open-dam': {
       let s = initial;
-      const priming = inputs(0, [inlet], switchControlIds(spec));
+      const priming = inputs(0, [inlet], primerSwitchIds(spec));
       for (let i = 0; i < 120 && s.trucks[0]?.pump.primed !== true; i++) s = settle(s, priming, 1);
       if (s.trucks[0]?.pump.primed !== true) throw new Error(`${spec.id} never primed`);
       return settle(s, working, 20);

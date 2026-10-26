@@ -22,6 +22,12 @@ export type OperatorStep =
   | { throttle: number }
   /** Run (or stop, false) the player's primer, if it has one to operate. */
   | { primer: boolean }
+  /** Switch the ignition on or off. */
+  | { ignition: boolean }
+  /** Hold START until the engine fires, then let go. */
+  | { crank: true }
+  /** Hold STOP until the engine has stopped, then let go. */
+  | { stopEngine: true }
   /** Trim the throttle once a second to hold a target; null stops trimming. */
   | { trim: TrimTarget | null }
   /** Gate this line's delivery back once a second whenever its branch is over its band. */
@@ -59,11 +65,29 @@ function valveId(p: Play, ref: ValveRef): string {
   return v.control;
 }
 
+/** A hand setting a valve has stopped gating it. */
+function ungate(p: Play, id: string): Play {
+  return { ...p, gates: p.gates.filter((line) => valveId(p, { line }) !== id) };
+}
+
 function setValve(p: Play, id: string, to: number): Play {
   return { ...p, inputs: { ...p.inputs, valves: { ...p.inputs.valves, [id]: to } } };
 }
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+
+/** Longest the operator holds START or STOP waiting for the engine, s. */
+const ENGINE_HOLD_MAX_S = 10;
+
+function setSwitch(p: Play, id: string, on: boolean): Play {
+  return { ...p, inputs: { ...p.inputs, switches: { ...p.inputs.switches, [id]: on } } };
+}
+
+/** Hold an engine switch until the engine is (or isn't) running, then let go. */
+function holdUntil(p: Play, id: string, running: boolean): Play {
+  const held = runFor(setSwitch(p, id, true), ENGINE_HOLD_MAX_S, { kind: 'engine', running });
+  return setSwitch(held, id, false);
+}
 
 /** Once-a-second corrections: throttle towards the trim target, gated deliveries back into band. */
 function correct(p: Play): Play {
@@ -147,9 +171,12 @@ export function operate(
     gates: [],
   };
   for (const step of steps) {
-    if ('open' in step) p = setValve(p, valveId(p, step.open), step.to ?? 1);
-    else if ('ease' in step) {
+    if ('open' in step) {
+      const id = valveId(p, step.open);
+      p = setValve(ungate(p, id), id, step.to ?? 1);
+    } else if ('ease' in step) {
       const id = valveId(p, step.ease);
+      p = ungate(p, id);
       const from = p.inputs.valves[id] ?? 0;
       const n = Math.max(1, Math.round(step.overS));
       for (let i = 1; i <= n; i++)
@@ -162,7 +189,11 @@ export function operate(
           ...p,
           inputs: { ...p.inputs, switches: { ...p.inputs.switches, [id]: step.primer } },
         };
-    } else if ('trim' in step) p = { ...p, trim: step.trim };
+    } else if ('ignition' in step)
+      p = setSwitch(p, player.spec.engine.controls.ignition, step.ignition);
+    else if ('crank' in step) p = holdUntil(p, player.spec.engine.controls.start, true);
+    else if ('stopEngine' in step) p = holdUntil(p, player.spec.engine.controls.stop.id, false);
+    else if ('trim' in step) p = { ...p, trim: step.trim };
     else if ('gate' in step) p = { ...p, gates: [...p.gates, step.gate] };
     else if ('until' in step) p = runFor(p, step.maxS, step.until);
     else p = runFor(p, step.wait);

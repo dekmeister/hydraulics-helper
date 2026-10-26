@@ -1,6 +1,7 @@
+import { START_UP, shutDown, startEngineSteps } from './engineSteps';
 import { createInitialState } from '../engine';
 import { inletOfKind } from '../appliances/controls';
-import { PUMP_DAMAGE, TANK_DRY } from '../lesson/common';
+import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
 import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
@@ -49,6 +50,7 @@ const LESSON: LessonDef = {
       holdS: 30,
       after: ['first', 'second'],
     },
+    shutdownObjective(['both'], ['line-38', 'line-65']),
   ],
   failures: [TANK_DRY, ...PUMP_DAMAGE],
 };
@@ -62,8 +64,9 @@ export const TANK_ATTACK: Scenario = {
     const tankInlet = inletOfKind(spec, 'tank', 'tank-attack');
     const [a, b] = twoLines(lines, 'tank-attack');
     return {
-      state: createInitialState(spec, lines),
+      state: createInitialState(spec, lines, { engine: 'off' }),
       script: [
+        ...startEngineSteps(spec),
         { tS: 0, valves: { [tankInlet]: 1 } },
         { tS: 2, valves: { [a.deliveryId]: 1 } },
         { tS: 5, throttle: 0.6 },
@@ -75,6 +78,7 @@ export const TANK_ATTACK: Scenario = {
   },
   lesson: LESSON,
   solution: [
+    ...START_UP,
     { open: { inlet: 'tank' } },
     { open: { line: 'line-38' } },
     { open: { line: 'line-65' } },
@@ -82,5 +86,6 @@ export const TANK_ATTACK: Scenario = {
     { trim: { branch: 'line-38' } },
     { gate: 'line-65' },
     { until: { kind: 'objective', objective: 'both' }, maxS: 150 },
+    ...shutDown(['line-38', 'line-65']),
   ],
 };

@@ -70,6 +70,23 @@ export type RealItem =
       box: RBox;
     }
   | {
+      /**
+       * An engine switch (`EngineSpec.controls`): 'toggle' an ignition switch, 'button' a push
+       * button, 't-handle' a pull handle. Named from the simplified layout's engine-switch item.
+       */
+      kind: 'engine-switch';
+      control: ControlId;
+      look: 'toggle' | 'button' | 't-handle';
+      box: RBox;
+    }
+  | {
+      /** A warning lamp lit while the ignition is on and the engine isn't running (charge, oil). */
+      kind: 'engine-lamp';
+      id: string;
+      label: string;
+      box: RBox;
+    }
+  | {
       kind: 'inert';
       id: string;
       /** What it is on the truck, e.g. 'Ignition switch'. */

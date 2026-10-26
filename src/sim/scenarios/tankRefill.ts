@@ -20,6 +20,7 @@ export const TANK_REFILL: Scenario = {
   build(spec) {
     const fill = inletOfKind(spec, 'tankFill', 'tank-refill');
     const initial = createInitialState(spec, [], {
+      engine: 'off',
       sources: [
         {
           id: 'hydrant',

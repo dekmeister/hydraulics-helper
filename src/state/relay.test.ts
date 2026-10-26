@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { HOSE_WORKING_KPA } from '../sim/constants';
+import { warmStart } from '../sim/engine';
 import { getScenario } from '../sim/scenarios';
 import { inputsWith, run, suctionInletOf, truck, withBigLines } from '../sim/testUtils';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../sim/types';
@@ -75,7 +76,7 @@ describe('store: switching trucks', () => {
     const player = activeTruck(useStore.getState().sim).spec;
     const support = ALL.find((a) => a.id !== player.id);
     if (support === undefined) throw new Error('needs a second appliance');
-    const s = getScenario('closed-relay').build(player, { base: support }).state;
+    const s = warmStart(getScenario('closed-relay').build(player, { base: support }).state);
     useStore.getState().reset(s, 'closed-relay');
     useStore.getState().setActiveTruck('base');
     expect(useStore.getState().playerSpec.id).toBe(player.id);
@@ -85,7 +86,7 @@ describe('store: switching trucks', () => {
 });
 
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('relay selectors: %s', (_id, spec) => {
-  const closed = getScenario('closed-relay').build(spec).state;
+  const closed = warmStart(getScenario('closed-relay').build(spec).state);
   const suction = suctionInletOf(spec);
   const lines = closed.lines.map((l) => l.deliveryId);
   const attackInputs = (throttle: number) => inputsWith(throttle, [suction, ...lines]);
@@ -130,7 +131,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('relay selectors: %s'
   });
 
   it('reports a portable dam’s water as a fraction of what it holds', () => {
-    const open = getScenario('open-relay').build(spec).state;
+    const open = warmStart(getScenario('open-relay').build(spec).state);
     const [dam] = portableDams(open);
     expect(dam?.source.label).toBe('Portable dam');
     expect(dam?.fraction).toBeCloseTo(0.4, 6);

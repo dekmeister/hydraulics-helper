@@ -49,10 +49,16 @@ export const CAT1_LAYOUT: PanelLayout = {
     },
     {
       id: 'throttle',
-      title: 'Throttle',
-      arrangement: 'list',
+      title: 'Engine',
+      arrangement: 'row',
       span: 'half',
-      items: [{ kind: 'throttle', variant: 't-handle', label: 'Throttle' }],
+      items: [
+        { kind: 'throttle', variant: 't-handle', label: 'Throttle' },
+        { kind: 'engine-status' },
+        { kind: 'engine-switch', control: 'ignition', role: 'ignition', label: 'Ignition' },
+        { kind: 'engine-switch', control: 'start', role: 'start', label: 'Start' },
+        { kind: 'engine-switch', control: 'stop', role: 'stop', label: 'Stop' },
+      ],
     },
     {
       id: 'supply',

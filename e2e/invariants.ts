@@ -70,7 +70,7 @@ export async function expectNoOverlaps(page: Page): Promise<void> {
 export async function expectSpecRenderedOnce(page: Page, layout: PanelLayout): Promise<void> {
   const expected = layout.sections
     .flatMap((s) => s.items)
-    .flatMap((i): { role: 'meter' | 'slider' | 'switch'; name: string }[] => {
+    .flatMap((i): { role: 'meter' | 'slider' | 'switch' | 'status'; name: string }[] => {
       switch (i.kind) {
         case 'gauge':
         case 'tank-level':
@@ -80,7 +80,10 @@ export async function expectSpecRenderedOnce(page: Page, layout: PanelLayout): P
         case 'throttle':
           return [{ role: 'slider', name: i.label }];
         case 'primer':
+        case 'engine-switch':
           return [{ role: 'switch', name: i.label }];
+        case 'engine-status':
+          return [{ role: 'status', name: 'Engine' }];
         case 'warnings':
           return [];
       }
@@ -88,10 +91,13 @@ export async function expectSpecRenderedOnce(page: Page, layout: PanelLayout): P
   for (const { role, name } of expected) {
     const found = page.getByRole(role, { name, exact: true });
     await expect(found, `${role} "${name}"`).toHaveCount(1);
+    // A live region may be visually hidden (the realistic panel's engine status): read, not seen.
+    if (role === 'status') continue;
     await found.scrollIntoViewIfNeeded();
     await expect(found, `${role} "${name}" reachable`).toBeInViewport();
   }
-  await expect(page.getByRole('status')).toHaveCount(1);
+  // The warning strip's live region, and the engine's.
+  await expect(page.getByRole('status')).toHaveCount(2);
 }
 
 /**

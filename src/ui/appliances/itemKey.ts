@@ -12,9 +12,11 @@ export function itemKey(item: PanelItem): string {
     case 'valve':
     case 'delivery':
     case 'primer':
+    case 'engine-switch':
       return `c:${item.control}`;
     case 'throttle':
     case 'warnings':
+    case 'engine-status':
       return item.kind;
   }
 }
@@ -28,9 +30,11 @@ export function realItemKey(item: RealItem): string | null {
     case 'lever':
     case 'outlet':
     case 'primer':
+    case 'engine-switch':
       return `c:${item.control}`;
     case 'throttle':
       return 'throttle';
+    case 'engine-lamp':
     case 'inert':
       return null;
   }

@@ -19,11 +19,12 @@ export const CAT1_REALISTIC: RealisticLayout = {
       // The sight tube beside the panel: watched while the operator monitors, not worked.
       id: 'tank',
       caption: null,
-      viewBox: { w: 140, h: 912 },
+      // As tall as the instrument panel beside it, the tube centred on it.
+      viewBox: { w: 140, h: 1132 },
       place: 'beside',
-      art: [{ kind: 'plate', x: 70, y: 228, text: 'TANK' }],
+      art: [{ kind: 'plate', x: 70, y: 338, text: 'TANK' }],
       items: [
-        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 10, y: 270, w: 120, h: 432 } },
+        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 10, y: 380, w: 120, h: 432 } },
       ],
     },
     {

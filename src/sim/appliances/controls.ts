@@ -24,10 +24,21 @@ export function primerControlId(spec: ApplianceSpec): ControlId | undefined {
   }
 }
 
-/** Ids of every on/off control on the spec. */
-export function switchControlIds(spec: ApplianceSpec): ControlId[] {
+/** The primer's control as a list: empty with no primer or a self-priming pump. */
+export function primerSwitchIds(spec: ApplianceSpec): ControlId[] {
   const primer = primerControlId(spec);
   return primer === undefined ? [] : [primer];
+}
+
+/** Ids of the engine's switches: ignition, start and stop. */
+export function engineControlIds(spec: ApplianceSpec): ControlId[] {
+  const { ignition, start, stop } = spec.engine.controls;
+  return [ignition, start, stop.id];
+}
+
+/** Ids of every on/off control on the spec: the primer's, then the engine's. */
+export function switchControlIds(spec: ApplianceSpec): ControlId[] {
+  return [...primerSwitchIds(spec), ...engineControlIds(spec)];
 }
 
 /** Inlets that feed the pump: everything but a tank-fill inlet, which goes straight to the tank. */

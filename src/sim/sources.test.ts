@@ -11,6 +11,7 @@ import {
   primedState,
   run,
   truckOf,
+  TEST_STARTING,
 } from './testUtils';
 import type { ApplianceSpec, HoseLine, PlayerInputs, SupplyLine } from './types';
 
@@ -25,7 +26,7 @@ const SPEC: ApplianceSpec = {
     casingVolumeL: 10,
     churnKw: 10,
   },
-  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 },
+  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
   tank: { capacityL: 3000 },
   inlets: [
     { id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 15e-6 },

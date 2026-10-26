@@ -1,10 +1,10 @@
 // Priming (ARCHITECTURE §4.6): every primer kind, the vacuum test, air leaks, duty cycle, loss of
 // prime. Inline specs so placeholders elsewhere can be re-tuned without moving these.
 import { describe, expect, it } from 'vitest';
-import { switchControlIds } from './appliances/controls';
+import { primerSwitchIds } from './appliances/controls';
 import { TICK_S } from './constants';
 import { createInitialState } from './engine';
-import { draughtSite, inputsWith, layLine, run, truckOf } from './testUtils';
+import { draughtSite, inputsWith, layLine, run, truckOf, TEST_STARTING } from './testUtils';
 import type { ApplianceSpec, PlayerInputs, PrimerSpec, SimState } from './types';
 
 const PERF = { maxVacuumKpa: 80, displacementLps: 1.5 };
@@ -19,7 +19,7 @@ const specWith = (primer: PrimerSpec | undefined): ApplianceSpec => ({
     casingVolumeL: 10,
     churnKw: 10,
   },
-  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 },
+  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
   tank: { capacityL: 3000 },
   inlets: [
     { id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 15e-6 },
@@ -52,7 +52,7 @@ function timeToPrime(state: SimState, inputs: PlayerInputs, maxS = 300): number 
 }
 
 /** Primer held (if it has a control) with the suction valve open. */
-const priming = (spec: ApplianceSpec) => inputsWith(0, ['suction'], switchControlIds(spec));
+const priming = (spec: ApplianceSpec) => inputsWith(0, ['suction'], primerSwitchIds(spec));
 
 describe.each([
   ['rotary vane', ROTARY],

@@ -1,7 +1,7 @@
 // Sim states for the generated panel and scene fixtures (docs/TESTING.md §3.2). Pure sim calls, built per
 // appliance from the tank-attack scenario so every appliance gets the same set.
 import { TICK_S } from '../../sim/constants';
-import { advance } from '../../sim/engine';
+import { advance, warmStart } from '../../sim/engine';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
 
@@ -11,13 +11,68 @@ export const TANK_ATTACK_TARGET_KPA = 700;
 /** Sim time each fixture state runs for before capture, s: long past the 0.5 s rpm lag. */
 const RUN_S = 10;
 
-export type PanelStateId = 'idle' | 'tank-attack-700' | 'tank-low' | 'tank-empty';
+export type PanelStateId = 'idle' | 'tank-attack-700' | 'tank-low' | 'tank-empty' | EngineStateId;
 
+/** The engine being started or stopped, on the tank-attack fireground with every valve shut. */
+export type EngineStateId =
+  'engine-cold' | 'ignition-on' | 'cranking' | 'stopping' | 'stop-without-ignition';
+
+/** Engine states an appliance can show: the ignition trap only where STOP needs the ignition. */
+export function engineStates(spec: ApplianceSpec): EngineStateId[] {
+  return [
+    'engine-cold',
+    'ignition-on',
+    'cranking',
+    'stopping',
+    ...(spec.engine.controls.stop.needsIgnition ? (['stop-without-ignition'] as const) : []),
+  ];
+}
+
+/**
+ * `state` run for `seconds` on `inputs`. Scenarios start cold, so the engines are started first
+ * (`warmStart`) and the player's ignition held on, as on a pump its operator has started.
+ */
 export function settle(state: SimState, inputs: PlayerInputs, seconds = RUN_S): SimState {
-  let s = state;
+  let s = warmStart(state);
+  const spec = s.trucks.find((t) => t.id === s.activeTruckId)?.spec;
+  const on =
+    spec === undefined
+      ? inputs
+      : { ...inputs, switches: { ...inputs.switches, [spec.engine.controls.ignition]: true } };
   const ticks = Math.round(seconds / TICK_S);
-  for (let i = 0; i < ticks; i++) s = advance(s, inputs, TICK_S);
+  for (let i = 0; i < ticks; i++) s = advance(s, on, TICK_S);
   return s;
+}
+
+/** `state` run for `seconds` with only the named engine switches on: no warm start. */
+function holdSwitches(state: SimState, held: readonly ControlId[], seconds: number): SimState {
+  const inputs: PlayerInputs = {
+    throttle: 0,
+    valves: {},
+    switches: Object.fromEntries(held.map((id) => [id, true])),
+  };
+  let s = state;
+  for (let i = 0; i < Math.round(seconds / TICK_S); i++) s = advance(s, inputs, TICK_S);
+  return s;
+}
+
+/** The engine part-way through a start or a stop, from the cold tank-attack state. */
+function engineState(spec: ApplianceSpec, cold: SimState, id: EngineStateId): SimState {
+  const { ignition, start, stop } = spec.engine.controls;
+  switch (id) {
+    case 'engine-cold':
+      return cold;
+    case 'ignition-on':
+      return holdSwitches(cold, [ignition], 1);
+    case 'cranking':
+      // Most of the way through the crank: the starter has it turning, not yet firing.
+      return holdSwitches(cold, [ignition, start], spec.engine.crankS * 0.7);
+    case 'stopping':
+      // One tick of STOP held: the fuel is cut and it's running down, not yet stopped.
+      return holdSwitches(warmStart(cold), [ignition, stop.id], TICK_S);
+    case 'stop-without-ignition':
+      return holdSwitches(warmStart(cold), [stop.id], 2);
+  }
 }
 
 function withTankL(state: SimState, tankL: number): SimState {
@@ -67,7 +122,16 @@ function throttleFor(
 /** Sim state for a generated panel fixture. Throws if the appliance can't play tank attack. */
 export function panelState(spec: ApplianceSpec, id: PanelStateId): SimState {
   const initial = TANK_ATTACK.build(spec).state;
-  if (id === 'idle') return initial;
+  switch (id) {
+    case 'idle':
+      return warmStart(initial);
+    case 'engine-cold':
+    case 'ignition-on':
+    case 'cranking':
+    case 'stopping':
+    case 'stop-without-ignition':
+      return engineState(spec, initial, id);
+  }
   const line = initial.lines[0];
   if (line === undefined) throw new Error(`tank attack laid no line on ${spec.id}`);
   const capacityL = spec.tank?.capacityL ?? 0;

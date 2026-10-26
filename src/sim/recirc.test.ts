@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { controlIds } from './appliances/controls';
 import { PUMP_TEMP_CAUTION_C, TICK_S } from './constants';
 import { createInitialState } from './engine';
-import { draughtSite, inputsWith, layLine, run, truckOf } from './testUtils';
+import { draughtSite, inputsWith, layLine, run, truckOf, TEST_STARTING } from './testUtils';
 import type { ApplianceSpec, SimState } from './types';
 
 /** 30 L/min at 700 kPa. */
@@ -22,7 +22,7 @@ const SPEC: ApplianceSpec = {
     casingVolumeL: 4,
     churnKw: 5,
   },
-  engine: { idleRpm: 1200, maxRpm: 3600, rpmLagS: 0.4, cylinders: 1 },
+  engine: { idleRpm: 1200, maxRpm: 3600, rpmLagS: 0.4, cylinders: 1, ...TEST_STARTING },
   tank: { capacityL: 1500 },
   inlets: [
     { id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 4e-5 },

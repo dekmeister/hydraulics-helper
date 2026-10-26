@@ -451,3 +451,102 @@
 .hand-primer--check-suction .hand-primer__caption {
   color: var(--color-signal-caution);
 }
+
+/* Engine switches and lamps (IGN, START, STOP, charge and oil lamps) */
+.real-engine,
+.real-lamp {
+  position: absolute;
+  box-sizing: border-box;
+}
+.real-engine {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+.real-engine__cap {
+  display: block;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 40% 35%,
+    var(--color-material-galv-mid),
+    var(--color-material-galv-dark)
+  );
+  border: 4px solid var(--color-material-galv-edge);
+  box-shadow: 2px 3px 0 1px #000;
+}
+.real-engine--stop .real-engine__cap {
+  background: radial-gradient(
+    circle at 40% 35%,
+    var(--color-signal-alarm-lit-core),
+    var(--color-signal-alarm)
+  );
+}
+.real-engine--start .real-engine__cap {
+  background: radial-gradient(circle at 40% 35%, #4a5a52, var(--color-function-inlet-stroke));
+}
+/* The ignition: a black boss with a bar, pointing up when off and right when on. */
+.real-engine--toggle .real-engine__cap {
+  position: relative;
+  background: var(--color-material-ink);
+  transition: transform 120ms ease-out;
+}
+.real-engine--toggle .real-engine__cap::after {
+  content: '';
+  position: absolute;
+  left: calc(50% - 6px);
+  top: 4%;
+  width: 12px;
+  height: 46%;
+  border-radius: 6px;
+  background: var(--color-material-steel);
+}
+.real-engine--toggle.real-engine--on .real-engine__cap {
+  transform: rotate(90deg);
+}
+/* A pull handle: a red T-bar on a shaft, drawn out while held. */
+.real-engine--t-handle .real-engine__cap {
+  width: 86%;
+  height: 34%;
+  border-radius: 10px;
+  transition: transform 120ms ease-out;
+}
+.real-engine--on:not(.real-engine--toggle) .real-engine__cap {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 1px #000;
+}
+.real-engine--t-handle.real-engine--on .real-engine__cap {
+  transform: translateY(18%);
+  box-shadow: 0 -10px 0 -2px var(--color-material-galv-mid);
+}
+.real-engine:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+  border-radius: 50%;
+}
+.real-lamp {
+  border-radius: 50%;
+  background: var(--color-material-lamp-glass-unlit);
+  border: 4px solid var(--color-material-galv-edge);
+  transform: scale(0.75);
+}
+.real-lamp--lit {
+  background: radial-gradient(
+    circle at 40% 35%,
+    var(--color-signal-alarm-lit-core),
+    var(--color-signal-alarm)
+  );
+  box-shadow: 0 0 12px 2px var(--color-signal-alarm);
+}
+@media (prefers-reduced-motion: reduce) {
+  .real-engine__cap {
+    transition: none;
+  }
+}

@@ -1,14 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
-import { activeTruck, selectWarnings } from '../../state/selectors';
+import { activeTruck, engineStatus, selectWarnings } from '../../state/selectors';
 import { LOW_TANK_FRACTION } from '../../state/tankLevel';
-import { panelState, TANK_ATTACK_TARGET_KPA } from './panelStates';
+import { engineStates, panelState, TANK_ATTACK_TARGET_KPA } from './panelStates';
 
 describe.each([...APPLIANCES, TEST_APPLIANCE].map((s) => [s.id, s] as const))(
   'panel fixture states: %s',
   (_id, spec) => {
     const capacityL = spec.tank?.capacityL ?? 0;
+
+    it('engine states show what their captions say', () => {
+      const status = (id: Parameters<typeof panelState>[1]) => {
+        const s = panelState(spec, id);
+        return engineStatus(s, activeTruck(s).inputs);
+      };
+      expect(status('idle')).toMatchObject({ phase: 'running', ignition: true });
+      expect(status('engine-cold')).toMatchObject({ phase: 'off', ignition: false });
+      expect(status('ignition-on')).toMatchObject({ phase: 'off', lampsLit: true });
+      expect(status('cranking').phase).toBe('cranking');
+      expect(activeTruck(panelState(spec, 'cranking')).rpm).toBeGreaterThan(0);
+      expect(status('stopping').phase).toBe('stopping');
+      if (engineStates(spec).includes('stop-without-ignition'))
+        expect(status('stop-without-ignition')).toMatchObject({
+          phase: 'running',
+          stopWithoutIgnition: true,
+        });
+    });
 
     it('tank-attack-700 holds the target discharge (±1 %) with no warnings lit', () => {
       const s = panelState(spec, 'tank-attack-700');

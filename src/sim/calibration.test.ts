@@ -13,6 +13,7 @@ import {
   primedState,
   run,
   truckOf,
+  TEST_STARTING,
 } from './testUtils';
 import type { ApplianceSpec, HoseLine, HoseSegment } from './types';
 
@@ -88,7 +89,7 @@ const DRAUGHT_SPEC: ApplianceSpec = {
     casingVolumeL: 10,
     churnKw: 10,
   },
-  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 },
+  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
   inlets: [{ id: 'suction', label: 'Suction', kind: 'suction', sizeMm: 64, lossKpaPerLpm2: 10e-6 }],
   deliveries: [
     { id: 'a', label: 'A', sizeMm: 64 },

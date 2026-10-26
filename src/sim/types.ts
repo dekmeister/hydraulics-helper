@@ -45,6 +45,30 @@ export interface EngineSpec {
    * push or pull it freely. Absent: not a vernier. The throttle input is the same 0–1 position.
    */
   vernier?: VernierSpec;
+  /** Panel controls that start and stop the engine. */
+  controls: EngineControlsSpec;
+  /** Cranking the starter needs before the engine fires, s. */
+  crankS: number;
+  /** Speed the starter turns the engine at, rpm. */
+  crankRpm: number;
+  /**
+   * With the fuel cut, the engine is stopped once it runs down below this, rpm; let go of STOP
+   * above it and the fuel rack returns and the engine picks up again.
+   */
+  refireRpm: number;
+  /** Spin-down time constant with the fuel cut, s. */
+  runDownS: number;
+}
+
+/**
+ * Engine switches, each a held on/off input. START cranks while held (with the ignition on); STOP
+ * cuts the fuel while held. An energise-to-stop solenoid (`needsIgnition`) is powered through the
+ * ignition, so STOP does nothing with it off; a mechanical stop works either way.
+ */
+export interface EngineControlsSpec {
+  ignition: ControlId;
+  start: ControlId;
+  stop: { id: ControlId; needsIgnition: boolean };
 }
 
 /** How far one full twist of a vernier throttle's knob moves the throttle, as a fraction of travel. */
@@ -398,6 +422,12 @@ export interface FaultTally {
   hoseBursts: number;
 }
 
+/** Whether the engine is firing, and how long the starter has cranked it unbroken. */
+export interface EngineState {
+  running: boolean;
+  crankS: number;
+}
+
 export interface TruckState {
   id: string;
   /** UI copy naming the truck on the fireground, e.g. 'Base pump'. */
@@ -405,6 +435,7 @@ export interface TruckState {
   /** Copy of the appliance spec, so saved states stay self-contained (ARCHITECTURE §9.2). */
   spec: ApplianceSpec;
   rpm: number;
+  engine: EngineState;
   /** Water in the tank, L. 0 if the appliance has no tank. */
   tankL: number;
   /** Inputs last applied to this truck. */

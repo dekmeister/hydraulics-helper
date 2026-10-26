@@ -9,6 +9,8 @@ import { SOURCE_STATE_SCENARIO, sourceState } from './sourceStates';
 
 export type RealisticStateId =
   | 'idle'
+  | 'engine-cold'
+  | 'ignition-on'
   | 'tank-attack-700'
   | 'after-tank-attack'
   | 'highlighted'
@@ -19,6 +21,8 @@ export type RealisticStateId =
 /** Scenario each state is built from, so the header picker shows it. */
 export const REALISTIC_STATE_SCENARIO: Readonly<Record<RealisticStateId, string>> = {
   idle: 'tank-attack',
+  'engine-cold': 'tank-attack',
+  'ignition-on': 'tank-attack',
   'tank-attack-700': 'tank-attack',
   'after-tank-attack': 'tank-attack',
   highlighted: 'tank-attack',
@@ -34,7 +38,9 @@ export const REALISTIC_STATE_SCENARIO: Readonly<Record<RealisticStateId, string>
 export function realisticState(spec: ApplianceSpec, id: RealisticStateId): SimState {
   switch (id) {
     case 'idle':
-      return panelState(spec, 'idle');
+    case 'engine-cold':
+    case 'ignition-on':
+      return panelState(spec, id);
     case 'tank-attack-700':
     case 'highlighted':
       return panelState(spec, 'tank-attack-700');

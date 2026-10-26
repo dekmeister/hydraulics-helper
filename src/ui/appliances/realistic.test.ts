@@ -111,6 +111,13 @@ describe.each(CATALOGUE_REALISTIC.map((l) => [l.applianceId, l] as const))(
       if (firstInset >= 0) expect(places.slice(firstInset).every((p) => p === 'inset')).toBe(true);
     });
 
+    it('draws each beside plate as tall as the plate it stands beside', () => {
+      for (const row of plateRows(layout.plates)) {
+        const [main, ...beside] = row;
+        for (const p of beside) expect(p.viewBox.h).toBe(main?.viewBox.h);
+      }
+    });
+
     it("shows the tank's level beside the instrument panel, where it is watched", () => {
       const [panelRow] = plateRows(layout.plates);
       const beside = (panelRow ?? []).slice(1);
@@ -121,7 +128,8 @@ describe.each(CATALOGUE_REALISTIC.map((l) => [l.applianceId, l] as const))(
       const simplified = getPanelLayout(id)
         .sections.flatMap((s) => s.items)
         .map(itemKey)
-        .filter((k) => k !== 'warnings');
+        // The realistic panel shows the engine's state on its lamps and the ignition's description.
+        .filter((k) => k !== 'warnings' && k !== 'engine-status');
       const placed = items.flatMap((i) => {
         const k = realItemKey(i);
         return k === null ? [] : [k];

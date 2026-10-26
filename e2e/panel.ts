@@ -27,7 +27,10 @@ export function layoutItems(layout: PanelLayout): PanelItem[] {
 export function controlName(layout: PanelLayout, controlId: string): string {
   const item = layoutItems(layout).find(
     (i) =>
-      (i.kind === 'valve' || i.kind === 'delivery' || i.kind === 'primer') &&
+      (i.kind === 'valve' ||
+        i.kind === 'delivery' ||
+        i.kind === 'primer' ||
+        i.kind === 'engine-switch') &&
       i.control === controlId,
   );
   if (item === undefined || !('label' in item)) throw new Error(`${controlId} not placed`);
@@ -128,12 +131,65 @@ export async function dragThrottle(page: Page, position: number): Promise<void> 
   await page.mouse.up();
 }
 
+/** The warning strip's live message (the panel's other status is the engine's). */
+export function warningsStatus(page: Page): Locator {
+  return page.locator('[role="status"]:not([aria-label="Engine"])');
+}
+
 export async function expectStatus(page: Page, text: string | RegExp): Promise<void> {
-  await expect(page.getByRole('status')).toContainText(text);
+  await expect(warningsStatus(page)).toContainText(text);
 }
 
 /** Switch the pump panel to the truck's realistic bay. */
 export async function showRealistic(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Realistic', exact: true }).click();
   await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
+}
+
+/** The active truck's engine switch for `role`, by its accessible name on the panel showing. */
+export async function engineSwitch(
+  page: Page,
+  role: 'ignition' | 'start' | 'stop',
+): Promise<Locator> {
+  const { spec } = activeTruckOf(await getState(page));
+  const { ignition, start, stop } = spec.engine.controls;
+  const id = role === 'ignition' ? ignition : role === 'start' ? start : stop.id;
+  return page.getByRole('switch', { name: controlName(layoutFor(spec.id), id), exact: true });
+}
+
+/** Hold a START or STOP switch down (Space held on it) for `ticks` of sim time, then let go. */
+export async function holdEngineSwitch(
+  page: Page,
+  role: 'start' | 'stop',
+  ticks: number,
+): Promise<void> {
+  const sw = await engineSwitch(page, role);
+  await sw.focus();
+  await page.keyboard.down(' ');
+  await expect(sw).toHaveAttribute('aria-checked', 'true');
+  await stepAndSettle(page, ticks);
+  await page.keyboard.up(' ');
+  await expect(sw).toHaveAttribute('aria-checked', 'false');
+}
+
+/** Turn the ignition on or off with a tap, if it isn't already. */
+export async function setIgnition(page: Page, on: boolean): Promise<void> {
+  const ign = await engineSwitch(page, 'ignition');
+  if ((await ign.getAttribute('aria-checked')) !== String(on)) await ign.click();
+  await expect(ign).toHaveAttribute('aria-checked', String(on));
+}
+
+/** Start the active truck from cold through its panel: ignition on, hold START until it fires. */
+export async function startEngine(page: Page): Promise<void> {
+  const { spec } = activeTruckOf(await getState(page));
+  await setIgnition(page, true);
+  await holdEngineSwitch(page, 'start', Math.ceil(spec.engine.crankS * 10) + 2);
+  expect(activeTruckOf(await getState(page)).engine.running).toBe(true);
+}
+
+/** Stop the active truck: hold STOP until it has run down, then the ignition off. */
+export async function stopEngine(page: Page): Promise<void> {
+  await holdEngineSwitch(page, 'stop', 40);
+  expect(activeTruckOf(await getState(page)).engine.running).toBe(false);
+  await setIgnition(page, false);
 }

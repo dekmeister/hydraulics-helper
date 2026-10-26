@@ -2,6 +2,7 @@ import { memo, useEffect, useId, useMemo, useRef } from 'react';
 import { vernierStep } from './controls/controlMath';
 import {
   activeTruck,
+  engineStatus,
   INSTRUMENT_UNIT,
   instrumentValue,
   selectWarnings,
@@ -10,6 +11,7 @@ import { useStore } from '../../state/store';
 import { primerStatus } from '../../state/supply';
 import type { ApplianceSpec, InstrumentSpec } from '../../sim/types';
 import type { PanelItem } from '../appliances/types';
+import { EngineSwitch } from './controls/EngineSwitch';
 import { PrimerControl } from './controls/PrimerControl';
 import { Throttle } from './controls/Throttle';
 import { ValveHandle } from './controls/ValveHandle';
@@ -185,6 +187,41 @@ function PrimerItem({ item }: { item: Extract<PanelItem, { kind: 'primer' }> }) 
   );
 }
 
+function EngineSwitchItem({ item }: { item: Extract<PanelItem, { kind: 'engine-switch' }> }) {
+  const on = useStore((s) => s.inputs.switches[item.control] ?? false);
+  const setSwitch = useStore((s) => s.setSwitch);
+  // The button's face names it (IGN, START, STOP), so no caption over it; its label is its name.
+  return (
+    <div className="panel-control">
+      <EngineSwitch
+        label={item.label}
+        role={item.role}
+        on={on}
+        onChange={(v) => {
+          setSwitch(item.control, v);
+        }}
+      />
+    </div>
+  );
+}
+
+/** The engine's state in words: a live region, so a held START or STOP is heard to work. */
+function EngineStatusItem() {
+  const text = useStore((s) => engineStatus(s.sim, s.inputs).text);
+  const phase = useStore((s) => engineStatus(s.sim, s.inputs).phase);
+  const trap = useStore((s) => engineStatus(s.sim, s.inputs).stopWithoutIgnition);
+  return (
+    <p
+      className={`engine-status${trap ? ' engine-status--trap' : ''}`}
+      data-phase={phase}
+      role="status"
+      aria-label="Engine"
+    >
+      {text}
+    </p>
+  );
+}
+
 /** Warnings depend on the whole sim and inputs, so only the strip re-renders every tick. */
 function WarningsItem() {
   const sim = useStore((s) => s.sim);
@@ -207,6 +244,10 @@ export const PanelItemView = memo(function PanelItemView({ item }: { item: Panel
       return <ThrottleItem item={item} />;
     case 'primer':
       return <PrimerItem item={item} />;
+    case 'engine-switch':
+      return <EngineSwitchItem item={item} />;
+    case 'engine-status':
+      return <EngineStatusItem />;
     case 'warnings':
       return <WarningsItem />;
   }

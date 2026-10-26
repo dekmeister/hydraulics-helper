@@ -1,5 +1,6 @@
 // Pump panel layout as data (ARCHITECTURE §9.4). Plain data only: e2e specs import layouts to
 // enumerate what must be on screen, so nothing here may pull in React.
+import type { EngineSwitch } from '../../sim/lesson/types';
 import type { ControlId } from '../../sim/types';
 import type { DialId } from '../panel-pump/gauge/dials';
 
@@ -46,6 +47,13 @@ export type PanelItem =
     }
   | { kind: 'throttle'; variant: 't-handle'; label: string }
   | { kind: 'primer'; control: ControlId; label: string }
+  /**
+   * An engine switch (`EngineSpec.controls`): the ignition is a toggle, START and STOP are held.
+   * `control` is that switch's spec id.
+   */
+  | { kind: 'engine-switch'; control: ControlId; role: EngineSwitch; label: string }
+  /** What the engine is doing (stopped, cranking, running, stopping), as words. */
+  | { kind: 'engine-status' }
   | { kind: 'warnings' };
 
 export interface PanelSection {

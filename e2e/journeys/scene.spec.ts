@@ -8,6 +8,7 @@ import {
   getState,
   JOURNEY_APPLIANCES,
   layoutFor,
+  startEngine,
   stepAndSettle,
 } from '../panel';
 import {
@@ -26,6 +27,7 @@ for (const spec of JOURNEY_APPLIANCES) {
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'tank-attack', appliance });
       }, spec.id);
+      await startEngine(page);
     });
 
     test('turn off a delivery and its branch stops spraying; the other keeps going', async ({

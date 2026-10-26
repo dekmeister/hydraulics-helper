@@ -4,6 +4,7 @@ import { operate } from '../../sim/lesson/operator';
 import { getScenario } from '../../sim/scenarios';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../../sim/types';
 import { advanceCoach, acknowledge } from '../../sim/lesson/progress';
+import { START_UP } from '../../sim/scenarios/engineSteps';
 import { beginLesson, type ActiveLesson } from '../../state/lesson';
 import { defaultSaved, recordResult, type Saved } from '../../state/persist';
 
@@ -36,7 +37,7 @@ function played(
 export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtureState {
   switch (id) {
     case 'guided': {
-      // First line, past the welcome: the coach points at tank-to-pump.
+      // First line, past the welcome: the coach points at the ignition.
       const { sim, lesson } = beginLesson('first-line', spec);
       const acked = acknowledge(lesson.def, lesson.progress, 'welcome');
       const progress = advanceCoach(lesson.def, acked, sim);
@@ -50,7 +51,8 @@ export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtu
       // Crew 1 has just moved uphill: the radio call is in and their branch is below its band.
       return played('incident', spec, (start, lesson) =>
         operate(lesson.def, start, [
-          ...(getScenario('incident').solution ?? []).slice(0, 4),
+          // Up to trimming the first line: start, tank open, line open, throttle up, trim.
+          ...(getScenario('incident').solution ?? []).slice(0, 6),
           { until: { kind: 'objective', objective: 'attack' }, maxS: 120 },
           { trim: null },
           { wait: 3 },
@@ -73,6 +75,7 @@ export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtu
             },
           },
           [
+            ...START_UP,
             { open: { inlet: 'tank' } },
             { open: { line: 'line-38' } },
             { open: { line: 'line-65' } },

@@ -1,7 +1,8 @@
+import { START_UP, shutDown, startEngineSteps } from './engineSteps';
 import { inletOfKind } from '../appliances/controls';
 import { createSiteState } from '../engine';
 import { RELAY_MIN_RESIDUAL_KPA } from '../constants';
-import { PUMP_DAMAGE } from '../lesson/common';
+import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
 import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay } from './relayTrucks';
@@ -73,6 +74,7 @@ const LESSON: LessonDef = {
       holdS: 30,
       after: ['relay'],
     },
+    shutdownObjective(['hold'], ['line-65', 'line-38']),
   ],
   failures: [...PUMP_DAMAGE],
   events: [
@@ -133,7 +135,7 @@ export const CLOSED_RELAY: Scenario = {
     const baseSuction = inletOfKind(base, 'suction', 'closed-relay base');
     const state = createSiteState(
       [
-        { id: ATTACK_ID, label: 'Attack pump', spec },
+        { id: ATTACK_ID, label: 'Attack pump', spec, engine: 'off' },
         {
           id: BASE_ID,
           label: BASE.label,
@@ -142,7 +144,8 @@ export const CLOSED_RELAY: Scenario = {
           inputs: {
             throttle: BASE_THROTTLE,
             valves: { [baseSuction]: 1, [relay.deliveryId]: 1 },
-            switches: {},
+            // Its crew started it: the engine is running with the ignition on.
+            switches: { [base.engine.controls.ignition]: true },
           },
         },
       ],
@@ -167,6 +170,7 @@ export const CLOSED_RELAY: Scenario = {
     return {
       state,
       script: [
+        ...startEngineSteps(spec),
         { tS: 0, valves: { [inlet]: 1 } },
         { tS: 2, valves: { [a.deliveryId]: 1 } },
         { tS: 5, throttle: 0.4 },
@@ -180,6 +184,7 @@ export const CLOSED_RELAY: Scenario = {
   },
   lesson: LESSON,
   solution: [
+    ...START_UP,
     { open: { inlet: 'suction' } },
     { until: { kind: 'objective', objective: 'relay' }, maxS: 30 },
     { open: { line: 'line-65' } },
@@ -188,5 +193,6 @@ export const CLOSED_RELAY: Scenario = {
     { trim: { branch: 'line-38' } },
     { gate: 'line-65' },
     { until: { kind: 'objective', objective: 'hold' }, maxS: 180 },
+    ...shutDown(['line-65', 'line-38']),
   ],
 };

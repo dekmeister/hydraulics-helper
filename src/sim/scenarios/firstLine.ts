@@ -1,7 +1,8 @@
 import { inletOfKind } from '../appliances/controls';
 import { createInitialState } from '../engine';
-import { PUMP_DAMAGE, TANK_DRY } from '../lesson/common';
+import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
 import type { LessonDef, ValveRef } from '../lesson/types';
+import { START_UP, shutDown, startEngineSteps, stopEngineSteps } from './engineSteps';
 import { attachLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
@@ -14,7 +15,8 @@ const LESSON: LessonDef = {
   ladder: 1,
   brief:
     'One crew has run out three lengths of 38 mm hose with a 15 mm branch. Get them water from ' +
-    'the tank at the right pressure, then shut down cleanly. The coach walks you through it.',
+    'the tank at the right pressure, then shut down cleanly. The pump is cold: you start it. ' +
+    'The coach walks you through it.',
   objectives: [
     {
       id: 'water',
@@ -28,18 +30,7 @@ const LESSON: LessonDef = {
       holdS: 20,
       after: ['water'],
     },
-    {
-      id: 'shutdown',
-      text: 'Shut down: throttle back to idle, then ease the delivery shut.',
-      when: {
-        kind: 'all',
-        of: [
-          { kind: 'throttle', max: 0.02 },
-          { kind: 'valve', valve: ON_LINE, max: 0 },
-        ],
-      },
-      after: ['pressure'],
-    },
+    shutdownObjective(['pressure'], [LINE.id]),
   ],
   failures: [TANK_DRY, ...PUMP_DAMAGE],
   coach: [
@@ -47,7 +38,22 @@ const LESSON: LessonDef = {
       id: 'welcome',
       text:
         'This is your pump panel. A crew is waiting on the end of three lengths of 38 mm hose. ' +
-        'You’ll open the tank to the pump, open their delivery, then bring the pressure up.',
+        'You’ll start the pump, open the tank to the pump, open their delivery, then bring the ' +
+        'pressure up.',
+    },
+    {
+      id: 'ignition',
+      text: 'The pump engine is cold. Turn on {target} ({gesture}).',
+      target: { engine: 'ignition' },
+      done: { kind: 'engine', ignition: true },
+    },
+    {
+      id: 'start',
+      text:
+        'Crank the engine with {target} ({gesture}) until it fires, then let go. Let go too soon ' +
+        'and it won’t catch.',
+      target: { engine: 'start' },
+      done: { kind: 'engine', running: true },
     },
     {
       id: 'tank',
@@ -96,6 +102,26 @@ const LESSON: LessonDef = {
         'Good work. Shut down as you would at the end of a job: throttle to idle first, then ease ' +
         'the delivery shut. Slamming a valve sends a water hammer surge down the hose.',
       target: { throttle: true },
+      done: {
+        kind: 'all',
+        of: [
+          { kind: 'throttle', max: 0.02 },
+          { kind: 'valve', valve: ON_LINE, max: 0 },
+        ],
+      },
+    },
+    {
+      id: 'stop',
+      text:
+        'Now stop the engine with {target} ({gesture}) until it has stopped. Let go while it’s ' +
+        'still turning and it picks up again.',
+      target: { engine: 'stop' },
+      done: { kind: 'engine', running: false },
+    },
+    {
+      id: 'ignition-off',
+      text: 'Last, turn off {target} ({gesture}) so the battery isn’t left flat.',
+      target: { engine: 'ignition' },
       done: { kind: 'objective', objective: 'shutdown' },
     },
   ],
@@ -111,28 +137,27 @@ export const FIRST_LINE: Scenario = {
     const tankInlet = inletOfKind(spec, 'tank', 'first-line');
     const delivery = lines[0]?.deliveryId ?? '';
     return {
-      state: createInitialState(spec, lines),
+      state: createInitialState(spec, lines, { engine: 'off' }),
       script: [
+        ...startEngineSteps(spec),
         { tS: 0, valves: { [tankInlet]: 1 } },
         { tS: 2, valves: { [delivery]: 1 } },
         { tS: 5, throttle: 0.6 },
         { tS: 40, throttle: 0 },
         ...[0.75, 0.5, 0.25, 0].map((open, i) => ({ tS: 45 + i, valves: { [delivery]: open } })),
+        ...stopEngineSteps(spec, 50),
       ],
       durationS: 60,
     };
   },
   lesson: LESSON,
   solution: [
+    ...START_UP,
     { open: TANK },
     { open: ON_LINE },
     { throttle: 0.5 },
     { trim: { branch: LINE.id } },
     { until: { kind: 'objective', objective: 'pressure' }, maxS: 120 },
-    { trim: null },
-    { throttle: 0 },
-    { wait: 3 },
-    { ease: ON_LINE, to: 0, overS: 5 },
-    { wait: 1 },
+    ...shutDown([LINE.id]),
   ],
 };

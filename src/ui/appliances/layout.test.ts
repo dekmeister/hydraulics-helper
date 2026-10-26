@@ -42,7 +42,12 @@ describe.each(PAIRS)('panel layout ↔ spec: %s', (_id, spec, layout) => {
 
   it('places every control exactly once and nothing else', () => {
     const placed = all.flatMap((i) =>
-      i.kind === 'valve' || i.kind === 'delivery' || i.kind === 'primer' ? [i.control] : [],
+      i.kind === 'valve' ||
+      i.kind === 'delivery' ||
+      i.kind === 'primer' ||
+      i.kind === 'engine-switch'
+        ? [i.control]
+        : [],
     );
     expect([...placed].sort()).toEqual(
       [...valveControlIds(spec), ...switchControlIds(spec)].sort(),
@@ -58,6 +63,13 @@ describe.each(PAIRS)('panel layout ↔ spec: %s', (_id, spec, layout) => {
         expect(deliveryIds.has(i.control) || switches.has(i.control)).toBe(false);
       if (i.kind === 'primer') expect(switches.has(i.control)).toBe(true);
     }
+  });
+
+  it('places each engine switch under its role, and the engine status once', () => {
+    const { ignition, start, stop } = spec.engine.controls;
+    const byRole = { ignition, start, stop: stop.id };
+    for (const i of all) if (i.kind === 'engine-switch') expect(i.control).toBe(byRole[i.role]);
+    expect(all.filter((i) => i.kind === 'engine-status')).toHaveLength(1);
   });
 
   it('places every instrument exactly once on a face that can show it', () => {

@@ -17,8 +17,13 @@ export type CoachTarget =
   | { valve: ValveRef }
   | { throttle: true }
   | { primer: true }
+  /** One of the engine's switches. */
+  | { engine: EngineSwitch }
   | { gauge: InstrumentKind }
   | { lamps: true };
+
+/** An engine switch, named by what it does. */
+export type EngineSwitch = 'ignition' | 'start' | 'stop';
 
 /** Inclusive bounds; a missing bound is open. */
 export interface Range {
@@ -51,6 +56,8 @@ export type Condition =
    */
   | ({ kind: 'flow'; line: string; ofWorking?: true } & Range)
   | { kind: 'primed'; truck?: string }
+  /** The engine is (or isn't) running, and its ignition is (or isn't) on; a missing field is either. */
+  | { kind: 'engine'; running?: boolean; ignition?: boolean; truck?: string }
   | { kind: 'cavitating'; truck?: string }
   /** Water left in a static source, L. */
   | ({ kind: 'source'; source: string } & Range)
@@ -77,6 +84,11 @@ export interface Objective {
   holdS?: number;
   /** Objectives that must be done before this one starts counting. */
   after?: string[];
+  /**
+   * The job is over once this starts counting: crews shut down with it, so a line going dry is no
+   * longer held against the player.
+   */
+  windDown?: true;
 }
 
 /** Ends the lesson as failed the moment its condition holds. */

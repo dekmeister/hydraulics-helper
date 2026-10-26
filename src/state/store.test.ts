@@ -18,8 +18,14 @@ describe('store', () => {
   });
 
   it('applies panel inputs to the sim on the next tick', () => {
-    const { sim, setValve, setThrottle } = useStore.getState();
+    const { sim, setValve, setThrottle, setSwitch } = useStore.getState();
     const spec = activeTruck(sim).spec;
+    // Start it from cold as a player would: ignition on, hold START until it fires.
+    setSwitch(spec.engine.controls.ignition, true);
+    setSwitch(spec.engine.controls.start, true);
+    useStore.getState().step(Math.ceil(spec.engine.crankS / 0.1) + 1);
+    expect(activeTruck(useStore.getState().sim).engine.running).toBe(true);
+    setSwitch(spec.engine.controls.start, false);
     for (const i of spec.inlets) setValve(i.id, 1);
     const line = sim.lines[0];
     if (line === undefined) throw new Error('no line');

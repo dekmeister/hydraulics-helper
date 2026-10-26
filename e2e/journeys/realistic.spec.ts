@@ -19,6 +19,7 @@ import {
   meterValue,
   showRealistic,
   sliderValue,
+  startEngine,
   stepAndSettle,
   tapOrClick,
 } from '../panel';
@@ -85,6 +86,7 @@ for (const spec of REALISTIC_APPLIANCES) {
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'tank-attack', appliance });
       }, spec.id);
+      await startEngine(page);
       await expect(page.getByRole('button', { name: 'Simplified', exact: true })).toHaveAttribute(
         'aria-pressed',
         'true',
@@ -95,6 +97,7 @@ for (const spec of REALISTIC_APPLIANCES) {
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'tank-attack', appliance });
       }, spec.id);
+      await startEngine(page);
       await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
       await page.getByRole('button', { name: 'Simplified', exact: true }).click();
       await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'simplified');

@@ -26,6 +26,17 @@ export const CAT1: ApplianceSpec = {
       rampRpmPerS: 400, // governor run-up while the switch is held // PLACEHOLDER — needs Dek
       flickRpm: 50, // one quick flick of the switch // PLACEHOLDER — needs Dek
     },
+    // IGN, START and STOP on the panel (photo). STOP energises a fuel rack solenoid through the
+    // ignition: placard "To stop pump ignition must be on". // doctrine-confirmed (photo, Dek)
+    controls: {
+      ignition: 'ignition',
+      start: 'start',
+      stop: { id: 'stop', needsIgnition: true },
+    },
+    crankS: 1.5, // cranking before a warm diesel fires // PLACEHOLDER — needs Dek
+    crankRpm: 200, // starter speed // PLACEHOLDER — needs Dek
+    refireRpm: 400, // let go of STOP above this and it picks up again // PLACEHOLDER — needs Dek
+    runDownS: 0.8, // spin-down time constant with the fuel cut // PLACEHOLDER — needs Dek
   },
   tank: {
     capacityL: 3000, // PLACEHOLDER — needs Dek

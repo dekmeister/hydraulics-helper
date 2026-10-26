@@ -4,7 +4,7 @@ import { branchPressureKpa } from './branch';
 import { HEAD_KPA_PER_M } from './constants';
 import { hoseFrictionKpa } from './hose';
 import { solveTruck, valveLossCoeff } from './network';
-import { layLine } from './testUtils';
+import { layLine, TEST_STARTING } from './testUtils';
 import type { ApplianceSpec, PlayerInputs, ReliefSpec } from './types';
 
 // Inline spec so solver tests don't move when an appliance's placeholders are re-tuned.
@@ -18,7 +18,7 @@ const SPEC: ApplianceSpec = {
     casingVolumeL: 10,
     churnKw: 10,
   },
-  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 },
+  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
   tank: { capacityL: 3000 },
   inlets: [{ id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 1e-4 }],
   deliveries: [

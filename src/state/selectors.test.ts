@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { warmStart } from '../sim/engine';
 import { APPLIANCES } from '../sim/appliances/catalogue';
 import { idleInputs } from '../sim/appliances/controls';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
@@ -28,7 +29,7 @@ const level = (sim: SimState, inputs: PlayerInputs, id: string) =>
   selectWarnings(sim, inputs).find((w) => w.id === id)?.level;
 
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('selectors: %s', (_id, spec) => {
-  const sim = TANK_ATTACK.build(spec).state;
+  const sim = warmStart(TANK_ATTACK.build(spec).state);
   const idle = idleInputs(spec);
   const capacity = spec.tank?.capacityL ?? 0;
   const firstLine = sim.lines[0];
@@ -85,7 +86,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('selectors: %s', (_id
 });
 
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('delivery lines: %s', (_id, spec) => {
-  const sim = TANK_ATTACK.build(spec).state;
+  const sim = warmStart(TANK_ATTACK.build(spec).state);
   const [first, second] = sim.lines;
   const tankInlet = spec.inlets.find((i) => i.kind === 'tank');
   if (first === undefined || second === undefined || tankInlet === undefined)

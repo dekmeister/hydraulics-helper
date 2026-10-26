@@ -15,6 +15,7 @@ import {
   objectiveDone,
   playUntil,
   presses,
+  shutDownLesson,
   startButton,
   trimBranch,
 } from '../lesson';
@@ -23,9 +24,13 @@ import {
   controlName,
   dragThrottle,
   dragValve,
+  engineSwitch,
   getState,
+  holdEngineSwitch,
   JOURNEY_APPLIANCES,
   layoutFor,
+  setIgnition,
+  startEngine,
   stepAndSettle,
   tapOrClick,
 } from '../panel';
@@ -80,34 +85,48 @@ for (const spec of JOURNEY_APPLIANCES) {
         window.__pumpops?.load({ scenario: 'first-line', appliance, lesson: true });
       }, spec.id);
     }
-    await expect(dock(page)).toContainText('Step 1 of 8');
+    await expect(dock(page)).toContainText('Step 1 of 12');
     await dock(page).getByRole('button', { name: 'Got it' }).click();
-    await expect(dock(page)).toContainText('Step 2 of 8');
+
+    // Start from cold: ignition on, then hold START until it fires.
+    await expect(dock(page)).toContainText('Step 2 of 12');
+    await setIgnition(page, true);
+    await stepAndSettle(page, 1);
+    await expect(dock(page)).toContainText('Step 3 of 12');
+    // Let go too soon and it doesn't catch; hold on and it does.
+    await holdEngineSwitch(page, 'start', 5);
+    await stepAndSettle(page, 5);
+    expect(activeTruckOf(await getState(page)).engine.running).toBe(false);
+    await expect(dock(page)).toContainText('Step 3 of 12');
+    await holdEngineSwitch(page, 'start', 25);
+    await stepAndSettle(page, 1);
+    await expect(dock(page)).toContainText('Step 4 of 12');
+    await expect(page.getByRole('status', { name: 'Engine' })).toHaveText('Running');
 
     const tank = await inlet(page, 'tank', testInfo);
     await expect(tank).toHaveAttribute('aria-valuenow', '100');
     await stepAndSettle(page, 1);
-    await expect(dock(page)).toContainText('Step 3 of 8');
+    await expect(dock(page)).toContainText('Step 5 of 12');
 
     const line = await deliveryOf(page, 'line-38');
     await dragValve(page, line.valve, 1);
     await stepAndSettle(page, 1);
-    await expect(dock(page)).toContainText('Step 4 of 8');
+    await expect(dock(page)).toContainText('Step 6 of 12');
 
     await dragThrottle(page, 0.6);
     await playUntil(
       page,
-      (p) => p.coachIndex >= 4,
+      (p) => p.coachIndex >= 6,
       async (s) => {
         if (activeTruckOf(s).readings.dischargeKpa < 650) await nudgeThrottle(page, 6);
       },
       30,
     );
-    for (const step of ['Step 5 of 8', 'Step 6 of 8']) {
+    for (const step of ['Step 7 of 12', 'Step 8 of 12']) {
       await expect(dock(page)).toContainText(step);
       await dock(page).getByRole('button', { name: 'Got it' }).click();
     }
-    await expect(dock(page)).toContainText('Step 7 of 8');
+    await expect(dock(page)).toContainText('Step 9 of 12');
     await playUntil(
       page,
       (p) => objectiveDone(p, 'pressure'),
@@ -115,13 +134,24 @@ for (const spec of JOURNEY_APPLIANCES) {
     );
 
     // Shut down: idle first, then ease the delivery shut over a few seconds.
-    await expect(dock(page)).toContainText('Step 8 of 8');
+    await expect(dock(page)).toContainText('Step 10 of 12');
     await dragThrottle(page, 0);
     await stepAndSettle(page, 30);
     for (const open of [0.5, 0.2, 0]) {
       await dragValve(page, line.valve, open);
       await stepAndSettle(page, 10);
     }
+    // Then the engine: a tap on STOP only dips it and it picks up again; held, it stops.
+    await expect(dock(page)).toContainText('Step 11 of 12');
+    await holdEngineSwitch(page, 'stop', 1);
+    await stepAndSettle(page, 20);
+    expect(activeTruckOf(await getState(page)).engine.running).toBe(true);
+    await holdEngineSwitch(page, 'stop', 40);
+    await stepAndSettle(page, 1);
+    await expect(dock(page)).toContainText('Step 12 of 12');
+    await expect(await engineSwitch(page, 'ignition')).toHaveAttribute('aria-checked', 'true');
+    await setIgnition(page, false);
+    await stepAndSettle(page, 1);
     expect((await getLesson(page)).status).toBe('passed');
     await expectPassedDebrief(page);
     expect(activeTruckOf(await getState(page)).tally.waterHammer).toBe(0);
@@ -136,6 +166,7 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
   await gotoApp(page);
   // 2: two lines on the tank, the 38 mm sets the pump and the 65 mm is gated back.
   await startButton(page, 2).click();
+  await startEngine(page);
   await inlet(page, 'tank', testInfo);
   const small = await deliveryOf(page, 'line-38');
   const big = await deliveryOf(page, 'line-65');
@@ -152,11 +183,13 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
     },
     150,
   );
+  await shutDownLesson(page, [small.valve, big.valve]);
   await expectPassedDebrief(page);
 
   // 3, from the debrief: water from the hydrant without over-running it.
   await page.getByRole('button', { name: 'Next scenario' }).click();
   await expect(dock(page)).toContainText('Take water from the hydrant');
+  await startEngine(page);
   await inlet(page, 'suction', testInfo);
   const attack = await deliveryOf(page, 'line-65');
   await dragValve(page, attack.valve, 1);
@@ -182,6 +215,7 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
       else if (lineFlow(s, 'line-38') < 220 && compound(s) > 100) await nudgeThrottle(page, 2);
     },
   );
+  await shutDownLesson(page, [attack.valve, second.valve]);
   await expectPassedDebrief(page);
 
   // Back on the menu, and after a reload: 2 and 3 passed; 1, never tried, is up next.
@@ -204,6 +238,7 @@ test('the incident’s events: the crew moves uphill and calls for pressure', as
   await page.evaluate(() => {
     window.__pumpops?.load({ scenario: 'incident', appliance: 'cat1-generic', lesson: true });
   });
+  await startEngine(page);
   await inlet(page, 'tank', testInfo);
   const line = await deliveryOf(page, 'line-1');
   await dragValve(page, line.valve, 1);
@@ -268,6 +303,7 @@ for (const spec of JOURNEY_APPLIANCES.filter(
     await startButton(page, 2).click();
     await expect(page.locator('.pump-panel__appliance')).toContainText(spec.name);
 
+    await startEngine(page);
     await inlet(page, 'tank', testInfo);
     const crew = await deliveryOf(page, 'line-38');
     const second = await deliveryOf(page, 'line-65');
@@ -284,6 +320,7 @@ for (const spec of JOURNEY_APPLIANCES.filter(
       },
       150,
     );
+    await shutDownLesson(page, [crew.valve, second.valve]);
     await expectPassedDebrief(page);
 
     await page.reload();

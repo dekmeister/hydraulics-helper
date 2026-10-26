@@ -86,7 +86,9 @@ describe('first-line coach figures', () => {
     const loaded = loadScenario(scenario, spec);
     const lesson = loaded.lesson;
     if (lesson === undefined) throw new Error('no lesson');
-    const steps = (scenario.solution ?? []).slice(0, 5); // up to holding the branch in band
+    const solution = scenario.solution ?? [];
+    // Up to holding the branch in band.
+    const steps = solution.slice(0, solution.findIndex((step) => 'until' in step) + 1);
     const end = operate(lesson.def, { state: loaded.run.state, progress: lesson.progress }, steps);
     const truck = end.state.trucks[0];
     expect(truck?.readings.dischargeKpa).toBeGreaterThan(630); // 700 ± 10 %

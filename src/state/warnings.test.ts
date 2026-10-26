@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { warmStart } from '../sim/engine';
 import {
   CAVITATION_FLUTTER_DISCHARGE_KPA,
   PUMP_TEMP_ALARM_C,
@@ -29,7 +30,7 @@ describe('supply lamp with a tank-fill inlet', () => {
   it.runIf(spec !== undefined)('doesn’t count hydrant to tank as a pump supply', () => {
     if (spec === undefined) return;
     const fill = spec.inlets.find((i) => i.kind === 'tankFill')?.id ?? '';
-    const sim = getScenario('tank-attack').build(spec).state;
+    const sim = warmStart(getScenario('tank-attack').build(spec).state);
     const d = sim.lines[0]?.deliveryId ?? '';
     const w = lamp(sim, inputsWith(0.5, [fill, d]), 'supply');
     expect(w?.level).toBe('caution');
@@ -39,8 +40,8 @@ describe('supply lamp with a tank-fill inlet', () => {
 });
 
 describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_id, spec) => {
-  const draught = getScenario('draughting').build(spec).state;
-  const hydrant = getScenario('hydrant-supply').build(spec).state;
+  const draught = warmStart(getScenario('draughting').build(spec).state);
+  const hydrant = warmStart(getScenario('hydrant-supply').build(spec).state);
   // A weak hydrant on big lines: one any pump can over-run, a light tanker's included.
   const weakHydrant = withBigLines({
     ...hydrant,
@@ -141,7 +142,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
 describe('primer status', () => {
   const spec = APPLIANCES[0] ?? TEST_APPLIANCE;
   const id = primerControlId(spec) ?? 'primer';
-  const draught = getScenario('draughting').build(spec).state;
+  const draught = warmStart(getScenario('draughting').build(spec).state);
   const held = inputsWith(0, [suctionInletOf(spec)], [id]);
 
   it('runs with the ring filling, warns to check the suction after 30 s, then shows primed', () => {

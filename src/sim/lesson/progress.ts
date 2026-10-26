@@ -123,6 +123,7 @@ function stepStats(
   state: SimState,
   truck: TruckState,
   dtS: number,
+  windingDown: boolean,
 ): LessonStats {
   const lines = state.lines.filter((l) => l.truckId === truck.id);
   const flow = (deliveryId: string) => truck.readings.deliveryFlowLpm[deliveryId] ?? 0;
@@ -132,12 +133,14 @@ function stepStats(
       .filter((l) => !stats.watered.includes(l.id) && flow(l.deliveryId) >= CREW_WATER_MIN_LPM)
       .map((l) => l.id),
   ];
-  const dry = lines.some(
-    (l) =>
-      watered.includes(l.id) &&
-      (truck.inputs.valves[l.deliveryId] ?? 0) >= VALVE_CLOSED_EPS &&
-      flow(l.deliveryId) < CREW_WATER_MIN_LPM,
-  );
+  const dry =
+    !windingDown &&
+    lines.some(
+      (l) =>
+        watered.includes(l.id) &&
+        (truck.inputs.valves[l.deliveryId] ?? 0) >= VALVE_CLOSED_EPS &&
+        flow(l.deliveryId) < CREW_WATER_MIN_LPM,
+    );
   const add = <K extends string>(m: Partial<Record<K, number>>, k: K) => ({
     ...m,
     [k]: (m[k] ?? 0) + dtS,
@@ -203,7 +206,11 @@ export function stepLesson(
     const done = ready && heldS > 0 && heldS >= (o.holdS ?? 0) - 1e-9;
     objectives[o.id] = done ? { heldS, doneAtS: s.timeS } : { heldS };
   }
-  p = { ...p, objectives, stats: stepStats(p.stats, s, truck, dtS) };
+  const done = lessonFacts(p).done;
+  const windingDown = def.objectives.some(
+    (o) => o.windDown === true && (o.after ?? []).every((id) => done.includes(id)),
+  );
+  p = { ...p, objectives, stats: stepStats(p.stats, s, truck, dtS, windingDown) };
 
   p = advanceCoach(def, p, s);
 

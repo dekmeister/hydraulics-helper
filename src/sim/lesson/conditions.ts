@@ -1,5 +1,6 @@
 // Evaluating and checking lesson conditions. Pure functions of the sim state and lesson facts.
 import { VALVE_CLOSED_EPS } from '../constants';
+import { ignitionOn } from '../engineControl';
 import type { InstrumentKind, SimState, TruckState } from '../types';
 import { branchBand, branchKpa, hoseById, resolveValve, truckOf, workingFlowLpm } from './refs';
 import type { Condition, GaugeId, Range } from './types';
@@ -54,6 +55,14 @@ export function holds(c: Condition, state: SimState, facts: LessonFacts): boolea
     case 'gauge': {
       const t = truck(c.truck);
       return t !== undefined && within(gauge(t, c.gauge), c);
+    }
+    case 'engine': {
+      const t = truck(c.truck);
+      return (
+        t !== undefined &&
+        (c.running === undefined || t.engine.running === c.running) &&
+        (c.ignition === undefined || ignitionOn(t) === c.ignition)
+      );
     }
     case 'tank': {
       const t = truck(c.truck);
@@ -158,6 +167,7 @@ export function validateCondition(
         : [`no ${kind} gauge on '${t.id}' to read`];
     }
     case 'throttle':
+    case 'engine':
     case 'tank':
     case 'primed':
     case 'cavitating':

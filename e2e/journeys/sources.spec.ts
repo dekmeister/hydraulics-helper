@@ -18,6 +18,7 @@ import {
   layoutFor,
   meterValue,
   stepAndSettle,
+  warningsStatus,
 } from '../panel';
 import {
   compoundShown,
@@ -182,7 +183,7 @@ for (const spec of JOURNEY_APPLIANCES) {
         0.3,
       );
       await stepAndSettle(page, 300);
-      await expect(page.getByRole('status')).not.toContainText('Pump hot');
+      await expect(warningsStatus(page)).not.toContainText('Pump hot');
     });
 
     test('slamming a delivery shut is water hammer; the lamp clears after a few seconds', async ({
@@ -203,7 +204,7 @@ for (const spec of JOURNEY_APPLIANCES) {
       await expectStatus(page, /Water hammer/);
       expect(activeTruckOf(await getState(page)).tally.waterHammer).toBe(1);
       await stepAndSettle(page, 60);
-      await expect(page.getByRole('status')).not.toContainText('Water hammer');
+      await expect(warningsStatus(page)).not.toContainText('Water hammer');
     });
   });
 }

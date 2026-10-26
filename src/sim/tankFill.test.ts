@@ -6,7 +6,7 @@ import { valveControlIds } from './appliances/controls';
 import { HEAD_KPA_PER_M, STANDARD_LENGTH_M, TICK_S } from './constants';
 import { DEFAULT_TRUCK_ID, createInitialState, type SiteOptions } from './engine';
 import { hoseResistance } from './hose';
-import { draughtSite, hydrantSite, inputsWith, run, truckOf } from './testUtils';
+import { draughtSite, hydrantSite, inputsWith, run, truckOf, TEST_STARTING } from './testUtils';
 import type { ApplianceSpec, SimState } from './types';
 
 // Inline spec so these tests don't move when an appliance's placeholders are re-tuned.
@@ -20,7 +20,7 @@ const SPEC: ApplianceSpec = {
     casingVolumeL: 10,
     churnKw: 10,
   },
-  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6 },
+  engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
   tank: { capacityL: 3000 },
   inlets: [
     { id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 15e-6 },

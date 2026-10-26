@@ -3,12 +3,19 @@ import {
   CAVITATION_FLUTTER_COMPOUND_KPA,
   CAVITATION_FLUTTER_DISCHARGE_KPA,
 } from '../sim/constants';
+import {
+  enginePhase,
+  ignitionOn,
+  stopWithoutIgnition,
+  type EnginePhase,
+} from '../sim/engineControl';
 import { CREW_WATER_MIN_LPM } from '../sim/lesson/progress';
 import { activeTruck } from './activeTruck';
 import type {
   ControlId,
   HoseLine,
   InstrumentKind,
+  PlayerInputs,
   RelayLink,
   SimState,
   TruckState,
@@ -127,4 +134,46 @@ export function tankFraction(truck: TruckState): number {
   const capacityL = truck.spec.tank?.capacityL ?? 0;
   if (!(capacityL > 0)) return 0;
   return Math.min(1, Math.max(0, truck.tankL / capacityL));
+}
+
+/** What the active truck's engine is doing, for its panel. */
+export interface EngineStatus {
+  phase: EnginePhase;
+  ignition: boolean;
+  /** The ignition is on and the engine isn't running: the charge and oil lamps are lit. */
+  lampsLit: boolean;
+  /** STOP is held with the ignition off on a solenoid stop: it does nothing. */
+  stopWithoutIgnition: boolean;
+  /** One line for the panel and assistive tech. */
+  text: string;
+}
+
+const PHASE_TEXT: Readonly<Record<EnginePhase, string>> = {
+  off: 'Stopped',
+  cranking: 'Cranking: hold until it fires',
+  running: 'Running',
+  stopping: 'Stopping: hold until it stops',
+};
+
+/**
+ * The active truck's engine under the panel's `inputs` (this tick's switches, before the sim has
+ * seen them, so a press shows at once).
+ */
+export function engineStatus(sim: SimState, inputs: PlayerInputs): EngineStatus {
+  const truck = { ...activeTruck(sim), inputs };
+  const phase = enginePhase(truck);
+  const ignition = ignitionOn(truck);
+  const trap = stopWithoutIgnition(truck);
+  const detail = trap
+    ? 'STOP needs the ignition on'
+    : phase === 'off'
+      ? `ignition ${ignition ? 'on' : 'off'}`
+      : null;
+  return {
+    phase,
+    ignition,
+    lampsLit: ignition && !truck.engine.running,
+    stopWithoutIgnition: trap,
+    text: detail === null ? PHASE_TEXT[phase] : `${PHASE_TEXT[phase]} · ${detail}`,
+  };
 }

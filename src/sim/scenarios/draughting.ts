@@ -1,6 +1,7 @@
+import { START_UP, shutDown, startEngineSteps } from './engineSteps';
 import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind, primerControlId } from '../appliances/controls';
-import { PUMP_DAMAGE } from '../lesson/common';
+import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
 import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario, ScriptStep } from './types';
@@ -54,6 +55,7 @@ const LESSON: LessonDef = {
       holdS: 30,
       after: ['water'],
     },
+    shutdownObjective(['hold'], ['line-65', 'line-38']),
   ],
   failures: [...PUMP_DAMAGE],
 };
@@ -77,6 +79,7 @@ export const DRAUGHTING: Scenario = {
               : { tS: 1, when: { kind: 'primed' }, switches: { [primerId]: false } },
           ];
     const state = createInitialState(spec, lines, {
+      engine: 'off',
       sources: [{ id: 'dam', kind: 'static', label: 'Dam', liftM: LIFT_M, volumeL: DAM_L }],
       supplies: [
         {
@@ -95,6 +98,7 @@ export const DRAUGHTING: Scenario = {
     return {
       state,
       script: [
+        ...startEngineSteps(spec),
         { tS: 0, valves: { [suction]: 1 } },
         ...prime(true),
         ...prime(false),
@@ -109,6 +113,7 @@ export const DRAUGHTING: Scenario = {
   },
   lesson: LESSON,
   solution: [
+    ...START_UP,
     { open: { inlet: 'suction' } },
     { primer: true },
     { until: { kind: 'primed' }, maxS: 90 },
@@ -119,5 +124,6 @@ export const DRAUGHTING: Scenario = {
     { trim: { branch: 'line-38' } },
     { gate: 'line-65' },
     { until: { kind: 'objective', objective: 'hold' }, maxS: 180 },
+    ...shutDown(['line-65', 'line-38']),
   ],
 };

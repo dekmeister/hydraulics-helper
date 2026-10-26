@@ -40,6 +40,7 @@ src/
     hose.ts       # Hose friction from the shared hose catalogue
     branch.ts     # Branch orifice law
     pump.ts       # Pump curve, engine rpm lag
+    engineControl.ts # Ignition, cranking, hold-to-stop (engine running state)
     inlets.ts     # Inlet paths (tank, hydrant, draught) in parallel; cavitation floor, layflat collapse
     network.ts    # Per-truck steady-state solver (bisection on discharge pressure)
     priming.ts    # Primer vacuum, catching, duty cycle, loss of prime (switches on primer.kind)
@@ -141,6 +142,7 @@ Curve parameters are **per appliance** (`ApplianceSpec.pump`, §9). The formula 
 * Multi-stage pumps with a series/parallel (pressure/volume) mode switch change the effective curve: series ≈ ×2 pressure at the same flow, parallel ≈ ×2 flow at the same pressure (manual Figs 24–25). This is a spec option, not a separate engine.
 * Discharge pressure (what the discharge gauge reads) = `P_inlet + P_pump`, clamped ≥ 0.
 * Engine RPM chases throttle with a first-order lag (~0.5 s) so the throttle feels mechanical.
+* **Starting and stopping** (`sim/engineControl.ts`, issue #19): `TruckState.engine` says whether it's firing. The spec's `EngineSpec.controls` names three held switches (ordinary `PlayerInputs.switches`): ignition, START and STOP. With the ignition on, START held spins it at `crankRpm` and it fires after `crankS` unbroken; let go early and the count restarts. START does nothing while it runs, and the ignition being off doesn't stop it (the Cat 1's is energise-to-stop). STOP cuts the fuel only while held: the engine runs down (`runDownS`) and is stopped below `refireRpm`, but let go above that and the fuel rack returns and it picks up again. `stop.needsIgnition` is a solenoid stop powered through the ignition (Cat 1: "to stop pump ignition must be on"), so with the ignition off STOP does nothing; a mechanical stop (Cat 7's T-handle) works either way. Stopped, the pump makes no rise, but a hydrant or relay still pushes water through it. Every scenario starts the player's truck cold (`TruckSetup.engine: 'off'`; support trucks run, their crews started them) and every lesson ends on `shutdownObjective` (throttle idle, lines eased shut, engine stopped, ignition off; `windDown`, so crews going dry during it isn't held against the player). `createInitialState` defaults to running so physics tests start at idle; `warmStart` starts a cold state for fixtures and tests about what comes after.
 * **Pressure relief** (`ApplianceSpec.relief`): a bypass that opens above its set pressure, `Q_relief = slope·(P_d − P_set)`, and dumps to the tank or the pump inlet (manual L2322–2336). It adds to pump flow, so droop holds discharge just above the set pressure, and it doesn't drain the tank. `preset` (Cat 1) or `adjustable` (the set pressure comes from a panel control). `reliefFlowLpm` drives the over-pressure lamp. This is not RPM shedding.
 * **Tank recirculation** (`ApplianceSpec.recirc`, M7, the Cat 7's 3-way valve at TANK RECIRC): an always-open bleed from the discharge through a check valve into the tank, `Q = √(P_d/k)` whenever the pump has water. Like pump to tank it is demand drawn through the inlets and returned to the tank (the level holds on tank supply) and it cools a churning pump, which is how a pump with no relief survives every delivery shut; unlike pump to tank its check valve keeps air out, so it doesn't stop the primer. Not a control. Reading `recircLpm`.
 
@@ -282,7 +284,7 @@ interface ApplianceSpec {        // src/sim/types.ts is authoritative
   id: string;                    // 'cat1-generic' — stable, used in saves/scenarios
   name: string;                  // UI copy; generic, no branding
   pump: PumpSpec;                // { shutoffKpa, droopKpaPerLpm2, cavitationInletKpa, casingVolumeL, churnKw }
-  engine: EngineSpec;            // { idleRpm, maxRpm, rpmLagS }
+  engine: EngineSpec;            // { idleRpm, maxRpm, rpmLagS, controls, crankS, crankRpm, refireRpm, runDownS }
   tank?: TankSpec;               // { capacityL }
   inlets: InletSpec[];           // { id, label, kind: 'tank'|'suction', lossKpaPerLpm2, sizeMm? }
   deliveries: DeliverySpec[];    // { id, label, sizeMm }

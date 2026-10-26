@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CAT1_LAYOUT } from '../appliances/cat1-generic/layout';
 import { CAT1_REALISTIC } from '../appliances/cat1-generic/realistic';
+import { CAT7_LAYOUT } from '../appliances/cat7-generic/layout';
+import { CAT7_REALISTIC } from '../appliances/cat7-generic/realistic';
 import { TEST_APPLIANCE_LAYOUT } from '../../testing/appliances/testApplianceLayout';
 import { gestureHint } from './labels';
 
@@ -19,5 +21,13 @@ describe('gestureHint', () => {
   it('names the throttle the player is looking at', () => {
     expect(gestureHint(CAT1_LAYOUT, undefined, 'throttle')).toBe('the throttle’s − and + buttons');
     expect(gestureHint(CAT1_LAYOUT, CAT1_REALISTIC, 'throttle')).toMatch(/speed switch/);
+  });
+
+  it('says to tap the ignition and hold START and STOP, pulling a T-handle stop', () => {
+    expect(gestureHint(CAT1_LAYOUT, undefined, 'c:ignition')).toBe('tap it');
+    expect(gestureHint(CAT1_LAYOUT, CAT1_REALISTIC, 'c:start')).toBe('press and hold it');
+    expect(gestureHint(CAT1_LAYOUT, CAT1_REALISTIC, 'c:stop')).toBe('press and hold it');
+    expect(gestureHint(CAT7_LAYOUT, undefined, 'c:stop')).toBe('press and hold it');
+    expect(gestureHint(CAT7_LAYOUT, CAT7_REALISTIC, 'c:stop')).toBe('pull it out and hold it');
   });
 });

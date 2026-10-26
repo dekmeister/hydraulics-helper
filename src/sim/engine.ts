@@ -1,17 +1,24 @@
 import { idleInputs, sanitiseInputs } from './appliances/controls';
-import { DEFAULT_TRUCK_ID, siteState, type SiteOptions, type TruckSetup } from './create';
+import {
+  DEFAULT_TRUCK_ID,
+  siteState,
+  type EngineStart,
+  type SiteOptions,
+  type TruckSetup,
+} from './create';
 import { FLUTTER_KICK, FLUTTER_MEMORY, PUMP_TEMP_CAUTION_C, VALVE_CLOSED_EPS } from './constants';
+import { stepEngine } from './engineControl';
 import { detectHammer } from './hammer';
 import { inletPaths, type ConnectedSupply, type RelayFeed } from './inlets';
 import type { TruckSolveInput } from './network';
 import { stepPrime } from './priming';
-import { lagRpm } from './pump';
 import { checkBursts, solveSite } from './relay';
 import { nextRandom } from './rng';
 import { stepTankL } from './tank';
 import { stepTempC } from './thermal';
 import type {
   ApplianceSpec,
+  EngineState,
   HoseLine,
   PlayerInputs,
   PumpState,
@@ -25,8 +32,10 @@ import type {
 export {
   DEFAULT_TRUCK_ID,
   reseed,
+  type EngineStart,
   restingPump,
   switchTruck,
+  warmStart,
   type SiteOptions,
   type TruckSetup,
 } from './create';
@@ -76,13 +85,21 @@ export function createSiteState(
   };
 }
 
-/** Fresh state with one truck of `spec` (`DEFAULT_TRUCK_ID`), engine at idle, every control shut. */
+/**
+ * Fresh state with one truck of `spec` (`DEFAULT_TRUCK_ID`), every control shut, its engine at idle
+ * or, with `engine: 'off'`, cold.
+ */
 export function createInitialState(
   spec: ApplianceSpec,
   lines: readonly HoseLine[] = [],
-  site: SiteOptions = {},
+  { engine, ...site }: SiteOptions & { engine?: EngineStart } = {},
 ): SimState {
-  return createSiteState([{ id: DEFAULT_TRUCK_ID, spec }], lines, site);
+  const truck: TruckSetup = {
+    id: DEFAULT_TRUCK_ID,
+    spec,
+    ...(engine === undefined ? {} : { engine }),
+  };
+  return createSiteState([truck], lines, site);
 }
 
 /** Neutral inputs for a spec: throttle idle, every valve shut, every switch off. */
@@ -100,6 +117,7 @@ interface Prepared {
   truck: TruckState;
   inputs: PlayerInputs;
   rpm: number;
+  engine: EngineState;
   pump: PumpState;
   /** Water reaches the pump: an open tank, hydrant or relay floods it, or a primed suction. */
   wet: boolean;
@@ -123,7 +141,7 @@ function prepareTruck(
 ): { prepared: Prepared; input: TruckSolveInput } {
   const { spec } = truck;
   const clean = sanitiseInputs(spec, inputs);
-  const rpm = lagRpm(spec.engine, truck.rpm, clean.throttle, dtS);
+  const { rpm, engine } = stepEngine(spec.engine, truck, clean, dtS);
   const supplies = connectedSupplies(state, truck.id);
   const flooded =
     inletPaths({
@@ -145,7 +163,7 @@ function prepareTruck(
   // otherwise it stays full (no drain is modelled).
   const pump = { ...primed, casingWet: wet || (primed.casingWet && !openToAir) };
   return {
-    prepared: { truck, inputs: clean, rpm, pump, wet },
+    prepared: { truck, inputs: clean, rpm, engine, pump, wet },
     input: {
       spec,
       rpm,
@@ -172,7 +190,7 @@ function finishTruck(
   timeS: number,
   dtS: number,
 ): TruckState {
-  const { truck, inputs, rpm } = p;
+  const { truck, inputs, rpm, engine } = p;
   const { spec } = truck;
   const outLpm = Object.values(readings.deliveryFlowLpm).reduce((a, b) => a + b, 0);
   const reliefToTankLpm = spec.relief?.dumpTo === 'tank' ? readings.reliefFlowLpm : 0;
@@ -219,6 +237,7 @@ function finishTruck(
   return {
     ...truck,
     rpm,
+    engine,
     inputs,
     readings,
     pump,

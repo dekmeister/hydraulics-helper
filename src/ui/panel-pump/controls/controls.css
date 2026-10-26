@@ -224,3 +224,72 @@
     transition: none;
   }
 }
+
+/* Engine switches: IGN toggles, START and STOP are held. Round buttons like the primer's, smaller. */
+.engine-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.engine-switch__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 4px solid var(--color-material-tank-unlit);
+  background: radial-gradient(circle at 40% 35%, #3a4045, var(--color-material-ink));
+  box-shadow:
+    0 0 0 3px var(--color-material-galv-dark),
+    2px 3px 0 3px #000;
+  color: var(--color-material-steel);
+  font: 700 11px/1 var(--font-display);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+.engine-switch__sub {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--color-material-steel-dim);
+}
+.engine-switch__button--stop {
+  border-color: var(--color-signal-alarm-unlit);
+}
+.engine-switch__button--on {
+  transform: translateY(2px);
+  border-color: var(--color-material-tank-lit);
+  box-shadow: 0 0 0 3px var(--color-material-galv-dark);
+}
+.engine-switch__button--stop.engine-switch__button--on {
+  border-color: var(--color-signal-alarm);
+}
+.engine-switch__button:focus-visible {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-focus-outer);
+}
+.engine-status {
+  margin: 0;
+  min-width: 10em;
+  max-width: 16em;
+  align-self: center;
+  color: var(--color-material-steel);
+  font: 600 14px/1.3 var(--font-display);
+}
+.engine-status[data-phase='running'] {
+  color: var(--color-function-inlet);
+}
+.engine-status.engine-status--trap {
+  color: var(--color-signal-caution);
+}
+@media (prefers-reduced-motion: reduce) {
+  .engine-switch__button--on {
+    transform: none;
+  }
+}

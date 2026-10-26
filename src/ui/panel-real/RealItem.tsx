@@ -13,6 +13,7 @@ import { COLOR } from '../theme/colors';
 import { BayLever } from './BayLever';
 import { boxStyle, leverBox } from './geometry';
 import { PullHandlePrimer } from './PullHandlePrimer';
+import { RealEngineLamp, RealEngineSwitch } from './RealEngine';
 import { SpeedSwitch } from './SpeedSwitch';
 import { HandPumpPrimer } from './HandPumpPrimer';
 import { VernierThrottle } from './VernierThrottle';
@@ -297,6 +298,20 @@ export const RealItemView = memo(function RealItemView({
           label={simpleItem(simple, 'throttle', () => true).label}
         />
       );
+    case 'engine-switch': {
+      const s = simpleItem(simple, 'engine-switch', (i) => i.control === item.control);
+      return (
+        <RealEngineSwitch
+          control={item.control}
+          label={s.label}
+          role={s.role}
+          look={item.look}
+          style={boxStyle(item.box, plate)}
+        />
+      );
+    }
+    case 'engine-lamp':
+      return <RealEngineLamp label={item.label} style={boxStyle(item.box, plate)} />;
     case 'inert':
       return null;
   }

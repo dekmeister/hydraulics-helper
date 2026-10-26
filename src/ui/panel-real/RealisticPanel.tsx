@@ -25,6 +25,11 @@ function Plate({ plate, simple }: { plate: RealPlate; simple: PanelLayout }) {
         <PlateBackdrop plate={plate} />
         {plate.items.map((item) => {
           const key = realItemKey(item);
+          // Lamps aren't coach targets, but they're live: drawn without an anchor.
+          if (item.kind === 'engine-lamp')
+            return (
+              <RealItemView key={`lamp:${item.id}`} item={item} plate={plate} simple={items} />
+            );
           if (key === null) return null;
           return (
             <CoachAnchor key={key} itemKey={key}>

@@ -192,3 +192,9 @@ export const RELAY_FIT_PROBE_LPM = 100;
  * finite when the supplying pump's discharge doesn't fall with flow. Numerical, not doctrine.
  */
 export const RELAY_FIT_MIN_R = 1e-9;
+
+/**
+ * A diesel running down with its fuel cut stops abruptly once compression beats its inertia: below
+ * this fraction of its idle speed it's at rest. // PLACEHOLDER — needs Dek
+ */
+export const ENGINE_AT_REST_FRACTION_OF_IDLE = 0.1;

@@ -14,6 +14,15 @@ import type {
   TruckState,
 } from './types';
 
+/** Engine controls and starting figures for a test-only spec: arbitrary but plausible. */
+export const TEST_STARTING = {
+  controls: { ignition: 'ignition', start: 'start', stop: { id: 'stop', needsIgnition: true } },
+  crankS: 1.5,
+  crankRpm: 200,
+  refireRpm: 400,
+  runDownS: 0.8,
+} as const;
+
 /** A flat line of `lengths` × 30 m of `hose` from `deliveryId` to a `tipMm` branch. */
 export function layLine(
   deliveryId: ControlId,
@@ -95,7 +104,9 @@ export function expectSaneTruck(t: TruckState): void {
   for (const q of Object.values(r.deliveryFlowLpm)) expect(q).toBeGreaterThanOrEqual(0);
   expect(t.tankL).toBeGreaterThanOrEqual(0);
   expect(t.tankL).toBeLessThanOrEqual(t.spec.tank?.capacityL ?? 0);
-  expect(t.rpm).toBeGreaterThanOrEqual(t.spec.engine.idleRpm - 1e-9);
+  // A running engine dips below idle only while STOP runs it down or it picks back up after.
+  expect(t.rpm).toBeGreaterThanOrEqual(0);
+  if (!t.engine.running) expect(t.rpm).toBeLessThan(t.spec.engine.idleRpm);
   expect(t.rpm).toBeLessThanOrEqual(t.spec.engine.maxRpm + 1e-9);
 }
 

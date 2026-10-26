@@ -30,6 +30,33 @@ describe.each(SCENARIOS.map((s) => [s.id, s] as const))('scenario %s', (_id, sce
     },
   );
 
+  // Issue #19: the player starts every job from cold; support trucks are already running.
+  it.each(specs.map((spec) => [spec.id, spec] as const))(
+    'starts the player’s engine cold and its script starts it, on %s',
+    (_specId, spec) => {
+      const { state, script } = scenario.build(spec);
+      for (const truck of state.trucks) {
+        const player = truck.id === state.activeTruckId;
+        expect(truck.engine.running).toBe(!player);
+        expect(truck.rpm).toBe(player ? 0 : truck.spec.engine.idleRpm);
+      }
+      // A script that works the pump (anything but the tank-fill inlet) starts it first.
+      const { ignition, start } = spec.engine.controls;
+      const pumps = script.some(
+        (step) =>
+          step.throttle !== undefined ||
+          Object.keys(step.valves ?? {}).some(
+            (id) => spec.inlets.find((i) => i.id === id)?.kind !== 'tankFill',
+          ),
+      );
+      if (pumps) {
+        expect(script).toContainEqual(
+          expect.objectContaining({ switches: { [ignition]: true, [start]: true } }),
+        );
+      }
+    },
+  );
+
   // Supplies join a real source to an external inlet; draughting needs hose that holds a vacuum.
   it.each(specs.map((spec) => [spec.id, spec] as const))(
     'connects supplies to external inlets, over hard suction for static water, on %s',

@@ -4,6 +4,7 @@ import {
   branchBand,
   branchKpa,
   hoseById,
+  resolveEngineSwitch,
   resolvePrimer,
   resolveValve,
   truckOf,
@@ -126,6 +127,10 @@ export function coachTargetKey(step: CoachStep, sim: SimState, player: string): 
   if ('primer' in target) {
     const id = resolvePrimer(sim, player);
     return id === undefined ? undefined : `c:${id}`;
+  }
+  if ('engine' in target) {
+    const id = resolveEngineSwitch(sim, player, target.engine);
+    return id === undefined || player !== sim.activeTruckId ? undefined : `c:${id}`;
   }
   if ('gauge' in target) {
     const t = truckOf(sim, player, undefined);

@@ -39,6 +39,15 @@ export function gestureHint(
     }
     case 'primer':
       return 'hold it on';
+    case 'engine-switch': {
+      if (item.role === 'ignition') return 'tap it';
+      const real = realistic?.plates
+        .flatMap((p) => p.items)
+        .find((i) => i.kind === 'engine-switch' && i.control === item.control);
+      return real?.kind === 'engine-switch' && real.look === 't-handle'
+        ? 'pull it out and hold it'
+        : 'press and hold it';
+    }
     default:
       return 'use it';
   }
