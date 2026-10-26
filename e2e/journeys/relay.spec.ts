@@ -1,4 +1,4 @@
-// M5 journeys (PLAN M5 demo): a closed relay pushing water uphill, worked from the attack pump's
+// M5 journeys (M5 demo): a closed relay pushing water uphill, worked from the attack pump's
 // real controls; switching trucks from the map and the switcher; the shutdown spike bursting a
 // relay hose; an open relay through a portable dam. On every journey appliance that can play
 // them, and once with a different appliance as the base pump.

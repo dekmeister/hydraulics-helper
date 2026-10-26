@@ -52,7 +52,7 @@ export function validateSite(
       if (source.kind !== 'hydrant')
         throw new Error(`Supply '${supply.id}': '${inlet.id}' fills the tank only from a hydrant`);
       // One hose per hydrant while it fills a tank: two draws on one main would share its loss,
-      // which the solver doesn't couple (PLAN parking lot).
+      // which the solver doesn't couple (docs/BACKLOG.md).
       const other = supplies.find((x) => x.id !== supply.id && x.sourceId === source.id);
       if (other !== undefined)
         throw new Error(`Supply '${supply.id}': hydrant '${source.id}' also feeds '${other.id}'`);

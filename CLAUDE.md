@@ -1,6 +1,6 @@
 # CLAUDE.md — Pump Operator Training Game
 
-Read `ARCHITECTURE.md` (design) and `PLAN.md` (current milestone) before writing code, and `docs/TESTING.md` before writing tests or UI. This file is about *how* we work.
+Read `docs/ARCHITECTURE.md` (design) and `docs/BACKLOG.md` (open work) before writing code, and `docs/TESTING.md` before writing tests or UI. This file is about *how* we work.
 
 ## Project one-liner
 
@@ -63,10 +63,10 @@ npm run verify    # lint → test → build → test:e2e → review
 
 ## Session workflow
 
-1. Pick one `PLAN.md` checklist item (or the slice Dek names). Restate it in one sentence before starting.
+1. Pick one `docs/BACKLOG.md` item (or the slice Dek names). Restate it in one sentence before starting.
 2. Skim the relevant `ARCHITECTURE.md` section; if reality has diverged from the doc, update the doc in the same session.
 3. Implement (tests-first for sim; journey/fixture alongside UI). Run `npm run verify`; for UI changes, do the review step above.
-4. Tick the checklist item in `PLAN.md`; add anything deferred to the parking lot or "needs Dek" list.
+4. Remove the finished item from `docs/BACKLOG.md`; add anything deferred to the backlog or the "needs Dek" list.
 5. Summarise: what changed, what's demoable, which fixtures you reviewed and which baselines/traces changed and why, open questions.
 
 Commits: imperative, scoped, e.g. `sim: add draughting lift + prime states`, `ui: compound gauge dual scale`. Small commits over one mega-commit.

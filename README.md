@@ -55,7 +55,7 @@ The stack is TypeScript, React, SVG, Zustand, Vite, Vitest and Playwright. The c
 Where to read next:
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): how the sim, state and UI fit together, and how to add an appliance (§9).
-- [`docs/PLAN.md`](docs/PLAN.md): milestones, what's done, what's next.
+- [`docs/BACKLOG.md`](docs/BACKLOG.md): what's left to build, open follow-ups and risks.
 - [`docs/CALIBRATION.md`](docs/CALIBRATION.md): the doctrine figures and worked examples the sim is held to.
 - [`docs/TESTING.md`](docs/TESTING.md): the testing approach, fixtures and the screenshot review loop.
 - [`Design/`](Design/README.md): the visual design spec, tokens and reference art.

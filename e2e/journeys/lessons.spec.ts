@@ -1,4 +1,4 @@
-// Lesson journeys (PLAN M6 demo): a new player completes scenarios 1–3 from the menu, through the
+// Lesson journeys (M6 demo): a new player completes scenarios 1–3 from the menu, through the
 // real controls, and their progress survives a reload. Run on the phone, the baseline constraint.
 import type { Page, TestInfo } from '@playwright/test';
 import { APPLIANCES } from '../../src/sim/appliances/catalogue';

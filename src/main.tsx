@@ -20,7 +20,7 @@ if (import.meta.env.VITE_E2E) {
     installTestHooks(root);
   });
 } else {
-  // Installed to a home screen, the app should still open offline (PWA, PLAN M6). Production only:
+  // Installed to a home screen, the app should still open offline (PWA, M6). Production only:
   // a service worker in dev would serve stale modules.
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {

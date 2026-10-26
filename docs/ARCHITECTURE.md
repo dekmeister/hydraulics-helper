@@ -298,7 +298,7 @@ interface ApplianceSpec {        // src/sim/types.ts is authoritative
 Control ids are the inlet (tank-fill included), delivery, pump-to-tank and adjustable-relief ids (valves, 0–1) plus primer ids (switches); `appliances/controls.ts` derives them. Hose lays (`HoseLine`) are scenario data rather than part of the spec, so the hose carried isn't modelled yet.
 
 * Specs are immutable. At scenario load the spec is **copied into `TruckState.spec`**, so `advance(state, inputs, dt)` keeps its signature and a saved state or replay stays self-contained even if the spec file is later re-tuned.
-* One pump per appliance in this version. A vehicle with two independent pumps (e.g. a separate high-pressure reel pump) would need `pumps: PumpSpec[]`. That is deferred and listed in the PLAN parking lot.
+* One pump per appliance in this version. A vehicle with two independent pumps (e.g. a separate high-pressure reel pump) would need `pumps: PumpSpec[]`. That is deferred and listed in `docs/BACKLOG.md`.
 
 ### 9.3 Inputs keyed by control id
 

@@ -1,4 +1,4 @@
-// State for relays and several trucks (PLAN M5): switching trucks, relay selectors, SUPPLY lamp.
+// State for relays and several trucks (M5): switching trucks, relay selectors, SUPPLY lamp.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';

@@ -1,4 +1,4 @@
-// Several trucks on one fireground (PLAN M5): creation, held inputs, switching, per-truck noise.
+// Several trucks on one fireground (M5): creation, held inputs, switching, per-truck noise.
 import { describe, expect, it } from 'vitest';
 import { CAT1 } from './appliances/cat1';
 import { TEST_APPLIANCE } from './appliances/testAppliance';

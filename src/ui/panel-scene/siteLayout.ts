@@ -1,4 +1,4 @@
-// Plan-view layout of a fireground with several trucks (PLAN M5): where each truck stands, its
+// Plan-view layout of a fireground with several trucks (M5): where each truck stands, its
 // lays and supplies (geometry.ts, per truck), the relay hoses between them and portable dams.
 // Pure functions of scene art and sim data; no React.
 import type { ControlId, HoseLine, RelayLink, SimState, WaterSource } from '../../sim/types';

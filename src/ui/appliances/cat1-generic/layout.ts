@@ -3,7 +3,7 @@ import type { PanelLayout } from '../types';
 /**
  * Cat 1 tanker pump panel, simplified (Design sheet 05) with Layout A's real ordering: compound
  * left of discharge, engine rpm beside them, three outlets (sheet 07–08). Reels and the discharge
- * master are deferred with the sim (PLAN parking lot).
+ * master are deferred with the sim (docs/BACKLOG.md).
  */
 export const CAT1_LAYOUT: PanelLayout = {
   applianceId: 'cat1-generic',

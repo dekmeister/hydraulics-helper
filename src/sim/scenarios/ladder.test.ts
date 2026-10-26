@@ -1,5 +1,5 @@
 // Every ladder scenario loads on every appliance that can play it, and a competent operator passes
-// it there cleanly (PLAN M6: scripts must not be hand-timed to one truck).
+// it there cleanly (M6: scripts must not be hand-timed to one truck).
 import { describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../appliances/catalogue';
 import { TEST_APPLIANCE } from '../appliances/testAppliance';

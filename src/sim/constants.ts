@@ -83,7 +83,7 @@ export const PUMP_TEMP_CAUTION_C = 60;
 export const PUMP_TEMP_ALARM_C = 80;
 
 /**
- * Sustained abuse that damages the pump and fails a lesson (PLAN parking lot, M4): seconds of
+ * Sustained abuse that damages the pump and fails a lesson (M4; docs/BACKLOG.md): seconds of
  * cavitation, and seconds above the temperature caution, over the whole scenario. Gentle on purpose:
  * a minute of either is well past a lesson learned. // PLACEHOLDER — needs Dek
  */

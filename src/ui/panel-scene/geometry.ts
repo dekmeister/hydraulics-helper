@@ -1,4 +1,4 @@
-// Plan-view scene layout (PLAN M3): where the truck, its couplings, hose lays and branches are
+// Plan-view scene layout (M3): where the truck, its couplings, hose lays and branches are
 // drawn. Pure functions of the scene art and the sim's lines; no React.
 import type { ControlId, HoseLine, WaterSource } from '../../sim/types';
 import type { SceneArt } from '../appliances/types';

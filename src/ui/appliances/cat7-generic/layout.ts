@@ -4,7 +4,7 @@ import type { PanelLayout } from '../types';
  * Cat 7 tanker pump panel, simplified, in the photographed order (Resources/Photos/Cat7_*):
  * COMPOUND left of PRESSURE on the pump's own panel (no tacho: an hour meter sits beside them),
  * the tank to pump and suction levers, pump to tank, the hand primer, and the two outlets on the
- * manifold. The hose reel, foam and crew protection sprays are deferred with the sim (PLAN).
+ * manifold. The hose reel, foam and crew protection sprays are deferred with the sim (docs/BACKLOG.md).
  */
 export const CAT7_LAYOUT: PanelLayout = {
   applianceId: 'cat7-generic',

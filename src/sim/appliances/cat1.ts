@@ -2,7 +2,7 @@ import type { ApplianceSpec } from '../types';
 
 /**
  * Cat 1 tanker: the v1 reference appliance (decided by Dek, 2026-10-24). Delivery set follows
- * Design Layout A's three outlets; its hose reels and discharge master are deferred (PLAN parking lot).
+ * Design Layout A's three outlets; its hose reels and discharge master are deferred (docs/BACKLOG.md).
  * Figures and status: docs/CALIBRATION.md § "Cat 1 tanker".
  */
 export const CAT1: ApplianceSpec = {

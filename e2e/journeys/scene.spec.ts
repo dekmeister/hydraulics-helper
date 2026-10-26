@@ -1,4 +1,4 @@
-// Scene journeys (PLAN M3): the scene reacts to what the player does on the panel, and the scene
+// Scene journeys (M3): the scene reacts to what the player does on the panel, and the scene
 // and panel point at each other. Driven through the real controls, on every journey appliance.
 import { expect, gotoApp, test } from '../fixtures';
 import {
