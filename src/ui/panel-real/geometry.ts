@@ -23,6 +23,24 @@ export function plateWidthU(text: string): number {
   return Math.round(textWidthU(text, PLATE_FONT_U) + 2 * PLATE_PAD_U);
 }
 
+/**
+ * How BayLever draws a lever, plate units: a pivot boss, a shank, and a rounded grip on its outer
+ * `gripLengthFrac` of the length, with a drop shadow lifted further off the plate while dragged.
+ * The shank is thinner and darker than any pipe and the grip wider, so a lever never reads as pipe.
+ */
+export const LEVER_ART = {
+  pivotR: 17,
+  hubR: 6,
+  shankHalfW: 5,
+  shankStrokeW: 1.5,
+  gripHalfW: 15,
+  gripStrokeW: 2.5,
+  gripLengthFrac: 0.48,
+  shadowHalfW: 7,
+  restLift: { x: 3, y: 4 },
+  dragLift: { x: 8, y: 12 },
+} as const;
+
 /** Margin round a lever's sweep inside its hit box, plate units. */
 const LEVER_PAD_U = 10;
 
@@ -36,22 +54,60 @@ export function leverTip(g: LeverGeometry, deg: number): { x: number; y: number 
   };
 }
 
-/** Hit box of a lever: its pivot and the quarter it sweeps from shut to open, padded. */
-export function leverBox(g: LeverGeometry): RBox {
-  const pts = [g.pivot, leverTip(g, g.shutDeg), leverTip(g, g.openDeg)];
-  // The arc bulges past its ends only where it crosses a 90° axis, which a quarter between two
-  // axis-aligned ends never does; for other angles, sample the middle too.
-  pts.push(leverTip(g, (g.shutDeg + g.openDeg) / 2));
-  const xs = pts.map((p) => p.x);
-  const ys = pts.map((p) => p.y);
-  const x0 = Math.min(...xs) - LEVER_PAD_U;
-  const y0 = Math.min(...ys) - LEVER_PAD_U;
+/** A disc: centre and radius, plate units (a point when `r` is 0). */
+interface Disc {
+  x: number;
+  y: number;
+  r: number;
+}
+
+/**
+ * The angles a lever's bounds are taken at. Its arc bulges past its ends only where it crosses a
+ * 90° axis, which a quarter between two axis-aligned ends never does; for others, the middle too.
+ */
+const sweepAngles = (g: LeverGeometry) => [g.shutDeg, g.openDeg, (g.shutDeg + g.openDeg) / 2];
+
+/** Bounding box of a set of discs, padded by `padU`. */
+function discsBox(discs: readonly Disc[], padU: number): RBox {
+  const x0 = Math.min(...discs.map((d) => d.x - d.r)) - padU;
+  const y0 = Math.min(...discs.map((d) => d.y - d.r)) - padU;
   return {
     x: x0,
     y: y0,
-    w: Math.max(...xs) + LEVER_PAD_U - x0,
-    h: Math.max(...ys) + LEVER_PAD_U - y0,
+    w: Math.max(...discs.map((d) => d.x + d.r)) + padU - x0,
+    h: Math.max(...discs.map((d) => d.y + d.r)) + padU - y0,
   };
+}
+
+/** Hit box of a lever: its pivot and the quarter it sweeps from shut to open, padded. */
+export function leverBox(g: LeverGeometry): RBox {
+  const tips = sweepAngles(g).map((deg) => ({ ...leverTip(g, deg), r: 0 }));
+  return discsBox([{ ...g.pivot, r: 0 }, ...tips], LEVER_PAD_U);
+}
+
+/**
+ * Everything a lever draws, shut, open and anywhere between: its pivot boss, its grip (round end
+ * and both sides where it starts) and its dragged shadow. It reaches past the hit box, so the
+ * lever's SVG draws unclipped; this keeps that drawing on its plate.
+ */
+export function leverArtBox(g: LeverGeometry): RBox {
+  const a = LEVER_ART;
+  const L = g.lengthU;
+  const gripR = a.gripHalfW + a.gripStrokeW / 2;
+  const gripBase = L * (1 - a.gripLengthFrac);
+  // (dx, dy) from the pivot in the lever's own frame (pointing up), turned `deg` clockwise.
+  const at = (dx: number, dy: number, r: number, deg: number): Disc => ({
+    x: g.pivot.x + dx * Math.cos(rad(deg)) - dy * Math.sin(rad(deg)),
+    y: g.pivot.y + dx * Math.sin(rad(deg)) + dy * Math.cos(rad(deg)),
+    r,
+  });
+  const discs = sweepAngles(g).flatMap((deg) => [
+    at(0, -(L - a.gripHalfW), gripR, deg),
+    at(gripR, -gripBase, 0, deg),
+    at(-gripR, -gripBase, 0, deg),
+    at(a.dragLift.x, -(L - a.dragLift.y - a.shadowHalfW), a.shadowHalfW, deg),
+  ]);
+  return discsBox([{ ...g.pivot, r: a.pivotR }, ...discs], 0);
 }
 
 /** Every interactive hit box an item puts on its plate, with what it is. */
@@ -75,12 +131,12 @@ export function interactiveBoxes(item: RealItem): { name: string; box: RBox }[] 
   }
 }
 
-/** An item's drawing box on its plate (levers: their hit box). */
+/** An item's drawing box on its plate (levers: all they draw, past their hit box). */
 export function itemBox(item: RealItem): RBox {
   switch (item.kind) {
     case 'lever':
     case 'outlet':
-      return leverBox(item);
+      return leverArtBox(item);
     default:
       return item.box;
   }

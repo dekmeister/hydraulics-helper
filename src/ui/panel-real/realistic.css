@@ -202,6 +202,11 @@
 }
 
 /* Lever */
+/* The lever's grip and pivot boss reach past its hit box (leverArtBox); draw them whole. */
+.bay-lever > svg {
+  overflow: visible;
+}
+
 .bay-lever {
   touch-action: none;
   cursor: grab;

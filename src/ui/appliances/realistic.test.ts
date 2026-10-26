@@ -5,7 +5,13 @@
 import { describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
 import type { InstrumentKind } from '../../sim/types';
-import { interactiveBoxes, itemBox, plateWidthsPx } from '../panel-real/geometry';
+import {
+  interactiveBoxes,
+  itemBox,
+  LEVER_ART,
+  leverArtBox,
+  plateWidthsPx,
+} from '../panel-real/geometry';
 import type { DialId } from '../panel-pump/gauge/dials';
 import { itemKey, realItemKey } from './itemKey';
 import type { RBox } from './realistic';
@@ -23,6 +29,19 @@ const DIAL_KIND: Readonly<Record<DialId, InstrumentKind>> = {
 
 const intersects = (a: RBox, b: RBox) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/** Whether a disc of radius `r` about (x, y) lies wholly inside `box`. */
+const holdsDisc = (box: RBox, x: number, y: number, r: number) =>
+  x - r >= box.x && y - r >= box.y && x + r <= box.x + box.w && y + r <= box.y + box.h;
+
+/** A point drawn at (dx, dy) from the pivot in the lever's own frame (pointing up), turned `deg` clockwise. */
+const turned = (pivot: { x: number; y: number }, dx: number, dy: number, deg: number) => {
+  const a = (deg * Math.PI) / 180;
+  return {
+    x: pivot.x + dx * Math.cos(a) - dy * Math.sin(a),
+    y: pivot.y + dx * Math.sin(a) + dy * Math.cos(a),
+  };
+};
 
 describe('realistic layout registry', () => {
   it('registers layouts only for catalogue appliances, one each', () => {
@@ -112,6 +131,33 @@ describe.each(CATALOGUE_REALISTIC.map((l) => [l.applianceId, l] as const))(
             expect(b.x + b.w, plate.id).toBeLessThanOrEqual(plate.viewBox.w);
             expect(b.y + b.h, plate.id).toBeLessThanOrEqual(plate.viewBox.h);
           }
+        }
+      }
+    });
+
+    it('bounds each lever drawing: pivot boss, grip and drag shadow, shut and open', () => {
+      const a = LEVER_ART;
+      const gripR = a.gripHalfW + a.gripStrokeW / 2;
+      for (const i of items) {
+        if (i.kind !== 'lever' && i.kind !== 'outlet') continue;
+        const box = leverArtBox(i);
+        const L = i.lengthU;
+        expect(holdsDisc(box, i.pivot.x, i.pivot.y, a.pivotR), `${i.control} pivot`).toBe(true);
+        for (const deg of [i.shutDeg, i.openDeg]) {
+          // The grip is a stadium: its round end, and both sides where it starts down the shank.
+          const discs = [
+            { ...turned(i.pivot, 0, -(L - a.gripHalfW), deg), r: gripR },
+            { ...turned(i.pivot, gripR, -L * (1 - a.gripLengthFrac), deg), r: 0 },
+            { ...turned(i.pivot, -gripR, -L * (1 - a.gripLengthFrac), deg), r: 0 },
+            {
+              ...turned(i.pivot, a.dragLift.x, -(L - a.dragLift.y - a.shadowHalfW), deg),
+              r: a.shadowHalfW,
+            },
+          ];
+          for (const d of discs)
+            expect(holdsDisc(box, d.x, d.y, d.r), `${i.control} grip at ${String(deg)}°`).toBe(
+              true,
+            );
         }
       }
     });

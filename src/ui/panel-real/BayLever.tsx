@@ -5,7 +5,7 @@ import { formatPercent } from '../format';
 import { leverAngleDeg, leverOpeningAt } from '../panel-pump/controls/controlMath';
 import { useLeverGesture } from '../panel-pump/controls/useLeverGesture';
 import { COLOR } from '../theme/colors';
-import { leverTip } from './geometry';
+import { LEVER_ART as A, leverTip } from './geometry';
 
 export interface BayLeverProps {
   /** Accessible name, e.g. 'Delivery 1'. */
@@ -108,34 +108,35 @@ export function BayLever(props: BayLeverProps) {
         )}
         <g transform={`rotate(${String(angle)} ${String(px)} ${String(py)})`}>
           <rect
-            x={px - 7 + (dragging ? 8 : 3)}
-            y={py - L + (dragging ? 12 : 4)}
-            width={14}
+            x={px - A.shadowHalfW + (dragging ? A.dragLift.x : A.restLift.x)}
+            y={py - L + (dragging ? A.dragLift.y : A.restLift.y)}
+            width={2 * A.shadowHalfW}
             height={L}
-            rx={7}
+            rx={A.shadowHalfW}
             fill="#000"
             opacity={0.3}
           />
           <rect
-            x={px - 7}
+            x={px - A.shankHalfW}
             y={py - L * 0.6}
-            width={14}
+            width={2 * A.shankHalfW}
             height={L * 0.6}
-            rx={4}
-            style={{ fill: COLOR.galvMid }}
+            rx={A.shankHalfW}
+            strokeWidth={A.shankStrokeW}
+            style={{ fill: COLOR.galvDark, stroke: COLOR.galvEdge }}
           />
           <rect
-            x={px - 13}
+            x={px - A.gripHalfW}
             y={py - L}
-            width={26}
-            height={L * 0.48}
-            rx={13}
-            strokeWidth={2.5}
-            style={{ fill: disabled ? COLOR.galvDark : handle, stroke: handleStroke }}
+            width={2 * A.gripHalfW}
+            height={L * A.gripLengthFrac}
+            rx={A.gripHalfW}
+            strokeWidth={A.gripStrokeW}
+            style={{ fill: disabled ? COLOR.galv : handle, stroke: handleStroke }}
           />
         </g>
-        <circle data-part="pivot" cx={px} cy={py} r={17} style={{ fill: COLOR.galvEdge }} />
-        <circle cx={px} cy={py} r={6} style={{ fill: COLOR.ink }} />
+        <circle data-part="pivot" cx={px} cy={py} r={A.pivotR} style={{ fill: COLOR.galvEdge }} />
+        <circle cx={px} cy={py} r={A.hubR} style={{ fill: COLOR.ink }} />
       </svg>
       {disabled && <span className="bay-lever__chip">{disabledReason}</span>}
     </div>
