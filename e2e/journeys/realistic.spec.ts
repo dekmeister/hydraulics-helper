@@ -16,19 +16,14 @@ import {
   getState,
   instrumentName,
   layoutFor,
-  layoutItems,
   meterValue,
+  showRealistic,
   sliderValue,
   stepAndSettle,
   tapOrClick,
 } from '../panel';
 import { load, openInlet, prime, throttle } from '../sources';
 import type { Page } from '@playwright/test';
-
-const showRealistic = async (page: Page) => {
-  await page.getByRole('button', { name: 'Realistic', exact: true }).click();
-  await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
-};
 
 /** The realistic throttle's variant on `applianceId`. */
 function throttleVariant(applianceId: string) {
@@ -266,43 +261,6 @@ for (const spec of REALISTIC_APPLIANCES) {
         'data-state',
         'primed',
       );
-    });
-
-    test('keyboard reaches every control, and arrows move the throttle', async ({ page }, info) => {
-      test.skip(info.project.name !== 'desktop', 'keyboard pass runs on desktop');
-      await load(page, 'tank-attack', spec.id);
-      await showRealistic(page);
-      const laid = new Set((await getState(page)).lines.map((l) => l.deliveryId));
-      const expected = layoutItems(layoutFor(spec.id)).flatMap((i) => {
-        switch (i.kind) {
-          case 'valve':
-          case 'primer':
-          case 'throttle':
-            return [i.label];
-          case 'delivery': {
-            const locate = [`Show ${i.label} on scene`, `Show ${i.label} on panel`];
-            return laid.has(i.control) ? [i.label, ...locate] : locate;
-          }
-          default:
-            return [];
-        }
-      });
-      const visited = new Set<string>();
-      for (let i = 0; i < expected.length + 12; i++) {
-        await page.keyboard.press('Tab');
-        const name = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-        if (name) visited.add(name);
-      }
-      expect([...visited].sort()).toEqual([...expected].sort());
-
-      const sw = throttle(page);
-      await sw.focus();
-      await page.keyboard.press('ArrowUp');
-      await page.keyboard.press('ArrowUp');
-      const two = await sliderValue(sw);
-      expect(two).toBeGreaterThan(0);
-      await page.keyboard.press('ArrowDown');
-      expect(await sliderValue(sw)).toBeLessThan(two);
     });
 
     test('a held speed controller stops when the bay goes away', async ({ page }) => {

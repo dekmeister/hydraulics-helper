@@ -9,6 +9,9 @@ const PORT = 4317;
  */
 const executablePath = process.env.PW_CHROMIUM_EXECUTABLE;
 
+/** `npm run test:e2e:full`: every journey on every viewport, every fixture's layout check. */
+export const E2E_FULL = process.env.PW_E2E_FULL === '1';
+
 const common = {
   ...devices['Desktop Chrome'],
   deviceScaleFactor: 1,
@@ -20,6 +23,9 @@ const common = {
 export const baseConfig: PlaywrightTestConfig = {
   testDir: 'e2e',
   fullyParallel: true,
+  // Each test is a browser page waiting on its own sim; Playwright's default (half the cores)
+  // leaves the rest idle.
+  workers: '100%',
   forbidOnly: !!process.env.CI,
   retries: 0,
   use: {

@@ -7,7 +7,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 ## Open housekeeping
 
 * **Visual baselines on the pinned Chromium (1248)** (left open from M7). The container used for M7 only had Chromium 1243, so the Cat 7 baselines were captured there and the menu, guided-lesson, incident and debrief baselines (and `menu/resume`, new) still show the old copy. On the pinned browser: `npx playwright test -c playwright.review.config.ts --update-snapshots`, then review the contact sheets of the `menu/*`, `lesson/*`, `debrief/*` and `*/cat7-generic/*` fixtures, and get `npm run verify` green.
-* **Test run time.** The e2e + review run is ~5.5 + ~4 min on the M7 container against a budget of ~60 s (`docs/TESTING.md` §4); the Cat 7 doubled the per-appliance journeys and fixtures. Before a third appliance: run the full journeys on the default appliance only, and generated layout and fixture checks (plus the picker journey) on the rest. Other trims: the overheat journey steps 400 s of sim; the shell fixtures are full-page at three widths (scene-alone fixtures they now cover could go); lesson journeys run on the phone only.
+* **Review run time.** `test:e2e` is trimmed (#26), but `npm run review` still screenshots every fixture at three widths (~4 min on the M7 container). Trims: the shell fixtures are full-page at three widths (scene-alone fixtures they now cover could go); the overheat journey steps 400 s of sim.
 * **No CI workflow:** `npm run verify` runs only locally, and baselines are tied to the pinned browser and OS.
 * `@axe-core/playwright` WCAG audit now that real controls exist (new dependency: ask Dek).
 

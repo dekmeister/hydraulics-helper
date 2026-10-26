@@ -93,23 +93,25 @@ interface Fixture {
 
 * **One browser: Chromium**, from Playwright's pinned download. On a machine whose preinstalled Chromium doesn't match the pinned Playwright (e.g. a cloud container, where `/opt/pw-browsers/chromium_headless_shell-<build>/chrome-headless-shell-linux64/chrome-headless-shell` works), set `PW_CHROMIUM_EXECUTABLE` to that browser; screenshots taken with a different build may need their baselines checked (`npx playwright install chromium`, no sudo; if system libraries are missing, Dek runs `sudo npx playwright install-deps chromium`). Baselines are only valid for that pinned browser and this OS; `@playwright/test` is pinned to an exact version and upgraded deliberately (that upgrade will refresh baselines).
 * **Target:** `npm run build:e2e` + `vite preview --outDir dist-e2e` on fixed port 4317 (`--strictPort`), started by Playwright's `webServer`. Testing the built app catches production-only issues and avoids HMR noise. The server is always rebuilt (`reuseExistingServer: false`): the e2e build takes under a second, and reusing a running server risks testing a stale bundle.
-* **Configs:** `playwright.base.ts` holds the shared server and projects; `playwright.config.ts` (`test:e2e`) runs everything except `e2e/visual/`; `playwright.review.config.ts` (`review`) runs only `e2e/visual/` with the review reporter and `updateSnapshots: 'none'`, so a missing baseline fails as **New** instead of being written silently.
+* **Configs:** `playwright.base.ts` holds the shared server and projects; `playwright.config.ts` (`test:e2e`) runs everything except `e2e/visual/`, scoped per project (below); `playwright.review.config.ts` (`review`) runs only `e2e/visual/` with the review reporter and `updateSnapshots: 'none'`, so a missing baseline fails as **New** instead of being written silently.
 * **Projects (viewports):**
 
-  | Project | Viewport | Notes |
-  |---|---|---|
-  | `phone` | 375 × 812 | `hasTouch`, `isMobile`: the baseline constraint |
-  | `tablet` | 768 × 1024 | `hasTouch`; just below the side-by-side breakpoint |
-  | `desktop` | 1280 × 800 | mouse + keyboard |
+  | Project | Viewport | Notes | `test:e2e` runs |
+  |---|---|---|---|
+  | `phone` | 375 × 812 | `hasTouch`, `isMobile`: the baseline constraint | journeys (every appliance) + layout |
+  | `tablet` | 768 × 1024 | `hasTouch`; just below the side-by-side breakpoint | layout |
+  | `desktop` | 1280 × 800 | mouse + keyboard | layout + keyboard journeys + smoke |
+
+  Journeys run once, on the phone: controls are Pointer Events only, so a wider viewport repeats the same input path, and the layout invariants check the arrangement at every width. `npm run review` still screenshots every fixture at all three. `npm run test:e2e:full` (`PW_E2E_FULL=1`) runs every journey on every project and every generated fixture's layout check; use it after layout or input-handling work, not every session.
 
 * **Stability settings for screenshots:** `deviceScaleFactor: 1`, `reducedMotion: 'reduce'`, `toHaveScreenshot({ animations: 'disabled', caret: 'hide' })`, a self-hosted font file in the repo (no network fonts), `await document.fonts.ready`, then `__pumpops.settle()` before capture. Default tolerance `maxDiffPixelRatio: 0.002`; tighten per test if needed, never loosen to make a test pass.
 * **Shared test fixture** (`e2e/fixtures.ts`): every test fails on any `console.error`, `pageerror` or failed request (a smoke test proves this with `test.fail()` on an unknown fixture). It also attaches the page's ARIA snapshot and the `__pumpops.getState()` readouts to the test result for the review bundle.
 * Layout invariant helpers are in `e2e/invariants.ts`; the side-by-side breakpoint comes from `src/ui/layout/breakpoints.ts` (`SIDE_BY_SIDE_MIN_PX`) and is checked at exactly that width and one pixel below.
-* `fullyParallel: true`. Budget: the whole Playwright run (`test:e2e` + `review`) under ~60 s locally. If it gets slower, trim fixtures before adding hardware.
+* `fullyParallel: true`, `workers: '100%'`. Budget: the whole Playwright run (`test:e2e` + `review`) under ~60 s locally; `test:e2e` alone is ~2 min on a 4-core laptop (Oct 2026). If it gets slower, trim the matrix (appliance × viewport × state) before adding hardware: test a behaviour where it can differ, not everywhere it could.
 
 ### Layout invariants (layer 6)
 
-Run in every project, over the app shell and every generated panel and scene fixture:
+Run in every project, over the app shell and one generated fixture per family and surface (`panel/<appliance>`, `scene/<appliance>`, `relay/<appliance>/with-<base>`, …: a family's states place the same controls; `test:e2e:full` checks every state):
 
 1. Every interactive element (`button`, `slider`, `switch`, `link`) has a bounding box ≥ 44 × 44 CSS px.
 2. `document.documentElement.scrollWidth <= window.innerWidth`, so no horizontal page scroll.
@@ -195,6 +197,7 @@ When a UI change has no fixture that shows it, add one. That's how the gallery g
 | `npm run test` | Vitest: layers 1–4 | Constantly; `-- --watch` while doing sim work |
 | `npm run sim:trace -- <scenario> [appliance]` | Prints a trace table | Exploring sim behaviour |
 | `npm run test:e2e` | Playwright journeys + layout invariants (no pixel compare) | Any UI change |
+| `npm run test:e2e:full` | The same over every project × appliance × fixture state | After layout or input-handling work |
 | `npm run review` | Visual baselines + review bundle in `review/` | Any change that could affect rendering |
 | `npm run verify` | lint → test → build → test:e2e → review | Must pass before a session ends |
 

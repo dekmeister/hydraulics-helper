@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { APPLIANCES } from '../src/sim/appliances/catalogue';
-import { FIXTURES } from '../src/testing/fixtures/catalog';
+import { E2E_FULL } from '../playwright.base';
+import { FIXTURES, type FixtureMeta } from '../src/testing/fixtures/catalog';
 import { SIDE_BY_SIDE_MIN_PX } from '../src/ui/layout/breakpoints';
 import { expect, gotoApp, test } from './fixtures';
 import {
@@ -111,10 +112,26 @@ test.describe('menu and lesson layout invariants', () => {
   }
 });
 
-// Every generated fixture, at every viewport (docs/TESTING.md §4 layout invariants): shell
-// fixtures show both panels, scene fixtures the scene alone.
+/**
+ * One generated fixture per family and surface ('panel/<appliance>', 'relay/<appliance>/with-…'):
+ * a family's states place the same controls, and the review screenshots every state at every
+ * viewport. `npm run test:e2e:full` checks them all.
+ */
+function onePerFamily(fixtures: readonly FixtureMeta[]): FixtureMeta[] {
+  const seen = new Set<string>();
+  return fixtures.filter((f) => {
+    const family = `${f.id.slice(0, f.id.lastIndexOf('/'))} ${f.surface ?? ''}`;
+    if (seen.has(family)) return false;
+    seen.add(family);
+    return true;
+  });
+}
+
+// Generated fixtures at every viewport (docs/TESTING.md §4 layout invariants): shell fixtures
+// show both panels, scene fixtures the scene alone.
 test.describe('generated fixture layout invariants', () => {
-  for (const fixture of FIXTURES.filter((f) => f.applianceId !== undefined)) {
+  const generated = FIXTURES.filter((f) => f.applianceId !== undefined);
+  for (const fixture of E2E_FULL ? generated : onePerFamily(generated)) {
     test(fixture.id, async ({ page }) => {
       const layout = layoutFor(fixture.applianceId ?? '');
       await gotoApp(page, `?fixture=${encodeURIComponent(fixture.id)}`);

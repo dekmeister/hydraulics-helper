@@ -11,7 +11,8 @@ Browser game teaching NSW-style fire pump operation: interactive pump panel + sc
 ```bash
 npm run dev       # Vite dev server
 npm run test      # Vitest: sim, contract suite, golden traces, data consistency (watch: -- --watch)
-npm run test:e2e  # Playwright: real-browser journeys + layout invariants at 375/768/1280
+npm run test:e2e  # Playwright: journeys on the phone, layout invariants at 375/768/1280, keyboard on desktop
+npm run test:e2e:full  # The exhaustive matrix (every journey × viewport × fixture state); opt-in
 npm run review    # Playwright visual baselines + review bundle in review/ (read review/report.md)
 npm run lint      # ESLint + Prettier check
 npm run build     # Type-check + production build

@@ -131,3 +131,9 @@ export async function dragThrottle(page: Page, position: number): Promise<void> 
 export async function expectStatus(page: Page, text: string | RegExp): Promise<void> {
   await expect(page.getByRole('status')).toContainText(text);
 }
+
+/** Switch the pump panel to the truck's realistic bay. */
+export async function showRealistic(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Realistic', exact: true }).click();
+  await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
+}

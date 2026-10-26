@@ -1,7 +1,17 @@
 // Keyboard pass (docs/TESTING.md layout invariant 5): Tab visits every enabled control; arrow
-// keys change a focused slider. Runs on desktop, the keyboard project.
+// keys change a focused slider, on the simplified panel and the realistic bay. Runs on desktop,
+// the keyboard project.
+import { REALISTIC_APPLIANCES } from '../../src/testing/fixtures/realisticStates';
 import { expect, gotoApp, test } from '../fixtures';
-import { getState, JOURNEY_APPLIANCES, layoutFor, layoutItems, sliderValue } from '../panel';
+import {
+  getState,
+  JOURNEY_APPLIANCES,
+  layoutFor,
+  layoutItems,
+  showRealistic,
+  sliderValue,
+} from '../panel';
+import { load, throttle } from '../sources';
 
 for (const spec of JOURNEY_APPLIANCES) {
   test(`keyboard reaches and works every control on ${spec.id}`, async ({ page }, testInfo) => {
@@ -89,6 +99,47 @@ for (const spec of JOURNEY_APPLIANCES) {
       await primer.dispatchEvent('click');
       await expect(primer).toHaveAttribute('aria-checked', 'false');
     }
+  });
+}
+
+for (const spec of REALISTIC_APPLIANCES) {
+  test(`keyboard reaches every control on ${spec.id}'s realistic bay, and arrows move the throttle`, async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'keyboard pass runs on desktop');
+    await load(page, 'tank-attack', spec.id);
+    await showRealistic(page);
+    const laid = new Set((await getState(page)).lines.map((l) => l.deliveryId));
+    const expected = layoutItems(layoutFor(spec.id)).flatMap((i) => {
+      switch (i.kind) {
+        case 'valve':
+        case 'primer':
+        case 'throttle':
+          return [i.label];
+        case 'delivery': {
+          const locate = [`Show ${i.label} on scene`, `Show ${i.label} on panel`];
+          return laid.has(i.control) ? [i.label, ...locate] : locate;
+        }
+        default:
+          return [];
+      }
+    });
+    const visited = new Set<string>();
+    for (let i = 0; i < expected.length + 12; i++) {
+      await page.keyboard.press('Tab');
+      const name = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+      if (name) visited.add(name);
+    }
+    expect([...visited].sort()).toEqual([...expected].sort());
+
+    const sw = throttle(page);
+    await sw.focus();
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    const two = await sliderValue(sw);
+    expect(two).toBeGreaterThan(0);
+    await page.keyboard.press('ArrowDown');
+    expect(await sliderValue(sw)).toBeLessThan(two);
   });
 }
 
