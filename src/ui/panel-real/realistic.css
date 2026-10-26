@@ -26,6 +26,13 @@
   height: 100%;
 }
 
+/* A main plate with what sits beside it; gap as PLATE_ROW_GAP_PX (geometry.ts). */
+.real-panel__row {
+  display: grid;
+  gap: var(--space-3);
+  align-items: end;
+}
+
 .real-panel__insets {
   display: grid;
   gap: var(--space-3);

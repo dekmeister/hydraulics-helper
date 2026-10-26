@@ -142,12 +142,50 @@ export function itemBox(item: RealItem): RBox {
   }
 }
 
-/** Width each plate is drawn at, CSS px, when the panel is `panelPx` wide. */
+/** Gap between the plates in a row, CSS px: `--space-3`, as `.real-panel__row` / `__insets` set. */
+export const PLATE_ROW_GAP_PX = 12;
+
+/**
+ * The main plates as rows, top to bottom: each stacked plate with the plates beside it. A beside
+ * plate with no stacked plate before it starts a row of its own.
+ */
+export function plateRows(plates: readonly RealPlate[]): RealPlate[][] {
+  const rows: RealPlate[][] = [];
+  for (const p of plates) {
+    const last = rows.at(-1);
+    if (p.place === 'beside' && last !== undefined) last.push(p);
+    else if (p.place !== 'inset') rows.push([p]);
+  }
+  return rows;
+}
+
+/** Share a row's width bar its gaps among its plates by `weight`. */
+function shareRow(
+  row: readonly RealPlate[],
+  panelPx: number,
+  weight: (p: RealPlate) => number,
+  into: Map<string, number>,
+) {
+  const total = row.reduce((w, p) => w + weight(p), 0);
+  const px = panelPx - PLATE_ROW_GAP_PX * (row.length - 1);
+  for (const p of row) into.set(p.id, (px * weight(p)) / total);
+}
+
+/**
+ * Each plate's drawn width, CSS px, in a panel `panelPx` wide. A row of main plates shares the
+ * width by aspect (w / h), so all are one height; the insets share theirs by viewBox width.
+ */
 export function plateWidthsPx(plates: readonly RealPlate[], panelPx: number): Map<string, number> {
-  const insetW = plates.filter((p) => p.inset).reduce((w, p) => w + p.viewBox.w, 0);
-  return new Map(
-    plates.map((p) => [p.id, p.inset ? (panelPx * p.viewBox.w) / insetW : panelPx] as const),
+  const widths = new Map<string, number>();
+  for (const row of plateRows(plates))
+    shareRow(row, panelPx, (p) => p.viewBox.w / p.viewBox.h, widths);
+  shareRow(
+    plates.filter((p) => p.place === 'inset'),
+    panelPx,
+    (p) => p.viewBox.w,
+    widths,
   );
+  return widths;
 }
 
 /** CSS position of a plate-unit box as percentages of the plate. */

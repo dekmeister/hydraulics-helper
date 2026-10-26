@@ -6,6 +6,7 @@ import { getScenario } from '../../src/sim/scenarios';
 import { supports } from '../../src/sim/scenarios/types';
 import { REALISTIC_APPLIANCES } from '../../src/testing/fixtures/realisticStates';
 import { getRealisticLayout } from '../../src/ui/appliances/registry';
+import { plateRows } from '../../src/ui/panel-real/geometry';
 import { expect, gotoApp, test } from '../fixtures';
 import {
   activeTruckOf,
@@ -102,6 +103,29 @@ for (const spec of REALISTIC_APPLIANCES) {
       await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
       await page.getByRole('button', { name: 'Simplified', exact: true }).click();
       await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'simplified');
+    });
+
+    test('plates beside a main plate sit to its right, level with it', async ({ page }) => {
+      await load(page, 'tank-attack', spec.id);
+      await showRealistic(page);
+      const rows = plateRows(getRealisticLayout(spec.id)?.plates ?? []);
+      expect(rows.some((r) => r.length > 1)).toBe(true);
+      for (const [main, ...beside] of rows) {
+        if (main === undefined) continue;
+        const of = await page
+          .locator(`[data-plate="${main.id}"] .real-plate__canvas`)
+          .boundingBox();
+        if (of === null) throw new Error(`plate ${main.id} not rendered`);
+        for (const p of beside) {
+          const box = await page
+            .locator(`[data-plate="${p.id}"] .real-plate__canvas`)
+            .boundingBox();
+          if (box === null) throw new Error(`plate ${p.id} not rendered`);
+          expect(box.x).toBeGreaterThanOrEqual(of.x + of.width);
+          expect(Math.abs(box.y - of.y)).toBeLessThanOrEqual(1);
+          expect(Math.abs(box.height - of.height)).toBeLessThanOrEqual(1);
+        }
+      }
     });
 
     test('the pipework shows the water: empty, still, flowing, and kept in the casing', async ({

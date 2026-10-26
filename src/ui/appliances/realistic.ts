@@ -118,19 +118,26 @@ export type PlateArt =
   | { kind: 'plate'; x: number; y: number; text: string; w?: number }
   | { kind: 'text'; x: number; y: number; text: string; anchor?: 'start' | 'middle' | 'end' };
 
+/**
+ * Where a plate is drawn. 'stack': main plates, top to bottom as on the truck. 'beside': to the
+ * right of the stacked plate before it, in one row at one height (for what is watched rather than
+ * worked, such as the tank's level beside the instrument panel). 'inset': side by side in one row
+ * under the main plates, sharing its width by viewBox width.
+ */
+export type PlatePlace = 'stack' | 'beside' | 'inset';
+
 export interface RealPlate {
   id: string;
   /** Caption above the plate (insets say where on the truck they are); null for none. */
   caption: string | null;
   viewBox: { w: number; h: number };
-  /** Insets sit side by side in one row under the main plates, sharing its width by viewBox width. */
-  inset: boolean;
+  place: PlatePlace;
   art: readonly PlateArt[];
   items: readonly RealItem[];
 }
 
 export interface RealisticLayout {
   applianceId: string;
-  /** Main plates top to bottom (as on the truck), then the insets. */
+  /** Main plates top to bottom (as on the truck), each followed by any beside it, then the insets. */
   plates: readonly RealPlate[];
 }

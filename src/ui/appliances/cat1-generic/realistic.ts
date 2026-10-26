@@ -6,8 +6,8 @@ const LEVER_U = 128;
 
 /**
  * Cat 1 tanker pump bay, from the photos (Resources/Photos/Cat1_*; Dek, 2026-10-25): the
- * instrument panel above, the plumbing and couplings below it, and two insets for what isn't on
- * the rear: hydrant to tank (side of the truck) and the tank's sight tube. Positions follow the
+ * instrument panel above with the tank's sight tube beside it, the plumbing and couplings below,
+ * and an inset for what isn't on the rear: hydrant to tank (side of the truck). Positions follow the
  * real arrangement, enlarged and simplified; no branding. Levers swing in the drawing's plane:
  * across the pipe is shut, along it open.
  */
@@ -16,6 +16,17 @@ export const CAT1_REALISTIC: RealisticLayout = {
   plates: [
     CAT1_PANEL_PLATE,
     {
+      // The sight tube beside the panel: watched while the operator monitors, not worked.
+      id: 'tank',
+      caption: null,
+      viewBox: { w: 140, h: 912 },
+      place: 'beside',
+      art: [{ kind: 'plate', x: 70, y: 228, text: 'TANK' }],
+      items: [
+        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 10, y: 270, w: 120, h: 432 } },
+      ],
+    },
+    {
       // Water in at the left, through the pump, out at the right. The tank feed and suction
       // meet and run into the pump's eye; the discharge leaves the volute's top, tees up (pump to
       // tank, back over the pump into the tank) and down to the manifold, its three outlet drops
@@ -23,7 +34,7 @@ export const CAT1_REALISTIC: RealisticLayout = {
       id: 'bay',
       caption: null,
       viewBox: { w: 1000, h: 720 },
-      inset: false,
+      place: 'stack',
       art: [
         // Each run is split at its valve and drawn the way the water flows (see `PlateArt`).
         { kind: 'pipe', d: 'M60 0 V200', widthU: 34, water: { at: 'tank' } },
@@ -174,7 +185,7 @@ export const CAT1_REALISTIC: RealisticLayout = {
       id: 'side',
       caption: 'Side of truck',
       viewBox: { w: 500, h: 300 },
-      inset: true,
+      place: 'inset',
       art: [
         {
           kind: 'pipe',
@@ -202,16 +213,6 @@ export const CAT1_REALISTIC: RealisticLayout = {
           openDeg: 90,
           lengthU: LEVER_U,
         },
-      ],
-    },
-    {
-      id: 'tank',
-      caption: 'Tank',
-      viewBox: { w: 300, h: 300 },
-      inset: true,
-      art: [],
-      items: [
-        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 110, y: 10, w: 80, h: 280 } },
       ],
     },
   ],

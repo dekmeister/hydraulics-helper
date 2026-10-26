@@ -10,7 +10,7 @@ export const CAT7_PANEL_PLATE: RealPlate = {
   id: 'panel',
   caption: null,
   viewBox: { w: 1000, h: 900 },
-  inset: false,
+  place: 'stack',
   art: [
     { kind: 'panel', box: { x: 4, y: 4, w: 992, h: 892 } },
     { kind: 'plate', x: 840, y: 56, text: 'LIGHTS' },

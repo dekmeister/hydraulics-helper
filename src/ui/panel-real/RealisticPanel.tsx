@@ -4,6 +4,7 @@ import { realItemKey } from '../appliances/itemKey';
 import type { PanelLayout } from '../appliances/types';
 import { CoachAnchor } from '../panel-pump/CoachAnchor';
 import { PanelItemView } from '../panel-pump/PanelItem';
+import { plateRows } from './geometry';
 import { PlateBackdrop } from './PlateBackdrop';
 import { RealItemView } from './RealItem';
 import './realistic.css';
@@ -13,7 +14,7 @@ function Plate({ plate, simple }: { plate: RealPlate; simple: PanelLayout }) {
   const items = useMemo(() => simple.sections.flatMap((s) => s.items), [simple]);
   return (
     <figure
-      className={`real-plate${plate.inset ? ' real-plate--inset' : ''}`}
+      className={`real-plate${plate.place === 'inset' ? ' real-plate--inset' : ''}`}
       data-plate={plate.id}
     >
       {plate.caption !== null && <figcaption className="panel-caption">{plate.caption}</figcaption>}
@@ -38,8 +39,9 @@ function Plate({ plate, simple }: { plate: RealPlate; simple: PanelLayout }) {
 
 /**
  * The realistic pump bay (ARCHITECTURE §9.4): the truck's own arrangement, drawn from its
- * realistic layout, plate by plate as on the truck, with the insets side by side under them and
- * the warning strip last. Generic: nothing here knows which truck it is drawing.
+ * realistic layout, plate by plate as on the truck (each with any plates beside it, one row at
+ * one height), with the insets side by side under them and the warning strip last. Generic:
+ * nothing here knows which truck it is drawing.
  */
 export function RealisticPanel({
   layout,
@@ -48,14 +50,31 @@ export function RealisticPanel({
   layout: RealisticLayout;
   simple: PanelLayout;
 }) {
-  const main = layout.plates.filter((p) => !p.inset);
-  const insets = layout.plates.filter((p) => p.inset);
+  const rows = plateRows(layout.plates);
+  const insets = layout.plates.filter((p) => p.place === 'inset');
   const insetW = insets.reduce((w, p) => w + p.viewBox.w, 0);
   return (
     <div className="real-panel">
-      {main.map((p) => (
-        <Plate key={p.id} plate={p} simple={simple} />
-      ))}
+      {rows.map((row) =>
+        row.length === 1 && row[0] !== undefined ? (
+          <Plate key={row[0].id} plate={row[0]} simple={simple} />
+        ) : (
+          <div
+            key={row.map((p) => p.id).join(' ')}
+            className="real-panel__row"
+            style={{
+              // By aspect, so every plate in the row is drawn at one height (plateWidthsPx).
+              gridTemplateColumns: row
+                .map((p) => `${String(p.viewBox.w / p.viewBox.h)}fr`)
+                .join(' '),
+            }}
+          >
+            {row.map((p) => (
+              <Plate key={p.id} plate={p} simple={simple} />
+            ))}
+          </div>
+        ),
+      )}
       {insets.length > 0 && (
         <div
           className="real-panel__insets"

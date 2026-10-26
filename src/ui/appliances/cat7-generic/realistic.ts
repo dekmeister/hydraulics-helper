@@ -10,18 +10,29 @@ const LEVER_U = 128;
  * it. Left to right: the hose reel, the hand primer, the manifold's two outlets, the pump with its
  * recirculation line and the 3-way valve on top, then the strainer into the eye, where the tank
  * feed (from above) and the suction (from the coupling below) meet. Levers swing in the drawing's
- * plane: across the pipe is shut, along it open. The tank's sight tube is an inset: where the
- * Cat 7 shows its level isn't in the photos (CALIBRATION needs Dek 40).
+ * plane: across the pipe is shut, along it open. The tank's sight tube sits beside the panel:
+ * where the Cat 7 shows its level isn't in the photos (CALIBRATION needs Dek 40).
  */
 export const CAT7_REALISTIC: RealisticLayout = {
   applianceId: 'cat7-generic',
   plates: [
     CAT7_PANEL_PLATE,
     {
+      // Beside the panel, where it is watched; where the Cat 7 shows its level is to confirm.
+      id: 'tank',
+      caption: null,
+      viewBox: { w: 140, h: 900 },
+      place: 'beside',
+      art: [{ kind: 'plate', x: 70, y: 222, text: 'TANK' }],
+      items: [
+        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 10, y: 264, w: 120, h: 432 } },
+      ],
+    },
+    {
       id: 'bay',
       caption: null,
       viewBox: { w: 1000, h: 760 },
-      inset: false,
+      place: 'stack',
       art: [
         // Supply, split at each valve and drawn the way the water flows (see `PlateArt`).
         { kind: 'pipe', d: 'M960 0 V200', widthU: 34, water: { at: 'tank' } },
@@ -181,17 +192,6 @@ export const CAT7_REALISTIC: RealisticLayout = {
             coupling: { x: x - 70, y: 350, w: 140, h: 140 },
           };
         }),
-      ],
-    },
-    {
-      id: 'tank',
-      // The only inset, so it spans the row: wide, with the tube in the middle.
-      caption: 'Tank (position to confirm)',
-      viewBox: { w: 1000, h: 300 },
-      inset: true,
-      art: [],
-      items: [
-        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 460, y: 10, w: 80, h: 280 } },
       ],
     },
   ],

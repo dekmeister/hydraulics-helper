@@ -243,6 +243,7 @@ From Dek's Cat 1 photos (`Resources/Photos/Cat1_*`, 2026-10-25), which corrected
 - [x] Polish (Dek, 2026-10-25): panel re-spaced on a grid, pipework terminated on fittings and flanges, radial pump (eye inlet, tangential outlet), plates sized from their text, speed switch as a face-on up/down toggle (swipe or press a half). Simplified panel: deliveries as side-by-side cards, half-width sections so it fits a 1080 screen; every Cat 1 valve toggles on a tap.
 
 - [x] Water in the pipework (Dek, 2026-10-25): flowing, still or empty in every bay pipe and the pump, drawn like a charged hose (core + moving streaks); sim latch `PumpState.casingWet` keeps the pump full after the feed shuts; fixtures `after-tank-attack`, `draught-working`.
+- [x] Tank sight tube beside the instrument panel (issue #17, Dek, 2026-10-26): it is watched while monitoring, not worked, so it moves up from the insets row. `RealPlate.place` (`stack | beside | inset`); a row shares the width by aspect, so both are one height. On a phone the panel narrows (~0.27 px/u), so the Cat 1 speed switch grew to 176 × 330 u to keep 44 px halves.
 
 **Demo:** switch the Cat 1 to Realistic, run a tank attack with the bay levers and the speed controller, prime with the PRIME handle on the draughting fireground, refill at a hydrant through hydrant to tank.
 

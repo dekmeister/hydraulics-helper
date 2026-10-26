@@ -394,8 +394,9 @@ const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
     'pump lever far left pointing right (across its pipe, shut), blue pump-to-tank lever pointing ' +
     'up (shut), green suction lever up (shut) by the big coupling low left, PRIME T-handle home; ' +
     'three blue outlet levers pointing right (shut), D1 and D2 couplings open (laid), D3 capped ' +
-    'and its lever dimmed with NO LINE. Insets: Side of truck (hydrant-to-tank lever up, shut) ' +
-    'and Tank (sight tube full, float at the top). Warning strip below, no lamps lit. Water ' +
+    'and its lever dimmed with NO LINE. Right of the instrument panel, level with it and as tall, ' +
+    'a narrow column with a TANK plate over the sight tube (full, float at the top); the Cat 1’s ' +
+    'Side of truck inset (hydrant-to-tank lever up, shut) alone under the bay. Warning strip below, no lamps lit. Water ' +
     '(x-ray, drawn like a charged hose): only the tank feed above the tank-to-pump lever shows a ' +
     'still blue core (no streaks); every other pipe and the pump are plain metal (empty).',
   'tank-attack-700':

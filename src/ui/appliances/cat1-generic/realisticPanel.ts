@@ -9,10 +9,10 @@ export const CAT1_PANEL_PLATE: RealPlate = {
   // one line under them, then the switches, speed controller and foam along the bottom.
   id: 'panel',
   caption: null,
-  viewBox: { w: 1000, h: 872 },
-  inset: false,
+  viewBox: { w: 1000, h: 912 },
+  place: 'stack',
   art: [
-    { kind: 'panel', box: { x: 4, y: 4, w: 992, h: 864 } },
+    { kind: 'panel', box: { x: 4, y: 4, w: 992, h: 904 } },
     { kind: 'plate', x: 167, y: 522, text: 'COMPOUND', w: 200 },
     { kind: 'plate', x: 467, y: 522, text: 'PRESSURE', w: 200 },
     { kind: 'plate', x: 895, y: 362, text: 'OIL TEMP', w: 150 },
@@ -121,10 +121,11 @@ export const CAT1_PANEL_PLATE: RealPlate = {
       box: { x: 296, y: 744, w: 80, h: 80 },
     },
     {
-      // Under the pressure gauge, as on the truck; tall so each half takes a thumb.
+      // Under the pressure gauge, as on the truck; tall so each half takes a thumb, with the tank
+      // column beside the panel narrowing it on a phone.
       kind: 'throttle',
       variant: 'speed-switch',
-      box: { x: 392, y: 560, w: 150, h: 280 },
+      box: { x: 388, y: 548, w: 176, h: 330 },
     },
     {
       kind: 'inert',

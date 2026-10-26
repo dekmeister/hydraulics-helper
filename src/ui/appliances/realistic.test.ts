@@ -10,11 +10,13 @@ import {
   itemBox,
   LEVER_ART,
   leverArtBox,
+  PLATE_ROW_GAP_PX,
+  plateRows,
   plateWidthsPx,
 } from '../panel-real/geometry';
 import type { DialId } from '../panel-pump/gauge/dials';
 import { itemKey, realItemKey } from './itemKey';
-import type { RBox } from './realistic';
+import type { RBox, RealPlate } from './realistic';
 import { CATALOGUE_REALISTIC, getPanelLayout, getRealisticLayout } from './registry';
 
 /** Width the pump panel's content gets on a 375 px phone, CSS px (page and card padding off). */
@@ -52,6 +54,38 @@ describe('realistic layout registry', () => {
   });
 });
 
+describe('plate rows', () => {
+  const plate = (id: string, place: RealPlate['place'], w: number, h: number): RealPlate => ({
+    id,
+    caption: null,
+    viewBox: { w, h },
+    place,
+    art: [],
+    items: [],
+  });
+  const plates = [
+    plate('panel', 'stack', 1000, 800),
+    plate('tank', 'beside', 200, 800),
+    plate('bay', 'stack', 1000, 700),
+    plate('a', 'inset', 300, 300),
+    plate('b', 'inset', 100, 300),
+  ];
+
+  it('groups each stacked plate with the plates beside it', () => {
+    expect(plateRows(plates).map((r) => r.map((p) => p.id))).toEqual([['panel', 'tank'], ['bay']]);
+  });
+
+  it('draws a row at one height, filling the width bar the gaps', () => {
+    const widths = plateWidthsPx(plates, 320);
+    const w = (id: string) => widths.get(id) ?? NaN;
+    expect(w('panel') + w('tank') + PLATE_ROW_GAP_PX).toBeCloseTo(320, 6);
+    expect((w('panel') * 800) / 1000).toBeCloseTo((w('tank') * 800) / 200, 6);
+    expect(w('bay')).toBe(320);
+    expect(w('a') + w('b') + PLATE_ROW_GAP_PX).toBeCloseTo(320, 6);
+    expect(w('a') / w('b')).toBeCloseTo(3, 6);
+  });
+});
+
 describe.each(CATALOGUE_REALISTIC.map((l) => [l.applianceId, l] as const))(
   'realistic layout: %s',
   (id, layout) => {
@@ -68,6 +102,19 @@ describe.each(CATALOGUE_REALISTIC.map((l) => [l.applianceId, l] as const))(
         if (i.kind === 'primer')
           expect(spec.primer?.kind).toBe(i.variant === 'hand-pump' ? 'diaphragm' : 'rotaryVane');
       }
+    });
+
+    it('puts beside plates after a main plate, and insets last', () => {
+      const places = layout.plates.map((p) => p.place);
+      expect(places[0]).toBe('stack');
+      const firstInset = places.indexOf('inset');
+      if (firstInset >= 0) expect(places.slice(firstInset).every((p) => p === 'inset')).toBe(true);
+    });
+
+    it("shows the tank's level beside the instrument panel, where it is watched", () => {
+      const [panelRow] = plateRows(layout.plates);
+      const beside = (panelRow ?? []).slice(1);
+      expect(beside.some((p) => p.items.some((i) => i.kind === 'tank-gauge'))).toBe(true);
     });
 
     it('places what the simplified panel places, each exactly once', () => {
