@@ -46,6 +46,8 @@ export const CAT7: ApplianceSpec = {
   },
   tank: {
     capacityL: 1600, // PLACEHOLDER — needs Dek
+    // Tank water about 0.8 m above the pump inlet: ~8 kPa on the compound at rest. // PLACEHOLDER — needs Dek
+    headM: 0.8,
   },
   inlets: [
     {

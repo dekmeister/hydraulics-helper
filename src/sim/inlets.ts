@@ -60,7 +60,8 @@ export function supplyOn(
 }
 
 /**
- * Open inlet paths that can deliver water now. Tank: head 0 while there's water. Hydrant:
+ * Open inlet paths that can deliver water now. Tank: the head of its water above the pump while
+ * there's water. Hydrant:
  * static − (main + hose + valve)·Q². Static source: −10·lift − (hose + strainer + valve)·Q², and
  * only once primed with water left. Closed relay: the supplying pump's equivalent head less
  * (pump + hose + valve)·Q². An external inlet with nothing connected is capped.
@@ -74,9 +75,9 @@ export function inletPaths(ctx: InletContext): InletPath[] {
     if (open < VALVE_CLOSED_EPS) return [];
     const valveR = inlet.lossKpaPerLpm2 / (open * open);
     if (inlet.kind === 'tank') {
-      return tankL > 0
-        ? [{ inletId: inlet.id, headKpa: 0, r: valveR, collapseKpa: Number.NEGATIVE_INFINITY }]
-        : [];
+      if (tankL <= 0) return [];
+      const headKpa = HEAD_KPA_PER_M * (spec.tank?.headM ?? 0);
+      return [{ inletId: inlet.id, headKpa, r: valveR, collapseKpa: Number.NEGATIVE_INFINITY }];
     }
     const connected = supplyOn(supplies, inlet.id);
     if (connected === undefined) {

@@ -23,7 +23,7 @@ const SPEC: ApplianceSpec = {
     churnKw: 5,
   },
   engine: { idleRpm: 1200, maxRpm: 3600, rpmLagS: 0.4, cylinders: 1, ...TEST_STARTING },
-  tank: { capacityL: 1500 },
+  tank: { capacityL: 1500, headM: 0 },
   inlets: [
     { id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 4e-5 },
     { id: 'suction', label: 'Suction', kind: 'suction', sizeMm: 65, lossKpaPerLpm2: 5e-5 },

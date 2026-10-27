@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BRANCH_OPTIMUM_KPA,
+  HEAD_KPA_PER_M,
   HOSES,
   PUMP_TEMP_CAUTION_C,
   SPILL_SOAK_TAU_S,
@@ -56,8 +57,10 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
       expect(spec.pump.droopKpaPerLpm2).toBeGreaterThan(0);
       for (const d of spec.deliveries) expect(d.sizeMm).toBeGreaterThan(0);
       for (const i of spec.inlets) expect(i.lossKpaPerLpm2).toBeGreaterThan(0);
-      if (spec.inlets.some((i) => i.kind === 'tank'))
+      if (spec.inlets.some((i) => i.kind === 'tank')) {
         expect(spec.tank?.capacityL).toBeGreaterThan(0);
+        expect(spec.tank?.headM).toBeGreaterThanOrEqual(0);
+      }
       if (spec.primer?.kind === 'rotaryVane')
         expect(spec.primer.maxOnS).toBeLessThan(spec.primer.periodS);
       if (spec.primer !== undefined) {
@@ -218,6 +221,17 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(truckOf(s).rpm).toBe(0);
         expect(truckOf(s).readings.dischargeKpa).toBeLessThan(5);
         expectSane(s);
+      });
+
+      it('reads the tank’s head on the compound once tank to pump opens, cold (issue #13)', () => {
+        const tankIn = spec.inlets.filter((i) => i.kind === 'tank').map((i) => i.id);
+        const shut = run(cold(), inputsWith(0, []), ticksFor(1));
+        const open = run(shut, inputsWith(0, tankIn), ticksFor(1));
+        const headKpa = HEAD_KPA_PER_M * (spec.tank?.headM ?? 0);
+        expect(truckOf(shut).readings.compoundKpa).toBe(0);
+        expect(Math.abs(truckOf(open).readings.compoundKpa - headKpa)).toBeLessThanOrEqual(0.5);
+        expect(truckOf(open).readings.compoundKpa).toBeGreaterThan(0);
+        expect(truckOf(open).rpm).toBe(0);
       });
 
       it('starts with the ignition on and START held through the crank, and settles at idle', () => {

@@ -26,7 +26,7 @@ export const TEST_APPLIANCE: ApplianceSpec = {
     refireRpm: 500,
     runDownS: 1,
   },
-  tank: { capacityL: 1500 },
+  tank: { capacityL: 1500, headM: 0.5 },
   inlets: [
     { id: 'tank-valve', label: 'Tank valve', kind: 'tank', lossKpaPerLpm2: 3e-5 },
     { id: 'intake', label: 'Intake', kind: 'suction', sizeMm: 75, lossKpaPerLpm2: 8e-6 },

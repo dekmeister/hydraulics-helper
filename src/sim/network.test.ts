@@ -19,7 +19,7 @@ const SPEC: ApplianceSpec = {
     churnKw: 10,
   },
   engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
-  tank: { capacityL: 3000 },
+  tank: { capacityL: 3000, headM: 0 },
   inlets: [{ id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 1e-4 }],
   deliveries: [
     { id: 'a', label: 'A', sizeMm: 38 },
@@ -65,6 +65,17 @@ describe('network solve', () => {
     const high = solve({ tank: 1, a: 1 }, undefined, 3000);
     expect(low.compoundKpa).toBeLessThan(0);
     expect(high.compoundKpa).toBeLessThan(low.compoundKpa);
+  });
+
+  it('tank head: the compound reads it with nothing flowing, less at flow, and below zero at high flow (issue #13)', () => {
+    const headed: ApplianceSpec = { ...SPEC, tank: { capacityL: 3000, headM: 1 } };
+    const still = solve({ tank: 1 }, undefined, 2500, headed);
+    const flowing = solve({ tank: 1, a: 1 }, [layLine('a', '38L', 1, 25)], 3000, headed);
+    expect(still.compoundKpa).toBeCloseTo(HEAD_KPA_PER_M * 1, 6);
+    expect(flowing.pumpFlowLpm).toBeGreaterThan(Math.sqrt(10 / 1e-4));
+    // P_in = head − k·Q²: exact against the inlet's loss (1e-4 kPa/(L/min)²).
+    expect(flowing.compoundKpa).toBeCloseTo(10 - 1e-4 * flowing.pumpFlowLpm ** 2, 3);
+    expect(flowing.compoundKpa).toBeLessThan(0);
   });
 
   it('holds shutoff pressure with water but every delivery shut', () => {

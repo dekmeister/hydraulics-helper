@@ -32,7 +32,7 @@ const specWith = (primer: PrimerSpec | undefined): ApplianceSpec => ({
     churnKw: 10,
   },
   engine: { idleRpm: 800, maxRpm: 3000, rpmLagS: 0.5, cylinders: 6, ...TEST_STARTING },
-  tank: { capacityL: 3000 },
+  tank: { capacityL: 3000, headM: 0 },
   inlets: [
     { id: 'tank', label: 'Tank', kind: 'tank', lossKpaPerLpm2: 15e-6 },
     { id: 'suction', label: 'Suction', kind: 'suction', sizeMm: 64, lossKpaPerLpm2: 10e-6 },

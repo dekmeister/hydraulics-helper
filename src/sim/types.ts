@@ -84,6 +84,11 @@ export interface SpeedControllerSpec {
 
 export interface TankSpec {
   capacityL: number;
+  /**
+   * Height of the tank's water above the pump inlet, m: with tank to pump open it stands on the
+   * compound gauge as a few kPa while nothing flows. Taken as constant over the tank's level.
+   */
+  headM: number;
 }
 
 /**
