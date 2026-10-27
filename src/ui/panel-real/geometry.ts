@@ -23,6 +23,19 @@ export function plateWidthU(text: string): number {
   return Math.round(textWidthU(text, PLATE_FONT_U) + 2 * PLATE_PAD_U);
 }
 
+/** Outer radius of a 65 mm delivery coupling, as a fraction of its box's width. */
+const COUPLING_65_FRAC = 0.32;
+/** Largest coupling radius, as a fraction of box width: inside the 0.38 locate ring. */
+const COUPLING_MAX_FRAC = 0.34;
+
+/**
+ * Outer radius of a delivery coupling of `sizeMm`, as a fraction of its box's width (issue #15).
+ * Grows as √size so a 25 mm fitting is still a thumb-sized target beside a 65 mm one.
+ */
+export function couplingRadiusFrac(sizeMm: number): number {
+  return Math.min(COUPLING_MAX_FRAC, COUPLING_65_FRAC * Math.sqrt(Math.max(0, sizeMm) / 65));
+}
+
 /**
  * How BayLever draws a lever, plate units: a pivot boss, a shank, and a rounded grip on its outer
  * `gripLengthFrac` of the length, with a drop shadow lifted further off the plate while dragged.

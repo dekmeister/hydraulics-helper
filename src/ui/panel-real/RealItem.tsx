@@ -11,7 +11,7 @@ import { useDelivery } from '../panel-pump/useDelivery';
 import { useDampedValue } from '../panel-pump/useDampedValue';
 import { COLOR } from '../theme/colors';
 import { BayLever } from './BayLever';
-import { boxStyle, leverBox } from './geometry';
+import { boxStyle, couplingRadiusFrac, leverBox } from './geometry';
 import { PullHandlePrimer } from './PullHandlePrimer';
 import { RealEngineLamp, RealEngineSwitch } from './RealEngine';
 import { SpeedSwitch } from './SpeedSwitch';
@@ -36,6 +36,8 @@ function simpleItem<K extends PanelItem['kind']>(
 
 /** Height of an outlet coupling's centre in its box, as a fraction: author the drop to end there. */
 const COUPLING_Y = 0.43;
+/** A coupling's bore, as a fraction of its outer radius. */
+const BORE_FRAC = 0.69;
 
 function Outlet({
   item,
@@ -47,12 +49,17 @@ function Outlet({
   simple: Of<'delivery'>;
 }) {
   const { laid, lineText, open, setOpen, highlight, toggleHighlight } = useDelivery(item.control);
+  const sizeMm = useStore(
+    (s) => activeTruck(s.sim).spec.deliveries.find((d) => d.id === item.control)?.sizeMm ?? 0,
+  );
   const ref = useRef<HTMLButtonElement>(null);
   const textId = useId();
   useEffect(() => {
     if (highlight === 'scene') ref.current?.scrollIntoView({ block: 'nearest' });
   }, [highlight]);
   const c = item.coupling;
+  const cy = c.h * COUPLING_Y;
+  const r = c.w * couplingRadiusFrac(sizeMm);
   return (
     <>
       <BayLever
@@ -79,26 +86,20 @@ function Outlet({
         onClick={toggleHighlight}
       >
         <svg viewBox={`0 0 ${String(c.w)} ${String(c.h)}`} aria-hidden="true">
-          {/* Centred across the box, on its drop's end; the number plate goes under it. */}
+          {/* Centred across the box, on its drop's end, sized to its fitting with the size
+              stamped in the bore; the number plate goes under it. */}
+          <circle cx={c.w / 2} cy={cy} r={r} style={{ fill: COLOR.galvLight }} />
           <circle
             cx={c.w / 2}
-            cy={c.h * COUPLING_Y}
-            r={c.w * 0.32}
-            style={{ fill: COLOR.galvLight }}
-          />
-          <circle
-            cx={c.w / 2}
-            cy={c.h * COUPLING_Y}
-            r={c.w * 0.22}
+            cy={cy}
+            r={r * BORE_FRAC}
             style={{ fill: laid ? COLOR.galvDark : COLOR.galv }}
           />
+          <text x={c.w / 2} y={cy} className="real-outlet__size">
+            {sizeMm}
+          </text>
           {highlight !== null && (
-            <circle
-              cx={c.w / 2}
-              cy={c.h * COUPLING_Y}
-              r={c.w * 0.38}
-              className="real-outlet__ring"
-            />
+            <circle cx={c.w / 2} cy={cy} r={c.w * 0.38} className="real-outlet__ring" />
           )}
         </svg>
         <span className="real-outlet__tag">
