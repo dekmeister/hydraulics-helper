@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cubicAt, cubicPath, cubicPortion, type Cubic } from './cubic';
+import { cubicAt, cubicPath, cubicPointAtArc, cubicPortion, type Cubic } from './cubic';
 
 const straight: Cubic = {
   p0: { x: 0, y: 0 },
@@ -57,6 +57,15 @@ describe('cubic hoses', () => {
     if (part === undefined) throw new Error('no portion');
     expect(arc(part) / arc(bent)).toBeCloseTo(0.25, 2);
     expect(cubicPortion(bent, 1, 'end')?.p3).toEqual(bent.p0);
+  });
+
+  it('finds a point by arc length: the ends at 0 and 1, the middle by distance (uneven control points)', () => {
+    expect(cubicPointAtArc(bent, 0)).toEqual(bent.p0);
+    const end = cubicPointAtArc(bent, 1);
+    expect(end.x).toBeCloseTo(bent.p3.x, 6);
+    expect(end.y).toBeCloseTo(bent.p3.y, 6);
+    // Halfway along a straight hose with bunched control points is at x = 50, not cubicAt(0.5).
+    expect(cubicPointAtArc(straight, 0.5).x).toBeCloseTo(50, 0);
   });
 
   it('has nothing to draw when empty', () => {

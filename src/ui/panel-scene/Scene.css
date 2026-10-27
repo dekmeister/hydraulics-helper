@@ -222,6 +222,11 @@
   stroke-dasharray: 9 6;
   stroke-linecap: round;
 }
+.scene-hose__coupling {
+  fill: var(--color-material-galv);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.5;
+}
 .scene-hose__hit {
   stroke: transparent;
   stroke-width: 36;

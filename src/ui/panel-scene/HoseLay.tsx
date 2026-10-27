@@ -15,11 +15,15 @@ interface Props {
   onTap: () => void;
 }
 
+/** Radius of the coupling drawn where two lengths join, drawing units: a lump on the casing. */
+const COUPLING_R_U = 6;
+
 /**
  * One hose lay (Design §7): laid but dry is thin dashed canvas; the part with water in it is an
  * ink casing round an outlet-blue core, filling from the truck while it charges, with a white flow
- * highlight while water moves (animated only without reduced motion). A wide invisible stroke
- * takes taps; the legend is the keyboard and screen-reader route to the same act.
+ * highlight while water moves (animated only without reduced motion). A coupling marks each join
+ * between lengths. A wide invisible stroke takes taps; the legend is the keyboard and
+ * screen-reader route to the same act.
  */
 export function HoseLay({
   lay,
@@ -52,6 +56,11 @@ export function HoseLay({
         moving={moving && !gapped}
         variant="outlet"
       />
+      <g aria-hidden="true" data-part="joints">
+        {lay.joints.map((p, i) => (
+          <circle key={i} className="scene-hose__coupling" cx={p.x} cy={p.y} r={COUPLING_R_U} />
+        ))}
+      </g>
       <path className="scene-hose__hit" data-part="hit" d={lay.path} />
     </g>
   );

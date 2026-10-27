@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
+import { STANDARD_LENGTH_M } from '../../sim/constants';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import type { ApplianceSpec, HoseLine } from '../../sim/types';
 import { TEST_APPLIANCE_SCENE_ART } from '../../testing/appliances/testApplianceScene';
 import { getSceneArt } from '../appliances/registry';
 import type { SceneArt } from '../appliances/types';
-import { DEFAULT_UNITS_PER_M, layoutScene, SCENE_VIEW, SPRAY_REACH_U, toScene } from './geometry';
+import {
+  DEFAULT_UNITS_PER_M,
+  jointFractions,
+  layoutScene,
+  SCENE_VIEW,
+  SPRAY_REACH_U,
+  toScene,
+} from './geometry';
 import { DAM, HYDRANT } from './site';
 
 const PAIRS: [string, ApplianceSpec, SceneArt][] = [
@@ -53,6 +61,21 @@ describe.each(PAIRS)('scene geometry: %s', (_id, spec, art) => {
       const start = pathStart(lay.path);
       expect(start.x).toBeCloseTo(coupling.x, 1);
       expect(start.y).toBeCloseTo(coupling.y, 1);
+    }
+  });
+
+  it('marks a coupling at every join between lengths, along the hose (issue #22)', () => {
+    for (const lay of scene.lines) {
+      const line = lines.find((l) => l.id === lay.lineId);
+      const lengths = (line?.segments ?? []).reduce(
+        (n, s) => n + Math.round(s.lengthM / STANDARD_LENGTH_M),
+        0,
+      );
+      expect(lay.joints).toHaveLength(lengths - 1);
+      // Each joint further from the coupling than the one before.
+      const start = pathStart(lay.path);
+      const dist = lay.joints.map((p) => Math.hypot(p.x - start.x, p.y - start.y));
+      for (let i = 1; i < dist.length; i++) expect(dist[i]).toBeGreaterThan(dist[i - 1] ?? 0);
     }
   });
 
@@ -146,5 +169,27 @@ describe.each(PAIRS)('scene geometry: %s', (_id, spec, art) => {
 
   it('lays nothing when no line is laid', () => {
     expect(layoutScene(art, []).lines).toEqual([]);
+  });
+});
+
+describe('hose joints', () => {
+  it('joins three lengths at a third and two thirds', () => {
+    const f = jointFractions([{ hose: '38L', lengthM: 90 }]);
+    expect(f).toHaveLength(2);
+    expect(f[0]).toBeCloseTo(1 / 3, 9);
+    expect(f[1]).toBeCloseTo(2 / 3, 9);
+  });
+
+  it('joins at segment ends as well as within them', () => {
+    const f = jointFractions([
+      { hose: '38L', lengthM: 60 },
+      { hose: '65L', lengthM: 30 },
+    ]);
+    expect(f.map((x) => x.toFixed(6))).toEqual([(1 / 3).toFixed(6), (2 / 3).toFixed(6)]);
+  });
+
+  it('has no joint in a single length, or in no hose', () => {
+    expect(jointFractions([{ hose: '38L', lengthM: 30 }])).toEqual([]);
+    expect(jointFractions([])).toEqual([]);
   });
 });

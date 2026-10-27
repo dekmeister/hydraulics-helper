@@ -66,6 +66,11 @@ function paramAtArc(curve: Cubic, fraction: number): number {
   return (i - 1 + (s1 > s0 ? (target - s0) / (s1 - s0) : 0)) / ARC_SAMPLES;
 }
 
+/** The point `fraction` (0–1) of the way along the curve by arc length. */
+export function cubicPointAtArc(curve: Cubic, fraction: number): Pt {
+  return cubicAt(curve, paramAtArc(curve, fraction));
+}
+
 /**
  * The part of a hose `fraction` (0–1) of its length long, measured along the hose from `from`,
  * as a cubic running the way the water travels: from the start, or from the end back towards the

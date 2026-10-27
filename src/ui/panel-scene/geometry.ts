@@ -1,8 +1,9 @@
 // Plan-view scene layout (M3): where the truck, its couplings, hose lays and branches are
 // drawn. Pure functions of the scene art and the sim's lines; no React.
-import type { ControlId, HoseLine, WaterSource } from '../../sim/types';
+import { STANDARD_LENGTH_M } from '../../sim/constants';
+import type { ControlId, HoseLine, HoseSegment, WaterSource } from '../../sim/types';
 import type { SceneArt } from '../appliances/types';
-import { cubicPath, type Cubic } from './cubic';
+import { cubicPath, cubicPointAtArc, type Cubic } from './cubic';
 import { DAM, FIRE_HEADING_DEG, HYDRANT, TRUCK_AT } from './site';
 
 /** Scene drawing space (SVG viewBox). */
@@ -64,6 +65,8 @@ export interface LayGeometry {
   branch: Point;
   /** Way the branch points (and sprays), degrees. */
   headingDeg: number;
+  /** Where one length of hose couples to the next (issue #22), so the lengths can be counted. */
+  joints: Point[];
 }
 
 /** A supply hose from a truck's inlet coupling to its source. */
@@ -136,6 +139,25 @@ function roomAlong(from: Point, headingDeg: number): number {
 }
 
 const layLengthM = (line: HoseLine) => line.segments.reduce((sum, s) => sum + s.lengthM, 0);
+
+/**
+ * Where along a lay (fraction of its length, ends excluded) one length couples to the next: each
+ * segment's end, and every standard length within a segment.
+ */
+export function jointFractions(segments: readonly HoseSegment[]): number[] {
+  const totalM = segments.reduce((sum, s) => sum + s.lengthM, 0);
+  if (!(totalM > 0)) return [];
+  const atM: number[] = [];
+  let startM = 0;
+  for (const s of segments) {
+    for (let m = STANDARD_LENGTH_M; m < s.lengthM - 1e-6; m += STANDARD_LENGTH_M) {
+      atM.push(startM + m);
+    }
+    startM += s.lengthM;
+    atM.push(startM);
+  }
+  return atM.filter((m) => m < totalM - 1e-6).map((m) => m / totalM);
+}
 
 /** Largest round scale-bar length that stays a comfortable size at `unitsPerM`. */
 export function scaleBarFor(unitsPerM: number): number {
@@ -241,6 +263,7 @@ function fanLays(pose: TruckPose, fan: Fan, unitsPerM: number): LayGeometry[] {
       curve,
       branch,
       headingDeg,
+      joints: jointFractions(line.segments).map((f) => cubicPointAtArc(curve, f)),
     };
   });
 }
