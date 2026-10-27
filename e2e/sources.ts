@@ -52,7 +52,7 @@ const primerControl = primerControlId;
 export async function openInlet(
   page: Page,
   spec: ApplianceSpec,
-  kind: 'tank' | 'suction',
+  kind: 'tank' | 'suction' | 'tankFill',
   info: TestInfo,
 ) {
   const valve = page.getByRole('slider', {

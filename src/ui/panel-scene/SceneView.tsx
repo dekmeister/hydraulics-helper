@@ -13,6 +13,7 @@ import { PortableDam } from './PortableDam';
 import { RelayLay } from './RelayLay';
 import { SceneLegend } from './SceneLegend';
 import { SceneTruck, TruckSupplies } from './SceneTruck';
+import { SpillPools } from './SpillPool';
 import { layoutSite, siteInput } from './siteLayout';
 import { Hydrant } from './SupplyLay';
 import './Scene.css';
@@ -99,6 +100,7 @@ export function SceneView() {
         }
       >
         <Backdrop />
+        <SpillPools sim={sim} geometry={geometry} />
         {sim.sources.some((x) => x.kind === 'hydrant') && <Hydrant />}
         {geometry.dams.map((g) => {
           const dam = dams.find((d) => d.source.id === g.sourceId);

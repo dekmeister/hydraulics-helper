@@ -67,7 +67,34 @@ export function createSoundEngine(ctx: AudioContext): SoundEngine {
   const rattleGain = voice(gate, 'highpass', 1800);
   // Spray: soft broadband hiss.
   const sprayGain = voice(noise(), 'lowpass', 1500);
-  for (const o of [engine, sub, primer, chop]) o.start();
+  // Overflow: a heavy low gush that surges unevenly (two slow, unrelated swells), with bright
+  // splashing on top as it hits the ground and runs round the truck.
+  const surge = ctx.createGain();
+  surge.gain.value = 0.6;
+  const swells = [0.9, 2.3].map((hz) => {
+    const o = ctx.createOscillator();
+    o.frequency.value = hz;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.2;
+    o.connect(depth).connect(surge.gain);
+    return o;
+  });
+  noise().connect(surge);
+  const gush = ctx.createGain();
+  gush.gain.value = 0;
+  gush.connect(master);
+  const body = ctx.createBiquadFilter();
+  body.type = 'lowpass';
+  body.frequency.value = 450;
+  const splash = ctx.createBiquadFilter();
+  splash.type = 'bandpass';
+  splash.frequency.value = 2600;
+  splash.Q.value = 0.7;
+  const splashLevel = ctx.createGain();
+  splashLevel.gain.value = 0.35;
+  surge.connect(body).connect(gush);
+  surge.connect(splash).connect(splashLevel).connect(gush);
+  for (const o of [engine, sub, primer, chop, ...swells]) o.start();
 
   const glide = (param: AudioParam, value: number) => {
     param.setTargetAtTime(value, ctx.currentTime, GLIDE_S);
@@ -80,6 +107,7 @@ export function createSoundEngine(ctx: AudioContext): SoundEngine {
       glide(primerGain.gain, p.primerGain);
       glide(rattleGain.gain, p.rattleGain);
       glide(sprayGain.gain, p.sprayGain);
+      glide(gush.gain, p.overflowGain);
     },
     setRunning(on) {
       void (on ? ctx.resume() : ctx.suspend());

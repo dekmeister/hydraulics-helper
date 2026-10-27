@@ -3,6 +3,8 @@ import { CAT1 } from '../../sim/appliances/cat1';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { activeTruck, selectWarnings } from '../../state/selectors';
 import type { SimState } from '../../sim/types';
+import { SPILL_SOAK_TAU_S } from '../../sim/constants';
+import { spillPoolSize } from '../../state/spill';
 import { SOURCE_FIXTURE_SETS } from './catalog';
 import { TANK_ATTACK_TARGET_KPA } from './panelStates';
 import { sourceState } from './sourceStates';
@@ -68,6 +70,7 @@ describe('Cat 1-only source states', () => {
       'hydrant',
       'faults',
       'refilling',
+      'overflowing',
     ]);
   });
 
@@ -77,5 +80,18 @@ describe('Cat 1-only source states', () => {
     expect(t.readings.inletFlowLpm['hydrant-to-tank']).toBeGreaterThan(900);
     expect(t.readings.pumpFlowLpm).toBe(0);
     expect(t.tankL).toBeGreaterThan(500);
+  });
+
+  it('overflowing holds the tank full with the hydrant still open and a pool round the truck', () => {
+    const t = activeTruck(sourceState(CAT1, 'overflowing'));
+    expect(t.readings.inletFlowLpm['hydrant-to-tank']).toBeGreaterThan(900);
+    expect(t.tankL).toBe(CAT1.tank?.capacityL);
+    // Long past τ, the pool has settled at overflow × τ (the caption's ~85 L).
+    const fill = t.readings.inletFlowLpm['hydrant-to-tank'] ?? 0;
+    expect(t.readings.overflowLpm).toBeCloseTo(fill, 6);
+    // Within 2 %: 0.1 s ticks settle ~1 % above the continuous q·τ, and 6τ in it's 0.25 % short.
+    const settledL = (fill / 60) * SPILL_SOAK_TAU_S;
+    expect(Math.abs(t.spilledL - settledL) / settledL).toBeLessThan(0.02);
+    expect(spillPoolSize(t.spilledL)).toBeDefined();
   });
 });

@@ -511,6 +511,14 @@ circle.scene-highlight--outer {
   stroke-width: 2;
 }
 
+/* Overflowed water round a full tank or dam (issue #18): one flat translucent puddle. */
+.scene-spill {
+  opacity: 0.6;
+}
+.scene-spill ellipse {
+  fill: var(--color-scene-dam);
+}
+
 /* Portable dams (M5): canvas wall, water, and a ring lit with the water held. */
 .scene-portable-dam__wall {
   fill: var(--color-scene-hose-dry-canvas);

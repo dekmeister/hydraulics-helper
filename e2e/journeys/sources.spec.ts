@@ -19,6 +19,7 @@ import {
   layoutFor,
   meterValue,
   stepAndSettle,
+  tapOrClick,
   warningsStatus,
 } from '../panel';
 import {
@@ -171,6 +172,41 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('hydran
     );
     await expect(supply).toHaveAttribute('data-state', 'soft');
     await expectStatus(page, /hydrant/);
+  });
+}
+
+for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('tank-refill'), s))) {
+  test(`hydrant to tank left open on a full tank spills a pool that soaks away on ${spec.id}`, async ({
+    page,
+  }, info) => {
+    await load(page, 'tank-refill', spec.id, undefined, { cold: true });
+    const truckId = (await getState(page)).activeTruckId;
+    const pool = page.getByTestId(`spill-pool-truck-${truckId}`);
+    const capacityL = spec.tank?.capacityL ?? 0;
+    await expect(pool).toHaveCount(0);
+
+    await openInlet(page, spec, 'tankFill', info);
+    for (let i = 0; i < 100 && activeTruckOf(await getState(page)).tankL < capacityL; i++)
+      await stepAndSettle(page, 50);
+    expect(activeTruckOf(await getState(page)).tankL).toBe(capacityL);
+    // Half a minute more with the hydrant still open: the overflow spreads round the truck.
+    await stepAndSettle(page, 300);
+    await expect(pool).toBeVisible();
+    const spread = Number(await pool.getAttribute('data-size'));
+    expect(spread).toBeGreaterThan(0);
+
+    // Shut it: the tank stays full and the pool soaks away.
+    const valve = page.getByRole('slider', {
+      name: controlName(layoutFor(spec.id), inletOf(spec, 'tankFill')),
+    });
+    await valve.scrollIntoViewIfNeeded();
+    await tapOrClick(valve, info);
+    await expect(valve).toHaveAttribute('aria-valuenow', '0');
+    await stepAndSettle(page, 20);
+    expect(Number(await pool.getAttribute('data-size'))).toBeLessThan(spread);
+    for (let i = 0; i < 100 && (await pool.count()) > 0; i++) await stepAndSettle(page, 100);
+    await expect(pool).toHaveCount(0);
+    expect(activeTruckOf(await getState(page)).tankL).toBe(capacityL);
   });
 }
 

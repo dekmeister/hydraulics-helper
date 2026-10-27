@@ -3,6 +3,7 @@ import { CAT1 } from '../../sim/appliances/cat1';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { relayLays, portableDams } from '../../state/relay';
 import { activeTruck, selectWarnings } from '../../state/selectors';
+import { spillPoolSize } from '../../state/spill';
 import type { SimState } from '../../sim/types';
 import { relayState } from './relayStates';
 
@@ -50,6 +51,14 @@ describe.each(
     expect(relayLays(s)[0]?.state).toBe('charged');
     expect(portableDams(s)[0]?.level).toBe('ok');
     expect(lit(s)).toEqual({});
+  });
+
+  it('dam-overflowing: the dam full, the relay still running in, a pool round the dam', () => {
+    const s = relayState(spec, 'dam-overflowing', support);
+    const dam = portableDams(s)[0];
+    expect(dam?.fraction).toBe(1);
+    expect(relayLays(s)[0]?.state).toBe('charged');
+    expect(spillPoolSize(dam?.source.spilledL ?? 0)).toBeDefined();
   });
 
   it('base-panel: the base pump operated, primed and delivering into the relay', () => {

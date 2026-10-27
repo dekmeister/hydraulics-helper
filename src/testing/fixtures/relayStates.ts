@@ -6,9 +6,10 @@ import { getScenario } from '../../sim/scenarios';
 import type { SupportSpecs } from '../../sim/scenarios/types';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
 import { chargedFor, settle } from './panelStates';
+import { OVERFLOW_FIXTURE_S } from './sourceStates';
 
 export type RelayStateId =
-  'closed-working' | 'closed-over-run' | 'burst' | 'open-dam' | 'base-panel';
+  'closed-working' | 'closed-over-run' | 'burst' | 'open-dam' | 'dam-overflowing' | 'base-panel';
 
 /** Scenario each state is built from, so the header picker shows it. */
 export const RELAY_STATE_SCENARIO: Readonly<Record<RelayStateId, string>> = {
@@ -16,6 +17,7 @@ export const RELAY_STATE_SCENARIO: Readonly<Record<RelayStateId, string>> = {
   'closed-over-run': 'closed-relay',
   burst: 'closed-relay',
   'open-dam': 'open-relay',
+  'dam-overflowing': 'open-relay',
   'base-panel': 'closed-relay',
 };
 
@@ -33,8 +35,9 @@ const inputs = (throttle: number, open: readonly ControlId[], on: readonly Contr
  * Sim state for a generated relay fixture. 'closed-working': the relay inlet and both lines open
  * at the working throttle. 'closed-over-run': the same at full throttle. 'burst': working, then the
  * relay inlet slammed shut for a tick (a length bursts) and opened again. 'open-dam': primed on the
- * portable dam, both lines open at the working throttle. 'base-panel': closed-working, then the
- * player switches to the base pump.
+ * portable dam, both lines open at the working throttle. 'dam-overflowing': the dam full, the attack
+ * pump idle with its lines shut, the relay left filling it for `OVERFLOW_FIXTURE_S`. 'base-panel':
+ * closed-working, then the player switches to the base pump.
  */
 export function relayState(
   spec: ApplianceSpec,
@@ -62,6 +65,12 @@ export function relayState(
       for (let i = 0; i < 120 && s.trucks[0]?.pump.primed !== true; i++) s = settle(s, priming, 1);
       if (s.trucks[0]?.pump.primed !== true) throw new Error(`${spec.id} never primed`);
       return settle(s, working, 20);
+    }
+    case 'dam-overflowing': {
+      const full = initial.sources.map((x) =>
+        x.kind === 'static' && x.capacityL !== undefined ? { ...x, volumeL: x.capacityL } : x,
+      );
+      return settle({ ...initial, sources: full }, inputs(0, [inlet]), OVERFLOW_FIXTURE_S);
     }
     case 'base-panel': {
       const s = settle(initial, working, 15);

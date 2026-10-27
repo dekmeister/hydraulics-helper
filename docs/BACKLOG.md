@@ -24,7 +24,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 * Lessons on the Cat 7 are easier where the physics says so (it can't over-run the hydrant), so its hydrant and relay lessons don't teach over-running. A lesson variant per appliance class, or scenario hydrants sized to the pump, would restore it.
 * Lesson titles are fixed text; a title naming hose sizes would need the same placeholders as the copy. Lesson copy names a line by its first segment's hose (`lesson/text.ts`); a line of mixed hose would need to say so.
 * Mixed relay lessons with a much smaller base pump than the attack pump aren't required to pass (`ladder.test.ts`); the app never offers them.
-* A refill lesson on the `tank-refill` fireground.
+* A refill lesson on the `tank-refill` fireground. Overflow now spills a pool (issue #18); the lesson could tally litres wasted out the overflow for the debrief, or fault leaving hydrant to tank open on a full tank.
 * `hydrant-tank` can't ask "hold the tank level" or "the tank is rising": conditions see only the tank fraction. A tank-trend condition (rate over a window) would let the lesson teach reading the tank gauge against the hydrant, e.g. a second crew that out-draws the fill.
 * "Resume a game in progress" (needs `SimState` versioning, see code health).
 

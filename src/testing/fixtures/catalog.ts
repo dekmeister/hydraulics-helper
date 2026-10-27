@@ -209,6 +209,11 @@ const SOURCE_CAPTIONS: Readonly<Record<SourceStateId, string>> = {
     'hydrant on the track, green charged layflat with white streaks from it to the hydrant-to-tank coupling on the ' +
     'truck’s left side (forward of the suction coupling, which is capped); legend "Hydrant  ' +
     'Charged · ~1 030 L/min".',
+  overflowing:
+    'Tank refill left running on a full tank for 30 s: hydrant to tank open (green handle, ' +
+    '100 %), engine at idle; tank full (3 000 of 3 000). Scene as refilling, plus a flat, ' +
+    'translucent blue puddle under the truck, uneven and spreading well past the body on every ' +
+    'side (~85 L, settled: it soaks away as fast as it overflows), drawn under the hydrant hose and the truck. Supply lamp off.',
 } as const;
 
 export type SourceState = SourceStateId;
@@ -275,8 +280,15 @@ const RELAY_CAPTIONS: Readonly<Record<RelayStateId, string>> = {
     'coupling), its blue relay hose ' +
     'runs +10 m to a round portable dam by the attack pump, its level ring ~half lit; hard ' +
     'suction (green core) from the attack pump into the dam; both lines spraying. Legend: relay ' +
-    '"~660 L/min in", "Portable dam  ~2 000 L of 5 000 L". Primer PRIMED, compound slightly ' +
+    '"~660 L/min in", "Portable dam  ~2 000 L of 5 000 L". A small translucent blue puddle ' +
+    'round the base pump: the hydrant tops its full tank up faster than it draws. Primer PRIMED, compound slightly ' +
     'negative. No lamps lit.',
+  'dam-overflowing':
+    'Open relay with the portable dam full and the attack pump idle and not primed (lines shut and holding ' +
+    'water): the relay still runs in, so the dam overflows. Scene: the dam’s level ring fully lit, ' +
+    'a flat translucent blue puddle spreading round the dam under its wall and the suction hose; ' +
+    'a second puddle round the base pump, whose full tank the hydrant keeps overfilling. Legend ' +
+    '"Portable dam  5 000 L of 5 000 L".',
   'base-panel':
     'As closed-working, switched to the base pump: header BASE PUMP pressed, panel "Base pump · ' +
     '…" with its throttle part out, suction valve open, primer PRIMED, compound in vacuum (~−50 ' +

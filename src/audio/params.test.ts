@@ -19,7 +19,7 @@ describe.each([CAT1, TEST_APPLIANCE])('sound on $id', (spec) => {
     const high = soundParams(truckOf(spec, { rpm: spec.engine.maxRpm }), idle);
     expect(high.engineHz).toBeGreaterThan(low.engineHz);
     expect(high.engineGain).toBeGreaterThan(low.engineGain);
-    expect([low.primerGain, low.rattleGain, low.sprayGain]).toEqual([0, 0, 0]);
+    expect([low.primerGain, low.rattleGain, low.sprayGain, low.overflowGain]).toEqual([0, 0, 0, 0]);
   });
 
   it('is silent stopped, turns over quietly on the starter, and idles louder once it runs', () => {
@@ -55,4 +55,18 @@ it('whines while a primer runs, until it catches', () => {
   expect(soundParams(truckOf(CAT1), on).primerGain).toBeGreaterThan(0);
   const t = truckOf(CAT1);
   expect(soundParams({ ...t, pump: { ...t.pump, primed: true } }, on).primerGain).toBe(0);
+});
+
+it('gushes as soon as a full tank overflows, louder with the overflow, silent for a trickle', () => {
+  const t = truckOf(CAT1);
+  const over = (overflowLpm: number) =>
+    soundParams(
+      { ...t, readings: { ...t.readings, overflowLpm } },
+      { throttle: 0, valves: {}, switches: {} },
+    ).overflowGain;
+  // A recirculation bleed returning into a full tank (~25 L/min) isn't heard.
+  expect(over(25)).toBe(0);
+  expect(over(100)).toBeGreaterThan(0);
+  expect(over(1000)).toBeGreaterThan(over(300));
+  expect(over(10000)).toBe(over(2000));
 });

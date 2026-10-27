@@ -14,10 +14,28 @@ export interface SoundParams {
   rattleGain: number;
   /** Water through the deliveries. */
   sprayGain: number;
+  /**
+   * Water gushing out a full tank's overflow and splashing round the truck: often how an operator
+   * finds out the tank is full.
+   */
+  overflowGain: number;
 }
 
 /** Flow at which spray noise is full, L/min. Sound design. */
 const SPRAY_FULL_LPM = 1200;
+
+/**
+ * Overflow below which nothing is heard, L/min: a recirculation bleed into a full tank (~25 L/min)
+ * stays silent. Above it the gush starts at a level you can't miss. Sound design.
+ */
+const OVERFLOW_AUDIBLE_LPM = 50;
+/** Overflow at which the gush is full, L/min: a hydrant into a full tank. Sound design. */
+const OVERFLOW_FULL_LPM = 1000;
+
+function overflowGain(overflowLpm: number): number {
+  if (!(overflowLpm >= OVERFLOW_AUDIBLE_LPM)) return 0;
+  return 0.3 + 0.4 * Math.min(1, overflowLpm / OVERFLOW_FULL_LPM);
+}
 
 export function soundParams(truck: TruckState, inputs: PlayerInputs): SoundParams {
   const { engine } = truck.spec;
@@ -42,5 +60,6 @@ export function soundParams(truck: TruckState, inputs: PlayerInputs): SoundParam
     primerGain: priming ? 0.35 : 0,
     rattleGain: 0.6 * Math.min(1, truck.readings.cavitation),
     sprayGain: 0.3 * Math.min(1, flowLpm / SPRAY_FULL_LPM),
+    overflowGain: overflowGain(truck.readings.overflowLpm),
   };
 }
