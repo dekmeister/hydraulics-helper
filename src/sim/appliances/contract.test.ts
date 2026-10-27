@@ -1,7 +1,13 @@
 // Appliance contract suite (ARCHITECTURE §9.5): every registered appliance, plus a test-only one
 // with a different shape, must pass these. Generic behaviour belongs here, not in per-truck tests.
 import { describe, expect, it } from 'vitest';
-import { BRANCH_OPTIMUM_KPA, HOSES, PUMP_TEMP_CAUTION_C, TICK_S } from '../constants';
+import {
+  BRANCH_OPTIMUM_KPA,
+  HOSES,
+  PUMP_TEMP_CAUTION_C,
+  SPILL_SOAK_TAU_S,
+  TICK_S,
+} from '../constants';
 import { createIdleInputs, createInitialState, switchTruck } from '../engine';
 import {
   closedRelayPair,
@@ -459,6 +465,23 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         const s = run(fillState(capacityL), valve(1), 300);
         expect(fillLpm(s)).toBeGreaterThan(0);
         expect(truckOf(s).tankL).toBe(capacityL);
+      });
+
+      it('spills the overflow onto a pool that soaks away once it is shut', () => {
+        const first = run(fillState(capacityL), valve(1), 1);
+        expect(truckOf(first).spilledL).toBeCloseTo((fillLpm(first) * TICK_S) / 60, 9);
+        const spilling = run(first, valve(1), 300);
+        expect(truckOf(spilling).spilledL).toBeGreaterThan(truckOf(first).spilledL);
+        // Nothing draws: all of it goes out the overflow.
+        expect(truckOf(spilling).readings.overflowLpm).toBeCloseTo(fillLpm(spilling), 6);
+        const shut = run(spilling, valve(0), Math.round((3 * SPILL_SOAK_TAU_S) / TICK_S));
+        expect(truckOf(shut).tankL).toBe(capacityL);
+        // Three time constants: e⁻³ ≈ 5 % left.
+        expect(truckOf(shut).spilledL).toBeCloseTo(truckOf(spilling).spilledL * Math.exp(-3), 6);
+        const filling = truckOf(run(fillState(capacityL / 2), valve(1), 50));
+        expect(filling.spilledL).toBe(0);
+        expect(filling.readings.overflowLpm).toBe(0);
+        expect(truckOf(shut).readings.overflowLpm).toBe(0);
       });
 
       it('never feeds the pump: with tank to pump shut a delivery stays dry', () => {

@@ -40,6 +40,8 @@ function truckColumns(
       // Appended with line fill (issue #6): water at the branch and in the hose.
       ...lineIds.map((id) => `branchLpm.${id}`),
       ...lineIds.map((id) => `waterL.${id}`),
+      // Appended with tank overflow (issue #18): water spilled round the truck.
+      'spilledL',
     ].map((h) => prefix + h),
     row: (t, state) => {
       const r = t.readings;
@@ -60,6 +62,7 @@ function truckColumns(
         fmt(t.pump.tempC, 1),
         ...lineIds.map((id) => fmt(r.branchFlowLpm[id] ?? 0, 1)),
         ...lineIds.map((id) => fmt(state.lineWaterL[id] ?? 0, 1)),
+        fmt(t.spilledL, 1),
       ];
     },
   };
@@ -77,6 +80,7 @@ function siteColumns(first: SimState): Columns<SimState> {
         ['flowLpm', 'startKpa', 'endKpa', 'burst'].map((c) => `relay.${id}.${c}`),
       ),
       ...damIds.map((id) => `source.${id}.volumeL`),
+      ...damIds.map((id) => `source.${id}.spilledL`),
     ],
     row: (s) => [
       ...linkIds.flatMap((id) => {
@@ -92,6 +96,10 @@ function siteColumns(first: SimState): Columns<SimState> {
       ...damIds.map((id) => {
         const source = s.sources.find((x) => x.id === id);
         return fmt(source?.kind === 'static' ? source.volumeL : 0, 1);
+      }),
+      ...damIds.map((id) => {
+        const source = s.sources.find((x) => x.id === id);
+        return fmt(source?.kind === 'static' ? (source.spilledL ?? 0) : 0, 1);
       }),
     ],
   };

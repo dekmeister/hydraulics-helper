@@ -15,7 +15,7 @@ import type { TruckSolveInput } from './network';
 import { stepPrime } from './priming';
 import { checkBursts, solveSite } from './relay';
 import { nextRandom } from './rng';
-import { stepTankL } from './tank';
+import { stepStore } from './tank';
 import { stepTempC } from './thermal';
 import type {
   ApplianceSpec,
@@ -183,8 +183,9 @@ function prepareTruck(
 
 /**
  * Second half of a truck's tick, once the site is solved: the slow states move. Tank (drawn,
- * refilled by relief, pump to tank, recirculation, tank-fill inlets and open relays), casing
- * temperature, flutter, fault tallies and water hammer on any delivery with a hose on it.
+ * refilled by relief, pump to tank, recirculation, tank-fill inlets and open relays, spilling onto
+ * the ground when full), casing temperature, flutter, fault tallies and water hammer on any
+ * delivery with a hose on it.
  */
 function finishTruck(
   state: SimState,
@@ -238,21 +239,25 @@ function finishTruck(
     hoseBursts: t.hoseBursts,
   };
 
+  const tank = stepStore(
+    truck.tankL,
+    spec.tank?.capacityL ?? 0,
+    tankDrawLpm,
+    returnLpm + fillLpm + relayInLpm,
+    truck.spilledL,
+    dtS,
+  );
+
   return {
     ...truck,
     rpm,
     engine,
     inputs,
-    readings,
+    readings: { ...readings, overflowLpm: tank.overflowLpm },
     pump,
     tally,
-    tankL: stepTankL(
-      truck.tankL,
-      spec.tank?.capacityL ?? 0,
-      tankDrawLpm,
-      returnLpm + fillLpm + relayInLpm,
-      dtS,
-    ),
+    tankL: tank.levelL,
+    spilledL: tank.spilledL,
     rngState,
     ...(hammer === undefined ? {} : { lastHammer: hammer }),
   };
@@ -287,7 +292,7 @@ function stepLines(
 
 /**
  * Static sources after `dtS`: drawn by every truck's supplies on them, filled by open relays into
- * them. A dam with a capacity (a portable dam) overflows at it.
+ * them. A dam with a capacity (a portable dam) overflows at it onto a pool that soaks away.
  */
 function stepSources(
   state: SimState,
@@ -306,10 +311,18 @@ function stepSources(
     const fillLpm = state.links
       .filter((l) => l.burst === undefined && l.to.kind === 'dam' && l.to.sourceId === source.id)
       .reduce((q, l) => q + (linkReadings[l.id]?.flowLpm ?? 0), 0);
-    const volumeL = source.volumeL + ((fillLpm - drawLpm) * dtS) / 60;
+    const store = stepStore(
+      source.volumeL,
+      source.capacityL ?? Number.POSITIVE_INFINITY,
+      drawLpm,
+      fillLpm,
+      source.spilledL ?? 0,
+      dtS,
+    );
     return {
       ...source,
-      volumeL: Math.min(source.capacityL ?? Number.POSITIVE_INFINITY, Math.max(0, volumeL)),
+      volumeL: store.levelL,
+      ...(source.capacityL === undefined ? {} : { spilledL: store.spilledL }),
     };
   });
 }

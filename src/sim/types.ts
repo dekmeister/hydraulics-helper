@@ -292,6 +292,8 @@ export type WaterSource =
        * (a farm dam, a creek) has no limit.
        */
       capacityL?: number;
+      /** Water overflowed past `capacityL` onto the ground and not yet soaked away, L. */
+      spilledL?: number;
     };
 
 /** Hose from a source to one of a truck's suction inlets: hard suction or layflat. */
@@ -368,6 +370,8 @@ export interface TruckReadings {
   pumpToTankLpm: number;
   /** Flow back to the tank through the recirculation bleed, L/min; 0 if none is fitted. */
   recircLpm: number;
+  /** Water out the tank's overflow, L/min: what a full tank can't hold. 0 with room in the tank. */
+  overflowLpm: number;
   /** Flow out of each delivery, keyed by delivery id, L/min. */
   deliveryFlowLpm: Record<ControlId, number>;
   /** Pressure at each branch, keyed by line id, kPa. */
@@ -449,6 +453,8 @@ export interface TruckState {
   engine: EngineState;
   /** Water in the tank, L. 0 if the appliance has no tank. */
   tankL: number;
+  /** Water overflowed from the tank onto the ground around the truck and not yet soaked away, L. */
+  spilledL: number;
   /** Inputs last applied to this truck. */
   inputs: PlayerInputs;
   readings: TruckReadings;

@@ -204,3 +204,12 @@ export const RELAY_FIT_MIN_R = 1e-9;
  * this fraction of its idle speed it's at rest. // PLACEHOLDER — needs Dek
  */
 export const ENGINE_AT_REST_FRACTION_OF_IDLE = 0.1;
+
+/**
+ * Time constant for spilled water soaking into the ground around an overflowing tank or dam, s.
+ * Infiltration goes with the wetted area, and a shallow pool's area goes with its volume, so the
+ * pool decays exponentially: about 37 % left after this long once nothing is spilling. Far quicker
+ * than real ground on purpose, so the pool shows the overflow as it happens and clears soon after
+ * it's shut. // doctrine-confirmed (Dek, 2026-10-27: a game-feel choice, not a measured soak rate)
+ */
+export const SPILL_SOAK_TAU_S = 5;

@@ -86,6 +86,7 @@ export function dryReadings(
     reliefFlowLpm: 0,
     pumpToTankLpm: 0,
     recircLpm: 0,
+    overflowLpm: 0,
     deliveryFlowLpm: Object.fromEntries(spec.deliveries.map((d) => [d.id, 0])),
     branchKpa: Object.fromEntries(lines.map((l) => [l.id, 0])),
     branchFlowLpm: Object.fromEntries(lines.map((l) => [l.id, 0])),
@@ -281,6 +282,8 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
     reliefFlowLpm: d.reliefLpm,
     pumpToTankLpm: d.pttLpm,
     recircLpm: d.recircLpm,
+    // Set once the tank has stepped (`engine.ts` finishTruck).
+    overflowLpm: 0,
     deliveryFlowLpm,
     branchKpa,
     branchFlowLpm,

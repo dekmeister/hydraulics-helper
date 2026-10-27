@@ -7,7 +7,7 @@ import type { ApplianceSpec, ControlId, PlayerInputs } from './types';
 /**
  * Flow in through each open tank-fill inlet, L/min. The tank is open to air, so the hydrant drives
  * Q = √((static − 10·fill height)/(main + hose + valve/open²)), whatever the pump is doing. A full
- * tank overflows rather than backing the flow off (`stepTankL` holds the level).
+ * tank overflows rather than backing the flow off (`stepStore` holds the level and spills the rest).
  */
 export function tankFillFlows(
   spec: ApplianceSpec,

@@ -450,6 +450,7 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
       expect(truck(s, 'attack').tankL).toBeGreaterThan(startL + (q * 8) / 60);
       const full = run(s, createIdleInputs(receiver), 1200);
       expect(truck(full, 'attack').tankL).toBe(receiver.tank?.capacityL);
+      expect(truck(full, 'attack').spilledL).toBeGreaterThan(0);
       expectSane(full);
     });
 
@@ -488,7 +489,10 @@ describe.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
         expect(q).toBeGreaterThan(100);
         expect(volume(s)).toBeGreaterThan((q * 8) / 60);
         expect(volume(s)).toBeLessThan((q * 10) / 60);
-        expect(volume(run(s, createIdleInputs(receiver), 1200))).toBe(1000);
+        const full = run(s, createIdleInputs(receiver), 1200);
+        expect(volume(full)).toBe(1000);
+        const pd = full.sources.find((x) => x.id === 'pd');
+        expect(pd?.kind === 'static' ? pd.spilledL : undefined).toBeGreaterThan(0);
       });
 
       it('balances fill against draw: drawn faster than filled, it empties and the pump loses prime', () => {
