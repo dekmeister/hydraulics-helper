@@ -43,3 +43,71 @@ export const DAM = {
 
 /** A hydrant on the track's verge below the truck: in layflat reach of a suction inlet. */
 export const HYDRANT = { x: 372, y: 452, label: { x: 390, y: 478 } } as const;
+
+/**
+ * The village street (issue #10) runs where the farm track does, so the truck parks on its verge
+ * and the hydrant stands beside it whatever the setting.
+ */
+export const STREET = TRACK;
+
+/**
+ * A house in plan: its roof centred at x, y, `w` × `h`, turned `deg`, in a fenced yard `YARD_U`
+ * wider all round. Iron or tiled roof.
+ */
+export interface Lot {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  deg: number;
+  roof: 'iron' | 'tile';
+}
+
+/** Yard beyond the house on every side, drawing units. */
+export const YARD_U = 14;
+
+/**
+ * Houses along the street, clear of the truck, the hydrant and its layflat, and the fan the crews
+ * lay out towards the fire in (geometry.test.ts checks).
+ */
+const WEST: Lot = { x: 78, y: 300, w: 56, h: 40, deg: -15, roof: 'tile' };
+const NORTH: Lot = { x: 210, y: 92, w: 52, h: 38, deg: 28, roof: 'iron' };
+const SOUTH: Lot = { x: 566, y: 422, w: 60, h: 42, deg: 0, roof: 'iron' };
+const SOUTH_EAST: Lot = { x: 704, y: 404, w: 54, h: 40, deg: 6, roof: 'tile' };
+const EAST: Lot = { x: 700, y: 300, w: 52, h: 38, deg: -6, roof: 'iron' };
+
+export const VILLAGE_LOTS: readonly Lot[] = [WEST, NORTH, SOUTH, SOUTH_EAST, EAST];
+
+/** The interface keeps its houses on the truck's side of the bush edge. */
+export const INTERFACE_LOTS: readonly Lot[] = [WEST, NORTH, SOUTH, SOUTH_EAST];
+
+/**
+ * The house alight in the village, where the bush has its fire front: up and right of the truck,
+ * between the two crews' streams.
+ */
+export const BURNING = { x: 690, y: 150, w: 96, h: 70, deg: -8 } as const;
+
+/**
+ * Where the bush begins at the urban interface: everything up and right of this line is bush
+ * (tints, scrub, fire front), the rest the edge of town.
+ */
+export const BUSH_EDGE = 'M330 0 C 420 90, 560 150, 800 300';
+
+/** Corners of a lot's yard (or of a rect with margin `pad`), for overlap checks. */
+export function lotCorners(
+  lot: Pick<Lot, 'x' | 'y' | 'w' | 'h' | 'deg'>,
+  pad = YARD_U,
+): { x: number; y: number }[] {
+  const r = (lot.deg * Math.PI) / 180;
+  const hw = lot.w / 2 + pad;
+  const hh = lot.h / 2 + pad;
+  return [
+    [-hw, -hh],
+    [hw, -hh],
+    [hw, hh],
+    [-hw, hh],
+  ].map(([dx = 0, dy = 0]) => ({
+    x: lot.x + dx * Math.cos(r) - dy * Math.sin(r),
+    y: lot.y + dx * Math.sin(r) + dy * Math.cos(r),
+  }));
+}

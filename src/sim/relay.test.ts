@@ -22,6 +22,7 @@ import { hoseResistance } from './hose';
 import { valveLossCoeff } from './network';
 import { relayEndKpa, relayOrder } from './relay';
 import { getScenario } from './scenarios';
+import { withHeavyLines } from './scenarios/heavyLines';
 import {
   closedRelayPair,
   expectSane,
@@ -520,7 +521,8 @@ describe('relay burst in the closed-relay scenario', () => {
   it.each(PAIRS.map(([b, r]) => [`${b.id} → ${r.id}`, b, r] as const))(
     'slamming the relay inlet at working flow bursts a length (%s)',
     (_name, base, receiver) => {
-      const { state } = getScenario('closed-relay').build(receiver, { base });
+      // Heavy lines: the scenario's bush lines draw too little for the surge to burst it.
+      const state = withHeavyLines(getScenario('closed-relay').build(receiver, { base }).state);
       const inlet = suctionInletOf(receiver);
       const lines = state.lines.map((l) => l.deliveryId);
       const working = run(state, inputsWith(0.6, [inlet, ...lines]), 150);

@@ -32,6 +32,7 @@ import {
   stepAndSettle,
   tapOrClick,
 } from '../panel';
+import { stepUntilCharged } from '../scene';
 
 test.skip(({ isMobile }) => !isMobile, 'lesson journeys run on the phone');
 
@@ -106,17 +107,20 @@ for (const spec of JOURNEY_APPLIANCES) {
     await stepAndSettle(page, 1);
     await expect(dock(page)).toContainText('Step 5 of 12');
 
-    const line = await deliveryOf(page, 'line-38');
+    const line = await deliveryOf(page, 'line-1');
     await dragValve(page, line.valve, 1);
     await stepAndSettle(page, 1);
     await expect(dock(page)).toContainText('Step 6 of 12');
 
-    await dragThrottle(page, 0.6);
+    // Let the line charge at idle first: a short 25 mm lay filling under throttle stops hard
+    // when the water reaches the branch, a hammer surge on a big pump.
+    await stepUntilCharged(page, line.id);
+    await dragThrottle(page, 0.75);
     await playUntil(
       page,
       (p) => p.coachIndex >= 6,
       async (s) => {
-        if (activeTruckOf(s).readings.dischargeKpa < 650) await nudgeThrottle(page, 6);
+        if (activeTruckOf(s).readings.dischargeKpa < 900) await nudgeThrottle(page, 6);
       },
       30,
     );
@@ -128,17 +132,19 @@ for (const spec of JOURNEY_APPLIANCES) {
     await playUntil(
       page,
       (p) => objectiveDone(p, 'pressure'),
-      (s) => trimBranch(page, s, 'line-38'),
+      (s) => trimBranch(page, s, 'line-1'),
     );
 
-    // Shut down: idle first, then ease the delivery shut over a few seconds.
+    // Shut down: idle first, then ease the delivery shut over a few seconds. Small bore carries
+    // the flow fast, so 25 mm hose wants the last of it closed gently or it hammers.
     await expect(dock(page)).toContainText('Step 10 of 12');
     await dragThrottle(page, 0);
     await stepAndSettle(page, 30);
-    for (const open of [0.5, 0.2, 0]) {
+    for (const open of [0.5, 0.3, 0.15, 0]) {
       await dragValve(page, line.valve, open);
       await stepAndSettle(page, 10);
     }
+    await expect(line.valve).toHaveAttribute('aria-valuenow', '0');
     // Then the engine: a tap on STOP only dips it and it picks up again; held, it stops.
     await expect(dock(page)).toContainText('Step 11 of 12');
     await holdEngineSwitch(page, 'stop', 1);
@@ -162,12 +168,12 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
   // Two whole lessons played a second at a time through the controls.
   test.setTimeout(120_000);
   await gotoApp(page);
-  // 2: two lines on the tank, the 38 mm sets the pump and the 65 mm is gated back.
+  // 2: two bush lines on the tank, crew 1 sets the pump and crew 2, downhill, is gated back.
   await startButton(page, 2).click();
   await startEngine(page);
   await inlet(page, 'tank', testInfo);
-  const small = await deliveryOf(page, 'line-38');
-  const big = await deliveryOf(page, 'line-65');
+  const small = await deliveryOf(page, 'line-1');
+  const big = await deliveryOf(page, 'line-2');
   await dragValve(page, small.valve, 1);
   await dragValve(page, big.valve, 1);
   await dragThrottle(page, 0.7);
@@ -176,8 +182,8 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
     page,
     (p) => objectiveDone(p, 'both'),
     async (s) => {
-      await trimBranch(page, s, 'line-38');
-      await gateBranch(page, s, 'line-65', bigName);
+      await trimBranch(page, s, 'line-1');
+      await gateBranch(page, s, 'line-2', bigName);
     },
     150,
   );
@@ -190,26 +196,23 @@ test('scenarios 2 and 3 unassisted, and the progress survives a reload', async (
   await inlet(page, 'tankFill', testInfo);
   await startEngine(page);
   await inlet(page, 'tank', testInfo);
-  const small3 = await deliveryOf(page, 'line-38');
-  const big3 = await deliveryOf(page, 'line-65');
-  await dragValve(page, small3.valve, 1);
-  await dragValve(page, big3.valve, 1);
+  const crew1 = await deliveryOf(page, 'line-1');
+  const crew2 = await deliveryOf(page, 'line-2');
+  await dragValve(page, crew1.valve, 1);
+  await dragValve(page, crew2.valve, 1);
   await dragThrottle(page, 0.7);
-  const big3Name = (await big3.valve.getAttribute('aria-label')) ?? '';
+  // Two identical village lines: one pump pressure suits both, nothing to gate back.
   await playUntil(
     page,
     (p) => objectiveDone(p, 'both'),
-    async (s) => {
-      await trimBranch(page, s, 'line-38');
-      await gateBranch(page, s, 'line-65', big3Name);
-    },
+    (s) => trimBranch(page, s, 'line-1'),
     150,
   );
   // Both branches in band, the hydrant keeps up: the tank is rising.
   const tankBefore = activeTruckOf(await getState(page)).tankL;
   await stepAndSettle(page, 50);
   expect(activeTruckOf(await getState(page)).tankL).toBeGreaterThan(tankBefore);
-  await shutDownLesson(page, [small3.valve, big3.valve]);
+  await shutDownLesson(page, [crew1.valve, crew2.valve]);
   await expectPassedDebrief(page);
 
   // Back on the menu, and after a reload: 2 and 3 passed; 1, never tried, is up next.
@@ -257,7 +260,7 @@ test('the incident’s events: the crew moves uphill and calls for pressure', as
     (s) => trimBranch(page, s, 'line-1'),
   );
   await stepAndSettle(page, 10);
-  await expect(dock(page)).toContainText('OIC: Second crew has run out 65 mm');
+  await expect(dock(page)).toContainText('OIC: Second crew has run out 25 mm');
   const after = await getState(page);
   const second = after.lines.find((l) => l.id === 'line-2');
   expect(second).toBeDefined();
@@ -300,8 +303,8 @@ for (const spec of JOURNEY_APPLIANCES.filter(
 
     await startEngine(page);
     await inlet(page, 'tank', testInfo);
-    const crew = await deliveryOf(page, 'line-38');
-    const second = await deliveryOf(page, 'line-65');
+    const crew = await deliveryOf(page, 'line-1');
+    const second = await deliveryOf(page, 'line-2');
     await dragValve(page, crew.valve, 1);
     await dragValve(page, second.valve, 1);
     await dragThrottle(page, 0.8);
@@ -310,8 +313,8 @@ for (const spec of JOURNEY_APPLIANCES.filter(
       page,
       (p) => objectiveDone(p, 'both'),
       async (s) => {
-        await trimBranch(page, s, 'line-38');
-        await gateBranch(page, s, 'line-65', secondName);
+        await trimBranch(page, s, 'line-1');
+        await gateBranch(page, s, 'line-2', secondName);
       },
       150,
     );

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CAT1 } from '../appliances/cat1';
 import { createInitialState } from '../engine';
-import { attachLines, LIGHT_LINE, type PlannedLine } from '../scenarios/lay';
+import { attachLines, BUSH_LINE, VILLAGE_LINE, type PlannedLine } from '../scenarios/lay';
 import { getScenario } from '../scenarios';
 import { lessonBrief, loadScenario } from '../scenarios/load';
 import type { ApplianceSpec } from '../types';
@@ -19,25 +19,22 @@ const LIGHT: ApplianceSpec = {
 };
 
 const PLANS: readonly PlannedLine[] = [
-  { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
+  { id: 'line-1', ...BUSH_LINE },
+  { id: 'line-2', ...VILLAGE_LINE, elevationM: -10 },
 ];
 
-describe('line plans on a light tanker', () => {
-  it('lays the planned hose where an outlet fits it, the light kit where none does', () => {
-    const [, big] = attachLines(CAT1, PLANS);
-    expect(big?.segments.map((x) => x.hose)).toEqual(['65L', '65L', '65L']);
-    const [crew, light] = attachLines(LIGHT, PLANS);
-    expect(crew?.segments).toHaveLength(3);
-    expect(light?.segments.map((x) => x.hose)).toEqual(
-      Array.from({ length: LIGHT_LINE.lengths }, () => LIGHT_LINE.hose),
-    );
-    expect(light?.branch.tipMm).toBe(LIGHT_LINE.tipMm);
+describe('line plans', () => {
+  it('puts 25 mm on a 38 mm outlet (the adaptor), not the 65 mm one', () => {
+    const [bush] = attachLines(CAT1, PLANS);
+    const outlet = CAT1.deliveries.find((d) => d.id === bush?.deliveryId);
+    expect(outlet?.sizeMm).toBe(38);
   });
 
-  it('keeps the planned hose (through an adaptor) when there is no light kit', () => {
-    const [line] = attachLines(LIGHT, [{ id: 'x', hose: '65L', lengths: 1, tipMm: 20 }]);
-    expect(line?.segments[0]?.hose).toBe('65L');
+  it('lays the kit as planned, branch height included', () => {
+    const [, village] = attachLines(LIGHT, PLANS);
+    expect(village?.segments.map((x) => x.hose)).toEqual(['38L', '38L', '38L']);
+    expect(village?.branch.tipMm).toBe(15);
+    expect(village?.elevationM).toBe(-10);
   });
 });
 
@@ -46,18 +43,19 @@ describe('lesson copy', () => {
   const light = createInitialState(LIGHT, attachLines(LIGHT, PLANS));
 
   it('names what was laid', () => {
-    const text =
-      'Charge the {line:line-65} ({hose:line-65}, {tip:line-65} branch at {kpa:line-65}).';
-    expect(resolveText(text, cat1)).toBe('Charge the 65 mm line (65 mm, 20 mm branch at 500 kPa).');
-    expect(resolveText(text, light)).toBe(
+    const text = 'Charge the {line:ID} ({hose:ID}, {tip:ID} branch at {kpa:ID}).';
+    expect(resolveText(text.replaceAll('ID', 'line-1'), cat1)).toBe(
       'Charge the 25 mm line (25 mm, 12 mm branch at 250 kPa).',
+    );
+    expect(resolveText(text.replaceAll('ID', 'line-2'), light)).toBe(
+      'Charge the 38 mm line (38 mm, 15 mm branch at 350 kPa).',
     );
   });
 
   it('gives a flow as a fraction of the line’s working flow, to 10 L/min', () => {
-    // A 20 mm tip at 500 kPa: (2/3)·20²/10·√500 ≈ 596 L/min.
-    expect(resolveText('{flow:line-65:1}', cat1)).toBe('600 L/min');
-    expect(resolveText('{flow:line-65:0.5}', cat1)).toBe('300 L/min');
+    // A 15 mm tip at 350 kPa: (2/3)·15²/10·√350 ≈ 281 L/min.
+    expect(resolveText('{flow:line-2:1}', cat1)).toBe('280 L/min');
+    expect(resolveText('{flow:line-2:0.5}', cat1)).toBe('140 L/min');
   });
 
   it('leaves {target} to the UI and flags a placeholder naming nothing', () => {
@@ -68,7 +66,7 @@ describe('lesson copy', () => {
   });
 
   it('reads generically where no appliance fills it', () => {
-    expect(genericText('a {line:line-65} with a {tip:line-65} branch')).toBe(
+    expect(genericText('a {line:line-1} with a {tip:line-1} branch')).toBe(
       'a line with a suitable branch',
     );
   });
@@ -90,14 +88,14 @@ describe('lesson copy', () => {
 
 describe('flow as a fraction of working flow', () => {
   it('scales the target with the line laid', () => {
-    const cond = { kind: 'flow', line: 'line-65', ofWorking: true, min: 0.5 } as const;
+    const cond = { kind: 'flow', line: 'line-2', ofWorking: true, min: 0.5 } as const;
     const facts = noFacts('truck-1');
     for (const state of [
       createInitialState(CAT1, attachLines(CAT1, PLANS)),
       createInitialState(LIGHT, attachLines(LIGHT, PLANS)),
     ]) {
       const truck = state.trucks[0];
-      const lay = state.lines.find((l) => l.id === 'line-65');
+      const lay = state.lines.find((l) => l.id === 'line-2');
       if (truck === undefined || lay === undefined) throw new Error('no truck');
       const at = (q: number) => ({
         ...state,
@@ -108,8 +106,7 @@ describe('flow as a fraction of working flow', () => {
           },
         ],
       });
-      const working =
-        (2 / 3) * (lay.branch.tipMm ** 2 / 10) * Math.sqrt(lay.branch.tipMm === 20 ? 500 : 250);
+      const working = (2 / 3) * (lay.branch.tipMm ** 2 / 10) * Math.sqrt(350);
       expect(holds(cond, at(0.49 * working), facts)).toBe(false);
       expect(holds(cond, at(0.51 * working), facts)).toBe(true);
       expect(

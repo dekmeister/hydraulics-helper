@@ -5,17 +5,16 @@ import { inletOfKind } from '../appliances/controls';
 import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
-import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
+import { attachLines, twoLines, VILLAGE_LINE, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
 /**
- * The tank-attack pair (Table 1: 15 mm ~280 L/min, 20 mm ~600 L/min): on a Cat 1 less than the
- * hydrant pushes into the tank (~1000 L/min on two lengths of 65 mm), so the tank holds while both
- * crews work. A truck with no 65 mm outlet runs the light line.
+ * Two village crews on 38 mm rubber (Table 1 15 mm tips, ~280 L/min each): less than the hydrant
+ * pushes into the tank (~1000 L/min on two lengths of 65 mm), so the tank holds while both work.
  */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
+  { id: 'line-1', ...VILLAGE_LINE },
+  { id: 'line-2', ...VILLAGE_LINE },
 ];
 
 /** Tank at the start, as a fraction of capacity: low after the last job. Lesson tuning. */
@@ -24,7 +23,8 @@ const START_TANK_OF_CAPACITY = 0.3;
 const LESSON: LessonDef = {
   ladder: 3,
   brief:
-    'A hydrant is on your hydrant-to-tank inlet through two lengths of 65 mm, and the tank is low ' +
+    'A house fire in the village. Two crews run 38 mm rubber hose to the building. A hydrant is ' +
+    'on your hydrant-to-tank inlet through two lengths of 65 mm, and the tank is low ' +
     'after the last job. Hydrant pressure pushes water straight into the tank; the pump still ' +
     'works off tank to pump, so the compound reads as it does on the tank. Watch the tank gauge: ' +
     'while it holds, the hydrant is keeping up with the crews.',
@@ -36,13 +36,13 @@ const LESSON: LessonDef = {
     },
     {
       id: 'attack',
-      text: 'Open tank to pump and charge the {line:line-38} and the {line:line-65}.',
+      text: 'Open tank to pump and charge both crews’ {line:line-1}s.',
       when: {
         kind: 'all',
         of: [
           { kind: 'valve', valve: { inlet: 'tank' }, min: 0.9 },
-          { kind: 'flow', line: 'line-38', min: 50 },
-          { kind: 'flow', line: 'line-65', min: 50 },
+          { kind: 'flow', line: 'line-1', min: 50 },
+          { kind: 'flow', line: 'line-2', min: 50 },
         ],
       },
       after: ['fill'],
@@ -51,19 +51,19 @@ const LESSON: LessonDef = {
       id: 'both',
       text:
         'Hold both branches at working pressure for 30 s, hydrant to tank still open: about ' +
-        '{kpa:line-38} on the {tip:line-38} branch, {kpa:line-65} on the {tip:line-65}.',
+        '{kpa:line-1} on each {tip:line-1} branch.',
       when: {
         kind: 'all',
         of: [
           { kind: 'valve', valve: { inlet: 'tankFill' }, min: 0.9 },
-          { kind: 'branch', line: 'line-38' },
-          { kind: 'branch', line: 'line-65' },
+          { kind: 'branch', line: 'line-1' },
+          { kind: 'branch', line: 'line-2' },
         ],
       },
       holdS: 30,
       after: ['attack'],
     },
-    shutdownObjective(['both'], ['line-38', 'line-65']),
+    shutdownObjective(['both'], ['line-1', 'line-2']),
   ],
   failures: [TANK_DRY, ...PUMP_DAMAGE],
 };
@@ -71,7 +71,8 @@ const LESSON: LessonDef = {
 /** Hydrant to tank (ARCHITECTURE §5 ladder step 3): the usual way to take a hydrant. */
 export const HYDRANT_TANK: Scenario = {
   id: 'hydrant-tank',
-  title: 'Hydrant supply: hydrant to tank',
+  title: 'House fire: hydrant to tank',
+  setting: 'village',
   requires: { tank: true, tankFill: true, minDeliveries: LINES.length },
   build(spec) {
     const lines = attachLines(spec, LINES);
@@ -124,12 +125,12 @@ export const HYDRANT_TANK: Scenario = {
     { open: { inlet: 'tankFill' } },
     ...START_UP,
     { open: { inlet: 'tank' } },
-    { open: { line: 'line-38' } },
-    { open: { line: 'line-65' } },
+    { open: { line: 'line-1' } },
+    { open: { line: 'line-2' } },
     { throttle: 0.7 },
-    { trim: { branch: 'line-38' } },
-    { gate: 'line-65' },
+    { trim: { branch: 'line-1' } },
+    { gate: 'line-2' },
     { until: { kind: 'objective', objective: 'both' }, maxS: 150 },
-    ...shutDown(['line-38', 'line-65']),
+    ...shutDown(['line-1', 'line-2']),
   ],
 };

@@ -9,6 +9,7 @@ import type { ApplianceSpec, PlayerInputs, SimState } from '../sim/types';
 import { TICK_S } from '../sim/constants';
 import { advance } from '../sim/engine';
 import {
+  sceneSetting,
   activeTruck,
   CHARGED_MIN_LPM,
   deliveryLines,
@@ -181,5 +182,14 @@ describe('relief lamp', () => {
     expect(level(dumping, idleInputs(spec), 'over-pressure')).toBe(
       spec.relief === undefined ? undefined : 'caution',
     );
+  });
+});
+
+describe('scene setting', () => {
+  it('draws each scenario on its setting’s backdrop, the bush when none is loaded', () => {
+    expect(sceneSetting('draughting')).toBe('bush');
+    expect(sceneSetting('hydrant-tank')).toBe('village');
+    expect(sceneSetting('incident')).toBe('interface');
+    expect(sceneSetting(null)).toBe('bush');
   });
 });

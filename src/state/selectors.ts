@@ -11,6 +11,8 @@ import {
 } from '../sim/engineControl';
 import { CREW_WATER_MIN_LPM } from '../sim/lesson/progress';
 import { lineFill } from '../sim/lineFill';
+import { SCENARIOS } from '../sim/scenarios';
+import type { ScenarioSetting } from '../sim/scenarios/types';
 import { activeTruck } from './activeTruck';
 import type {
   ControlId,
@@ -27,6 +29,11 @@ interface HasSim {
 }
 
 export const selectSimTimeS = (s: HasSim): number => s.sim.timeS;
+
+/** Where the loaded scenario is set, for the scene's backdrop; the bush with none loaded. */
+export function sceneSetting(scenarioId: string | null): ScenarioSetting {
+  return SCENARIOS.find((x) => x.id === scenarioId)?.setting ?? 'bush';
+}
 
 export { activeTruck } from './activeTruck';
 

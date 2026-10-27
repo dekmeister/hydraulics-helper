@@ -77,11 +77,11 @@ export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtu
           [
             ...START_UP,
             { open: { inlet: 'tank' } },
-            { open: { line: 'line-38' } },
-            { open: { line: 'line-65' } },
-            { throttle: 0.7 },
+            { open: { line: 'line-1' } },
+            { open: { line: 'line-2' } },
+            { throttle: 0.75 },
             { wait: 60 },
-            // A light tanker draws less: let it run on until the tank is dry.
+            // A smaller pump draws less: let it run on until the tank is dry.
             { until: { kind: 'tank', max: 0 }, maxS: 240 },
           ],
         ),

@@ -292,8 +292,8 @@ for (const spec of REALISTIC_APPLIANCES) {
     });
 
     test('refill the tank through hydrant to tank', async ({ page }) => {
-      test.skip(!supports(getScenario('tank-refill'), spec), 'no hydrant to tank');
-      await load(page, 'tank-refill', spec.id);
+      test.skip(!supports(getScenario('hydrant-tank'), spec), 'no hydrant to tank');
+      await load(page, 'hydrant-tank', spec.id);
       await showRealistic(page);
       const layout = layoutFor(spec.id);
       const tank = instrumentName(await getState(page), layout, 'tank');

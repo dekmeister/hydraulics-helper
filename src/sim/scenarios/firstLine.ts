@@ -3,29 +3,29 @@ import { createInitialState } from '../engine';
 import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
 import type { LessonDef, ValveRef } from '../lesson/types';
 import { START_UP, shutDown, startEngineSteps, stopEngineSteps } from './engineSteps';
-import { attachLines, type PlannedLine } from './lay';
+import { attachLines, BUSH_LINE, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
-/** Three lengths of 38 mm with a 15 mm tip: 350 kPa at the branch (Table 1), ~700 at the pump. */
-const LINE: PlannedLine = { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 };
+/** The bush crew's line: 25 mm canvas, 12 mm tip, 250 kPa at the branch (Table 1), ~950 at the pump. */
+const LINE: PlannedLine = { id: 'line-1', ...BUSH_LINE };
 const ON_LINE: ValveRef = { line: LINE.id };
 const TANK: ValveRef = { inlet: 'tank' };
 
 const LESSON: LessonDef = {
   ladder: 1,
   brief:
-    'One crew has run out three lengths of 38 mm hose with a 15 mm branch. Get them water from ' +
+    'A bush crew has run out a length of 25 mm canvas hose with a 12 mm branch. Get them water from ' +
     'the tank at the right pressure, then shut down cleanly. The pump is cold: you start it. ' +
     'The coach walks you through it.',
   objectives: [
     {
       id: 'water',
-      text: 'Get water to the crew: charge the 38 mm line.',
+      text: 'Get water to the crew: charge the {line:line-1}.',
       when: { kind: 'flow', line: LINE.id, min: 50 },
     },
     {
       id: 'pressure',
-      text: 'Hold the branch at working pressure (about 350 kPa) for 20 s.',
+      text: 'Hold the branch at working pressure (about {kpa:line-1}) for 20 s.',
       when: { kind: 'branch', line: LINE.id },
       holdS: 20,
       after: ['water'],
@@ -37,7 +37,7 @@ const LESSON: LessonDef = {
     {
       id: 'welcome',
       text:
-        'This is your pump panel. A crew is waiting on the end of three lengths of 38 mm hose. ' +
+        'This is your pump panel. A crew is waiting on the end of a length of 25 mm canvas hose. ' +
         'You’ll start the pump, open the tank to the pump, open their delivery, then bring the ' +
         'pressure up.',
     },
@@ -69,16 +69,16 @@ const LESSON: LessonDef = {
     },
     {
       id: 'throttle',
-      text: 'Bring the throttle up and watch the discharge gauge climb. Aim for about 700 kPa.',
+      text: 'Bring the throttle up and watch the discharge gauge climb. Aim for about 950 kPa.',
       target: { throttle: true },
-      done: { kind: 'gauge', gauge: 'discharge', min: 600 },
+      done: { kind: 'gauge', gauge: 'discharge', min: 850 },
     },
     {
       id: 'friction',
       text:
-        'The discharge gauge shows pressure at the pump, not at the branch. Three lengths of ' +
-        '38 mm lose about 350 kPa to friction at this flow, so 700 at the pump is about 350 at ' +
-        'the branch: what a 15 mm tip wants.',
+        'The discharge gauge shows pressure at the pump, not at the branch. Canvas hose weeps to ' +
+        'keep itself wet, and one length of 25 mm loses about 700 kPa to friction at this flow, ' +
+        'so 950 at the pump is about 250 at the branch: what a 12 mm tip wants.',
       target: { gauge: 'discharge' },
     },
     {
@@ -127,10 +127,11 @@ const LESSON: LessonDef = {
   ],
 };
 
-/** Ladder step 1, fully guided: one 38 mm line on tank (ARCHITECTURE §5). */
+/** Ladder step 1, fully guided: one 25 mm bush line on tank (ARCHITECTURE §5). */
 export const FIRST_LINE: Scenario = {
   id: 'first-line',
-  title: 'First line: one 38 mm line from the tank',
+  title: 'First line: one 25 mm line from the tank',
+  setting: 'bush',
   requires: { tank: true, minDeliveries: 1 },
   build(spec) {
     const lines = attachLines(spec, [LINE]);
@@ -142,7 +143,7 @@ export const FIRST_LINE: Scenario = {
         ...startEngineSteps(spec),
         { tS: 0, valves: { [tankInlet]: 1 } },
         { tS: 2, valves: { [delivery]: 1 } },
-        { tS: 5, throttle: 0.6 },
+        { tS: 5, throttle: 0.75 },
         { tS: 40, throttle: 0 },
         ...[0.75, 0.5, 0.25, 0].map((open, i) => ({ tS: 45 + i, valves: { [delivery]: open } })),
         ...stopEngineSteps(spec, 50),
@@ -155,7 +156,7 @@ export const FIRST_LINE: Scenario = {
     ...START_UP,
     { open: TANK },
     { open: ON_LINE },
-    { throttle: 0.5 },
+    { throttle: 0.7 },
     { trim: { branch: LINE.id } },
     { until: { kind: 'objective', objective: 'pressure' }, maxS: 120 },
     ...shutDown([LINE.id]),

@@ -12,7 +12,6 @@ import { HYDRANT_TANK } from './hydrantTank';
 import { INCIDENT } from './incident';
 import { OPEN_RELAY } from './openRelay';
 import { TANK_ATTACK } from './tankAttack';
-import { TANK_REFILL } from './tankRefill';
 import { traceCsv } from './trace';
 import { supports, type Scenario, type SupportSpecs } from './types';
 
@@ -28,7 +27,6 @@ export const SCENARIOS: readonly Scenario[] = [
   CLOSED_RELAY,
   OPEN_RELAY,
   INCIDENT,
-  TANK_REFILL,
 ];
 
 export function getScenario(id: string): Scenario {

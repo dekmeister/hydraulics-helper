@@ -47,9 +47,17 @@ export interface SupportRole {
 /** Appliance chosen for each support role, by role id; a missing role takes the player's. */
 export type SupportSpecs = Readonly<Record<string, ApplianceSpec>>;
 
+/**
+ * Where the job is (issue #10), which sets the crews' hose and the scene's backdrop: bush (draughting,
+ * 25 mm canvas), village (hydrants, 38 mm rubber, a building alight) or the urban interface between.
+ * The sim never reads it.
+ */
+export type ScenarioSetting = 'bush' | 'village' | 'interface';
+
 export interface Scenario {
   id: string;
   title: string;
+  setting: ScenarioSetting;
   /** What the player's appliance needs. */
   requires: ScenarioRequirements;
   /** Other trucks on the fireground, each with what its appliance needs. */

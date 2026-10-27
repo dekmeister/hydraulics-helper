@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { deliveryLines, tankFraction } from '../../state/selectors';
+import { deliveryLines, sceneSetting, tankFraction } from '../../state/selectors';
 import { portableDams, relayLays } from '../../state/relay';
 import { supplyLays } from '../../state/supply';
 import { useStore } from '../../state/store';
@@ -38,6 +38,7 @@ export function SceneView() {
   const highlight = useStore((s) => s.highlight);
   const toggleHighlight = useStore((s) => s.toggleHighlight);
   const setActiveTruck = useStore((s) => s.setActiveTruck);
+  const setting = useStore((s) => sceneSetting(s.scenarioId));
   const ref = useRef<HTMLDivElement>(null);
 
   // Asked from the panel: bring the scene into view (it's above the panel on a phone).
@@ -99,7 +100,7 @@ export function SceneView() {
             : `Plan view: the ${active.truck.spec.name} with its hose lays, crews and water supply.`
         }
       >
-        <Backdrop />
+        <Backdrop setting={setting} />
         <SpillPools sim={sim} geometry={geometry} />
         {sim.sources.some((x) => x.kind === 'hydrant') && <Hydrant />}
         {geometry.dams.map((g) => {

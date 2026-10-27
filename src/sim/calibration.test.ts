@@ -56,6 +56,18 @@ describe('calibration: supply-line friction C10 (L1024–1039), 1000 L/min over 
   });
 });
 
+// Table 3 has no 25 mm unlined column: 25U is 25L scaled by the 38 and 65 mm unlined:lined ratio
+// (2.8). PLACEHOLDER — needs Dek. One length with a 12 mm branch is the bush crew's lay.
+describe('calibration: 25 mm percolating hose (PLACEHOLDER)', () => {
+  it('loses about 2.8 × the lined figure: ~680 kPa a length at 150 L/min', () => {
+    expectWithinRel(hoseFrictionKpa(lengths('25U', 1), 150), 2.8 * 243, PUMP_TOL);
+  });
+
+  it('needs about 930 kPa at the pump for one length and a 12 mm branch', () => {
+    expectWithinRel(pumpKpa(250, lengths('25U', 1), 150), 930, PUMP_TOL);
+  });
+});
+
 describe('calibration: Table 1 branch flows at optimum pressure (L465–490)', () => {
   // Manual flows are rounded; the formula lands within 2 % of every row.
   it.each([

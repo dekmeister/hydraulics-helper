@@ -1,12 +1,24 @@
 import { useMemo } from 'react';
 import { SCENARIOS } from '../../sim/scenarios';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
-import { missingRequirements, supports, type Scenario } from '../../sim/scenarios/types';
+import {
+  missingRequirements,
+  supports,
+  type Scenario,
+  type ScenarioSetting,
+} from '../../sim/scenarios/types';
 import { lessonBrief } from '../../sim/scenarios/load';
 import { useStore } from '../../state/store';
 import { AppliancePicker } from './AppliancePicker';
 import { Stars } from './Stars';
 import './ScenarioMenu.css';
+
+/** Where each scenario is set (issue #10), as its card's tag says it. */
+const SETTING_NAMES: Readonly<Record<ScenarioSetting, string>> = {
+  bush: 'Bush',
+  village: 'Village',
+  interface: 'Urban interface',
+};
 
 const LADDER: readonly Scenario[] = SCENARIOS.filter((s) => s.lesson !== undefined).sort(
   (a, b) => (a.lesson?.ladder ?? 0) - (b.lesson?.ladder ?? 0),
@@ -64,6 +76,9 @@ export function ScenarioMenu() {
               <p className="menu-card__brief">{briefs.get(s.id)}</p>
               <div className="menu-card__foot">
                 <p className="menu-card__status">
+                  <span className="menu-card__tag" data-setting={s.setting}>
+                    {SETTING_NAMES[s.setting]}
+                  </span>
                   {s.lesson?.coach !== undefined && <span className="menu-card__tag">Guided</span>}
                   {isNext && <span className="menu-card__tag menu-card__tag--next">Next up</span>}
                   {missing.length > 0 ? (

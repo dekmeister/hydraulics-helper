@@ -5,6 +5,7 @@ import { inletOfKind, primerControlId } from '../src/sim/appliances/controls';
 import { TICK_S } from '../src/sim/constants';
 import { advance, chargeLines, warmStart } from '../src/sim/engine';
 import { getScenario } from '../src/sim/scenarios';
+import { withHeavyLines } from '../src/sim/scenarios/heavyLines';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../src/sim/types';
 import { expect, gotoApp } from './fixtures';
 import {
@@ -12,6 +13,7 @@ import {
   controlName,
   getState,
   instrumentName,
+  JOURNEY_APPLIANCES,
   layoutFor,
   meterValue,
   startEngine,
@@ -22,27 +24,58 @@ import {
 /**
  * Open the app on `scenario` with the player on `appliance` (support trucks on `support`), and
  * start the player's engine from its panel (`cold` leaves it as the scenario does: stopped).
+ * `heavy` swaps the player's lines for the heavy test pair (`withHeavyLines`): the scenario's bush
+ * lines can't over-run a draught or a relay, or burst one (issue #10). Built here and loaded as a
+ * state, so it has no scenario: the scene draws the bush.
  */
 export async function load(
   page: Page,
   scenario: string,
   appliance: string,
   support?: string,
-  { cold = false }: { cold?: boolean } = {},
+  { cold = false, heavy = false }: { cold?: boolean; heavy?: boolean } = {},
 ) {
   await gotoApp(page);
-  await page.evaluate(
-    ([s, a, b]) => {
-      window.__pumpops?.load({
-        scenario: s,
-        appliance: a,
-        seed: 7,
-        ...(b === '' ? {} : { support: b }),
-      });
-    },
-    [scenario, appliance, support ?? ''] as const,
-  );
+  if (heavy) {
+    const other = support === undefined ? undefined : specOf(support);
+    const state = fireground(scenario, specOf(appliance), other, true);
+    await page.evaluate((st) => {
+      window.__pumpops?.load({ state: st });
+    }, state);
+  } else {
+    await page.evaluate(
+      ([s, a, b]) => {
+        window.__pumpops?.load({
+          scenario: s,
+          appliance: a,
+          seed: 7,
+          ...(b === '' ? {} : { support: b }),
+        });
+      },
+      [scenario, appliance, support ?? ''] as const,
+    );
+  }
   if (!cold) await startEngine(page);
+}
+
+/** A journey appliance by id. */
+function specOf(id: string): ApplianceSpec {
+  const spec = JOURNEY_APPLIANCES.find((a) => a.id === id);
+  if (spec === undefined) throw new Error(`unknown journey appliance '${id}'`);
+  return spec;
+}
+
+/** The scenario's initial fireground, support roles on `support` (or the same), maybe heavy. */
+function fireground(
+  scenario: string,
+  spec: ApplianceSpec,
+  support: ApplianceSpec | undefined,
+  heavy: boolean,
+): SimState {
+  const s = getScenario(scenario);
+  const roles = Object.fromEntries((s.support ?? []).map((r) => [r.id, support ?? spec]));
+  const built = s.build(spec, roles).state;
+  return heavy ? withHeavyLines(built) : built;
 }
 
 export const inletOf = inletOfKind;
@@ -125,9 +158,15 @@ export async function expectCompoundAlert(page: Page, spec: ApplianceSpec, alert
  * The scenario's fireground on `spec` after `ticks` with the player's suction inlet and every line
  * open at `throttle`, the pump primed: headless, to ask the sim what a journey will see.
  */
-function pushed(scenario: string, spec: ApplianceSpec, throttle: number, ticks: number): SimState {
+function pushed(
+  scenario: string,
+  spec: ApplianceSpec,
+  throttle: number,
+  ticks: number,
+  heavy = false,
+): SimState {
   // Steady over-run: the lines start charged, so the fill's rush isn't counted.
-  const built = chargeLines(warmStart(getScenario(scenario).build(spec).state));
+  const built = chargeLines(warmStart(fireground(scenario, spec, undefined, heavy)));
   const player = built.activeTruckId;
   let s: SimState = {
     ...built,
@@ -153,14 +192,31 @@ function pushed(scenario: string, spec: ApplianceSpec, throttle: number, ticks: 
  * fireground (cavitation). A small pump can't over-run a good hydrant, a 4 m draught or a relay
  * with its crew lines: that's physics, so a journey checks before it asks for it.
  */
-export function overRuns(scenario: string, spec: ApplianceSpec): boolean {
-  const s = pushed(scenario, spec, 1, 100);
+export function overRuns(scenario: string, spec: ApplianceSpec, heavy = false): boolean {
+  const s = pushed(scenario, spec, 1, 100, heavy);
   return (s.trucks.find((t) => t.id === s.activeTruckId)?.readings.cavitation ?? 0) > 0;
 }
 
+/**
+ * Whether every line flat out draws the open relay's portable dam down on `spec` (more than the
+ * relay brings). Bush lines on a small pump can't (issue #10): that's physics, so check first.
+ */
+export function drainsPortableDam(spec: ApplianceSpec, heavy = false): boolean {
+  const volume = (s: SimState) => {
+    const dam = s.sources.find((x) => x.id === 'portable-dam');
+    return dam?.kind === 'static' ? dam.volumeL : Number.NaN;
+  };
+  const before = pushed('open-relay', spec, 1, Math.round(50 / TICK_S), heavy);
+  let s = before;
+  const player = s.trucks.find((t) => t.id === s.activeTruckId);
+  if (player === undefined) return false;
+  for (let i = 0; i < Math.round(300 / TICK_S); i++) s = advance(s, player.inputs, TICK_S);
+  return volume(s) < volume(before);
+}
+
 /** Whether snapping the closed relay's inlet shut at 0.6 throttle bursts the relay on `spec`. */
-export function relayBurstsOnSlam(spec: ApplianceSpec): boolean {
-  let s = pushed('closed-relay', spec, 0.6, 150);
+export function relayBurstsOnSlam(spec: ApplianceSpec, heavy = false): boolean {
+  let s = pushed('closed-relay', spec, 0.6, 150, heavy);
   const player = s.trucks.find((t) => t.id === s.activeTruckId);
   if (player === undefined) return false;
   const inputs = {

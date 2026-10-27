@@ -1,0 +1,65 @@
+/* Village and interface scenery (issue #10): the same flat map palette as the bush. */
+
+.scene-street__kerb {
+  fill: none;
+  stroke: var(--color-scene-street-kerb);
+  stroke-width: 34;
+  stroke-linecap: round;
+}
+.scene-street {
+  fill: none;
+  stroke: var(--color-scene-street);
+  stroke-width: 28;
+  stroke-linecap: round;
+}
+.scene-street__line {
+  fill: none;
+  stroke: var(--color-scene-street-line);
+  stroke-width: 1.5;
+  stroke-dasharray: 10 8;
+}
+.scene-lawn {
+  fill: var(--color-scene-lawn);
+  stroke: var(--color-scene-fence);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.scene-roof {
+  stroke-width: 1.5;
+}
+.scene-roof--iron {
+  fill: var(--color-scene-roof);
+  stroke: var(--color-scene-roof-stroke);
+}
+.scene-roof--tile {
+  fill: var(--color-scene-roof-tile);
+  stroke: var(--color-scene-roof-tile-stroke);
+}
+.scene-roof__ridge {
+  fill: none;
+  stroke: var(--color-scene-roof-ridge);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.scene-roof--tile + .scene-roof__ridge {
+  stroke: var(--color-scene-roof-tile-stroke);
+  opacity: 0.5;
+}
+.scene-char {
+  fill: var(--color-scene-char);
+  opacity: 0.85;
+}
+.scene-flame {
+  fill: var(--color-signal-alarm);
+  opacity: 0.85;
+}
+.scene-flame__core {
+  fill: var(--color-signal-caution);
+}
+.scene-bush-edge {
+  fill: none;
+  stroke: var(--color-scene-scrub-stroke);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+}

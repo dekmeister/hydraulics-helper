@@ -5,6 +5,7 @@ import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { HOSE_WORKING_KPA } from '../sim/constants';
 import { chargeLines, warmStart } from '../sim/engine';
 import { getScenario } from '../sim/scenarios';
+import { withHeavyLines } from '../sim/scenarios/heavyLines';
 import { inputsWith, run, suctionInletOf, truck, withBigLines } from '../sim/testUtils';
 import type { ApplianceSpec, PlayerInputs, SimState } from '../sim/types';
 import { portableDams, relayLays, trucksOnScene } from './relay';
@@ -147,8 +148,13 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('relay selectors: %s'
     });
 
     it('warns when the residual falls under 100 kPa', () => {
-      const s = run(closed, attackInputs(1), 100);
-      const w = supplyLamp(s, attackInputs(1));
+      // Heavy lines: the scenario's bush lines can't draw the relay down that far.
+      const heavy = chargeLines(
+        withHeavyLines(warmStart(getScenario('closed-relay').build(spec).state)),
+      );
+      const full = inputsWith(1, [suction, ...heavy.lines.map((l) => l.deliveryId)]);
+      const s = run(heavy, full, 100);
+      const w = supplyLamp(s, full);
       expect(w?.level).toBe('caution');
       expect(w?.message).toMatch(/residual/i);
       expect(w?.message).toMatch(/100 kPa/);

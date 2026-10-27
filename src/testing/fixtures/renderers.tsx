@@ -38,6 +38,7 @@ import {
   WakeGallery,
 } from './galleries';
 import { panelState, sceneState, type PanelStateId, type SceneStateId } from './panelStates';
+import { isSettingState, SETTING_STATE_SCENARIO, settingState } from './settingStates';
 
 export interface FixtureRenderer {
   /** Sim state loaded into the store before rendering. */
@@ -233,10 +234,16 @@ function sceneRenderers(): Record<string, FixtureRenderer> {
   const out: Record<string, FixtureRenderer> = {};
   for (const { spec, states } of SCENE_FIXTURE_SETS) {
     for (const state of states) {
-      out[sceneFixtureId(spec.id, state)] = {
-        state: () => sceneState(spec, state satisfies SceneStateId),
-        render: () => <SceneAlone />,
-      };
+      out[sceneFixtureId(spec.id, state)] = isSettingState(state)
+        ? {
+            state: () => settingState(spec, state),
+            scenario: SETTING_STATE_SCENARIO[state],
+            render: () => <SceneAlone />,
+          }
+        : {
+            state: () => sceneState(spec, state satisfies SceneStateId),
+            render: () => <SceneAlone />,
+          };
     }
     out[sceneFixtureId(spec.id, 'highlighted')] = {
       state: () => sceneState(spec, 'all-charged'),

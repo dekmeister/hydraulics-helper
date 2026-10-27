@@ -71,6 +71,17 @@
   --color-scene-spray: #DCEFF5;
   --color-scene-ash: #C9B994;
   --color-scene-smoke: #8E9292;
+  --color-scene-street: #C4C1B6;
+  --color-scene-street-kerb: #E9E4D6;
+  --color-scene-street-line: #F3EFE4;
+  --color-scene-lawn: #CDD4A8;
+  --color-scene-roof: #AEB3B1;
+  --color-scene-roof-stroke: #5F6664;
+  --color-scene-roof-ridge: #C9CDCB;
+  --color-scene-roof-tile: #B98568;
+  --color-scene-roof-tile-stroke: #6E4433;
+  --color-scene-fence: #9C8A68;
+  --color-scene-char: #4E4640;
   --color-focus-inner: #F5F2EA;
   --color-focus-outer: #16191B;
   --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;

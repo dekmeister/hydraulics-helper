@@ -4,14 +4,14 @@ import { createSiteState } from '../engine';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
 import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
+import { attachLines, BUSH_LINE, twoLines, type PlannedLine } from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay, lengths } from './relayTrucks';
 import { supportSpec, type Scenario, type ScriptStep, type SupportRole } from './types';
 
-/** The attack pump's two lines: the tank-attack pair (Table 1 tips). */
+/** The attack pump's two bush lines. */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
-  { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
+  { id: 'line-1', ...BUSH_LINE },
+  { id: 'line-2', ...BUSH_LINE },
 ];
 
 /**
@@ -44,8 +44,8 @@ const LESSON: LessonDef = {
   ladder: 7,
   brief:
     'The base pump at the hydrant fills a portable dam beside you; you draught from it. The pumps ' +
-    'aren’t coupled: what you can use is what’s in the dam. Two lines draw more than the relay ' +
-    'brings, so watch the dam level as well as your gauges.',
+    'aren’t coupled: what you can use is what’s in the dam, so watch the dam level as well as ' +
+    'your gauges.',
   objectives: [
     {
       id: 'prime',
@@ -58,8 +58,8 @@ const LESSON: LessonDef = {
       when: {
         kind: 'all',
         of: [
-          { kind: 'flow', line: 'line-65', min: 50 },
-          { kind: 'flow', line: 'line-38', min: 50 },
+          { kind: 'flow', line: 'line-1', min: 50 },
+          { kind: 'flow', line: 'line-2', min: 50 },
         ],
       },
       after: ['prime'],
@@ -70,14 +70,14 @@ const LESSON: LessonDef = {
       when: {
         kind: 'all',
         of: [
-          { kind: 'branch', line: 'line-65' },
-          { kind: 'branch', line: 'line-38' },
+          { kind: 'branch', line: 'line-1' },
+          { kind: 'branch', line: 'line-2' },
         ],
       },
       holdS: 60,
       after: ['water'],
     },
-    shutdownObjective(['hold'], ['line-65', 'line-38']),
+    shutdownObjective(['hold'], ['line-1', 'line-2']),
   ],
   failures: [
     {
@@ -98,6 +98,7 @@ const LESSON: LessonDef = {
 export const OPEN_RELAY: Scenario = {
   id: 'open-relay',
   title: 'Open relay: draught from a portable dam the base pump fills',
+  setting: 'bush',
   requires: { tank: false, suction: true, primer: true, minDeliveries: LINES.length },
   support: [BASE],
   build(spec, support) {
@@ -198,11 +199,11 @@ export const OPEN_RELAY: Scenario = {
     { primer: true },
     { until: { kind: 'primed' }, maxS: 90 },
     { primer: false },
-    ...chargeLines(['line-65', 'line-38']),
+    ...chargeLines(['line-1', 'line-2']),
     { throttle: 0.6 },
-    { trim: { branch: 'line-38' } },
-    { gate: 'line-65' },
+    { trim: { branch: 'line-1' } },
+    { gate: 'line-2' },
     { until: { kind: 'objective', objective: 'hold' }, maxS: 180 },
-    ...shutDown(['line-65', 'line-38']),
+    ...shutDown(['line-1', 'line-2']),
   ],
 };

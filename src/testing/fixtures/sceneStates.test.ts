@@ -31,9 +31,11 @@ describe.each([...APPLIANCES, TEST_APPLIANCE].map((s) => [s.id, s] as const))(
       for (const d of deliveryLines(s)) if (d.state !== 'none') expect(d.state).toBe('charged');
     });
 
-    it('tank-empty leaves the water standing in every line: nothing flows', () => {
+    it('tank-empty leaves water standing in level lines; a downhill line drains: nothing flows', () => {
+      const s = sceneState(spec, 'tank-empty');
       for (const d of states('tank-empty')) {
-        expect(d.state).toBe('holding');
+        const downhill = (s.lines.find((l) => l.deliveryId === d.deliveryId)?.elevationM ?? 0) < 0;
+        expect(d.state).toBe(downhill ? 'dry' : 'holding');
         expect(d.branchFlowLpm).toBe(0);
       }
     });

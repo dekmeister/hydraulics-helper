@@ -9,7 +9,7 @@ describe.each([CAT1, TEST_APPLIANCE])('lesson view on $id', (spec) => {
     const { sim, lesson } = beginLesson('tank-attack', spec);
     const rows = objectiveRows(lesson, sim);
     expect(rows.map((r) => r.state)).toEqual(['active', 'active', 'waiting', 'waiting']);
-    expect(rows[0]?.metrics).toEqual([{ kind: 'flow', line: 'line-38', lpm: 0, min: 50 }]);
+    expect(rows[0]?.metrics).toEqual([{ kind: 'flow', line: 'line-1', lpm: 0, min: 50 }]);
     expect(rows[2]?.metrics).toEqual([]);
     expect(rows[2]?.holdS).toBe(30);
   });
@@ -28,16 +28,27 @@ describe.each([CAT1, TEST_APPLIANCE])('lesson view on $id', (spec) => {
     expect(both?.state).toBe('active');
     expect(both?.heldS).toBe(4);
     expect(both?.metrics.map((m) => m.kind)).toEqual(['branch', 'branch']);
-    expect(both?.metrics[0]).toMatchObject({ kind: 'branch', line: 'line-38', kpa: 0 });
+    expect(both?.metrics[0]).toMatchObject({ kind: 'branch', line: 'line-1', kpa: 0 });
   });
 
   it('reads a fraction-of-working-flow target in L/min', () => {
-    const { sim, lesson } = beginLesson('hydrant-supply', CAT1);
-    const done = { heldS: 0, doneAtS: 1 };
-    const later = { ...lesson, progress: { ...lesson.progress, objectives: { hydrant: done } } };
-    const flow = objectiveRows(later, sim)[1]?.metrics.find((m) => m.kind === 'flow');
-    // 0.635 of a 25 mm tip's ~1100 L/min at 700 kPa: the lesson's "700 L/min".
-    expect(flow?.kind === 'flow' ? flow.min : undefined).toBeCloseTo(700, -1);
+    const { sim, lesson } = beginLesson('hydrant-tank', CAT1);
+    const fraction = {
+      ...lesson,
+      def: {
+        ...lesson.def,
+        objectives: [
+          {
+            id: 'half',
+            text: 'Half flow.',
+            when: { kind: 'flow', line: 'line-1', ofWorking: true, min: 0.5 },
+          } as const,
+        ],
+      },
+    };
+    const flow = objectiveRows(fraction, sim)[0]?.metrics.find((m) => m.kind === 'flow');
+    // Half a 15 mm tip's ~281 L/min at 350 kPa.
+    expect(flow?.kind === 'flow' ? flow.min : undefined).toBeCloseTo(140, -1);
   });
 
   it('points the coach at the panel item for its target', () => {

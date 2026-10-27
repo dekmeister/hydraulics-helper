@@ -4,14 +4,14 @@ import { createSiteState } from '../engine';
 import { RELAY_MIN_RESIDUAL_KPA } from '../constants';
 import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
+import { attachLines, BUSH_LINE, twoLines, type PlannedLine } from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay } from './relayTrucks';
 import { supportSpec, type Scenario, type SupportRole } from './types';
 
-/** The attack pump's two lines: the tank-attack pair (Table 1 tips). */
+/** The attack pump's two bush lines. */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
-  { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
+  { id: 'line-1', ...BUSH_LINE },
+  { id: 'line-2', ...BUSH_LINE },
 ];
 
 /** C12 (L3813–3820): 20 m up, 4 lengths of 65 mm between the pumps. */
@@ -23,19 +23,19 @@ const DAM_LIFT_M = 2;
 const DAM_L = 200_000;
 
 /**
- * Throttle the base pump's operator holds: about 700 kPa at its delivery once the attack pump
- * draws both lines (the manual's relay delivery pressure). Fixed settings until support trucks
- * have AI. // PLACEHOLDER — needs Dek
+ * Throttle the base pump's operator holds: about 700 kPa at its delivery on a Cat 1 once the attack
+ * pump draws both bush lines (~300 L/min; the manual's relay delivery pressure). Fixed settings
+ * until support trucks have AI. // PLACEHOLDER — needs Dek
  */
-const BASE_THROTTLE = 0.8;
+const BASE_THROTTLE = 0.65;
 
 /**
  * Throttle the base pump's operator raises to once the attack pump has both lines on (the fill
  * sequence, L3850–3853: lower pressure until every pump has water, then working pressure): about
- * 800 kPa at its delivery with both lines drawn, enough for the climb and the extra flow.
+ * 800 kPa at its delivery on a Cat 1 with both lines drawn, enough for the climb and the extra flow.
  * // PLACEHOLDER — needs Dek
  */
-const BASE_THROTTLE_RAISED = 0.9;
+const BASE_THROTTLE_RAISED = 0.7;
 
 const BASE: SupportRole = {
   id: BASE_ID,
@@ -53,8 +53,8 @@ const LESSON: LessonDef = {
   brief:
     'A base pump at the farm dam pushes water 20 m up four lengths of 65 mm into your suction ' +
     'inlet. In a closed relay your compound shows the pressure left at the end of the relay hose: ' +
-    `keep it above ${String(RELAY_MIN_RESIDUAL_KPA)} kPa. Over-run the relay and the hose goes ` +
-    'soft; slam the inlet shut and the surge can burst a length.',
+    `keep it above ${String(RELAY_MIN_RESIDUAL_KPA)} kPa. Ease the inlet; never slam it shut on a ` +
+    'flowing relay.',
   objectives: [
     {
       id: 'relay',
@@ -69,12 +69,12 @@ const LESSON: LessonDef = {
       text: `Hold both branches at working pressure with at least ${String(RELAY_MIN_RESIDUAL_KPA)} kPa residual on the compound, for 30 s.`,
       when: {
         kind: 'all',
-        of: [{ kind: 'branch', line: 'line-65' }, { kind: 'branch', line: 'line-38' }, RESIDUAL],
+        of: [{ kind: 'branch', line: 'line-1' }, { kind: 'branch', line: 'line-2' }, RESIDUAL],
       },
       holdS: 30,
       after: ['relay'],
     },
-    shutdownObjective(['hold'], ['line-65', 'line-38']),
+    shutdownObjective(['hold'], ['line-1', 'line-2']),
   ],
   failures: [...PUMP_DAMAGE],
   events: [
@@ -84,8 +84,8 @@ const LESSON: LessonDef = {
         kind: 'all',
         of: [
           { kind: 'objective', objective: 'relay' },
-          { kind: 'flow', line: 'line-65', min: 50 },
-          { kind: 'flow', line: 'line-38', min: 50 },
+          { kind: 'flow', line: 'line-1', min: 50 },
+          { kind: 'flow', line: 'line-2', min: 50 },
         ],
       },
       effects: [{ kind: 'holdSettings', truck: BASE_ID, throttle: BASE_THROTTLE_RAISED }],
@@ -120,6 +120,7 @@ const LESSON: LessonDef = {
 export const CLOSED_RELAY: Scenario = {
   id: 'closed-relay',
   title: 'Closed relay: the base pump pushes water 20 m uphill to you',
+  setting: 'bush',
   requires: { tank: false, suction: true, minDeliveries: LINES.length },
   support: [BASE],
   build(spec, support) {
@@ -175,9 +176,10 @@ export const CLOSED_RELAY: Scenario = {
         { tS: 2, valves: { [a.deliveryId]: 1 } },
         { tS: 5, throttle: 0.4 },
         { tS: 40, valves: { [b.deliveryId]: 1 } },
-        { tS: 60, throttle: 0.6 },
+        // Bush lines want ~950 kPa: the relay's pressure at the inlet leaves little to add.
+        { tS: 60, throttle: 0.45 },
         { tS: 90, throttle: 1 },
-        { tS: 120, throttle: 0.6 },
+        { tS: 120, throttle: 0.45 },
       ],
       durationS: 180,
     };
@@ -187,11 +189,11 @@ export const CLOSED_RELAY: Scenario = {
     ...START_UP,
     { open: { inlet: 'suction' } },
     { until: { kind: 'objective', objective: 'relay' }, maxS: 30 },
-    ...chargeLines(['line-65', 'line-38']),
+    ...chargeLines(['line-1', 'line-2']),
     { throttle: 0.4 },
-    { trim: { branch: 'line-38' } },
-    { gate: 'line-65' },
+    { trim: { branch: 'line-1' } },
+    { gate: 'line-2' },
     { until: { kind: 'objective', objective: 'hold' }, maxS: 180 },
-    ...shutDown(['line-65', 'line-38']),
+    ...shutDown(['line-1', 'line-2']),
   ],
 };

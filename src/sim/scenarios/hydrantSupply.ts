@@ -4,22 +4,31 @@ import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind } from '../appliances/controls';
 import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
+import { attachLines, twoLines, VILLAGE_LINE, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
 /**
- * A 65 mm attack line with a 25 mm branch (700 kPa, ~1100 L/min, Table 1), then a 38 mm line: more
- * than the hydrant can give at full throttle, so it over-runs (Table 7). A truck with no 65 mm
- * outlet runs the light line; its targets are fractions of each line's working flow.
+ * Two village crews on 38 mm rubber (Table 1 15 mm tips, ~280 L/min each): ~560 L/min at working
+ * pressure, ~800 at full throttle, more than this village main gives, so pushing it over-runs the
+ * hydrant (Table 7).
  */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 25, light: LIGHT_LINE },
-  { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
+  { id: 'line-1', ...VILLAGE_LINE },
+  { id: 'line-2', ...VILLAGE_LINE },
 ];
 
 /** Hydrant figures follow C14 (L3127): 400 kPa static, 300 kPa residual at 1100 L/min. */
 export const HYDRANT_STATIC_KPA = 400;
 export const HYDRANT_MAIN_LOSS = (HYDRANT_STATIC_KPA - 300) / 1100 ** 2;
+
+/**
+ * A weaker village main for pumping direct (issue #10): 300 kPa static, 200 kPa residual at
+ * 600 L/min. Through two lengths of 65 mm the compound reads ~135 kPa with both crews at working
+ * pressure and zero at ~760 L/min, so full throttle on both lines over-runs it; on the C14 main two
+ * 38 mm lines never could. // PLACEHOLDER — needs Dek (a typical village main)
+ */
+const VILLAGE_STATIC_KPA = 300;
+const VILLAGE_MAIN_LOSS = (VILLAGE_STATIC_KPA - 200) / 600 ** 2;
 
 /**
  * Compound readings the lesson asks for, kPa: a healthy reserve on one line, and still positive with
@@ -29,41 +38,33 @@ export const HYDRANT_MAIN_LOSS = (HYDRANT_STATIC_KPA - 300) / 1100 ** 2;
 const RESERVE_KPA = 100;
 const MARGIN_KPA = 50;
 
-/**
- * Flows the lesson asks for, as fractions of each line's working flow: on a Cat 1, 700 L/min on the
- * 65 mm line (of ~1100), then 500 on it with 200 on the 38 mm (of ~280). Lesson tuning.
- */
-const RESERVE_OF_WORKING = 0.635;
-const BOTH_65_OF_WORKING = 0.45;
-const BOTH_38_OF_WORKING = 0.71;
-
 const LESSON: LessonDef = {
   ladder: 4,
   brief:
-    'Usually a hydrant fills the tank. Sometimes, as in village firefighting on a good main, it ' +
-    'goes straight into the pump instead: here it feeds your suction inlet through two lengths ' +
-    'of 65 mm. Pumping direct from a hydrant the compound ' +
+    'A house fire in the village. Usually a hydrant fills the tank; here it goes straight into ' +
+    'the pump instead, feeding your suction inlet through two lengths of 65 mm. Two crews run ' +
+    '38 mm rubber hose to the building. Pumping direct from a hydrant the compound ' +
     'gauge reads positive: the higher it sits, the more water the hydrant has left. Take as much ' +
     'as the crews need without over-running it.',
   objectives: [
     {
       id: 'hydrant',
-      text: 'Take water from the hydrant: open the suction inlet and charge the {line:line-65}.',
+      text: 'Take water from the hydrant: open the suction inlet and charge crew 1’s {line:line-1}.',
       when: {
         kind: 'all',
         of: [
           { kind: 'valve', valve: { inlet: 'suction' }, min: 0.9 },
-          { kind: 'flow', line: 'line-65', min: 50 },
+          { kind: 'flow', line: 'line-1', min: 50 },
         ],
       },
     },
     {
       id: 'reserve',
-      text: `Push the {line:line-65} to {flow:line-65:${String(RESERVE_OF_WORKING)}} or more with the compound above ${String(RESERVE_KPA)} kPa, for 20 s.`,
+      text: `Bring crew 1’s branch to working pressure (about {kpa:line-1}) and read the compound: hold it above ${String(RESERVE_KPA)} kPa for 20 s.`,
       when: {
         kind: 'all',
         of: [
-          { kind: 'flow', line: 'line-65', ofWorking: true, min: RESERVE_OF_WORKING },
+          { kind: 'branch', line: 'line-1' },
           { kind: 'gauge', gauge: 'compound', min: RESERVE_KPA },
         ],
       },
@@ -73,28 +74,28 @@ const LESSON: LessonDef = {
     {
       id: 'both',
       text:
-        'Charge the {line:line-38} as well without over-running the hydrant: both crews flowing ' +
-        `({flow:line-38:${String(BOTH_38_OF_WORKING)}} or more on it) and the compound above ` +
-        `${String(MARGIN_KPA)} kPa, for 20 s.`,
+        'Charge crew 2’s {line:line-2} as well without over-running the hydrant: both branches at ' +
+        `working pressure and the compound above ${String(MARGIN_KPA)} kPa, for 20 s.`,
       when: {
         kind: 'all',
         of: [
-          { kind: 'flow', line: 'line-38', ofWorking: true, min: BOTH_38_OF_WORKING },
-          { kind: 'flow', line: 'line-65', ofWorking: true, min: BOTH_65_OF_WORKING },
+          { kind: 'branch', line: 'line-1' },
+          { kind: 'branch', line: 'line-2' },
           { kind: 'gauge', gauge: 'compound', min: MARGIN_KPA },
         ],
       },
       holdS: 20,
       after: ['reserve'],
     },
-    shutdownObjective(['both'], ['line-65', 'line-38']),
+    shutdownObjective(['both'], ['line-1', 'line-2']),
   ],
   failures: [...PUMP_DAMAGE],
 };
 
 export const HYDRANT_SUPPLY: Scenario = {
   id: 'hydrant-supply',
-  title: 'Hydrant to suction: pumping direct from the main',
+  title: 'House fire: pumping direct from the hydrant',
+  setting: 'village',
   requires: { tank: false, suction: true, minDeliveries: LINES.length },
   build(spec) {
     const lines = attachLines(spec, LINES);
@@ -107,8 +108,8 @@ export const HYDRANT_SUPPLY: Scenario = {
           id: 'hydrant',
           kind: 'hydrant',
           label: 'Hydrant',
-          staticKpa: HYDRANT_STATIC_KPA,
-          mainLossKpaPerLpm2: HYDRANT_MAIN_LOSS,
+          staticKpa: VILLAGE_STATIC_KPA,
+          mainLossKpaPerLpm2: VILLAGE_MAIN_LOSS,
         },
       ],
       supplies: [
@@ -142,13 +143,14 @@ export const HYDRANT_SUPPLY: Scenario = {
   solution: [
     ...START_UP,
     { open: { inlet: 'suction' } },
-    ...chargeLines(['line-65']),
+    ...chargeLines(['line-1']),
     { throttle: 0.3 },
-    { trim: { compoundKpa: RESERVE_KPA + 50 } },
+    { trim: { branch: 'line-1' } },
     { until: { kind: 'objective', objective: 'reserve' }, maxS: 120 },
-    { ease: { line: 'line-38' }, to: 1, overS: 10 },
-    { trim: { compoundKpa: MARGIN_KPA + 40 } },
+    { ease: { line: 'line-2' }, to: 1, overS: 10 },
+    { trim: { branch: 'line-1' } },
+    { gate: 'line-2' },
     { until: { kind: 'objective', objective: 'both' }, maxS: 120 },
-    ...shutDown(['line-65', 'line-38']),
+    ...shutDown(['line-1', 'line-2']),
   ],
 };

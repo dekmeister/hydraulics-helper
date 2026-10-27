@@ -73,7 +73,7 @@ describe.each(LADDER.map((s) => [s.id, s] as const))('%s', (_id, scenario) => {
   });
 });
 
-// The first-line coach says "700 kPa at the pump is about 350 at the branch": hose and branch
+// The first-line coach says "950 kPa at the pump is about 250 at the branch": hose and branch
 // physics, the same on any pump. Hold it to that on every appliance that plays it.
 describe('first-line coach figures', () => {
   const scenario = SCENARIOS.find((s) => s.id === 'first-line');
@@ -81,7 +81,7 @@ describe('first-line coach figures', () => {
     POOL.filter((s) => scenario !== undefined && supportsLesson(scenario, s)).map(
       (s) => [s.id, s] as const,
     ),
-  )('on %s the branch is at working pressure with ~700 kPa at the pump', (_id, spec) => {
+  )('on %s the branch is at working pressure with ~950 kPa at the pump', (_id, spec) => {
     if (scenario === undefined) throw new Error('no first-line');
     const loaded = loadScenario(scenario, spec);
     const lesson = loaded.lesson;
@@ -91,8 +91,8 @@ describe('first-line coach figures', () => {
     const steps = solution.slice(0, solution.findIndex((step) => 'until' in step) + 1);
     const end = operate(lesson.def, { state: loaded.run.state, progress: lesson.progress }, steps);
     const truck = end.state.trucks[0];
-    expect(truck?.readings.dischargeKpa).toBeGreaterThan(630); // 700 ± 10 %
-    expect(truck?.readings.dischargeKpa).toBeLessThan(770);
-    expect(truck?.readings.branchKpa['line-38']).toBeGreaterThan(315);
+    expect(truck?.readings.dischargeKpa).toBeGreaterThan(855); // 950 ± 10 %
+    expect(truck?.readings.dischargeKpa).toBeLessThan(1045);
+    expect(truck?.readings.branchKpa['line-1']).toBeGreaterThan(225);
   });
 });

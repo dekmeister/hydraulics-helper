@@ -10,31 +10,24 @@ export interface LineKit {
   tipMm: number;
 }
 
-/**
- * A line plan before it's attached to a delivery. `light`: what the crew runs instead from a truck
- * whose free outlets are all smaller than `hose` (a light tanker has no 65 mm outlet), so one lesson
- * plays on every appliance; without it the hose goes on the closest outlet through an adaptor.
- */
+/** A line plan before it's attached to a delivery; `elevationM` is the branch above the pump. */
 export interface PlannedLine extends LineKit {
   id: string;
-  light?: LineKit;
+  elevationM?: number;
 }
 
 /**
- * The crew's light line in place of a 65 mm one: two lengths of 25 mm with a 12 mm branch (Table 1:
- * 250 kPa, ~150 L/min; 25 mm loses ~250 kPa a length at that flow, L928), so it wants about the
- * same pump pressure as the 38 mm crew line. // PLACEHOLDER — needs Dek (what a Cat 7 crew runs)
+ * A bush crew's line (issue #10): one length of 25 mm canvas on a 38→25 adaptor with a 12 mm
+ * branch (Table 1: 250 kPa, ~150 L/min), about 930 kPa at the pump. One length because percolating
+ * hose loses ~680 kPa a length at that flow (`25U`). // PLACEHOLDER — needs Dek (the usual lay)
  */
-export const LIGHT_LINE: LineKit = { hose: '25L', lengths: 2, tipMm: 12 };
+export const BUSH_LINE: LineKit = { hose: '25U', lengths: 1, tipMm: 12 };
 
-/** The kit to lay for `plan` from one of `free`: its light kit when every free outlet is smaller. */
-export function kitFor(
-  plan: LineKit & { light?: LineKit },
-  free: readonly DeliverySpec[],
-): LineKit {
-  const largestMm = Math.max(0, ...free.map((d) => d.sizeMm));
-  return plan.light !== undefined && largestMm < hoseType(plan.hose).sizeMm ? plan.light : plan;
-}
+/**
+ * A village crew's line (issue #10): three lengths of 38 mm rubber hose, taken as lined, with a
+ * 15 mm branch (Table 1: 350 kPa, ~280 L/min), about 700 kPa at the pump.
+ */
+export const VILLAGE_LINE: LineKit = { hose: '38L', lengths: 3, tipMm: 15 };
 
 /**
  * The free delivery closest in size to `hose` (adaptors assumed); takes it out of `free`. Throws
@@ -53,8 +46,8 @@ export function takeDelivery(free: DeliverySpec[], hose: string): DeliverySpec {
 }
 
 /**
- * Attach each planned line (or its light kit, see `PlannedLine`) to the unused delivery closest in
- * size to its hose (adaptors assumed), on truck `truckId`.
+ * Attach each planned line to the unused delivery closest in size to its hose (adaptors assumed),
+ * on truck `truckId`.
  */
 export function attachLines(
   spec: ApplianceSpec,
@@ -63,18 +56,17 @@ export function attachLines(
 ): HoseLine[] {
   const free: DeliverySpec[] = [...spec.deliveries];
   return plans.map((plan) => {
-    const kit = kitFor(plan, free);
-    const best = takeDelivery(free, kit.hose);
+    const best = takeDelivery(free, plan.hose);
     return {
       id: plan.id,
       truckId,
       deliveryId: best.id,
-      segments: Array.from({ length: kit.lengths }, () => ({
-        hose: kit.hose,
+      segments: Array.from({ length: plan.lengths }, () => ({
+        hose: plan.hose,
         lengthM: STANDARD_LENGTH_M,
       })),
-      elevationM: 0,
-      branch: { tipMm: kit.tipMm },
+      elevationM: plan.elevationM ?? 0,
+      branch: { tipMm: plan.tipMm },
     };
   });
 }

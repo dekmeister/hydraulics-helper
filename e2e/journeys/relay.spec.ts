@@ -28,8 +28,12 @@ import {
   openInlet,
   overRuns,
   prime,
+  drainsPortableDam,
   relayBurstsOnSlam,
 } from '../sources';
+
+/** Attack throttle that holds the heavy lines with a good residual off the base pump. */
+const HOLD_THROTTLE = 0.2;
 
 const truckButton = (page: Page, label: string) =>
   page.getByRole('group', { name: 'Truck you operate' }).getByRole('button', { name: label });
@@ -37,7 +41,8 @@ const truckButton = (page: Page, label: string) =>
 for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed-relay'), s))) {
   test.describe(`closed relay on ${spec.id}`, () => {
     test('hold the residual on the relay, over-run it, and recover', async ({ page }, info) => {
-      await load(page, 'closed-relay', spec.id);
+      // Heavy lines: the scenario's bush lines can't over-run the relay (issue #10).
+      await load(page, 'closed-relay', spec.id, undefined, { heavy: true });
       const layout = layoutFor(spec.id);
       const lines = (await getState(page)).lines.filter((l) => l.truckId === 'attack');
       // The base pump is already pumping: the relay is charged up to the shut inlet.
@@ -54,14 +59,14 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
       }
       // Charge the attack lines at idle: empty hoses would out-draw the relay.
       for (const line of lines) await stepUntilCharged(page, line.deliveryId);
-      await dragThrottle(page, 0.6);
+      await dragThrottle(page, HOLD_THROTTLE);
       await stepAndSettle(page, 150);
       expect(await compoundShown(page, spec)).toBeGreaterThan(RELAY_MIN_RESIDUAL_KPA);
       await expect(relayLay(page, 'relay')).toHaveAttribute('data-state', 'charged');
       await expectStatus(page, 'No warnings');
       await expect(page.locator('[data-relay="relay"]')).toContainText('kPa at the inlet');
 
-      if (!overRuns('closed-relay', spec)) {
+      if (!overRuns('closed-relay', spec, true)) {
         test.info().annotations.push({
           type: 'physics',
           description: `${spec.id}'s lines can't out-draw the relay: no over-run to recover from`,
@@ -79,7 +84,7 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
       await expect(relayLay(page, 'relay')).toHaveAttribute('data-state', 'soft');
       await expectStatus(page, /Relay residual low.*100 kPa/);
 
-      await dragThrottle(page, 0.6);
+      await dragThrottle(page, HOLD_THROTTLE);
       await stepAndSettle(page, 100);
       expect(await compoundShown(page, spec)).toBeGreaterThan(RELAY_MIN_RESIDUAL_KPA);
       await expect(relayLay(page, 'relay')).toHaveAttribute('data-state', 'charged');
@@ -87,8 +92,12 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
 
     test('slamming the relay inlet shut bursts the relay hose', async ({ page }, info) => {
       // The surge scales with the flow cut off: a light tanker's relay doesn't carry enough.
-      test.skip(!relayBurstsOnSlam(spec), `${spec.id}'s relay flow is too small to burst a length`);
-      await load(page, 'closed-relay', spec.id);
+      test.skip(
+        !relayBurstsOnSlam(spec, true),
+        `${spec.id}'s relay flow is too small to burst a length`,
+      );
+      // Heavy lines: the scenario's bush lines don't carry enough to burst it (issue #10).
+      await load(page, 'closed-relay', spec.id, undefined, { heavy: true });
       const layout = layoutFor(spec.id);
       const lines = (await getState(page)).lines.filter((l) => l.truckId === 'attack');
       await openInlet(page, spec, 'suction', info);
@@ -162,7 +171,8 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('open-r
   test(`open relay: draught from the portable dam the base pump fills, on ${spec.id}`, async ({
     page,
   }, info) => {
-    await load(page, 'open-relay', spec.id);
+    // Heavy lines: the scenario's bush lines can't out-draw the relay (issue #10).
+    await load(page, 'open-relay', spec.id, undefined, { heavy: true });
     const layout = layoutFor(spec.id);
     const lines = (await getState(page)).lines.filter((l) => l.truckId === 'attack');
     const damVolume = async () => {
@@ -179,6 +189,13 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('open-r
     expect(await damVolume()).toBeGreaterThan(filled);
     await expect(relayLay(page, 'relay')).toHaveAttribute('data-state', 'charged');
 
+    if (!drainsPortableDam(spec, true)) {
+      test.info().annotations.push({
+        type: 'physics',
+        description: `${spec.id}'s lines can't out-draw the relay: the dam doesn't fall`,
+      });
+      return;
+    }
     // Both lines flat out draw more than the relay brings: the level falls.
     for (const line of lines) {
       await dragValve(

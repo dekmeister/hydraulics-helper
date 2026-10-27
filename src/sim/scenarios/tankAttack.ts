@@ -3,54 +3,55 @@ import { createInitialState } from '../engine';
 import { inletOfKind } from '../appliances/controls';
 import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
+import { attachLines, BUSH_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
+/** Crew 2's branch below the pump, m. // PLACEHOLDER — needs Dek (a typical bush slope) */
+const DOWNHILL_M = -10;
+
 /**
- * The 38 mm line first, then a 65 mm line: the friction contrast and the pump-droop sag when the
- * second line opens. Tips from Table 1: 15 mm (350 kPa, ~280 L/min) and 20 mm (500 kPa, ~600 L/min).
- * A truck with no 65 mm outlet gets the light line instead (`LIGHT_LINE`): the sag and gating stay.
+ * Two bush lines, the second crew working downhill: it wants ~100 kPa less at the pump, so the
+ * pump is set for the first and the second gated back, and the pump droops when it opens.
  */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
+  { id: 'line-1', ...BUSH_LINE },
+  { id: 'line-2', ...BUSH_LINE, elevationM: DOWNHILL_M },
 ];
 
 const LESSON: LessonDef = {
   ladder: 2,
   brief:
-    'Two crews on the tank: a {line:line-38} with a {tip:line-38} branch and a {line:line-65} ' +
-    'with a {tip:line-65} branch. One pump pressure serves both, but they need different ' +
-    'pressures at the pump. Set the pump for the harder line and gate the other back until both ' +
-    'branches are right.',
+    'Two bush crews on the tank, each on a {line:line-1} with a {tip:line-1} branch. Crew 2 ' +
+    'is working 10 m down the slope, so its branch gains pressure from the fall. One pump ' +
+    'pressure serves both: set the pump for crew 1 and gate crew 2 back until both branches ' +
+    'are right.',
   objectives: [
     {
       id: 'first',
-      text: 'Charge the {line:line-38}.',
-      when: { kind: 'flow', line: 'line-38', min: 50 },
+      text: 'Charge crew 1’s {line:line-1}.',
+      when: { kind: 'flow', line: 'line-1', min: 50 },
     },
     {
       id: 'second',
-      text: 'Charge the {line:line-65} as well.',
-      when: { kind: 'flow', line: 'line-65', min: 50 },
+      text: 'Charge crew 2’s {line:line-2} as well.',
+      when: { kind: 'flow', line: 'line-2', min: 50 },
     },
     {
       id: 'both',
       text:
-        'Hold both branches at working pressure together for 30 s: about {kpa:line-38} on the ' +
-        '{tip:line-38} branch, {kpa:line-65} on the {tip:line-65}. Gate back a delivery that runs ' +
-        'high.',
+        'Hold both branches at working pressure together for 30 s: about {kpa:line-1} on each. ' +
+        'Gate back the delivery that runs high.',
       when: {
         kind: 'all',
         of: [
-          { kind: 'branch', line: 'line-38' },
-          { kind: 'branch', line: 'line-65' },
+          { kind: 'branch', line: 'line-1' },
+          { kind: 'branch', line: 'line-2' },
         ],
       },
       holdS: 30,
       after: ['first', 'second'],
     },
-    shutdownObjective(['both'], ['line-38', 'line-65']),
+    shutdownObjective(['both'], ['line-1', 'line-2']),
   ],
   failures: [TANK_DRY, ...PUMP_DAMAGE],
 };
@@ -58,6 +59,7 @@ const LESSON: LessonDef = {
 export const TANK_ATTACK: Scenario = {
   id: 'tank-attack',
   title: 'Tank attack: two lines on the tank',
+  setting: 'bush',
   requires: { tank: true, minDeliveries: LINES.length },
   build(spec) {
     const lines = attachLines(spec, LINES);
@@ -69,7 +71,7 @@ export const TANK_ATTACK: Scenario = {
         ...startEngineSteps(spec),
         { tS: 0, valves: { [tankInlet]: 1 } },
         { tS: 2, valves: { [a.deliveryId]: 1 } },
-        { tS: 5, throttle: 0.6 },
+        { tS: 5, throttle: 0.75 },
         { tS: 60, valves: { [b.deliveryId]: 1 } },
         { tS: 90, throttle: 0.8 },
       ],
@@ -80,12 +82,12 @@ export const TANK_ATTACK: Scenario = {
   solution: [
     ...START_UP,
     { open: { inlet: 'tank' } },
-    { open: { line: 'line-38' } },
-    { open: { line: 'line-65' } },
+    { open: { line: 'line-1' } },
+    { open: { line: 'line-2' } },
     { throttle: 0.7 },
-    { trim: { branch: 'line-38' } },
-    { gate: 'line-65' },
+    { trim: { branch: 'line-1' } },
+    { gate: 'line-2' },
     { until: { kind: 'objective', objective: 'both' }, maxS: 150 },
-    ...shutDown(['line-38', 'line-65']),
+    ...shutDown(['line-1', 'line-2']),
   ],
 };

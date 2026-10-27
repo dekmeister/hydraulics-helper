@@ -30,6 +30,22 @@ describe.each(SCENARIOS.map((s) => [s.id, s] as const))('scenario %s', (_id, sce
     },
   );
 
+  // Issue #10: crews run 25 mm canvas in the bush and 38 mm rubber in the village; 65 mm on a
+  // delivery isn't standard for attack (it stays for hydrant layflat and suction).
+  it.each(specs.map((spec) => [spec.id, spec] as const))(
+    'lays the setting’s attack hose, laid lines and event lines alike, on %s',
+    (_specId, spec) => {
+      const laid = scenario.build(spec).state.lines.flatMap((l) => l.segments.map((s) => s.hose));
+      const events = (scenario.lesson?.events ?? []).flatMap((e) =>
+        (e.effects ?? []).flatMap((x) => (x.kind === 'layLine' ? [x.line.hose] : [])),
+      );
+      const allowed = { bush: ['25U'], village: ['38L'], interface: ['25U', '38L'] }[
+        scenario.setting
+      ];
+      for (const hose of [...laid, ...events]) expect(allowed).toContain(hose);
+    },
+  );
+
   // Issue #19: the player starts every job from cold; support trucks are already running.
   it.each(specs.map((spec) => [spec.id, spec] as const))(
     'starts the player’s engine cold and its script starts it, on %s',

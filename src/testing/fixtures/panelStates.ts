@@ -165,13 +165,17 @@ export function panelState(spec: ApplianceSpec, id: PanelStateId): SimState {
 export type SceneStateId =
   'all-charged' | 'one-line-off' | 'tank-low' | 'tank-empty' | 'line-filling';
 
+/** How long the empty-tank scene runs on: a line laid downhill drains out its branch by then, s. */
+const DRAIN_S = 30;
+
 /** Most the 'line-filling' fixture runs waiting for the front to pass half way, s. */
 const FILLING_MAX_S = 60;
 
 /**
  * Sim state for a generated scene fixture: every tank-attack line open at the throttle that holds
- * the working discharge, then the first line shut ('one-line-off') or the tank run low or empty.
- * 'line-filling': only the first line opened, dry, at that throttle until it is half full.
+ * the working discharge, then the first line shut ('one-line-off') or the tank run low or empty
+ * ('tank-empty' runs on `DRAIN_S`, so a downhill line has drained). 'line-filling': only the first
+ * line opened, dry, at that throttle until it is half full.
  */
 export function sceneState(spec: ApplianceSpec, id: SceneStateId): SimState {
   const initial = TANK_ATTACK.build(spec).state;
@@ -189,7 +193,7 @@ export function sceneState(spec: ApplianceSpec, id: SceneStateId): SimState {
     case 'tank-low':
       return settle(chargedFor(withTankL(initial, 0.2 * capacityL), inputs), inputs);
     case 'tank-empty':
-      return settle(chargedFor(withTankL(initial, 0), inputs), inputs);
+      return settle(settle(chargedFor(withTankL(initial, 0), inputs), inputs), inputs, DRAIN_S);
     case 'line-filling': {
       const line = initial.lines[0];
       if (line === undefined) throw new Error(`tank attack laid no line on ${spec.id}`);

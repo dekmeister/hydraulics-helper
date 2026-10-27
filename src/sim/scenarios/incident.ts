@@ -4,22 +4,27 @@ import { createInitialState } from '../engine';
 import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
 import type { LessonDef, LineDef } from '../lesson/types';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
-import { attachLines, LIGHT_LINE, type PlannedLine } from './lay';
+import { attachLines, BUSH_LINE, VILLAGE_LINE, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
-/** Crew 1: the first-line lay (Table 1 15 mm tip). */
-const FIRST: PlannedLine = { id: 'line-1', hose: '38L', lengths: 3, tipMm: 15 };
-/** Crew 2 runs out 65 mm with a 20 mm tip once the fire spreads (the light line on a light truck). */
-const SECOND: LineDef = { id: 'line-2', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE };
+/**
+ * Crew 1 protects the houses on 38 mm rubber; moved up the slope with a fourth length it wants
+ * ~930 kPa at the pump. (25 mm canvas couldn't take the extra length: two lengths lose ~1400 kPa.)
+ */
+const FIRST: PlannedLine = { id: 'line-1', ...VILLAGE_LINE };
+/** Crew 2 runs 25 mm canvas onto spot fires in the yards once the fire spreads. */
+const SECOND: LineDef = { id: 'line-2', ...BUSH_LINE };
 /** Crew 1 moves up the slope with another length. // PLACEHOLDER — needs Dek (a typical advance) */
 const UPHILL_M = 10;
 
 const LESSON: LessonDef = {
   ladder: 8,
   brief:
-    'A full incident on the tank. Crew 1 starts on a 38 mm line, then moves up the slope; a ' +
-    'second crew runs out {hose:line-2}; and when a hydrant is connected you open it into the tank ' +
-    'before the tank runs dry. Listen to the radio and keep both crews in water.',
+    'A bush fire reaching the edge of town. Crew 1 protects the houses on a {line:line-1}, then ' +
+    'moves up the slope behind them; a second crew runs {hose:line-2} canvas onto spot fires in ' +
+    'the yards; and ' +
+    'when the street hydrant is connected you open it into the tank before the tank runs dry. ' +
+    'Listen to the radio and keep both crews in water.',
   objectives: [
     {
       id: 'attack',
@@ -131,7 +136,8 @@ const LESSON: LessonDef = {
 /** Ladder step 8: a full incident driven by events (ARCHITECTURE §5). */
 export const INCIDENT: Scenario = {
   id: 'incident',
-  title: 'Full incident: crews move, a line goes in, a hydrant tops up the tank',
+  title: 'Interface fire: crews move, a line goes in, a hydrant tops up the tank',
+  setting: 'interface',
   requires: { tank: true, tankFill: true, minDeliveries: 2 },
   build(spec) {
     const lines = attachLines(spec, [FIRST]);

@@ -3,9 +3,10 @@
 import { inletOfKind, primerSwitchIds } from '../../sim/appliances/controls';
 import { switchTruck } from '../../sim/engine';
 import { getScenario } from '../../sim/scenarios';
+import { withHeavyLines } from '../../sim/scenarios/heavyLines';
 import type { SupportSpecs } from '../../sim/scenarios/types';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
-import { chargedFor, settle } from './panelStates';
+import { chargedFor, settle, throttleForKpa } from './panelStates';
 import { OVERFLOW_FIXTURE_S } from './sourceStates';
 
 export type RelayStateId =
@@ -21,8 +22,11 @@ export const RELAY_STATE_SCENARIO: Readonly<Record<RelayStateId, string>> = {
   'base-panel': 'closed-relay',
 };
 
-/** Attack pump throttle while working the relay: both lines at a comfortable residual. */
+/** Attack pump throttle on the heavy lines and the open relay: a comfortable residual. */
 const WORKING_THROTTLE = 0.6;
+
+/** Attack pump discharge the closed relay's bush lines are trimmed to: ~250 kPa at each branch. */
+const BUSH_WORKING_KPA = 950;
 
 const inputs = (throttle: number, open: readonly ControlId[], on: readonly ControlId[] = []) =>
   ({
@@ -32,9 +36,10 @@ const inputs = (throttle: number, open: readonly ControlId[], on: readonly Contr
   }) satisfies PlayerInputs;
 
 /**
- * Sim state for a generated relay fixture. 'closed-working': the relay inlet and both lines open
- * at the working throttle. 'closed-over-run': the same at full throttle. 'burst': working, then the
- * relay inlet slammed shut for a tick (a length bursts) and opened again. 'open-dam': primed on the
+ * Sim state for a generated relay fixture. 'closed-working': the relay inlet and both bush lines
+ * open, trimmed to `BUSH_WORKING_KPA`. 'closed-over-run': heavy lines (`withHeavyLines`) at full
+ * throttle. 'burst': heavy lines working, then the relay inlet slammed shut for a tick (a length
+ * bursts) and opened again. 'open-dam': primed on the
  * portable dam, both lines open at the working throttle. 'dam-overflowing': the dam full, the attack
  * pump idle with its lines shut, the relay left filling it for `OVERFLOW_FIXTURE_S`. 'base-panel':
  * closed-working, then the player switches to the base pump.
@@ -50,14 +55,26 @@ export function relayState(
   const working = inputs(WORKING_THROTTLE, [inlet, ...lines]);
   // Every fixture here works the attack lines: they start charged (the fill is the scene's fixture).
   const initial = chargedFor(built, working);
+  // The scenario's bush lines can't over-run or burst the relay (issue #10): those use heavy lines.
+  const heavy = withHeavyLines(built);
+  const heavyLines = heavy.lines.map((l) => l.deliveryId);
+  const trimmedInputs = () => {
+    const at = (x: number) => inputs(x, [inlet, ...lines]);
+    return at(throttleForKpa(built, at, BUSH_WORKING_KPA));
+  };
+  const trimmed = (open: PlayerInputs) => settle(chargedFor(built, open), open, 15);
   switch (id) {
     case 'closed-working':
-      return settle(initial, working, 15);
-    case 'closed-over-run':
-      return settle(initial, inputs(1, [inlet, ...lines]), 15);
+      return trimmed(trimmedInputs());
+    case 'closed-over-run': {
+      const full = inputs(1, [inlet, ...heavyLines]);
+      return settle(chargedFor(heavy, full), full, 15);
+    }
     case 'burst': {
-      const slammed = settle(settle(initial, working, 15), inputs(WORKING_THROTTLE, lines), 0.1);
-      return settle(slammed, working, 3);
+      const flowing = inputs(WORKING_THROTTLE, [inlet, ...heavyLines]);
+      const s = settle(chargedFor(heavy, flowing), flowing, 15);
+      const slammed = settle(s, inputs(WORKING_THROTTLE, heavyLines), 0.1);
+      return settle(slammed, flowing, 3);
     }
     case 'open-dam': {
       let s = initial;
@@ -73,8 +90,8 @@ export function relayState(
       return settle({ ...initial, sources: full }, inputs(0, [inlet]), OVERFLOW_FIXTURE_S);
     }
     case 'base-panel': {
-      const s = settle(initial, working, 15);
-      return switchTruck(s, 'base', working);
+      const open = trimmedInputs();
+      return switchTruck(trimmed(open), 'base', open);
     }
   }
 }

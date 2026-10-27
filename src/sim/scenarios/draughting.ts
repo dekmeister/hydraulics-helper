@@ -3,13 +3,13 @@ import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind, primerControlId } from '../appliances/controls';
 import { PUMP_DAMAGE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
-import { attachLines, LIGHT_LINE, twoLines, type PlannedLine } from './lay';
+import { attachLines, BUSH_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario, ScriptStep } from './types';
 
-/** The tank-attack pair (38 mm then 65 mm or the light line, Table 1 tips), now fed from the dam. */
+/** Two bush lines, now fed from the dam. */
 const LINES: readonly PlannedLine[] = [
-  { id: 'line-65', hose: '65L', lengths: 3, tipMm: 20, light: LIGHT_LINE },
-  { id: 'line-38', hose: '38L', lengths: 3, tipMm: 15 },
+  { id: 'line-1', ...BUSH_LINE },
+  { id: 'line-2', ...BUSH_LINE },
 ];
 
 /** 4 m of lift: the manual's worked example (C11, −40 kPa on the compound). */
@@ -21,8 +21,8 @@ const LESSON: LessonDef = {
   ladder: 5,
   brief:
     'No hydrant here: you draught from a farm dam 4 m below the pump through hard suction. Prime ' +
-    'with the deliveries shut, then supply two lines. The compound now reads vacuum, and the lift ' +
-    'limits how much water you can draw: push too hard and the pump cavitates.',
+    'with the deliveries shut, then supply two lines. The compound now reads vacuum: the lift ' +
+    'and the suction hose cost you pressure before the pump adds any.',
   objectives: [
     {
       id: 'prime',
@@ -35,8 +35,8 @@ const LESSON: LessonDef = {
       when: {
         kind: 'all',
         of: [
-          { kind: 'flow', line: 'line-65', min: 50 },
-          { kind: 'flow', line: 'line-38', min: 50 },
+          { kind: 'flow', line: 'line-1', min: 50 },
+          { kind: 'flow', line: 'line-2', min: 50 },
         ],
       },
       after: ['prime'],
@@ -47,22 +47,23 @@ const LESSON: LessonDef = {
       when: {
         kind: 'all',
         of: [
-          { kind: 'branch', line: 'line-65' },
-          { kind: 'branch', line: 'line-38' },
+          { kind: 'branch', line: 'line-1' },
+          { kind: 'branch', line: 'line-2' },
           { kind: 'not', of: { kind: 'cavitating' } },
         ],
       },
       holdS: 30,
       after: ['water'],
     },
-    shutdownObjective(['hold'], ['line-65', 'line-38']),
+    shutdownObjective(['hold'], ['line-1', 'line-2']),
   ],
   failures: [...PUMP_DAMAGE],
 };
 
 export const DRAUGHTING: Scenario = {
   id: 'draughting',
-  title: 'Draughting from the dam: prime, deliver, don’t cavitate',
+  title: 'Draughting from the dam: prime, deliver, read the lift',
+  setting: 'bush',
   requires: { tank: false, suction: true, primer: true, minDeliveries: LINES.length },
   build(spec) {
     const lines = attachLines(spec, LINES);
@@ -118,11 +119,11 @@ export const DRAUGHTING: Scenario = {
     { primer: true },
     { until: { kind: 'primed' }, maxS: 90 },
     { primer: false },
-    ...chargeLines(['line-65', 'line-38']),
+    ...chargeLines(['line-1', 'line-2']),
     { throttle: 0.6 },
-    { trim: { branch: 'line-38' } },
-    { gate: 'line-65' },
+    { trim: { branch: 'line-1' } },
+    { gate: 'line-2' },
     { until: { kind: 'objective', objective: 'hold' }, maxS: 180 },
-    ...shutDown(['line-65', 'line-38']),
+    ...shutDown(['line-1', 'line-2']),
   ],
 };

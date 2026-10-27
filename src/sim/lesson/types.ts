@@ -99,13 +99,9 @@ export interface Failure {
   when: Condition;
 }
 
-/**
- * A line the crew lays during the scenario, on the free delivery closest in size; `light` is what
- * they run instead when every free outlet is smaller than `hose` (as `PlannedLine`).
- */
+/** A line the crew lays during the scenario, on the free delivery closest in size. */
 export interface LineDef extends LineKit {
   id: string;
-  light?: LineKit;
   elevationM?: number;
   truck?: string;
 }

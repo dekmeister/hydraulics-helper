@@ -130,14 +130,30 @@ const SCENE_CAPTIONS = {
     'amber fill and an amber triangle; legend "Tank water" status amber with a triangle, ' +
     'ending "· low".',
   'tank-empty':
-    'As all-charged, but the tank is empty: every hose still holds its water (ink casing, blue ' +
-    'core, no white streaks), no sprays, the tank bar is dark with a red outline; legend says ' +
-    '"Holding water" on every line and the tank status is red with a diamond, "0 L of … · empty".',
+    'As all-charged, but the tank is empty: a hose on level ground still holds its water (ink ' +
+    'casing, blue core, no white streaks), one laid downhill has drained out its branch and is ' +
+    'drawn dry; no sprays, the tank bar is dark with a red outline; legend says "Holding water" ' +
+    'on a level line and the tank status is red with a diamond, "0 L of … · empty".',
   'line-filling':
     'Tank attack, only the first line’s delivery open, charging from dry: that hose is ink casing ' +
     'and blue core with white streaks from its coupling a little over half way along, ending in ' +
     'a rounded front; beyond the front it is thin dashed canvas to a crew with no spray. Other ' +
     'lines dashed canvas. Legend: first line "Filling · 5N %", others "Laid, dry".',
+  village:
+    'Village house fire (issue #10). No contours, dam or track: a grey sealed street with pale ' +
+    'kerbs and a dashed centre line runs where the bush track would, the truck parked on its ' +
+    'verge and the red hydrant beside it with green layflat to hydrant to tank. Houses in pale ' +
+    'green fenced yards (grey iron and terracotta hip roofs, a small tree each) stand clear of ' +
+    'the truck and the hoses. Up and right, a larger grey roof half burnt through (dark char), ' +
+    'red and amber flames, a fire-light glow and smoke drifting off the top-right corner; both ' +
+    '38 mm lines charged, their crews spraying towards it.',
+  interface:
+    'Urban interface (issue #10), the incident with every event fired. Up and right of a dotted ' +
+    'bush edge: tinted slope with contours, scrub, ash, the fire front and its glow and smoke. ' +
+    'Below and left: the sealed street through the truck’s verge, the hydrant with layflat to ' +
+    'hydrant to tank, and four houses in fenced yards (no dam, no spill pool: the tank is filling). Crew 1’s 38 mm line runs four ' +
+    'lengths up into the bush edge; crew 2’s short 25 mm canvas line works spot fires near the truck; both ' +
+    'charged and spraying.',
 } as const;
 
 export type SceneState = keyof typeof SCENE_CAPTIONS;

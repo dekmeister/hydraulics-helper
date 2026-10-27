@@ -3,7 +3,7 @@
 import { sanitiseInputs } from '../appliances/controls';
 import { STANDARD_LENGTH_M } from '../constants';
 import { hoseType } from '../hose';
-import { kitFor, takeDelivery } from '../scenarios/lay';
+import { takeDelivery } from '../scenarios/lay';
 import { validateSite } from '../site';
 import type { HoseLine, SimState } from '../types';
 import { truckOf } from './refs';
@@ -26,19 +26,17 @@ function layLine(state: SimState, playerTruckId: string, e: Extract<Effect, { ki
   );
   const free = truck.spec.deliveries.filter((d) => !taken.has(d.id));
   if (free.length === 0) throw new Error(`layLine '${line.id}': no free delivery on '${truck.id}'`);
-  const kit = kitFor(line, free);
-  hoseType(kit.hose);
-  const delivery = takeDelivery(free, kit.hose);
+  const delivery = takeDelivery(free, line.hose);
   const lay: HoseLine = {
     id: line.id,
     truckId: truck.id,
     deliveryId: delivery.id,
-    segments: Array.from({ length: kit.lengths }, () => ({
-      hose: kit.hose,
+    segments: Array.from({ length: line.lengths }, () => ({
+      hose: line.hose,
       lengthM: STANDARD_LENGTH_M,
     })),
     elevationM: line.elevationM ?? 0,
-    branch: { tipMm: kit.tipMm },
+    branch: { tipMm: line.tipMm },
   };
   return check({ ...state, lines: [...state.lines, lay] });
 }

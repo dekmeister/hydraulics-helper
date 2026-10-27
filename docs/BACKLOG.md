@@ -15,16 +15,16 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 
 * Reactive firefighters (lose water → animate + radio call), incident escalation.
 * Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event. Goes with **pressurised vs flowing** (CALIBRATION row 13): `LineState` `charged` is "delivery flows"; once a branch can be shut, split it so the hose follows pressure (`DeliveryLine.branchKpa`) and the spray follows flow.
-* Unlined hose in scenarios (the catalogue already has it); hose carried per appliance.
+* Hose carried per appliance (scenarios lay their setting's kit: `BUSH_LINE`, `VILLAGE_LINE` in `scenarios/lay.ts`, issue #10); unlined hose beyond the bush's 25 mm canvas.
 * Replays and shareable debriefs.
 * Multiplayer relay (two humans, one relay): state is serialisable for this, but it's far off.
 * **Instructor-authored scenarios:** the lesson is JSON-shaped already; the fireground is still a `build()` function. A JSON site format (trucks by role, lines by hose size, sources, supplies, relays, scene placement) and an import screen would finish it.
 * **AI support operators.** Support trucks hold fixed settings and change them only through lesson events (`holdSettings`, throttle only). Wanted: AI operators (hold 700 kPa at the delivery, the fill sequence of 500 then 700 kPa, manual L3850–3853), radio calls between operators, and the booster-failure loss (~30 %, L3881) for the relay scenarios. Blocked on `advance()` taking per-truck inputs (see code health).
 * Lessons don't drive the scene beyond what the sim shows: no crew animation on a radio call, no marker on the coach's target when it's on the scene. Coach targets are panel items only.
-* Lessons on the Cat 7 are easier where the physics says so (it can't over-run the hydrant), so its hydrant and relay lessons don't teach over-running. A lesson variant per appliance class, or scenario hydrants sized to the pump, would restore it.
+* **Supply traps lost with bush lines** (issue #10, CALIBRATION "needs Dek" 53): two 25 mm bush lines can't cavitate the 4 m draught, over-run or burst the closed relay, or drain the open relay's dam, on any appliance (Dek, 2026-10-27: accept for now). The burst and repair events are still in the closed-relay lesson but can't fire. Restoring the traps needs a scenario change (a longer or steeper relay, a deeper dam, more crews, a bulk-water attack truck). The Cat 7 also can't over-run the village main (`hydrant-supply`); a lesson variant per appliance class, or scenario supplies sized to the pump, would cover both.
 * Lesson titles are fixed text; a title naming hose sizes would need the same placeholders as the copy. Lesson copy names a line by its first segment's hose (`lesson/text.ts`); a line of mixed hose would need to say so.
 * Mixed relay lessons with a much smaller base pump than the attack pump aren't required to pass (`ladder.test.ts`); the app never offers them.
-* A refill lesson on the `tank-refill` fireground. Overflow now spills a pool (issue #18); the lesson could tally litres wasted out the overflow for the debrief, or fault leaving hydrant to tank open on a full tank.
+* A refill lesson on the `hydrant-tank` fireground (the free-play `tank-refill` scenario was retired in issue #10). Overflow now spills a pool (issue #18); the lesson could tally litres wasted out the overflow for the debrief, or fault leaving hydrant to tank open on a full tank.
 * `hydrant-tank` can't ask "hold the tank level" or "the tank is rising": conditions see only the tank fraction. A tank-trend condition (rate over a window) would let the lesson teach reading the tank gauge against the hydrant, e.g. a second crew that out-draws the fill.
 * "Resume a game in progress" (needs `SimState` versioning, see code health).
 
@@ -49,6 +49,9 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 * `TEST_APPLIANCE` has no pump to tank or realistic layout, so those paths are proven on Cat 1 only, and the electronic `bands` tank gauge has no fixture. Adding them adds trace columns and fixtures, and needs a review pass.
 
 ## Panels and scene
+
+* **Scenario settings** (issue #10): the menu tags each card Bush, Village or Urban interface but keeps the ladder order; grouping the menu by setting is the alternative. Scenes lay every line towards the fire, so in the interface crew 2's short canvas line works near the truck rather than at a spot fire in a yard, and the village crews' streams fall short of the burning house: per-line placement data on the scenario (heading, target) would fix both. The burning house doesn't respond to water.
+* **"Charge at idle" for 25 mm** (CALIBRATION "needs Dek" 54): a short 25 mm line filled under throttle can log a hammer when it charges; the first-line coach doesn't say to charge at idle.
 
 * **Realistic view:** foam (bypass / foam-off / foam-on switch, selection and metering valves), fuses, the air-cleaner indicator, reels; a callouts toggle for a "find it yourself" mode (Design §8).
 * **Realistic water:** an accessible summary of where the water is (pipes are decorative, `aria-hidden`); a drain cock for trucks that have one; the hose reels' water once reels are modelled.

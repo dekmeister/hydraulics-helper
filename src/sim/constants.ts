@@ -33,6 +33,9 @@ export interface HoseType {
  */
 export const HOSES: Readonly<Record<string, HoseType>> = {
   '25L': { sizeMm: 25, lined: true, kPerM: 3.6e-4 }, // 150 L/min → 250 kPa per length (L928)
+  // Bush canvas (percolating): Table 3 has no 25 mm unlined column, so 25L × 2.8, the unlined:lined
+  // ratio at 38 and 65 mm; 150 L/min → ~680 kPa per length. // PLACEHOLDER — needs Dek
+  '25U': { sizeMm: 25, lined: false, kPerM: 1.0e-3 },
   '38U': { sizeMm: 38, lined: false, kPerM: 1.43e-4 }, // 500 L/min → 1000 kPa per length
   '38L': { sizeMm: 38, lined: true, kPerM: 5.1e-5 }, // 500 L/min → 400 kPa per length (L966)
   '50U': { sizeMm: 50, lined: false, kPerM: 3.47e-5 }, // 500 L/min → 260 kPa per length

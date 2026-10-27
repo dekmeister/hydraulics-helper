@@ -24,6 +24,7 @@ import {
 } from '../panel';
 import {
   compoundShown,
+  drainsPortableDam,
   expectCompoundAlert,
   holdPrimer,
   inletOf,
@@ -39,7 +40,8 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('draugh
   test(`draught from the dam, then induce and recover cavitation on ${spec.id}`, async ({
     page,
   }, info) => {
-    await load(page, 'draughting', spec.id);
+    // Heavy lines: the scenario's bush lines can't out-draw the lift (issue #10).
+    await load(page, 'draughting', spec.id, undefined, { heavy: true });
     const layout = layoutFor(spec.id);
     const initial = await getState(page);
     const [first, second] = initial.lines;
@@ -77,11 +79,12 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('draugh
     await dragThrottle(page, 0.6);
     await stepAndSettle(page, 100);
     await expect(supply).toHaveAttribute('data-flowing', 'true');
-    expect(await meterValue(page, discharge)).toBeGreaterThan(300);
+    // Pressure building (a heavy 65 mm lay on a 38 mm outlet reads lowest, ~295 kPa).
+    expect(await meterValue(page, discharge)).toBeGreaterThan(250);
     expect(await compoundShown(page, spec)).toBeLessThan(-10 * liftM);
     await expectStatus(page, 'No warnings.');
 
-    if (!overRuns('draughting', spec)) {
+    if (!overRuns('draughting', spec, true)) {
       test.info().annotations.push({
         type: 'physics',
         description: `${spec.id} can't draw past this lift with these lines: no cavitation to induce`,
@@ -161,8 +164,9 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('hydran
     await page.keyboard.press('End');
     await stepAndSettle(page, 50);
     if (!overRuns('hydrant-supply', spec)) {
-      // A pump this size can't out-draw the hydrant: the compound stays positive at full throttle.
-      expect(await compoundShown(page, spec)).toBeGreaterThan(50);
+      // A pump this size can't out-draw the hydrant: the compound stays positive at full throttle
+      // (on the weaker village main, not by much).
+      expect(await compoundShown(page, spec)).toBeGreaterThan(CAVITATION_FLUTTER_COMPOUND_KPA + 1);
       await expect(supply).toHaveAttribute('data-state', 'charged');
       return;
     }
@@ -175,11 +179,11 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('hydran
   });
 }
 
-for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('tank-refill'), s))) {
+for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('hydrant-tank'), s))) {
   test(`hydrant to tank left open on a full tank spills a pool that soaks away on ${spec.id}`, async ({
     page,
   }, info) => {
-    await load(page, 'tank-refill', spec.id, undefined, { cold: true });
+    await load(page, 'hydrant-tank', spec.id, undefined, { cold: true });
     const truckId = (await getState(page)).activeTruckId;
     const pool = page.getByTestId(`spill-pool-truck-${truckId}`);
     const capacityL = spec.tank?.capacityL ?? 0;
@@ -279,9 +283,12 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => primerControl(s) !== undefin
 }
 
 // The over-run guards above skip only where the physics says so: the reference appliance must
-// still be pushed past every supply, so the cavitation journeys always run somewhere.
+// still be pushed past every supply, so the cavitation journeys always run somewhere. The draught
+// and relay journeys run on heavy lines (issue #10: bush lines can't over-run them).
 test('the reference appliance over-runs every supply and bursts a slammed relay', () => {
-  for (const scenario of ['draughting', 'hydrant-supply', 'closed-relay'])
-    expect(overRuns(scenario, CAT1), scenario).toBe(true);
-  expect(relayBurstsOnSlam(CAT1)).toBe(true);
+  expect(overRuns('draughting', CAT1, true), 'draughting').toBe(true);
+  expect(overRuns('hydrant-supply', CAT1), 'hydrant-supply').toBe(true);
+  expect(overRuns('closed-relay', CAT1, true), 'closed-relay').toBe(true);
+  expect(relayBurstsOnSlam(CAT1, true)).toBe(true);
+  expect(drainsPortableDam(CAT1, true)).toBe(true);
 });
