@@ -5,7 +5,7 @@
 export const SAVE_KEY = 'pumpops:v1';
 const VERSION = 1;
 
-/** Which pump panel to show: the grouped simplified panel, or the truck's real arrangement. */
+/** Which pump panel to show: the grouped simplified panel, or the truck's real arrangement (the default). */
 export type PanelView = 'simplified' | 'realistic';
 
 const PANEL_VIEWS: readonly PanelView[] = ['simplified', 'realistic'];
@@ -13,7 +13,7 @@ const PANEL_VIEWS: readonly PanelView[] = ['simplified', 'realistic'];
 export interface Settings {
   /** Play the engine, primer, cavitation and spray sounds. */
   sound: boolean;
-  /** The pump panel view; an appliance without a realistic layout shows the simplified one. */
+  /** The pump panel view, realistic by default; an appliance without a realistic layout shows the simplified one. */
   panelView: PanelView;
   /** The appliance the player trains on, by spec id; absent: the default. The store checks it. */
   applianceId?: string;
@@ -34,7 +34,7 @@ export interface Saved {
 }
 
 export function defaultSaved(): Saved {
-  return { version: VERSION, settings: { sound: true, panelView: 'simplified' }, results: {} };
+  return { version: VERSION, settings: { sound: true, panelView: 'realistic' }, results: {} };
 }
 
 const isRecord = (x: unknown): x is Record<string, unknown> =>

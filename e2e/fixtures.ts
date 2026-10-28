@@ -22,8 +22,26 @@ export const test = base.extend<{ browserErrorGuard: undefined }>({
 
 export { expect };
 
-/** Open the e2e build (optionally with a query such as '?fixture=shell/empty') and wait until it's stable. */
-export async function gotoApp(page: Page, query = ''): Promise<void> {
+/**
+ * Open the e2e build (optionally with a query such as '?fixture=shell/empty') and wait until it's
+ * stable. A new player gets the realistic panel; the journeys and baselines were written against the
+ * simplified one, so they start with that saved, unless `freshPlayer` asks for the true default.
+ */
+export async function gotoApp(page: Page, query = '', freshPlayer = false): Promise<void> {
+  if (!freshPlayer) {
+    await page.addInitScript(() => {
+      // Only when nothing is saved, so a reload keeps whatever view the test then chose.
+      if (localStorage.getItem('pumpops:v1') === null)
+        localStorage.setItem(
+          'pumpops:v1',
+          JSON.stringify({
+            version: 1,
+            settings: { sound: true, panelView: 'simplified' },
+            results: {},
+          }),
+        );
+    });
+  }
   await page.goto(`/${query}`);
   await page.waitForFunction(() => window.__pumpops !== undefined);
   await page.evaluate(async () => {

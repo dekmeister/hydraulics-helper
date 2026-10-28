@@ -40,10 +40,10 @@ describe('store', () => {
 
   it('switches the pump panel view and keeps it in the saved settings', () => {
     const { setPanelView } = useStore.getState();
-    setPanelView('realistic');
-    expect(useStore.getState().saved.settings.panelView).toBe('realistic');
     setPanelView('simplified');
     expect(useStore.getState().saved.settings.panelView).toBe('simplified');
+    setPanelView('realistic');
+    expect(useStore.getState().saved.settings.panelView).toBe('realistic');
   });
 
   it('runs the throttle up while a speed switch is held, by sim time, and holds on release', () => {

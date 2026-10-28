@@ -82,26 +82,26 @@ async function holdSpeedSwitch(page: Page, direction: 'up' | 'down', ticks: numb
 
 for (const spec of REALISTIC_APPLIANCES) {
   test.describe(`realistic bay on ${spec.id}`, () => {
-    test('the view switch shows the realistic bay and is remembered', async ({ page }) => {
-      await gotoApp(page);
+    test('a new player gets the realistic bay; the view switch is remembered', async ({ page }) => {
+      await gotoApp(page, '', true);
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'tank-attack', appliance });
       }, spec.id);
       await startEngine(page);
-      await expect(page.getByRole('button', { name: 'Simplified', exact: true })).toHaveAttribute(
+      await expect(page.getByRole('button', { name: 'Realistic', exact: true })).toHaveAttribute(
         'aria-pressed',
         'true',
       );
-      await showRealistic(page);
       await expect(page.locator('[data-plate="bay"]')).toBeVisible();
+      await page.getByRole('button', { name: 'Simplified', exact: true }).click();
+      await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'simplified');
       await page.reload();
       await page.evaluate((appliance) => {
         window.__pumpops?.load({ scenario: 'tank-attack', appliance });
       }, spec.id);
       await startEngine(page);
-      await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'realistic');
-      await page.getByRole('button', { name: 'Simplified', exact: true }).click();
       await expect(page.locator('.pump-panel')).toHaveAttribute('data-view', 'simplified');
+      await showRealistic(page);
     });
 
     test('plates beside a main plate sit to its right, level with it', async ({ page }) => {

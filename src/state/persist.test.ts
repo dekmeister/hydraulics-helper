@@ -68,16 +68,16 @@ describe('saved settings and progress', () => {
     expect(saved.results).toEqual({ a: { x: { passed: true, bestPoints: 80, bestStars: 2 } } });
   });
 
-  it('defaults the panel view to simplified, and keeps only a view it knows', () => {
-    expect(defaultSaved().settings.panelView).toBe('simplified');
+  it('defaults the panel view to realistic, and keeps only a view it knows', () => {
+    expect(defaultSaved().settings.panelView).toBe('realistic');
     const blob = (panelView: unknown) =>
       parseSaved(JSON.stringify({ version: 1, settings: { sound: true, panelView } }));
-    expect(blob('realistic').settings.panelView).toBe('realistic');
-    expect(blob('photo').settings.panelView).toBe('simplified');
+    expect(blob('simplified').settings.panelView).toBe('simplified');
+    expect(blob('photo').settings.panelView).toBe('realistic');
     // A v1 blob saved before the setting existed still loads.
     expect(parseSaved('{"version":1,"settings":{"sound":false}}').settings).toEqual({
       sound: false,
-      panelView: 'simplified',
+      panelView: 'realistic',
     });
   });
 
