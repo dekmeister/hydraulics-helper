@@ -55,11 +55,17 @@ function Lamp({ warning }: { warning: Warning }) {
   );
 }
 
+interface Props {
+  warnings: readonly Warning[];
+  /** Offered under a burst relay's alarm (free play): the crew replaces the burst length. */
+  onReplaceBurst?: () => void;
+}
+
 /**
  * Warning strip (ARCHITECTURE §7): a lamp per warning plus a polite live region spelling out
  * whatever is lit, so faults read without sound and without colour alone.
  */
-export function WarningStrip({ warnings }: { warnings: readonly Warning[] }) {
+export function WarningStrip({ warnings, onReplaceBurst }: Props) {
   const lit = warnings.filter((w) => w.level === 'caution' || w.level === 'alarm');
   return (
     <div className="warnings">
@@ -71,6 +77,11 @@ export function WarningStrip({ warnings }: { warnings: readonly Warning[] }) {
       <p className="warnings__messages" role="status" aria-live="polite">
         {lit.length === 0 ? 'No warnings.' : lit.map((w) => w.message).join(' ')}
       </p>
+      {onReplaceBurst !== undefined && (
+        <button type="button" className="warnings__action" onClick={onReplaceBurst}>
+          Replace burst length
+        </button>
+      )}
     </div>
   );
 }

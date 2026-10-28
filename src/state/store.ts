@@ -13,6 +13,7 @@ import type {
   PlayerInputs,
   SimState,
 } from '../sim/types';
+import { applyEffect } from '../sim/lesson/effects';
 import { acknowledge, advanceCoach } from '../sim/lesson/progress';
 import type { SupportSpecs } from '../sim/scenarios/types';
 import { rampedThrottle, type ThrottleRamp } from './throttleRamp';
@@ -147,6 +148,12 @@ interface PumpOpsStore {
    * other's. Clears the highlight and the Wake (both belong to the truck left).
    */
   setActiveTruck: (truckId: string) => void;
+  /**
+   * Free play: the crew replaces the burst length in relay `linkId`, through the lesson's own
+   * `repairRelay` effect. Throws in a lesson (its timed event and radio calls do the repair) or
+   * on a relay that isn't there.
+   */
+  replaceBurstLength: (linkId: string) => void;
   highlight: Highlight | null;
   /** Highlight a delivery on the scene and panel, or clear it if it's already highlighted. */
   toggleHighlight: (deliveryId: ControlId, from: HighlightSource) => void;
@@ -318,6 +325,13 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
         throttleRamp: null,
       };
     });
+  },
+  replaceBurstLength: (linkId) => {
+    if (get().lesson !== null)
+      throw new Error('replaceBurstLength: a lesson repairs its own burst relay');
+    set(({ sim }) => ({
+      sim: applyEffect(sim, sim.activeTruckId, { kind: 'repairRelay', link: linkId }),
+    }));
   },
   toggleHighlight: (deliveryId, from) => {
     const truck = activeTruck(get().sim);

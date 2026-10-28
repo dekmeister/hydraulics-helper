@@ -288,9 +288,12 @@ const RELAY_CAPTIONS: Readonly<Record<RelayStateId, string>> = {
     'needle; SUPPLY lamp amber ("Relay residual low … 100 kPa … base pump"), CAVITATION lamp lit; ' +
     'charged lines broken into gaps.',
   burst:
-    'The relay inlet was slammed shut and opened again: a red burst marker with white jets on the ' +
-    'relay hose near the base pump, the hose dashed (dry) beyond; attack lines dry. SUPPLY lamp red ' +
-    'with a diamond, "Relay hose burst: no water from the base pump…". Legend "Burst: length 1".',
+    'The relay inlet was slammed shut and opened again: a red burst marker (white cross) on the ' +
+    'relay hose near the base pump, the hose dashed (dry) beyond; the base pump still pumping, so ' +
+    'two broad pale-white lobes of water with white streaks gush out of both sides of the split, ' +
+    'square to the hose (no flat blue puddle like an overflow); attack lines dry. SUPPLY lamp red ' +
+    'with a diamond, "Relay hose burst: no water from the base pump…", and under it a red-outlined ' +
+    '"REPLACE BURST LENGTH" button. Legend "Burst: length 1".',
   'open-dam':
     'Open relay: the base pump stands by the hydrant (green layflat into its hydrant-to-tank ' +
     'coupling), its blue relay hose ' +

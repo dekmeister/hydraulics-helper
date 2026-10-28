@@ -72,3 +72,24 @@
   font-size: 14px;
   color: var(--color-material-steel);
 }
+
+/* Free play's repair for a burst relay, straight under its alarm message. */
+.warnings__action {
+  align-self: center;
+  min-height: var(--touch-min);
+  min-width: min(100%, 240px);
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--color-signal-alarm);
+  border-radius: var(--radius-card);
+  background: var(--color-material-ironbark);
+  color: var(--color-signal-alarm-text-on-dark);
+  font: 600 15px/1.15 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.warnings__action:focus-visible {
+  outline: 3px solid var(--color-signal-alarm-text-on-dark);
+  outline-offset: 2px;
+}

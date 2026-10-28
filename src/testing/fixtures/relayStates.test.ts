@@ -4,9 +4,10 @@ import { CAT1 } from '../../sim/appliances/cat1';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { relayLays, portableDams } from '../../state/relay';
-import { activeTruck, selectWarnings } from '../../state/selectors';
+import { activeTruck, burstRelayInto, selectWarnings } from '../../state/selectors';
 import { spillPoolSize } from '../../state/spill';
 import type { SimState } from '../../sim/types';
+import { burstGushScale } from '../../ui/panel-scene/burstGush';
 import { relayState } from './relayStates';
 
 const lit = (s: SimState) =>
@@ -44,10 +45,13 @@ describe.each(
     expect(lit(s).cavitation).toBeDefined();
   });
 
-  it('burst: the first length gone and the supply alarm lit', () => {
+  it('burst: the first length gone, water gushing out of it, the supply alarm lit', () => {
     const s = relayState(spec, 'burst', support);
     expect(s.links[0]?.burst?.segment).toBe(0);
+    expect(burstGushScale(relayLays(s)[0]?.reading.flowLpm ?? 0)).toBeGreaterThan(0);
     expect(lit(s).supply).toBe('alarm');
+    // Fixtures load without a lesson: free play offers the repair.
+    expect(burstRelayInto(s)?.id).toBe('relay');
   });
 
   it('open-dam: primed on a portable dam the relay fills, nothing lit', () => {

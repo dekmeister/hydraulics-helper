@@ -76,6 +76,14 @@ function supplierOf(sim: SimState, link: RelayLink): string {
 }
 
 /**
+ * A burst relay hose into the operated pump: what its SUPPLY alarm reports, and what free play's
+ * "Replace burst length" repairs. A burst on a relay the operated pump supplies isn't one (no lamp).
+ */
+export function burstRelayInto(sim: SimState): RelayLink | undefined {
+  return relaysInto(sim, activeTruck(sim)).find((l) => l.burst !== undefined);
+}
+
+/**
  * Relay problems that matter whatever is open: a burst relay hose (alarm), or one pushed past the
  * hose's working pressure (the receiving operator sees the compound climb).
  */

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createInitialState } from '../sim/engine';
+import { createInitialState, warmStart } from '../sim/engine';
+import { RELAY_MIN_RESIDUAL_KPA } from '../sim/constants';
+import { getScenario } from '../sim/scenarios';
+import { withHeavyLines } from '../sim/scenarios/heavyLines';
+import { inputsWith, run, suctionInletOf } from '../sim/testUtils';
 import type { ApplianceSpec } from '../sim/types';
 import { activeTruck } from './selectors';
 import { APPLIANCES } from '../sim/appliances/catalogue';
@@ -231,5 +235,54 @@ describe('store: the About screen', () => {
     useStore.getState().openAbout();
     useStore.getState().closeAbout();
     expect(useStore.getState().screen).toBe('debrief');
+  });
+});
+
+describe('store: replacing a burst relay length', () => {
+  const spec = playerAppliance(DEFAULT_APPLIANCE_ID);
+  /** The closed relay on heavy lines, worked, then its inlet slammed shut: a length bursts. */
+  const burst = () => {
+    const state = warmStart(withHeavyLines(getScenario('closed-relay').build(spec).state));
+    const inlet = suctionInletOf(spec);
+    const lines = state.lines.filter((l) => l.truckId === 'attack').map((l) => l.deliveryId);
+    const working = run(state, inputsWith(0.6, [inlet, ...lines]), 150);
+    const slammed = run(working, inputsWith(0.6, lines), 1);
+    return { slammed, inlet };
+  };
+
+  beforeEach(() => {
+    useStore.getState().reset();
+  });
+
+  it('repairs the relay in free play: the burst clears and water comes back up it', () => {
+    const { slammed, inlet } = burst();
+    expect(slammed.links[0]?.burst).toBeDefined();
+    useStore.getState().reset(slammed);
+    useStore.getState().replaceBurstLength('relay');
+    expect(useStore.getState().sim.links[0]?.burst).toBeUndefined();
+    // Reopen the inlet at a throttle the relay can feed (0.6 on heavy lines over-runs it).
+    useStore.getState().setValve(inlet, 1);
+    useStore.getState().setThrottle(0.2);
+    useStore.getState().step(200);
+    const { sim } = useStore.getState();
+    expect(sim.links[0]?.burst).toBeUndefined();
+    expect(sim.linkReadings.relay?.flowLpm).toBeGreaterThan(0);
+    expect(activeTruck(sim).readings.compoundKpa).toBeGreaterThanOrEqual(RELAY_MIN_RESIDUAL_KPA);
+    // The burst still counts against the base pump.
+    expect(sim.trucks.find((t) => t.id === 'base')?.tally.hoseBursts).toBe(1);
+  });
+
+  it('throws on a relay that isn’t there', () => {
+    useStore.getState().reset(burst().slammed);
+    expect(() => {
+      useStore.getState().replaceBurstLength('nope');
+    }).toThrow(/no relay 'nope'/);
+  });
+
+  it('leaves the repair to a lesson’s own event', () => {
+    useStore.getState().startLesson('closed-relay');
+    expect(() => {
+      useStore.getState().replaceBurstLength('relay');
+    }).toThrow(/lesson/);
   });
 });

@@ -84,7 +84,13 @@ export function relayOnDelivery(
 }
 
 export { waterIn, waterRefKey, type WaterRef, type WaterState } from './plumbing';
-export { selectWarnings, type Warning, type WarningId, type WarningLevel } from './warnings';
+export {
+  burstRelayInto,
+  selectWarnings,
+  type Warning,
+  type WarningId,
+  type WarningLevel,
+} from './warnings';
 
 /**
  * Delivery flow at or above which the scene draws a line charged, L/min: the flow at which a lesson

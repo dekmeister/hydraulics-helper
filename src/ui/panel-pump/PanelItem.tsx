@@ -2,6 +2,7 @@ import { memo, useEffect, useId, useMemo, useRef } from 'react';
 import { vernierStep } from './controls/controlMath';
 import {
   activeTruck,
+  burstRelayInto,
   engineStatus,
   INSTRUMENT_UNIT,
   instrumentValue,
@@ -222,11 +223,28 @@ function EngineStatusItem() {
   );
 }
 
-/** Warnings depend on the whole sim and inputs, so only the strip re-renders every tick. */
+/**
+ * Warnings depend on the whole sim and inputs, so only the strip re-renders every tick. In free play
+ * a burst relay into this pump can be repaired from under its alarm; a lesson repairs its own.
+ */
 function WarningsItem() {
   const sim = useStore((s) => s.sim);
   const inputs = useStore((s) => s.inputs);
-  return <WarningStrip warnings={selectWarnings(sim, inputs)} />;
+  const freePlay = useStore((s) => s.lesson === null);
+  const replaceBurstLength = useStore((s) => s.replaceBurstLength);
+  const burst = freePlay ? burstRelayInto(sim) : undefined;
+  return (
+    <WarningStrip
+      warnings={selectWarnings(sim, inputs)}
+      {...(burst === undefined
+        ? {}
+        : {
+            onReplaceBurst: () => {
+              replaceBurstLength(burst.id);
+            },
+          })}
+    />
+  );
 }
 
 /** One layout item, drawn with the generic component for its kind. */

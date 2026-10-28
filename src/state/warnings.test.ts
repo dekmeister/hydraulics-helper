@@ -7,13 +7,14 @@ import {
 } from '../sim/constants';
 import { APPLIANCES } from '../sim/appliances/catalogue';
 import { primerControlId } from '../sim/appliances/controls';
+import { CAT1 } from '../sim/appliances/cat1';
 import { TEST_APPLIANCE } from '../sim/appliances/testAppliance';
 import { getScenario } from '../sim/scenarios';
 import { inputsWith, primedState, run, suctionInletOf, withBigLines } from '../sim/testUtils';
 import type { ApplianceSpec, PlayerInputs, SimState, TruckState } from '../sim/types';
 import { activeTruck, instrumentValue } from './selectors';
 import { CHECK_SUCTION_S, primerStatus, supplyLays } from './supply';
-import { HAMMER_LAMP_S, selectWarnings } from './warnings';
+import { burstRelayInto, HAMMER_LAMP_S, selectWarnings } from './warnings';
 
 const ALL: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
 
@@ -136,6 +137,19 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))('M4 warnings: %s', (_
     const rough = activeTruck(run(primedState(draught), allOpen, 50));
     const shake = Math.abs(instrumentValue(rough, 'discharge') - rough.readings.dischargeKpa);
     expect(shake).toBeLessThanOrEqual(CAVITATION_FLUTTER_DISCHARGE_KPA);
+  });
+});
+
+describe('burstRelayInto', () => {
+  it('finds a burst relay into the operated pump, not the one supplying it', () => {
+    const built = getScenario('closed-relay').build(CAT1).state;
+    expect(burstRelayInto(built)).toBeUndefined();
+    const sim: SimState = {
+      ...built,
+      links: built.links.map((l) => ({ ...l, burst: { atS: 0, segment: 0, peakKpa: 1400 } })),
+    };
+    expect(burstRelayInto(sim)?.id).toBe('relay');
+    expect(burstRelayInto({ ...sim, activeTruckId: 'base' })).toBeUndefined();
   });
 });
 

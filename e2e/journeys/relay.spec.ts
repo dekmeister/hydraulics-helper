@@ -1,7 +1,7 @@
 // M5 journeys (M5 demo): a closed relay pushing water uphill, worked from the attack pump's
 // real controls; switching trucks from the map and the switcher; the shutdown spike bursting a
-// relay hose; an open relay through a portable dam. On every journey appliance that can play
-// them, and once with a different appliance as the base pump.
+// relay hose, and replacing the burst length in free play; an open relay through a portable dam.
+// On every journey appliance that can play them, and once with a different appliance as base pump.
 import type { Page } from '@playwright/test';
 import { CAVITATION_FLUTTER_COMPOUND_KPA, RELAY_MIN_RESIDUAL_KPA } from '../../src/sim/constants';
 import { getScenario } from '../../src/sim/scenarios';
@@ -19,6 +19,7 @@ import {
   layoutFor,
   stepAndSettle,
   tapOrClick,
+  warningsStatus,
 } from '../panel';
 import { relayLay, tapTruck, stepUntilCharged } from '../scene';
 import {
@@ -124,6 +125,26 @@ for (const spec of JOURNEY_APPLIANCES.filter((s) => supports(getScenario('closed
       await expect(page.getByTestId('relay-burst-relay')).toBeVisible();
       await expectStatus(page, 'Relay hose burst');
       expect((await getState(page)).trucks.find((t) => t.id === 'base')?.tally.hoseBursts).toBe(1);
+      // The base pump keeps pumping: from the next tick its water gushes out of the split.
+      await stepAndSettle(page, 5);
+      await expect(page.getByTestId('relay-burst-gush-relay')).toBeVisible();
+
+      // Free play: the crew replaces the length from under the alarm.
+      const replace = page.getByRole('button', { name: 'Replace burst length' });
+      await expect(replace).toBeVisible();
+      await tapOrClick(replace, info);
+      await stepAndSettle(page, 1);
+      await expect(replace).toBeHidden();
+      await expect(warningsStatus(page)).not.toContainText('Relay hose burst');
+      await expect(relayLay(page, 'relay')).not.toHaveAttribute('data-state', 'burst');
+      await expect(page.getByTestId('relay-burst-gush-relay')).toBeHidden();
+
+      // Ease back to what the relay can feed and take its water again: the residual returns.
+      await dragThrottle(page, HOLD_THROTTLE);
+      await dragValve(page, inlet, 1);
+      await stepAndSettle(page, 200);
+      expect(await compoundShown(page, spec)).toBeGreaterThan(RELAY_MIN_RESIDUAL_KPA);
+      await expect(relayLay(page, 'relay')).toHaveAttribute('data-state', 'charged');
     });
   });
 
