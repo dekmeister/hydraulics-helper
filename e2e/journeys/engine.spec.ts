@@ -1,6 +1,7 @@
 // Starting and stopping the pump engine through its panel (issue #19): every job starts cold, START
 // must be held until it fires, and STOP until it has run down or it picks up again.
 import { REALISTIC_APPLIANCES } from '../../src/testing/fixtures/realisticStates';
+import { getRealisticLayout } from '../../src/ui/appliances/registry';
 import { expect, test } from '../fixtures';
 import {
   activeTruckOf,
@@ -92,20 +93,31 @@ for (const spec of JOURNEY_APPLIANCES) {
 }
 
 for (const spec of REALISTIC_APPLIANCES) {
-  test(`the realistic ${spec.id} panel starts and stops it, its lamps lit only with the ignition on and the engine stopped`, async ({
+  test(`the realistic ${spec.id} panel starts and stops it, its warning lamps lit with the ignition on and the engine stopped, its running lamp while it runs`, async ({
     page,
   }) => {
+    const lamps = (getRealisticLayout(spec.id)?.plates ?? []).flatMap((p) =>
+      p.items.flatMap((i) => (i.kind === 'engine-lamp' ? [i] : [])),
+    );
+    expect(lamps.length).toBeGreaterThan(0);
+    /** Every lamp reads lit or off as the engine's state says, by its `litWhen`. */
+    const expectLamps = async (ignition: boolean, engineRunning: boolean) => {
+      for (const lamp of lamps) {
+        const lit = ignition && (lamp.litWhen === 'running' ? engineRunning : !engineRunning);
+        const name = `${lamp.label}: ${lit ? 'lit' : 'off'}`;
+        await expect(page.getByRole('img', { name, exact: true })).toBeVisible();
+      }
+    };
     await load(page, 'tank-attack', spec.id, undefined, { cold: true });
     await showRealistic(page);
-    const charge = page.getByRole('img', { name: /^Charge \(ALT\) lamp/ });
-    await expect(charge).toHaveAccessibleName('Charge (ALT) lamp: off');
+    await expectLamps(false, false);
     await setIgnition(page, true);
-    await expect(charge).toHaveAccessibleName('Charge (ALT) lamp: lit');
+    await expectLamps(true, false);
     await holdEngineSwitch(page, 'start', Math.ceil(spec.engine.crankS * 10) + 2);
     expect(await running(page)).toBe(true);
-    await expect(charge).toHaveAccessibleName('Charge (ALT) lamp: off');
+    await expectLamps(true, true);
     await holdEngineSwitch(page, 'stop', 40);
     expect(await running(page)).toBe(false);
-    await expect(charge).toHaveAccessibleName('Charge (ALT) lamp: lit');
+    await expectLamps(true, false);
   });
 }

@@ -89,6 +89,31 @@ function InertShape({ look, box, text }: { look: InertLook; box: RBox; text?: re
           />
         </g>
       );
+    case 'knob':
+      // One rotary selector on its legend plate (a foam metering valve).
+      return (
+        <g>
+          <rect
+            x={box.x}
+            y={box.y}
+            width={box.w}
+            height={box.h}
+            rx={8}
+            className="real-inert__foam"
+          />
+          <rect
+            x={cx - box.w * 0.25}
+            y={cy}
+            width={box.w * 0.5}
+            height={box.h * 0.25}
+            rx={10}
+            style={{ fill: COLOR.ink }}
+          />
+          <text x={cx} y={box.y + 40} textAnchor="middle" className="real-art__plate-text">
+            {text?.[0]}
+          </text>
+        </g>
+      );
     case 'knobs':
       return (
         <g>

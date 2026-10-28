@@ -82,11 +82,24 @@ export function RealEngineSwitch({
 }
 
 /** A charge or oil lamp: lit while the ignition is on and the engine isn't running. */
-export function RealEngineLamp({ label, style }: { label: string; style: CSSProperties }) {
-  const lit = useStore((s) => engineStatus(s.sim, s.inputs).lampsLit);
+export function RealEngineLamp({
+  label,
+  litWhen = 'stopped',
+  tone = 'red',
+  style,
+}: {
+  label: string;
+  litWhen?: 'stopped' | 'running';
+  tone?: 'red' | 'green';
+  style: CSSProperties;
+}) {
+  const lit = useStore((s) => {
+    const status = engineStatus(s.sim, s.inputs);
+    return litWhen === 'running' ? status.runningLit : status.lampsLit;
+  });
   return (
     <span
-      className={`real-lamp${lit ? ' real-lamp--lit' : ''}`}
+      className={`real-lamp real-lamp--${tone}${lit ? ' real-lamp--lit' : ''}`}
       role="img"
       aria-label={`${label}: ${lit ? 'lit' : 'off'}`}
       data-lit={lit}

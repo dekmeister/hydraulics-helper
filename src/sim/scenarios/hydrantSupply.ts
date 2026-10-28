@@ -147,7 +147,8 @@ export const HYDRANT_SUPPLY: Scenario = {
     { throttle: 0.3 },
     { trim: { branch: 'line-1' } },
     { until: { kind: 'objective', objective: 'reserve' }, maxS: 120 },
-    { ease: { line: 'line-2' }, to: 1, overS: 10 },
+    // Eased over 15 s: the empty line fills fast enough to over-run the main if it's rushed.
+    { ease: { line: 'line-2' }, to: 1, overS: 15 },
     { trim: { branch: 'line-1' } },
     { gate: 'line-2' },
     { until: { kind: 'objective', objective: 'both' }, maxS: 120 },

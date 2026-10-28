@@ -1,8 +1,9 @@
 import type { ApplianceSpec } from '../types';
 
 /**
- * Cat 1 tanker: the v1 reference appliance (decided by Dek, 2026-10-24). Delivery set follows
- * Design Layout A's three outlets; its hose reels and discharge master are deferred (docs/BACKLOG.md).
+ * Cat 1 tanker: the v1 reference appliance (decided by Dek, 2026-10-24), modelled on the Cat1B
+ * (Resources/Photos/Cat1B_*, 2026-10-28): a Hatz 3L "village pumpset". Its two hose reels are
+ * deferred (docs/BACKLOG.md).
  * Figures and status: docs/CALIBRATION.md § "Cat 1 tanker".
  */
 export const CAT1: ApplianceSpec = {
@@ -10,7 +11,9 @@ export const CAT1: ApplianceSpec = {
   name: 'Category 1 tanker',
   pump: {
     shutoffKpa: 1400, // pressure rise at zero flow, max rpm // PLACEHOLDER — needs Dek
-    droopKpaPerLpm2: 4e-4, // gives 1000 kPa at 1000 L/min, max rpm // PLACEHOLDER — needs Dek
+    // Rated 1200 L/min at 1000 kPa at max rpm: (1400 − 1000) / 1200². // doctrine-confirmed (data
+    // plate, Resources/Photos/Cat1B_Panel.jpg); the shutoff it's fitted from is still a placeholder.
+    droopKpaPerLpm2: 400 / 1200 ** 2,
     // Cavitates below −84 kPa at the inlet: the fit to the manual's lift derate (Table 4, L1179)
     // for a generic pump; the Cat 1 pump's own figure is unknown. // PLACEHOLDER — needs Dek
     cavitationInletKpa: -84,
@@ -19,9 +22,9 @@ export const CAT1: ApplianceSpec = {
   },
   engine: {
     idleRpm: 800, // PLACEHOLDER — needs Dek
-    maxRpm: 3000, // PLACEHOLDER — needs Dek
+    maxRpm: 3000, // the plate's "do not exceed 3000 RPM" // doctrine-confirmed (Cat1B photos)
     rpmLagS: 0.5, // throttle-to-rpm time constant (ARCHITECTURE §4.4) // PLACEHOLDER — needs Dek
-    cylinders: 6, // pump engine, for the engine note // PLACEHOLDER — needs Dek
+    cylinders: 3, // Hatz 3L pumpset engine, for the engine note // doctrine-confirmed (data plate)
     speedController: {
       rampRpmPerS: 400, // governor run-up while the switch is held // PLACEHOLDER — needs Dek
       flickRpm: 50, // one quick flick of the switch // PLACEHOLDER — needs Dek
@@ -72,9 +75,11 @@ export const CAT1: ApplianceSpec = {
     },
   ],
   deliveries: [
-    { id: 'd1', label: 'Delivery 1', sizeMm: 65 }, // 65 mm outlet, big blue lever // doctrine-confirmed (Dek 2026-10-25)
-    { id: 'd2', label: 'Delivery 2', sizeMm: 38 }, // 38 mm outlet // doctrine-confirmed (Dek 2026-10-25)
-    { id: 'd3', label: 'Delivery 3', sizeMm: 38 }, // 38 mm outlet // doctrine-confirmed (Dek 2026-10-25)
+    // Left to right on the Cat1B's manifold: 38 | 65 | 38, each on a blue quarter-turn lever.
+    // doctrine-confirmed (photos Resources/Photos/Cat1B_*, Dek 2026-10-28)
+    { id: 'd1', label: 'Delivery 1', sizeMm: 38 },
+    { id: 'd2', label: 'Delivery 2', sizeMm: 65 }, // the big centre outlet
+    { id: 'd3', label: 'Delivery 3', sizeMm: 38 },
   ],
   // Pump to tank: the blue lever above the suction inlet, a return from the discharge into the tank
   // (Dek, 2026-10-25). Sized as a 38 mm valved return passing ~500 L/min at 700 kPa.
@@ -103,14 +108,14 @@ export const CAT1: ApplianceSpec = {
     setKpa: 1100, // PLACEHOLDER — needs Dek
     slopeLpmPerKpa: 50, // bypass flow per kPa over set; holds discharge within ~20 kPa of set // PLACEHOLDER — needs Dek
   },
-  // Dial markings: the faces fitted to the Cat 1 (photos, Dek 2026-10-25), without the psi scale.
-  // The panel placard reads "do not exceed 3000 r/min, do not exceed −80 kPa".
+  // Dial markings: the GAAM faces on the Cat1B panel (Resources/Photos/Cat1B_Panel.jpg). The
+  // panel reads "do not exceed −80 kPa" over the compound and "do not exceed 3000 RPM" over the tacho.
   instruments: [
     {
       id: 'compound',
       kind: 'compound',
       scale: {
-        fullScale: 2500, // −100…2500 kPa face // doctrine-confirmed (photo)
+        fullScale: 1600, // −100…1600 kPa face // doctrine-confirmed (photo)
         zones: [
           { from: -80, to: -70, tone: 'caution' }, // approaching the placard limit // PLACEHOLDER — needs Dek
           { from: -100, to: -80, tone: 'alarm' }, // past the placard's −80 kPa // doctrine-confirmed (photo)
@@ -121,12 +126,9 @@ export const CAT1: ApplianceSpec = {
       id: 'discharge',
       kind: 'discharge',
       scale: {
-        fullScale: 4000, // 0–4000 kPa face // doctrine-confirmed (photo)
-        zones: [
-          // Relief set → shutoff. No alarm band: on the 4000 kPa face it would paint most of the
-          // dial red, and the fitted gauge carries no zones. // PLACEHOLDER — needs Dek
-          { from: 1100, to: 1400, tone: 'caution' },
-        ],
+        fullScale: 2500, // 0–2500 kPa face // doctrine-confirmed (photo)
+        // Relief set → shutoff; the fitted face carries no zones. // PLACEHOLDER — needs Dek
+        zones: [{ from: 1100, to: 1400, tone: 'caution' }],
       },
     },
     {
@@ -134,7 +136,7 @@ export const CAT1: ApplianceSpec = {
       kind: 'tacho',
       scale: {
         fullScale: 4000, // 0–40 ×100 rpm face // doctrine-confirmed (photo)
-        zones: [{ from: 3000, to: 4000, tone: 'alarm' }], // placard: do not exceed 3000 r/min // doctrine-confirmed (photo)
+        zones: [{ from: 3000, to: 4000, tone: 'alarm' }], // placard: do not exceed 3000 RPM // doctrine-confirmed (photo)
       },
     },
     // A clear sight tube on the tank with a float at the water line (Dek, 2026-10-25). // doctrine-confirmed

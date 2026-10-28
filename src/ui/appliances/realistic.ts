@@ -36,6 +36,7 @@ export type InertLook =
   | 'toggle'
   | 'lamp'
   | 'dial'
+  | 'knob'
   | 'knobs'
   | 'placard'
   | 'fuses'
@@ -80,11 +81,17 @@ export type RealItem =
       box: RBox;
     }
   | {
-      /** A warning lamp lit while the ignition is on and the engine isn't running (charge, oil). */
+      /**
+       * An engine lamp. 'stopped' (the default): a warning lit while the ignition is on and the
+       * engine isn't running (charge, oil, engine fault). 'running': lit while it runs (pump running).
+       */
       kind: 'engine-lamp';
       id: string;
       label: string;
       box: RBox;
+      litWhen?: 'stopped' | 'running';
+      /** Glass colour; red by default. */
+      tone?: 'red' | 'green';
     }
   | {
       kind: 'inert';
@@ -93,7 +100,7 @@ export type RealItem =
       label: string;
       look: InertLook;
       box: RBox;
-      /** Placard lines, for a placard; a knob panel's legend, for knobs. */
+      /** Placard lines, for a placard; a knob panel's legend, for knob or knobs. */
       text?: readonly string[];
     };
 

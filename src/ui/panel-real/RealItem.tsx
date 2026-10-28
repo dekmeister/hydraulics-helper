@@ -310,7 +310,14 @@ export const RealItemView = memo(function RealItemView({
       );
     }
     case 'engine-lamp':
-      return <RealEngineLamp label={item.label} style={boxStyle(item.box, plate)} />;
+      return (
+        <RealEngineLamp
+          label={item.label}
+          {...(item.litWhen === undefined ? {} : { litWhen: item.litWhen })}
+          {...(item.tone === undefined ? {} : { tone: item.tone })}
+          style={boxStyle(item.box, plate)}
+        />
+      );
     case 'inert':
       return null;
   }

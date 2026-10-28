@@ -549,6 +549,11 @@
   );
   box-shadow: 0 0 12px 2px var(--color-signal-alarm);
 }
+/* A pump-running lamp: green glass, lit in the inlet green (the panel's running colour). */
+.real-lamp--green.real-lamp--lit {
+  background: radial-gradient(circle at 40% 35%, #ffffff, var(--color-function-inlet));
+  box-shadow: 0 0 12px 2px var(--color-function-inlet);
+}
 @media (prefers-reduced-motion: reduce) {
   .real-engine__cap {
     transition: none;

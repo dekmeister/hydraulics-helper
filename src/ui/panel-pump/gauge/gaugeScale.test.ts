@@ -95,6 +95,11 @@ describe('dial faces from a spec scale', () => {
     expect(majorStep(3500, 4)).toBe(1000);
   });
 
+  it('prefers a step that lands on the full scale (the Cat 1 0–2500 kPa face reads in 500s)', () => {
+    expect(majorStep(2500, 8)).toBe(500);
+    expect(majorStep(1400, 5)).toBe(400); // nothing round divides it: the smallest that fits
+  });
+
   it('ends the scale at the spec full scale and carries its zones', () => {
     const d = dischargeDial({ fullScale: 1400, zones: [{ from: 1200, to: 1400, tone: 'alarm' }] });
     expect(range(d)).toEqual([0, 1400]);

@@ -5,7 +5,7 @@ import { CAT1_PANEL_PLATE } from './realisticPanel';
 const LEVER_U = 128;
 
 /**
- * Cat 1 tanker pump bay, from the photos (Resources/Photos/Cat1_*; Dek, 2026-10-25): the
+ * Cat 1 tanker pump bay, from the Cat1B photos (Resources/Photos/Cat1B_*; Dek, 2026-10-28): the
  * instrument panel above with the tank's sight tube beside it, the plumbing and couplings below,
  * and an inset for what isn't on the rear: hydrant to tank (side of the truck). Positions follow the
  * real arrangement, enlarged and simplified; no branding. Levers swing in the drawing's plane:
@@ -20,119 +20,130 @@ export const CAT1_REALISTIC: RealisticLayout = {
       id: 'tank',
       caption: null,
       // As tall as the instrument panel beside it, the tube centred on it.
-      viewBox: { w: 140, h: 1132 },
+      viewBox: { w: 140, h: 952 },
       place: 'beside',
-      art: [{ kind: 'plate', x: 70, y: 338, text: 'TANK' }],
+      art: [{ kind: 'plate', x: 70, y: 218, text: 'TANK' }],
       items: [
-        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 10, y: 380, w: 120, h: 432 } },
+        { kind: 'tank-gauge', instrument: 'tank-level', box: { x: 10, y: 260, w: 120, h: 432 } },
       ],
     },
     {
-      // Water in at the left, through the pump, out at the right. The tank feed and suction
-      // meet and run into the pump's eye; the discharge leaves the volute's top, tees up (pump to
-      // tank, back over the pump into the tank) and down to the manifold, its three outlet drops
-      // and the riser to the right-hand reel.
+      // Water in at the left, through the pump, out at the right. The tank feed and the external
+      // inlet meet and run into the pump's eye; the discharge leaves the volute's top, tees up to
+      // the left reel and down to the manifold under the pump. Off the manifold: pump to tank at its
+      // left end (back into the tank, passing in front of the external inlet's riser as on the
+      // truck), the outlets 38 | 65 | 38, and the riser to the right reel.
       id: 'bay',
       caption: null,
-      viewBox: { w: 1000, h: 720 },
+      viewBox: { w: 1000, h: 740 },
       place: 'stack',
       art: [
         // Each run is split at its valve and drawn the way the water flows (see `PlateArt`).
-        { kind: 'pipe', d: 'M60 0 V200', widthU: 34, water: { at: 'tank' } },
+        { kind: 'pipe', d: 'M60 0 V170', widthU: 34, water: { at: 'tank' } },
         {
           kind: 'pipe',
-          d: 'M60 200 V300 H300',
+          d: 'M60 170 V300 H250',
           widthU: 34,
           water: { at: 'inlet', id: 'tank-to-pump', side: 'pump' },
         },
         {
           kind: 'pipe',
-          d: 'M70 600 H180',
+          d: 'M70 640 H180',
           widthU: 34,
           water: { at: 'inlet', id: 'suction', side: 'source' },
         },
         {
           kind: 'pipe',
-          d: 'M180 600 H300 V300',
+          d: 'M180 640 H250 V300',
           widthU: 34,
           water: { at: 'inlet', id: 'suction', side: 'pump' },
         },
+        // The discharge, and the left reel's branch up off it: the reels aren't in the game, so
+        // that water never moves.
+        { kind: 'pipe', d: 'M560 227 H620', widthU: 34, water: { at: 'casing' } },
+        { kind: 'pipe', d: 'M620 227 V70', widthU: 22, water: { at: 'casing', feeds: [] } },
         {
           kind: 'pipe',
-          d: 'M640 227 V150 H420',
+          d: 'M620 227 V470',
+          widthU: 34,
+          water: { at: 'casing', feeds: ['d1', 'd2', 'd3', 'pump-to-tank'] },
+        },
+        // The manifold: each run flows only toward the outlets drawing through it.
+        {
+          kind: 'pipe',
+          d: 'M620 470 H545',
+          widthU: 34,
+          water: { at: 'casing', feeds: ['d1', 'pump-to-tank'] },
+        },
+        {
+          kind: 'pipe',
+          d: 'M545 470 H300',
           widthU: 22,
           water: { at: 'casing', feeds: ['pump-to-tank'] },
         },
-        { kind: 'pipe', d: 'M420 150 H250 V0', widthU: 22, water: { at: 'pumpToTank' } },
-        // The manifold: each run flows only toward the outlets drawing through it.
-        { kind: 'pipe', d: 'M640 440 H560', widthU: 34, water: { at: 'casing', feeds: ['d1'] } },
+        // Pump to tank, left into the tank through the frame.
+        { kind: 'pipe', d: 'M300 470 H0', widthU: 22, water: { at: 'pumpToTank' } },
         {
           kind: 'pipe',
-          d: 'M640 440 H710',
+          d: 'M620 470 H695',
           widthU: 34,
           water: { at: 'casing', feeds: ['d2', 'd3'] },
         },
-        { kind: 'pipe', d: 'M710 440 H860', widthU: 34, water: { at: 'casing', feeds: ['d3'] } },
-        // On to the reel riser: the reels aren't in the game, so this water never moves.
-        { kind: 'pipe', d: 'M860 440 H955 V85', widthU: 22, water: { at: 'casing', feeds: [] } },
+        { kind: 'pipe', d: 'M695 470 H845', widthU: 34, water: { at: 'casing', feeds: ['d3'] } },
+        { kind: 'pipe', d: 'M845 470 H960 V85', widthU: 22, water: { at: 'casing', feeds: [] } },
         ...(['d1', 'd2', 'd3'] as const).flatMap((id, i) => {
-          const x = String(560 + 150 * i);
+          const x = String(545 + 150 * i);
+          // The 65 mm centre drop is the bigger pipe.
+          const widthU = id === 'd2' ? 34 : 28;
           return [
             {
               kind: 'pipe' as const,
-              d: `M${x} 440 V560`,
-              widthU: 28,
+              d: `M${x} 470 V560`,
+              widthU,
               water: { at: 'casing' as const, feeds: [id] },
             },
             {
               kind: 'pipe' as const,
               d: `M${x} 560 V640`,
-              widthU: 28,
+              widthU,
               water: { at: 'delivery' as const, id },
             },
           ];
         }),
-        { kind: 'pipe', d: 'M590 227 H640', widthU: 34, water: { at: 'casing' } },
-        {
-          kind: 'pipe',
-          d: 'M640 227 V440',
-          widthU: 34,
-          water: { at: 'casing', feeds: ['d1', 'd2', 'd3'] },
-        },
         {
           kind: 'casing',
-          cx: 470,
+          cx: 440,
           cy: 300,
           r: 90,
           label: 'PUMP',
-          outlet: { x: 590, y: 227, dir: 'right', widthU: 34 },
+          outlet: { x: 560, y: 227, dir: 'right', widthU: 34 },
           water: { at: 'casing' },
         },
         // Inlet over the casing's face into the eye.
-        { kind: 'pipe', d: 'M300 300 H470', widthU: 34, water: { at: 'casing' } },
-        { kind: 'fitting', cx: 470, cy: 300, r: 30 },
+        { kind: 'pipe', d: 'M250 300 H440', widthU: 34, water: { at: 'casing' } },
+        { kind: 'fitting', cx: 440, cy: 300, r: 30 },
         { kind: 'fitting', cx: 60, cy: 300, r: 19 },
-        { kind: 'fitting', cx: 300, cy: 300, r: 19 },
-        { kind: 'fitting', cx: 640, cy: 227, r: 19 },
-        { kind: 'fitting', cx: 640, cy: 440, r: 19 },
-        { kind: 'fitting', cx: 560, cy: 440, r: 19 },
-        { kind: 'fitting', cx: 710, cy: 440, r: 19 },
-        { kind: 'fitting', cx: 860, cy: 440, r: 19 },
-        { kind: 'fitting', cx: 955, cy: 440, r: 19 },
+        { kind: 'fitting', cx: 250, cy: 300, r: 19 },
+        { kind: 'fitting', cx: 620, cy: 227, r: 19 },
+        { kind: 'fitting', cx: 620, cy: 470, r: 19 },
+        { kind: 'fitting', cx: 545, cy: 470, r: 19 },
+        { kind: 'fitting', cx: 695, cy: 470, r: 19 },
+        { kind: 'fitting', cx: 845, cy: 470, r: 19 },
+        { kind: 'fitting', cx: 960, cy: 470, r: 15 },
         { kind: 'flange', x: 60, y: 6, widthU: 34, along: 'v' },
-        { kind: 'flange', x: 250, y: 6, widthU: 22, along: 'v' },
-        { kind: 'coupling', cx: 70, cy: 600, r: 58 },
+        { kind: 'flange', x: 6, y: 470, widthU: 22, along: 'h' },
+        { kind: 'coupling', cx: 70, cy: 640, r: 58 },
         { kind: 'text', x: 87, y: 30, text: 'FROM TANK', anchor: 'start' },
-        { kind: 'text', x: 271, y: 30, text: 'TO TANK', anchor: 'start' },
+        { kind: 'text', x: 20, y: 505, text: 'TO TANK', anchor: 'start' },
         { kind: 'plate', x: 186, y: 245, text: 'TANK TO PUMP' },
-        { kind: 'plate', x: 540, y: 110, text: 'PUMP TO TANK' },
-        { kind: 'plate', x: 200, y: 668, text: 'SUCTION' },
+        { kind: 'plate', x: 125, y: 430, text: 'PUMP TO TANK', w: 170 },
+        { kind: 'plate', x: 220, y: 712, text: 'EXTERNAL INLET', w: 180 },
       ],
       items: [
         {
           kind: 'lever',
           control: 'tank-to-pump',
-          pivot: { x: 60, y: 200 },
+          pivot: { x: 60, y: 170 },
           shutDeg: 90,
           openDeg: 0,
           lengthU: LEVER_U,
@@ -140,28 +151,28 @@ export const CAT1_REALISTIC: RealisticLayout = {
         {
           kind: 'lever',
           control: 'pump-to-tank',
-          pivot: { x: 420, y: 150 },
+          pivot: { x: 300, y: 470 },
           shutDeg: 0,
-          openDeg: -90,
+          openDeg: 90,
           lengthU: LEVER_U,
         },
         {
           kind: 'lever',
           control: 'suction',
-          pivot: { x: 180, y: 600 },
+          pivot: { x: 180, y: 640 },
           shutDeg: 0,
           openDeg: 90,
           lengthU: LEVER_U,
         },
-        // The PRIME T-handle sits on the bumper between the suction and the outlets.
+        // The PRIME T-handle sits on the bumper between the external inlet and the outlets.
         {
           kind: 'primer',
           control: 'primer',
           variant: 'pull-handle',
-          box: { x: 340, y: 480, w: 150, h: 200 },
+          box: { x: 330, y: 510, w: 140, h: 190 },
         },
         ...(['d1', 'd2', 'd3'] as const).map((control, i) => {
-          const x = 560 + 150 * i;
+          const x = 545 + 150 * i;
           return {
             kind: 'outlet' as const,
             control,
@@ -175,10 +186,17 @@ export const CAT1_REALISTIC: RealisticLayout = {
         }),
         {
           kind: 'inert',
-          id: 'reels',
-          label: 'Hose reels and the right reel valve',
+          id: 'reel-left',
+          label: 'Left hose reel and its valve',
           look: 'reel',
-          box: { x: 915, y: 30, w: 80, h: 110 },
+          box: { x: 580, y: 20, w: 80, h: 100 },
+        },
+        {
+          kind: 'inert',
+          id: 'reels',
+          label: 'Right hose reel and its valve',
+          look: 'reel',
+          box: { x: 920, y: 30, w: 80, h: 110 },
         },
       ],
     },

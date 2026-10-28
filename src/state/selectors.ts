@@ -177,6 +177,8 @@ export interface EngineStatus {
   ignition: boolean;
   /** The ignition is on and the engine isn't running: the charge and oil lamps are lit. */
   lampsLit: boolean;
+  /** The ignition is on and the engine is running: a pump-running lamp is lit. */
+  runningLit: boolean;
   /** STOP is held with the ignition off on a solenoid stop: it does nothing. */
   stopWithoutIgnition: boolean;
   /** One line for the panel and assistive tech. */
@@ -208,6 +210,7 @@ export function engineStatus(sim: SimState, inputs: PlayerInputs): EngineStatus 
     phase,
     ignition,
     lampsLit: ignition && !truck.engine.running,
+    runningLit: ignition && truck.engine.running,
     stopWithoutIgnition: trap,
     text: detail === null ? PHASE_TEXT[phase] : `${PHASE_TEXT[phase]} · ${detail}`,
   };

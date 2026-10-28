@@ -55,10 +55,10 @@ describe('Cat 1-only source states', () => {
     expect(t.readings.compoundKpa).toBeLessThan(-10);
   });
 
-  it('faults has the temperature alarm and a fresh hammer on Delivery 2', () => {
+  it('faults has the temperature alarm and a fresh hammer on Delivery 1', () => {
     const s = sourceState(CAT1, 'faults');
     expect(lit(s)).toMatchObject({ overheat: 'alarm', hammer: 'caution' });
-    expect(activeTruck(s).lastHammer?.deliveryId).toBe('d2');
+    expect(activeTruck(s).lastHammer?.deliveryId).toBe('d1');
   });
 
   it('every catalogue appliance with a primer control gets draught-priming', () => {

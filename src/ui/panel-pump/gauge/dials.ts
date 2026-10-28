@@ -9,9 +9,13 @@ const hundreds = (v: number) => String(v / 100);
 /** Tick steps a face may use: round numbers a gauge maker would print. */
 const NICE_STEPS = [50, 100, 200, 250, 400, 500, 1000, 2000, 2500, 5000] as const;
 
-/** Smallest nice major step giving at most `maxMajors` intervals over `span`. Minor = major / 4. */
+/**
+ * Smallest nice major step giving at most `maxMajors` intervals over `span`, preferring one that
+ * divides it, so the last major lands on full scale as on a printed face. Minor = major / 4.
+ */
 export function majorStep(span: number, maxMajors: number): number {
-  return NICE_STEPS.find((s) => span / s <= maxMajors + 1e-9) ?? span;
+  const fits = NICE_STEPS.filter((s) => span / s <= maxMajors + 1e-9);
+  return fits.find((s) => span % s === 0) ?? fits[0] ?? span;
 }
 
 function linear(

@@ -1,9 +1,11 @@
 // Worked examples from docs/CALIBRATION.md (manual pump calcs): pump pressure = nozzle + friction ± head.
 // Tolerance: ±5 % on pump pressure, the friction fits' ±10 % scatter diluted by the nozzle term.
 import { describe, expect, it } from 'vitest';
+import { CAT1 } from './appliances/cat1';
 import { branchFlowLpm } from './branch';
 import { HEAD_KPA_PER_M, STANDARD_LENGTH_M } from './constants';
 import { hoseFrictionKpa } from './hose';
+import { pumpRiseKpa } from './pump';
 import { chargeLines, createInitialState } from './engine';
 import {
   draughtSite,
@@ -86,6 +88,14 @@ describe('calibration: Table 1 branch flows at optimum pressure (L465–490)', (
       2 * branchFlowLpm({ tipMm: 15 }, 250),
       9,
     );
+  });
+});
+
+describe('calibration: Cat 1 rated duty (data plate, Resources/Photos/Cat1B_Panel.jpg)', () => {
+  it('C15: 1200 L/min at 1000 kPa at max rpm', () => {
+    // Tolerance ±1 kPa: the droop is fitted to this point exactly.
+    const { pump, engine } = CAT1;
+    expect(pumpRiseKpa(pump, engine, engine.maxRpm, 1200)).toBeCloseTo(1000, 0);
   });
 });
 

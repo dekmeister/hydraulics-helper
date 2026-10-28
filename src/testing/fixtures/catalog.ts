@@ -216,7 +216,7 @@ const SOURCE_CAPTIONS: Readonly<Record<SourceStateId, string>> = {
   faults:
     'Tank attack, every delivery just slammed shut with the throttle still up: discharge ~700 kPa ' +
     'with no flow (churning), TEMP lamp red with a diamond (steady with a ring: reduced motion), ' +
-    'HAMMER lamp amber with a triangle; messages "Pump hot…" and "Water hammer: Delivery 2 was ' +
+    'HAMMER lamp amber with a triangle; messages "Pump hot…" and "Water hammer: Delivery 1 was ' +
     'shut too fast…". Scene: the first line holds its water (blue core, no streaks, no spray), ' +
     'legend "Holding water"; the other line dry.',
   refilling:
@@ -441,51 +441,57 @@ const DEBRIEF_FIXTURES: FixtureMeta[] = APPLIANCES.flatMap((spec) =>
 
 const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
   idle:
-    'Realistic bay at rest (header button REALISTIC pressed). Instrument panel: dark box with ' +
-    'compound and pressure dials (no readouts) on one centreline over red COMPOUND / PRESSURE ' +
-    'plates on one line, the tacho at idle, small oil temp / oil pressure dials, placards (idle, ' +
-    'limits, stopping) with their lines evenly spaced, fuses, STOP (red cap) and IGN (black boss, ' +
-    'bar pointing right: on) side by side under the stopping placard, the ALT lamp (dark glass) ' +
-    'and START (dark green cap) below them, each under an equal plate; foam knobs and the ' +
-    'air-cleaner indicator drawn plainly; the red SPEED switch ' +
-    'under the pressure gauge, toggle bat end-on in its bezel (centred), ▲ / ▼ above and below. ' +
+    'Realistic bay at rest (header button REALISTIC pressed). Instrument panel (Cat 1): dark box ' +
+    'with red limit plates "DO NOT EXCEED −80 kPa" over the compound and "DO NOT EXCEED 3000 RPM" ' +
+    'over the tacho; compound and pressure dials (no readouts) on one top line over red COMPOUND ' +
+    '/ PRESSURE plates, the pressure face 0–25 in 5s; the tacho at idle; under it four lamps in a ' +
+    '2 × 2 grid over PUMP RUNNING, ALTERNATOR, ENGINE FAULT, WATER TEMP plates; PUMP RUNNING lit ' +
+    'green, the others dark glass. A small stopping placard (two lines, evenly spaced) centred under the ' +
+    'dials; then STOP (red cap), IGNITION (black boss, bar pointing right: on) and START (dark ' +
+    'green cap) in a row, each under an equal plate, the red speed switch under THROTTLE, toggle ' +
+    'bat end-on in its bezel, ▲ / ▼ above and below, and one foam knob drawn plainly at the right. ' +
     'Bay: galvanised pipes with square ends on collars, couplings or flanges, none overrunning a ' +
-    'joint; tank feed and suction join into the red pump’s eye (centre); the discharge leaves ' +
-    'tangentially off the volute’s top edge at a flange, tees up (pump to tank, over the pump) ' +
-    'and down to the manifold; each outlet drop ends on its coupling’s centre. Green tank-to-' +
-    'pump lever far left pointing right (across its pipe, shut), blue pump-to-tank lever pointing ' +
-    'up (shut), green suction lever up (shut) by the big coupling low left, PRIME T-handle home; ' +
-    'three blue outlet levers pointing right (shut), D1 and D2 couplings open (laid), D3 capped ' +
-    'and its lever dimmed with NO LINE. Right of the instrument panel, level with it and as tall, ' +
-    'a narrow column with a TANK plate over the sight tube (full, float at the top); the ' +
-    'Side of truck inset (hydrant-to-tank lever up, shut) alone under the bay. Warning strip below, no lamps lit. Water ' +
-    '(x-ray, drawn like a charged hose): only the tank feed above the tank-to-pump lever shows a ' +
-    'still blue core (no streaks); every other pipe and the pump are plain metal (empty).',
+    'joint; tank feed and external inlet join into the red pump’s eye (centre); the discharge ' +
+    'leaves tangentially off the volute’s top edge at a flange, tees up to the left reel and down ' +
+    'to the manifold under the pump; pump to tank runs left off the manifold, passing in front ' +
+    'of the external inlet’s riser, to a flange at the plate edge (TO TANK); each outlet drop ' +
+    'ends on its coupling’s centre, the centre (D2, 65 mm) drop and coupling bigger. Green tank-' +
+    'to-pump lever far left pointing right (across its pipe, shut), blue pump-to-tank lever ' +
+    'pointing up (shut), green external inlet lever up (shut) by the big coupling low left, PRIME ' +
+    'T-handle home between it and the outlets; three blue outlet levers pointing right (shut), D1 ' +
+    'and D3 couplings open (laid), D2 capped and its lever dimmed with NO LINE; two reels drawn ' +
+    'plainly at the top. Right of the instrument panel, level with it and as tall, a narrow ' +
+    'column with a TANK plate over the sight tube (full, float at the top); the Side of truck ' +
+    'inset (hydrant-to-tank lever up, shut) alone under the bay. Warning strip below, no lamps ' +
+    'lit. Water (x-ray, drawn like a charged hose): only the tank feed above the tank-to-pump ' +
+    'lever shows a still blue core (no streaks); every other pipe and the pump are plain metal ' +
+    '(empty).',
   'engine-cold':
     'As idle, but the engine is cold: the tacho (Cat 1) at 0, the ignition switch’s bar pointing ' +
-    'up (off), START and STOP caps unpressed, the ALT lamp (and on the Cat 7 the oil lamp) dark ' +
-    'glass. Cat 7: IGN, the lamps and START in a row under their plates, the red STOP T-handle ' +
-    'beside the throttle knob.',
+    'up (off), START and STOP caps unpressed, every lamp dark glass (Cat 1: PUMP RUNNING too). ' +
+    'Cat 7: IGN, the lamps and START in a row under their plates, the red STOP T-handle beside ' +
+    'the throttle knob.',
   'ignition-on':
-    'As engine-cold with the ignition on: its bar turned to point right; the ALT lamp (and on ' +
-    'the Cat 7 the oil lamp) lit red with a glow. Nothing else moves.',
+    'As engine-cold with the ignition on: its bar turned to point right; the ALT lamp (Cat 1: ' +
+    'ALTERNATOR and ENGINE FAULT; Cat 7: and the oil lamp) lit red with a glow, PUMP RUNNING ' +
+    'still dark. Nothing else moves.',
   'tank-attack-700':
     'As idle, but tank to pump open (green lever up along its pipe), the first line’s outlet ' +
-    'lever up along its drop (open, travel arc filled blue), pressure needle at ~700 kPa (low on ' +
-    'the 0–4000 face), tacho above idle, sight tube nearly full. No warnings. Water: blue cores ' +
-    'with white streaks (flowing) down the tank feed, along into the pump’s eye, out of the ' +
-    'volute, down to the manifold, right to the open line’s drop (D2 on the Cat 1) and through ' +
-    'its lever to the coupling; the pump’s pool shows a dashed swirl. Still cores (no streaks) ' +
-    'in the manifold toward the other drops, those drops down to their shut levers, the reel ' +
-    'riser and the pump-to-tank stub up to its lever; below the shut levers, the suction and the ' +
-    'return over the pump: plain metal.',
+    'lever up along its drop (open, travel arc filled blue), pressure needle at ~700 kPa (Cat 1: ' +
+    'just over a quarter of the 0–2500 face), tacho above idle, sight tube nearly full. No ' +
+    'warnings. Water: blue cores with white streaks (flowing) down the tank feed, along into the ' +
+    'pump’s eye, out of the volute, down to the manifold, to the open line’s drop (D1 on the ' +
+    'Cat 1) and through its lever to the coupling; the pump’s pool shows a dashed swirl. Still ' +
+    'cores (no streaks) in the manifold toward the other drops, those drops down to their shut ' +
+    'levers, the reel risers and the pump-to-tank run to its lever; below the shut levers, the ' +
+    'external inlet and the return to the tank: plain metal.',
   'after-tank-attack':
     'As tank-attack-700 but every lever shut again (tank to pump pointing right, the outlet ' +
     'lever pointing right), throttle back at idle, pressure ~0. Water: the casing kept its ' +
     'water, so the pump’s pool (no swirl), the eye run, the discharge, manifold, the drops down ' +
-    'to every lever, the reel riser and the pump-to-tank stub all show still cores, no streaks; ' +
-    'the tank feed is still above and below its lever. Below the outlet levers, the suction and ' +
-    'the return over the pump: plain metal.',
+    'to every lever, the reel risers and the pump-to-tank run all show still cores, no streaks; ' +
+    'the tank feed is still above and below its lever. Below the outlet levers, the external ' +
+    'inlet and the return to the tank: plain metal.',
   highlighted:
     'As tank-attack-700, with the first line’s delivery picked out: its coupling has a double ' +
     'focus ring and the number plate button is pressed; on the scene its hose and legend row are ' +
@@ -554,11 +560,11 @@ export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'gauge/cat1-faces',
     expect:
-      'The Cat 1 fitted faces (spec scales, no psi). Two compounds −100…25 (×100) with the vacuum ' +
-      'sector, labels every 5 (500 kPa), amber −80…−70, red −100…−80: needles at −40 (in the ' +
-      'vacuum sector) and 300. A discharge 0–40 (×100) labelled every 5, amber 11–14 and no red band: ' +
-      'needle at 700, low on the face. Two tachos 0–4 (×1000), red 3–4: needles at 2 400 and ' +
-      '3 200 (in the red, red readout).',
+      'The Cat 1 fitted faces (the Cat1B panel, spec scales). Two compounds −100…16 (×100) with ' +
+      'the vacuum sector, labels every 4 (400 kPa), amber −80…−70, red −100…−80: needles at −40 ' +
+      '(in the vacuum sector) and 300. A discharge 0–25 (×100) labelled every 5, amber 11–14 and ' +
+      'no red band: needle at 700, a little over a quarter of the sweep. Two tachos 0–4 (×1000), ' +
+      'red 3–4: needles at 2 400 and 3 200 (in the red, red readout).',
   },
   {
     id: 'gauge/wake',
