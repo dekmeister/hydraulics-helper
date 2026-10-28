@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { rotate } from '../../sim/testUtils';
 import { CAT1 } from '../../sim/appliances/cat1';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { APPLIANCES } from '../../sim/appliances/catalogue';
@@ -17,11 +18,14 @@ const lit = (s: SimState) =>
 
 // The captions in catalog.ts promise these; a re-tuned placeholder that breaks one fails here.
 describe.each(
-  [
-    [CAT1, CAT1],
-    [CAT1, TEST_APPLIANCE],
-    [TEST_APPLIANCE, CAT1],
-  ].map(([p, b]) => [`${p?.id ?? ''} with base ${b?.id ?? ''}`, p ?? CAT1, b ?? CAT1] as const),
+  rotate(
+    [
+      [CAT1, CAT1],
+      [CAT1, TEST_APPLIANCE],
+      [TEST_APPLIANCE, CAT1],
+    ],
+    0,
+  ).map(([p, b]) => [`${p?.id ?? ''} with base ${b?.id ?? ''}`, p ?? CAT1, b ?? CAT1] as const),
 )('relay fixture states: %s', (_name, spec, base) => {
   const support = { base };
 
@@ -72,7 +76,7 @@ describe.each(
 });
 
 // Free play's fixture (catalog.ts caption): both trucks working, the monitor flowing, nothing lit.
-describe.each(APPLIANCES.map((spec) => [spec.id, spec] as const))(
+describe.each(rotate(APPLIANCES, 0).map((spec) => [spec.id, spec] as const))(
   'free-play fixture state: %s',
   (_id, spec) => {
     it('relay charged with residual to spare, base primed, every line flowing, nothing lit', () => {

@@ -10,6 +10,7 @@
     "build:e2e": "vite build --mode e2e --outDir dist-e2e",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:matrix": "VITEST_MATRIX=1 vitest run",
     "sim:trace": "node scripts/sim-trace.mjs",
     "test:e2e": "playwright test",
     "test:e2e:full": "PW_E2E_FULL=1 playwright test",
@@ -17,7 +18,7 @@
     "review": "node scripts/review-baseline.mjs --if-stale && playwright test -c playwright.review.config.ts",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
-    "verify": "npm run lint && npm run test && npm run build && npm run test:e2e && npm run review"
+    "verify": "npm run lint && npm run test:matrix && npm run build && npm run test:e2e && npm run review"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "5.3.0",

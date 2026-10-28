@@ -19,6 +19,7 @@ import {
   inputsWith,
   layLine,
   lineOnEveryDelivery,
+  matrix,
   primedState,
   run,
   seededRandom,
@@ -29,10 +30,15 @@ import {
 } from '../testUtils';
 import type { ApplianceSpec, HoseLine, PlayerInputs } from '../types';
 import { APPLIANCES } from './catalogue';
+import { CAT1 } from './cat1';
 import { controlIds, primerSwitchIds, validateInputs } from './controls';
 import { TEST_APPLIANCE } from './testAppliance';
 
-const ALL: readonly ApplianceSpec[] = [...APPLIANCES, TEST_APPLIANCE];
+// The fast tier runs the contract on one real truck and the test-only spec.
+const ALL: readonly ApplianceSpec[] = matrix(
+  [...APPLIANCES, TEST_APPLIANCE],
+  [CAT1, TEST_APPLIANCE],
+);
 const allDeliveries = (spec: ApplianceSpec) => spec.deliveries.map((d) => d.id);
 
 describe('appliance catalogue', () => {

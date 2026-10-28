@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { rotate } from '../testUtils';
 import { CAT1 } from '../appliances/cat1';
 import { TEST_APPLIANCE } from '../appliances/testAppliance';
 import { isRigid } from '../hose';
@@ -10,8 +11,12 @@ import type { ApplianceSpec } from '../types';
 
 // Golden traces (docs/TESTING.md §2, layer 3). If one changes, explain the numeric diff before
 // updating it; never update a trace to make a calibration test pass.
-describe.each(SCENARIOS.map((s) => [s.id, s] as const))('scenario %s', (_id, scenario) => {
-  const specs = eligibleAppliances(scenario, [...eligibleAppliances(scenario), TEST_APPLIANCE]);
+// The fast tier plays each scenario on one appliance, rotating so every appliance gets some.
+describe.each(SCENARIOS.map((s, i) => [s.id, s, i] as const))('scenario %s', (_id, scenario, i) => {
+  const specs = rotate(
+    eligibleAppliances(scenario, [...eligibleAppliances(scenario), TEST_APPLIANCE]),
+    i,
+  );
 
   it('is playable on at least one registered appliance', () => {
     expect(eligibleAppliances(scenario).length).toBeGreaterThan(0);
@@ -102,10 +107,13 @@ describe.each(SCENARIOS.map((s) => [s.id, s] as const))('scenario %s', (_id, sce
 describe.each(SCENARIOS.filter((s) => (s.support ?? []).length > 0).map((s) => [s.id, s] as const))(
   'scenario %s with mixed appliances',
   (_id, scenario) => {
-    const pairs = [
-      [CAT1, TEST_APPLIANCE],
-      [TEST_APPLIANCE, CAT1],
-    ] as const;
+    const pairs = rotate(
+      [
+        [CAT1, TEST_APPLIANCE],
+        [TEST_APPLIANCE, CAT1],
+      ] as const,
+      0,
+    );
     it.each(pairs.map(([p, o]) => [`${p.id}+${o.id}`, p, o] as const))(
       'golden trace on %s',
       async (name, player, other) => {

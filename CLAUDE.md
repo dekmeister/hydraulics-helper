@@ -10,17 +10,25 @@ Browser game teaching NSW-style fire pump operation: interactive pump panel + sc
 
 ```bash
 npm run dev       # Vite dev server
-npm run test      # Vitest: sim, contract suite, golden traces, data consistency (watch: -- --watch)
+npm run test      # Vitest fast tier (~25 s): sim, contract suite, golden traces, data consistency; a slice of each cross-product
+npm run test:matrix    # Vitest with every appliance × scenario × support case; part of verify
 npm run test:e2e  # Playwright: journeys on the phone, layout invariants at 375/768/1280, keyboard on desktop
 npm run test:e2e:full  # The exhaustive matrix (every journey × viewport × fixture state); opt-in
 npm run review    # Visual review bundle in review/ against baselines rendered from HEAD (read review/report.md)
 npm run review:baseline [ref]  # Render baselines from another commit (default HEAD); never committed
 npm run lint      # ESLint + Prettier check
 npm run build     # Type-check + production build
-npm run verify    # lint → test → build → test:e2e → review
+npm run verify    # lint → test:matrix → build → test:e2e → review (~3–4 min)
 ```
 
-`npm run verify` must pass before a session ends (until M0 creates it, the individual commands that exist). If you break `dev`, fixing it takes priority over new features.
+**Fast loop: test what you touched, scale the final check to the change.** Dek shouldn't wait minutes for a minor change.
+
+* While iterating: only the tests for what you changed: `npx vitest run <file|dir>` (~3 s), `npx playwright test <spec>`, `npx eslint <files>`.
+* Before finishing: `npm run test` (~25 s), `npx tsc -b`, lint on the touched files; for UI changes also the touched e2e specs and `npm run review`.
+* Full `npm run verify` only for cross-cutting changes (sim engine, `ApplianceSpec`/types, a new or changed appliance, scenarios catalogue, test harness, build config) or when Dek asks.
+* A new cross-product test wraps its case list in `matrix()`/`rotate()` (`sim/testUtils.ts`) so the fast tier stays fast.
+
+If you break `dev`, fixing it takes priority over new features.
 
 ## Non-negotiable rules
 
@@ -67,7 +75,7 @@ npm run verify    # lint → test → build → test:e2e → review
 
 1. Pick one `docs/BACKLOG.md` item (or the slice Dek names). Restate it in one sentence before starting.
 2. Skim the relevant `ARCHITECTURE.md` section; if reality has diverged from the doc, update the doc in the same session.
-3. Implement (tests-first for sim; journey/fixture alongside UI). Run `npm run verify`; for UI changes, do the review step above.
+3. Implement (tests-first for sim; journey/fixture alongside UI). Run the checks the change warrants (see Commands); for UI changes, do the review step above.
 4. Remove the finished item from `docs/BACKLOG.md`; add anything deferred to the backlog or the "needs Dek" list.
 5. Summarise: what changed, what's demoable, which fixtures you reviewed and which renders/traces changed and why, open questions.
 

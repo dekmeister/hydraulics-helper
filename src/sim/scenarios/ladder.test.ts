@@ -5,7 +5,7 @@ import { APPLIANCES } from '../appliances/catalogue';
 import { TEST_APPLIANCE } from '../appliances/testAppliance';
 import { operate } from '../lesson/operator';
 import { scoreLesson } from '../lesson/score';
-import { expectSane } from '../testUtils';
+import { expectSane, rotate } from '../testUtils';
 import { SCENARIOS } from '.';
 import { loadScenario } from './load';
 import { supportsLesson, type Scenario, type SupportSpecs } from './types';
@@ -49,8 +49,8 @@ describe('the scenario ladder', () => {
   });
 });
 
-describe.each(LADDER.map((s) => [s.id, s] as const))('%s', (_id, scenario) => {
-  const cases = casesFor(scenario);
+describe.each(LADDER.map((s, i) => [s.id, s, i] as const))('%s', (_id, scenario, i) => {
+  const cases = rotate(casesFor(scenario), i);
   it('can be played on at least the reference appliance', () => {
     expect(cases.length).toBeGreaterThan(0);
   });

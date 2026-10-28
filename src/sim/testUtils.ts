@@ -307,3 +307,21 @@ export function closedRelayPair(
     inputsWith(throttle, [inlet, ...open]);
   return { state, link, inlet, out, attackInputs };
 }
+
+/** `npm run test:matrix` (VITEST_MATRIX=1) runs every cross-product case; `npm run test` a slice. */
+export const FULL_MATRIX = import.meta.env.VITEST_MATRIX === '1';
+
+/**
+ * Every case of a cross-product (appliance × scenario × support) under `test:matrix`; otherwise
+ * only those in `sample`, or the first if none are, so the fast tier stays fast as appliances are
+ * added (docs/TESTING.md §7).
+ */
+export function matrix<T>(all: readonly T[], sample: readonly T[]): readonly T[] {
+  if (FULL_MATRIX) return all;
+  const kept = all.filter((x) => sample.includes(x));
+  return kept.length > 0 ? kept : all.slice(0, 1);
+}
+
+/** The `index`-th case only (wrapping): rotating it per row still covers every case across rows. */
+export const rotate = <T>(all: readonly T[], index: number): readonly T[] =>
+  matrix(all, all.slice(index % all.length, (index % all.length) + 1));

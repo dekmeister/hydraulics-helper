@@ -1,11 +1,12 @@
 // The water each realistic fixture's caption promises (catalog.ts), checked against the selector.
 import { describe, expect, it } from 'vitest';
+import { rotate } from '../../sim/testUtils';
 import { inletOfKind } from '../../sim/appliances/controls';
 import { activeTruck } from '../../state/activeTruck';
 import { waterIn, type WaterRef, type WaterState } from '../../state/plumbing';
 import { REALISTIC_APPLIANCES, realisticState, type RealisticStateId } from './realisticStates';
 
-describe.each(REALISTIC_APPLIANCES.map((spec) => [spec.id, spec] as const))(
+describe.each(rotate(REALISTIC_APPLIANCES, 0).map((spec) => [spec.id, spec] as const))(
   'realistic fixture water: %s',
   (_id, spec) => {
     const tankIn = inletOfKind(spec, 'tank');

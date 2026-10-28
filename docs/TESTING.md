@@ -195,13 +195,17 @@ When a UI change has no fixture that shows it, add one. That's how the gallery g
 
 | Command | Runs | When |
 |---|---|---|
-| `npm run test` | Vitest: layers 1–4 | Constantly; `-- --watch` while doing sim work |
+| `npx vitest run <file\|dir>` | Just the tests for what you changed (~3 s) | While iterating |
+| `npm run test` | Vitest: layers 1–4, a representative slice of each cross-product (~25 s) | Before finishing any change; `-- --watch` while doing sim work |
+| `npm run test:matrix` | The same with every appliance × scenario × support case (`VITEST_MATRIX=1`) | Inside `verify`; after changing an appliance or scenario |
 | `npm run sim:trace -- <scenario> [appliance]` | Prints a trace table | Exploring sim behaviour |
 | `npm run test:e2e` | Playwright journeys + layout invariants (no pixel compare) | Any UI change |
 | `npm run test:e2e:full` | The same over every project × appliance × fixture state | After layout or input-handling work |
 | `npm run review` | Renders baselines from `HEAD` if stale, then the review bundle in `review/` | Any change that could affect rendering |
 | `npm run review:baseline [ref]` | Renders baselines from `ref` (default `HEAD`) in a temporary worktree | Reviewing against another commit, e.g. `main` |
-| `npm run verify` | lint → test → build → test:e2e → review | Must pass before a session ends |
+| `npm run verify` | lint → test:matrix → build → test:e2e → review (~3–4 min) | Cross-cutting changes, or when Dek asks (CLAUDE.md, Commands) |
+
+Cross-product tests (appliance × scenario × support pairing) wrap their case lists in `matrix(all, sample)` or `rotate(all, i)` from `sim/testUtils.ts`. The fast tier keeps one real truck and the test-only spec, and rotates one appliance per scenario so every appliance is still exercised somewhere; `test:matrix` runs everything. Golden traces outside the slice are checked only by `test:matrix`.
 
 ## 8. Dependencies
 
