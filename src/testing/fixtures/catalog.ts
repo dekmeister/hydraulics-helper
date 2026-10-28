@@ -378,16 +378,16 @@ const RELAY_FIXTURES: FixtureMeta[] = RELAY_FIXTURE_SETS.flatMap((set) =>
 const LESSON_CAPTIONS = {
   guided:
     'Whole app in a lesson: app bar (PUMPOPS, SCENARIOS, SOUND ON). Scene header reads ' +
-    '"LESSON 1 First line…" instead of the picker. The tank-to-pump control has the focus double ' +
-    'ring (white inside ink) and is scrolled into view. A paper dock at the foot of the screen ' +
-    '(right half from 900 px): "STEP 2 OF 8", "Water comes from the truck’s tank first. Open Tank ' +
-    'to pump: tap its green handle, or drag it a quarter turn to open it part way." (each truck ' +
-    'names its own valve; the hint comes from its layout), and OBJECTIVES 0/3 ' +
-    'and END buttons. Nothing hidden under the dock once scrolled.',
+    '"LESSON 1 First line: one 25 mm line from the tank" instead of the picker; one line laid ' +
+    'dry on D1. Every job starts cold, so the ignition switch has the focus double ring (white ' +
+    'inside ink) and is scrolled into view. A paper dock at the foot of the screen (right half ' +
+    'from 900 px): "STEP 2 OF 12", "The pump engine is cold. Turn on Ignition (tap it).", and ' +
+    'OBJECTIVES 0/3 and END buttons. Nothing hidden under the dock once scrolled.',
   incident:
-    'Whole app in the incident lesson: one 38 mm line charged, the crew has just moved uphill. ' +
+    'Whole app in the incident lesson: crew 1’s 25 mm line on D1, the crew has just moved 10 m ' +
+    'uphill with another length, so the line reads "Filling" (blue, part full on the scene). ' +
     'Dock: the active objective "Crew 1 has moved 10 m up the slope…", a mono line "Branch on ' +
-    'Delivery …: ~2xx kPa · target 315 kPa–385 kPa" in pencil (not yet met), the radio call in ' +
+    'Delivery 1: 0 kPa · target 315 kPa–385 kPa" in pencil (not yet met), the radio call in ' +
     'italics "Branch 1: Moving up the slope after a spot fire. We need more pressure up here.", ' +
     'and the objective list expanded: ✓ first objective, ▸ the uphill one, ○ the rest in pencil.',
 } as const;
@@ -426,10 +426,12 @@ const DEBRIEF_CAPTIONS = {
     'Total 100). Buttons: ' +
     'NEXT SCENARIO (ink, filled), TRY AGAIN, BACK TO THE PANEL, ALL SCENARIOS.',
   failed:
-    'Debrief: "SCENARIO FAILED", "2. Tank attack…". ☆☆☆ and 40 points; WHAT HAPPENED leads with ' +
-    'an amber-edged "Scenario failed / The tank ran dry with crews on the branches."; OBJECTIVES ' +
-    '✓ ✓ ○; SCORE Objectives +40, Clean running 0 (a failed run earns its objectives only), ' +
-    'each penalty 0, Total 40: the lines add up. No NEXT SCENARIO button.',
+    'Debrief: "SCENARIO FAILED", "2. Tank attack…". ☆☆☆ and the points the objectives earned ' +
+    '(Cat 1 45, Cat 7 30); WHAT HAPPENED leads with an amber-edged "Scenario failed / The tank ' +
+    'ran dry with crews on the branches."; OBJECTIVES: four, about crew 1’s and crew 2’s 25 mm ' +
+    'lines, holding both at about 250 kPa, and shut down; the met ones ✓ (Cat 1 three, Cat 7 two), ' +
+    'the rest ○; SCORE Objectives +N, Clean running 0 (a failed run earns its objectives only), ' +
+    'each penalty 0, Total N: the lines add up. No NEXT SCENARIO button.',
 } as const;
 
 const DEBRIEF_FIXTURES: FixtureMeta[] = APPLIANCES.flatMap((spec) =>
