@@ -13,7 +13,8 @@ npm run dev       # Vite dev server
 npm run test      # Vitest: sim, contract suite, golden traces, data consistency (watch: -- --watch)
 npm run test:e2e  # Playwright: journeys on the phone, layout invariants at 375/768/1280, keyboard on desktop
 npm run test:e2e:full  # The exhaustive matrix (every journey × viewport × fixture state); opt-in
-npm run review    # Playwright visual baselines + review bundle in review/ (read review/report.md)
+npm run review    # Visual review bundle in review/ against baselines rendered from HEAD (read review/report.md)
+npm run review:baseline [ref]  # Render baselines from another commit (default HEAD); never committed
 npm run lint      # ESLint + Prettier check
 npm run build     # Type-check + production build
 npm run verify    # lint → test → build → test:e2e → review
@@ -50,7 +51,7 @@ npm run verify    # lint → test → build → test:e2e → review
 * Scripted scenario runs get a **golden trace** (CSV snapshot). If a trace changes, explain the numeric diff before updating it. Never "fix" a failing calibration test by updating a snapshot.
 * UI is tested **in a real browser with Playwright, not jsdom**: journeys drive the built app through real controls (no input shortcuts), and assert readings via ARIA (`role="meter"`), not needle pixels. See `docs/TESTING.md`.
 * Any new visual state gets a **fixture** (`src/testing/fixtures/`) with an `expect` caption; adding a fixture adds a screenshot at all three viewports.
-* After UI work, run `npm run review`, read `review/report.md`, and **look at the contact sheet of every changed or new fixture** against its caption (checklist in `docs/TESTING.md` §6). Update baselines only for changes you've seen and can explain; list them in the summary.
+* After UI work, run `npm run review`, read `review/report.md`, and **look at the contact sheet of every changed or new fixture** against its caption (checklist in `docs/TESTING.md` §6). Baselines are rendered from `HEAD`, never committed (`docs/TESTING.md` §5); accept locally only changes you've seen and can explain, and list them in the summary.
 * **Don't drive Chrome by hand** (Chrome extension, clicking around the dev server) to check UI work. Use the review loop. Manual browsing is for exploration Dek asks for.
 * Tests are deterministic: sim time moves only via `__pumpops.step()`, randomness is seeded, animations are off for screenshots. Fix or delete a flaky test the same session.
 * When you fix a bug, first write the test that would have caught it.
@@ -68,7 +69,7 @@ npm run verify    # lint → test → build → test:e2e → review
 2. Skim the relevant `ARCHITECTURE.md` section; if reality has diverged from the doc, update the doc in the same session.
 3. Implement (tests-first for sim; journey/fixture alongside UI). Run `npm run verify`; for UI changes, do the review step above.
 4. Remove the finished item from `docs/BACKLOG.md`; add anything deferred to the backlog or the "needs Dek" list.
-5. Summarise: what changed, what's demoable, which fixtures you reviewed and which baselines/traces changed and why, open questions.
+5. Summarise: what changed, what's demoable, which fixtures you reviewed and which renders/traces changed and why, open questions.
 
 Commits: imperative, scoped, e.g. `sim: add draughting lift + prime states`, `ui: compound gauge dual scale`. Small commits over one mega-commit.
 

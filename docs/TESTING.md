@@ -93,7 +93,7 @@ interface Fixture {
 
 * **One browser: Chromium**, from Playwright's pinned download. On a machine whose preinstalled Chromium doesn't match the pinned Playwright (e.g. a cloud container, where `/opt/pw-browsers/chromium_headless_shell-<build>/chrome-headless-shell-linux64/chrome-headless-shell` works), set `PW_CHROMIUM_EXECUTABLE` to that browser; screenshots taken with a different build may need their baselines checked (`npx playwright install chromium`, no sudo; if system libraries are missing, Dek runs `sudo npx playwright install-deps chromium`). Baselines are only valid for that pinned browser and this OS; `@playwright/test` is pinned to an exact version and upgraded deliberately (that upgrade will refresh baselines).
 * **Target:** `npm run build:e2e` + `vite preview --outDir dist-e2e` on fixed port 4317 (`--strictPort`), started by Playwright's `webServer`. Testing the built app catches production-only issues and avoids HMR noise. The server is always rebuilt (`reuseExistingServer: false`): the e2e build takes under a second, and reusing a running server risks testing a stale bundle.
-* **Configs:** `playwright.base.ts` holds the shared server and projects; `playwright.config.ts` (`test:e2e`) runs everything except `e2e/visual/`, scoped per project (below); `playwright.review.config.ts` (`review`) runs only `e2e/visual/` with the review reporter and `updateSnapshots: 'none'`, so a missing baseline fails as **New** instead of being written silently.
+* **Configs:** `playwright.base.ts` holds the shared server and projects; `playwright.config.ts` (`test:e2e`) runs everything except `e2e/visual/`, scoped per project (below); `playwright.review.config.ts` (`review`) runs only `e2e/visual/` with the review reporter and `updateSnapshots: 'none'`, so a missing baseline fails as **New** instead of being written silently. Baselines come from `scripts/review-baseline.mjs` (§5).
 * **Projects (viewports):**
 
   | Project | Viewport | Notes | `test:e2e` runs |
@@ -144,11 +144,12 @@ Assertions use tolerances that come from the calibration/scenario data, not new 
 
 ## 5. Visual baselines
 
-* Baselines live in `e2e/visual/__screenshots__/` and **are committed**: they are the visual spec.
+* **Baselines are rendered from a commit, not committed.** The renders are deterministic (§1), so a commit's screenshots are a build output of it; committing them cost the repo hundreds of MB of PNG churn. `scripts/review-baseline.mjs` checks the reference (default `HEAD`) out in a temporary git worktree, renders every fixture there with this checkout's `node_modules`, and writes them to the gitignored `e2e/visual/__screenshots__/` with a stamp (`.baseline`: the commit's sha and subject). Uncommitted work is never in the baseline, so `npm run review` shows exactly what the working tree changes against the last commit.
+* `npm run review` runs it with `--if-stale` first: nothing happens if the stamp names `HEAD`, or if every change since the stamped commit is docs only (`*.md`, `docs/`, `Design/`, `Resources/`; the stamp moves on); otherwise it re-renders (~2½ min on a 4-core laptop). `npm run review:baseline [ref]` renders from any commit, e.g. `main` to review a branch's whole change. `report.md` names the commit the baselines came from.
 * A screenshot diff fails `npm run review` (and therefore `verify`). Playwright writes `expected`, `actual` and `diff` PNGs.
 * `maxDiffPixelRatio: 0.002` is relative to the whole page, so a small change (e.g. one heading's font size) can stay under it at 1280 px while failing at 375 px. If a change *should* show at every viewport and the report says unchanged there, treat that as a finding (§6 step 4).
-* **Updating baselines** (`npm run review -- --update-snapshots`, scoped with `-g <fixture>` where possible) is allowed only after Claude has looked at the new image (§6) and can say why the change is intended. The session summary lists every baseline that changed and why. Dek sees the PNG changes in `git diff --stat` / their git client before committing.
-* Baselines go stale for legitimate reasons, such as Dek supplying a doctrine figure that moves a needle. Regenerate in the same session as the change, never as a separate "fix the tests" step.
+* **Accepting a change** is committing the code that makes it: the next review renders the new commit. Within a session, `npm run review -- --update-snapshots` (scoped with `-g <fixture>` where possible) accepts reviewed changes locally so later runs show only what's new; it is allowed only after Claude has looked at the new image (§6) and can say why the change is intended. The session summary lists every fixture whose rendering changed and why; with no PNGs in `git diff`, that list is Dek's record of visual changes before committing.
+* Renders change for legitimate reasons, such as Dek supplying a doctrine figure that moves a needle. Review them in the same session as the change, never as a separate "fix the tests" step.
 
 ## 6. The Claude review loop
 
@@ -178,7 +179,7 @@ Contact sheets and diff composites are made by Playwright itself: the reporter w
 ### What Claude does with it
 
 1. `npm run test` and `npm run test:e2e`. Fix anything red from the text output first.
-2. `npm run review`, then read `review/report.md`.
+2. `npm run review` (it renders the `HEAD` baselines first if they're stale), then read `review/report.md`.
 3. For every **changed** or **new** entry, Read the contact sheet (and the diff image if changed). Check it against its `expect` caption and this checklist:
    * needles point where the readings say (a 700 kPa reading on a 0–1600 face is a little under half-sweep);
    * nothing clipped, overlapping, or off-canvas at 375 px; labels legible;
@@ -198,7 +199,8 @@ When a UI change has no fixture that shows it, add one. That's how the gallery g
 | `npm run sim:trace -- <scenario> [appliance]` | Prints a trace table | Exploring sim behaviour |
 | `npm run test:e2e` | Playwright journeys + layout invariants (no pixel compare) | Any UI change |
 | `npm run test:e2e:full` | The same over every project × appliance × fixture state | After layout or input-handling work |
-| `npm run review` | Visual baselines + review bundle in `review/` | Any change that could affect rendering |
+| `npm run review` | Renders baselines from `HEAD` if stale, then the review bundle in `review/` | Any change that could affect rendering |
+| `npm run review:baseline [ref]` | Renders baselines from `ref` (default `HEAD`) in a temporary worktree | Reviewing against another commit, e.g. `main` |
 | `npm run verify` | lint → test → build → test:e2e → review | Must pass before a session ends |
 
 ## 8. Dependencies

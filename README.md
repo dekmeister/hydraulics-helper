@@ -44,7 +44,7 @@ The simulation aims to be _honest_ rather than exact: the right shape of behavio
 | `npm run test`     | Unit tests: the simulation, every appliance, scenario traces         |
 | `npm run test:e2e` | Browser tests with Playwright at phone, tablet and desktop widths    |
 | `npm run test:e2e:full` | The same over every width × appliance × state (slow; opt-in)   |
-| `npm run review`   | Screenshot baselines and a visual review bundle in `review/`         |
+| `npm run review`   | Screenshots compared with the last commit's, as a review bundle in `review/` |
 | `npm run lint`     | ESLint and Prettier                                                  |
 | `npm run build`    | Type-check and production build                                      |
 | `npm run verify`   | All of the above, in order; must pass before a change goes in        |

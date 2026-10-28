@@ -8,7 +8,7 @@ import type {
   TestCase,
   TestResult,
 } from '@playwright/test/reporter';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 
 type Outcome = 'failure' | 'changed' | 'new' | 'unchanged' | 'skipped';
@@ -71,10 +71,20 @@ function gridHtml(title: string, cells: { label: string; png: Buffer }[]): strin
 
 export default class ReviewReporter implements Reporter {
   private readonly outputDir: string;
+  private readonly baselineStamp: string | undefined;
   private readonly entries: Entry[] = [];
 
-  constructor(options: { outputDir?: string } = {}) {
+  constructor(options: { outputDir?: string; baselineStamp?: string } = {}) {
     this.outputDir = options.outputDir ?? 'review';
+    this.baselineStamp = options.baselineStamp;
+  }
+
+  /** The commit the baselines were rendered from (scripts/review-baseline.mjs), if stamped. */
+  private baselineFrom(): string {
+    const path = this.baselineStamp;
+    if (path === undefined || !existsSync(path)) return 'unstamped (not rendered by `npm run review:baseline`)';
+    const [sha = '', ...subject] = readFileSync(path, 'utf8').trim().split(' ');
+    return `\`${sha.slice(0, 7)}\` ${subject.join(' ')}`;
   }
 
   onTestEnd(test: TestCase, result: TestResult): void {
@@ -201,7 +211,9 @@ export default class ReviewReporter implements Reporter {
     return [
       `# Review report`,
       '',
-      `Run status: **${status}**. Start with Failures, then look at the contact sheet of every Changed and New fixture (docs/TESTING.md §6).`,
+      `Run status: **${status}**. Baselines: ${this.baselineFrom()}.`,
+      '',
+      `Start with Failures, then look at the contact sheet of every Changed and New fixture (docs/TESTING.md §6).`,
       '',
       section('Failures', groups.failure),
       section('Changed', groups.changed),

@@ -5,11 +5,17 @@ import { baseConfig } from './playwright.base';
 export default defineConfig({
   ...baseConfig,
   testMatch: 'visual/**/*.spec.ts',
-  // Never write a baseline implicitly: a missing one fails as "New" until reviewed and written
-  // with --update-snapshots (docs/TESTING.md §5).
+  // Never write a baseline implicitly: a missing one fails as "New". Baselines are rendered from a
+  // commit by scripts/review-baseline.mjs (docs/TESTING.md §5), which keeps this path in step.
   updateSnapshots: 'none',
   snapshotPathTemplate: '{testDir}/visual/__screenshots__/{projectName}/{arg}{ext}',
-  reporter: [['list'], ['./e2e/review/reporter.ts', { outputDir: 'review' }]],
+  reporter: [
+    ['list'],
+    [
+      './e2e/review/reporter.ts',
+      { outputDir: 'review', baselineStamp: 'e2e/visual/__screenshots__/.baseline' },
+    ],
+  ],
   expect: {
     toHaveScreenshot: { maxDiffPixelRatio: 0.002, animations: 'disabled', caret: 'hide' },
   },

@@ -13,7 +13,8 @@
     "sim:trace": "node scripts/sim-trace.mjs",
     "test:e2e": "playwright test",
     "test:e2e:full": "PW_E2E_FULL=1 playwright test",
-    "review": "playwright test -c playwright.review.config.ts",
+    "review:baseline": "node scripts/review-baseline.mjs",
+    "review": "node scripts/review-baseline.mjs --if-stale && playwright test -c playwright.review.config.ts",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "verify": "npm run lint && npm run test && npm run build && npm run test:e2e && npm run review"

@@ -24,3 +24,6 @@ dist-e2e/
 /review/
 test-results/
 playwright-report/
+
+# Visual baselines: rendered from a commit by scripts/review-baseline.mjs, never committed
+e2e/visual/__screenshots__/

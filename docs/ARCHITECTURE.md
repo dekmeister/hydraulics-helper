@@ -80,8 +80,8 @@ src/
     debrief/      # Debrief screen
   audio/          # soundParams (pure) → Web Audio synth: engine note, primer, cavitation rattle, spray, overflow
   testing/        # e2e build mode only: window.__pumpops test API, fixture gallery (docs/TESTING.md §3)
-e2e/              # Playwright: journeys/, visual/ (+ committed __screenshots__), layout.spec.ts, invariants.ts, fixtures.ts, review/ reporter
-scripts/          # Node build helpers (check-prod-bundle.mjs)
+e2e/              # Playwright: journeys/, visual/ (baselines rendered from a commit, gitignored), layout.spec.ts, invariants.ts, fixtures.ts, review/ reporter
+scripts/          # Node build helpers (check-prod-bundle.mjs, review-baseline.mjs)
 ```
 
 **The hard rule:** `sim/` is a pure, deterministic library. `advance(state, inputs, dt)` takes plain data and returns new plain data. Every hydraulics behaviour must be demonstrable in a Vitest test without rendering anything. UI reads sim state through selectors and writes only through a small `PlayerInputs` interface (valve positions 0–1, throttle 0–1, primer engaged, etc.), keyed by the control ids the appliance spec defines (§9.3).
@@ -340,7 +340,7 @@ Scenarios name appliances by `id`. Where the lesson is generic (e.g. "tank attac
 2. `docs/CALIBRATION.md` section with worked examples; Dek confirms or marks PLACEHOLDER.
 3. Contract suite passes; add tests for anything appliance-specific.
 4. If it needs a new behaviour kind (e.g. a new primer type), extend the enum and the engine module test-first, not as a special case.
-5. Panel layout + scene art. Generated fixtures and layout invariants cover it at 375 / 768 / 1280 px automatically; run `npm run review`, look at the new contact sheets and commit the new baselines.
+5. Panel layout + scene art. Generated fixtures and layout invariants cover it at 375 / 768 / 1280 px automatically; run `npm run review`, look at the new contact sheets (they show as New until the appliance is committed).
 6. Register it in the appliance catalogue, then list it in scenario selection.
 
 ### 9.8 What the second appliance changed (M7, Cat 7)

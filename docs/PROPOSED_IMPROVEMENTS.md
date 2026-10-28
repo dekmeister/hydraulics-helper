@@ -23,6 +23,8 @@ The git pack is 205 MB after 33 commits; `e2e/visual/__screenshots__` (62 MB on 
 
 Worth settling before the next appliance (Cat 9) lands.
 
+**Decided (2026-10-28): neither.** Baselines are rendered from a reference commit and never committed (`scripts/review-baseline.mjs`, `docs/TESTING.md` §5); LFS was rejected because the files are derivable and its bandwidth would be spent on every clone. Removing them from history is a separate, Dek-run `git filter-repo` rewrite.
+
 ## 2. Structural refactors
 
 In priority order. All but the first are in `BACKLOG.md` "Code health".
