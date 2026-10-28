@@ -68,7 +68,7 @@ if (spawnSync('git', ['diff', '--quiet', sha, '--', 'package-lock.json']).status
 
 const tmp = mkdtempSync(join(tmpdir(), 'pumpops-baseline-'));
 const tree = join(tmp, 'tree');
-log(`rendering baselines from ${sha.slice(0, 7)} ${subject}`);
+log(`rendering baselines from ${sha.slice(0, 7)} ${subject} (a few minutes)`);
 git('worktree', 'add', '--detach', '--quiet', tree, sha);
 try {
   symlinkSync(resolve('node_modules'), join(tree, 'node_modules'), 'dir');
@@ -84,9 +84,15 @@ try {
       '--update-snapshots=all',
       '--reporter=dot',
     ],
-    { cwd: tree, stdio: 'inherit' },
+    // Every shot is written fresh, so Playwright notes each one; show its output only on failure.
+    { cwd: tree, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
   );
   if (run.status !== 0) {
+    const output = `${run.stdout ?? ''}${run.stderr ?? ''}`
+      .split('\n')
+      .filter((line) => !/snapshot doesn't exist at .*writing actual/i.test(line))
+      .join('\n');
+    console.error(run.error?.message ?? output);
     log(`rendering ${sha.slice(0, 7)} failed; baselines left as they were`);
     process.exitCode = 1;
   } else {
