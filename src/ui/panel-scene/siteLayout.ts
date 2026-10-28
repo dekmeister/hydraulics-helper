@@ -60,8 +60,8 @@ export interface RelayGeometry {
   path: string;
   /** Halfway along, for its label. */
   mid: Point;
-  /** Where the burst length is, if one has burst. */
-  burstAt?: Point;
+  /** Where the burst length is, if one has burst, and the way the hose runs there (degrees). */
+  burst?: { at: Point; headingDeg: number };
 }
 
 /** A portable dam: a static source that holds a fixed amount. */
@@ -95,6 +95,16 @@ function bezierAt(p: readonly [Point, Point, Point, Point], t: number): Point {
     x: w[0] * a.x + w[1] * b.x + w[2] * c.x + w[3] * d.x,
     y: w[0] * a.y + w[1] * b.y + w[2] * c.y + w[3] * d.y,
   };
+}
+
+/** A point on a cubic and the hose's heading there (the curve's tangent), degrees. */
+function burstOn(p: readonly [Point, Point, Point, Point], t: number) {
+  const u = 1 - t;
+  const [a, b, c, d] = p;
+  const w = [-3 * u * u, 3 * u * u - 6 * u * t, 6 * u * t - 3 * t * t, 3 * t * t] as const;
+  const dx = w[0] * a.x + w[1] * b.x + w[2] * c.x + w[3] * d.x;
+  const dy = w[0] * a.y + w[1] * b.y + w[2] * c.y + w[3] * d.y;
+  return { at: bezierAt(p, t), headingDeg: (Math.atan2(dy, dx) * 180) / Math.PI };
 }
 
 /** Trucks a truck sends water to: by relay into its inlet or tank, or a dam another draws from. */
@@ -247,9 +257,7 @@ export function layoutSite(input: SiteInput): SiteGeometry {
         deliveryId: link.deliveryId,
         path,
         mid: bezierAt(p, 0.5),
-        ...(link.burst === undefined
-          ? {}
-          : { burstAt: bezierAt(p, (link.burst.segment + 0.5) / n) }),
+        ...(link.burst === undefined ? {} : { burst: burstOn(p, (link.burst.segment + 0.5) / n) }),
       },
     ];
   });

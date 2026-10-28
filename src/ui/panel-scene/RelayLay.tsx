@@ -1,5 +1,6 @@
 import type { RelayLay as RelayLayState } from '../../state/relay';
 import { formatWhole } from '../format';
+import { burstGushLobes, burstGushScale } from './burstGush';
 import type { RelayGeometry } from './siteLayout';
 
 interface Props {
@@ -9,24 +10,18 @@ interface Props {
   highlighted: boolean;
 }
 
-/** Spokes of the burst marker: water jetting out of the split length. */
-const BURST_SPOKES = [0, 45, 90, 135, 180, 225, 270, 315]
-  .map((deg) => {
-    const a = (deg * Math.PI) / 180;
-    const r = deg % 90 === 0 ? 24 : 16;
-    return `M${(9 * Math.cos(a)).toFixed(1)} ${(9 * Math.sin(a)).toFixed(1)} L${(r * Math.cos(a)).toFixed(1)} ${(r * Math.sin(a)).toFixed(1)}`;
-  })
-  .join(' ');
-
 /**
  * A relay hose between trucks, or into a tank or dam (Design §7): drawn like a delivery hose,
  * charged blue while water moves, thin dashed canvas when dry, flattened (dashed) when the
- * receiving pump over-runs it, and split with a jet of water where a length has burst. A label
+ * receiving pump over-runs it, and split with a red marker where a length has burst, water gushing
+ * out of both sides of the split as big as the flow running out of it (none once the supplying
+ * delivery or pump stops). A label
  * halfway gives the climb. Not interactive: its legend row and the panel describe it.
  */
 export function RelayLay({ geometry, relay, highlighted }: Props) {
-  const { path, mid, burstAt } = geometry;
+  const { path, mid, burst } = geometry;
   const climb = relay.link.elevationM;
+  const gush = burst === undefined ? 0 : burstGushScale(relay.reading.flowLpm);
   return (
     <g
       className={`scene-relay scene-relay--${relay.state}`}
@@ -48,13 +43,28 @@ export function RelayLay({ geometry, relay, highlighted }: Props) {
       ) : (
         <path className="scene-hose__dry" d={path} />
       )}
-      {burstAt !== undefined && (
-        <g
-          transform={`translate(${burstAt.x.toFixed(1)} ${burstAt.y.toFixed(1)})`}
-          data-testid={`relay-burst-${geometry.linkId}`}
-        >
-          <circle className="scene-relay__burst-ring" r="12" />
-          <path className="scene-relay__burst" d={BURST_SPOKES} />
+      {burst !== undefined && (
+        <g transform={`translate(${burst.at.x.toFixed(1)} ${burst.at.y.toFixed(1)})`}>
+          {gush > 0 && (
+            <g
+              className="scene-relay__gush"
+              data-testid={`relay-burst-gush-${geometry.linkId}`}
+              data-scale={gush.toFixed(2)}
+            >
+              {burstGushLobes(gush, burst.headingDeg).map((lobe, i) => (
+                <g key={i}>
+                  <path className="scene-relay__gush-body" d={lobe.body} />
+                  {lobe.streaks.map((d) => (
+                    <path key={d} className="scene-relay__gush-streak" d={d} />
+                  ))}
+                </g>
+              ))}
+            </g>
+          )}
+          <g data-testid={`relay-burst-${geometry.linkId}`}>
+            <circle className="scene-relay__burst-ring" r="12" />
+            <path className="scene-relay__burst" d="M-5 -5 L5 5 M5 -5 L-5 5" />
+          </g>
         </g>
       )}
       {climb !== 0 && (

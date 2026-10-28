@@ -143,11 +143,18 @@ describe.each(PAIRS.map(([p, b]) => [`${p.id} with base ${b.id}`, p, b] as const
         links: built.links.map((l) => ({ ...l, burst: { atS: 0, segment: 0, peakKpa: 1400 } })),
       };
       const relay = layout(sim).relays[0];
-      if (relay?.burstAt === undefined) throw new Error('no burst marked');
+      if (relay?.burst === undefined) throw new Error('no burst marked');
+      const { at, headingDeg } = relay.burst;
       const start = pathStart(relay.path);
       const end = pathEnd(relay.path);
       // The first of four lengths: nearer the supplying end.
-      expect(dist(relay.burstAt, start)).toBeLessThan(dist(relay.burstAt, end));
+      expect(dist(at, start)).toBeLessThan(dist(at, end));
+      // The heading runs along the hose, towards its far end (the gush is thrown square to it).
+      const step = (sign: number) => ({
+        x: at.x + sign * 5 * Math.cos((headingDeg * Math.PI) / 180),
+        y: at.y + sign * 5 * Math.sin((headingDeg * Math.PI) / 180),
+      });
+      expect(dist(step(1), end)).toBeLessThan(dist(step(-1), end));
     });
   },
 );

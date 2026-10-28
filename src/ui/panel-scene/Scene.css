@@ -514,7 +514,7 @@ circle.scene-highlight--outer {
   }
 }
 
-/* Relay hoses (M5): drawn like delivery hoses; burst lengths jet water. */
+/* Relay hoses (M5): drawn like delivery hoses; burst lengths gush water. */
 .scene-relay path {
   fill: none;
   stroke-linecap: round;
@@ -527,6 +527,32 @@ circle.scene-highlight--outer {
   fill: var(--color-signal-alarm);
   stroke: var(--color-material-ink);
   stroke-width: 2;
+}
+/* White water thrown out of the split, square to the hose: unlike an overflow puddle (flat, dam
+   coloured, still, round a truck), it starts at the red marker and its streaks run outwards. */
+.scene-relay path.scene-relay__gush-body {
+  fill: var(--color-scene-spray);
+  stroke: var(--color-scene-dam);
+  stroke-width: 2;
+  opacity: 0.92;
+}
+.scene-relay path.scene-relay__gush-streak {
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scene-relay path.scene-relay__gush-streak {
+    animation: scene-relay-gush 0.4s linear infinite;
+  }
+}
+
+@keyframes scene-relay-gush {
+  to {
+    stroke-dashoffset: -12;
+  }
 }
 
 /* Overflowed water round a full tank or dam (issue #18): one flat translucent puddle. */
