@@ -1,11 +1,12 @@
 import { useStore } from '../../state/store';
 
-/** Above every screen: the game's name, the way back to the scenario menu, and the sound switch. */
+/** Above every screen: the game's name, the way back to the scenario menu, About, and the sound switch. */
 export function AppBar() {
   const screen = useStore((s) => s.screen);
   const openMenu = useStore((s) => s.openMenu);
   const sound = useStore((s) => s.saved.settings.sound);
   const setSound = useStore((s) => s.setSound);
+  const openAbout = useStore((s) => s.openAbout);
   return (
     <header className="app-bar">
       <p className="app-bar__name">PumpOps</p>
@@ -13,6 +14,11 @@ export function AppBar() {
         {screen !== 'menu' && (
           <button type="button" className="app-bar__button" onClick={openMenu}>
             Scenarios
+          </button>
+        )}
+        {screen !== 'about' && (
+          <button type="button" className="app-bar__button" onClick={openAbout}>
+            About
           </button>
         )}
         <button

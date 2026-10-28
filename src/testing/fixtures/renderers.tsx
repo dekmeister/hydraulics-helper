@@ -173,7 +173,7 @@ function loadLesson(spec: ApplianceSpec, id: LessonStateId, screen: 'play' | 'de
   useStore.setState({ lesson, inputs, screen, saved: defaultSaved() });
 }
 
-/** Generated menu, lesson and debrief renderers. */
+/** Generated menu, About, lesson and debrief renderers. */
 function lessonRenderers(): Record<string, FixtureRenderer> {
   const out: Record<string, FixtureRenderer> = {};
   const menu = (saved: () => ReturnType<typeof defaultSaved>) => () => {
@@ -182,6 +182,12 @@ function lessonRenderers(): Record<string, FixtureRenderer> {
   out['menu/fresh'] = { setup: menu(defaultSaved), render: () => <AppRoot /> };
   out['menu/progress'] = {
     setup: menu(() => savedProgress(useStore.getState().playerSpec)),
+    render: () => <AppRoot />,
+  };
+  out.about = {
+    setup: () => {
+      useStore.setState({ screen: 'about', aboutReturn: 'menu', saved: defaultSaved() });
+    },
     render: () => <AppRoot />,
   };
   out['menu/resume'] = {

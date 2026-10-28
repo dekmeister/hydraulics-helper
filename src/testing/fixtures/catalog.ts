@@ -604,7 +604,7 @@ export const FIXTURES: readonly FixtureMeta[] = [
   {
     id: 'menu/fresh',
     expect:
-      'Scenario menu: app bar (PUMPOPS, SOUND ON; no SCENARIOS button here), "SCENARIOS", "Pick ' +
+      'Scenario menu: app bar (PUMPOPS, ABOUT, SOUND ON; no SCENARIOS button here), "SCENARIOS", "Pick ' +
       'the truck you’re training on, then a scenario." A YOUR APPLIANCE card: one row per ' +
       'catalogue truck (radio dot, name, fitout line such as "3 deliveries (65, 38, 38 mm) · 3000 L ' +
       'tank · electric primer · tacho"), Category 1 tanker checked with an ink border. Eight paper cards numbered 1–8 in ink discs, each with title, ' +
@@ -623,6 +623,18 @@ export const FIXTURES: readonly FixtureMeta[] = [
       'As menu/fresh, with a lesson in progress: the YOUR APPLIANCE card ends with "Changing ' +
       'truck ends the lesson in progress." under the truck rows, and a filled RESUME LESSON ' +
       'button sits between that card and the ladder.',
+  },
+  {
+    id: 'about',
+    expect:
+      'About screen: app bar (PUMPOPS, SCENARIOS, SOUND ON; no ABOUT button here), "ABOUT PUMPOPS", ' +
+      '"A pump operator trainer for rural fire appliances." Four paper cards in ink: WHAT THIS IS ' +
+      '(unofficial self-study tool; not affiliated with any fire service or agency, none named), HOW ' +
+      'THE SIMULATION WORKS (three paragraphs: physics not scripts; failures come from the model; ' +
+      'simplified, trust behaviour over exact numbers), ALONGSIDE YOUR TRAINING, NOT INSTEAD OF IT ' +
+      '(may contain errors; manuals, SOPs and instructors are the authority), SOURCE (an underlined ' +
+      'github.com/dekmeister/hydraulics-helper link, wrapping on the phone rather than overflowing). ' +
+      'A paper BACK button (ink text) last.',
   },
   ...LESSON_FIXTURES,
   ...DEBRIEF_FIXTURES,

@@ -67,8 +67,8 @@ export interface Highlight {
   from: HighlightSource;
 }
 
-/** What fills the screen: the scenario menu, the panels, or a lesson's debrief. */
-export type Screen = 'menu' | 'play' | 'debrief';
+/** What fills the screen: the scenario menu, the panels, a lesson's debrief, or About. */
+export type Screen = 'menu' | 'play' | 'debrief' | 'about';
 
 interface PumpOpsStore {
   screen: Screen;
@@ -78,6 +78,12 @@ interface PumpOpsStore {
   openPlay: () => void;
   /** Show the debrief for the lesson in play. */
   openDebrief: () => void;
+  /** The screen About goes back to. */
+  aboutReturn: Screen;
+  /** Show About; the sim pauses as on the menu. */
+  openAbout: () => void;
+  /** Back to the screen About was opened from. */
+  closeAbout: () => void;
   /** The lesson being played; null in free play (the sandbox). */
   lesson: ActiveLesson | null;
   /**
@@ -165,6 +171,14 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   },
   openDebrief: () => {
     if (get().lesson !== null) set({ screen: 'debrief' });
+  },
+  aboutReturn: 'menu',
+  openAbout: () => {
+    const { screen } = get();
+    if (screen !== 'about') set({ screen: 'about', aboutReturn: screen });
+  },
+  closeAbout: () => {
+    set(({ aboutReturn }) => ({ screen: aboutReturn }));
   },
   lesson: null,
   startLesson: (id, opts = {}) => {

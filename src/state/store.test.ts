@@ -197,3 +197,26 @@ describe('store: the player’s appliance', () => {
     expect(playerAppliance(undefined).id).toBe(DEFAULT_APPLIANCE_ID);
   });
 });
+
+describe('store: the About screen', () => {
+  beforeEach(() => {
+    useStore.getState().reset();
+  });
+
+  it('pauses the sim while open and returns to the screen it was opened from', () => {
+    const timeS = useStore.getState().sim.timeS;
+    useStore.getState().openAbout();
+    expect(useStore.getState().screen).toBe('about');
+    useStore.getState().step(10);
+    expect(useStore.getState().sim.timeS).toBe(timeS);
+    useStore.getState().openAbout();
+    useStore.getState().closeAbout();
+    expect(useStore.getState().screen).toBe('play');
+
+    useStore.getState().startLesson('first-line');
+    useStore.getState().openDebrief();
+    useStore.getState().openAbout();
+    useStore.getState().closeAbout();
+    expect(useStore.getState().screen).toBe('debrief');
+  });
+});
