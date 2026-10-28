@@ -9,11 +9,16 @@ interface Props {
   spraying: boolean;
   /** Branch height above the pump, m. */
   elevationM: number;
+  /** A monitor on the ground instead of a crew: no figure, a longer, tighter jet. */
+  monitor?: boolean;
   onTap: () => void;
 }
 
-/** Half-angle of the spray fan, degrees. */
+/** Half-angle of the spray fan, degrees: a crew's, and a monitor's tighter stream. */
 const SPRAY_HALF_DEG = 11;
+const MONITOR_HALF_DEG = 6;
+/** A monitor throws further than a hand line (a map symbol, not to scale). */
+const MONITOR_REACH = 1.7;
 /** Identity marker sits this far to the branch's right, drawing units. */
 const MARKER_OFFSET_U = 30;
 
@@ -21,18 +26,20 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 
 /**
  * The working end of a line: a crew figure on the branch (Design §7: khaki PPE, white helmet,
- * hi-vis band, top-down), the spray fan while water flows, and the delivery's glyph and tag so the
- * player can trace the line back to its valve.
+ * hi-vis band, top-down) or a monitor on its base, the spray fan while water flows, and the
+ * delivery's glyph and tag so the player can trace the line back to its valve.
  */
-export function BranchCrew({ lay, identity, spraying, elevationM, onTap }: Props) {
+export function BranchCrew({ lay, identity, spraying, elevationM, monitor = false, onTap }: Props) {
   const { x, y } = lay.branch;
   const h = lay.headingDeg;
+  const reach = SPRAY_REACH_U * (monitor ? MONITOR_REACH : 1);
+  const half = monitor ? MONITOR_HALF_DEG : SPRAY_HALF_DEG;
   const tip = (deg: number) => ({
-    x: x + SPRAY_REACH_U * Math.cos(rad(deg)),
-    y: y + SPRAY_REACH_U * Math.sin(rad(deg)),
+    x: x + reach * Math.cos(rad(deg)),
+    y: y + reach * Math.sin(rad(deg)),
   });
-  const a = tip(h - SPRAY_HALF_DEG);
-  const b = tip(h + SPRAY_HALF_DEG);
+  const a = tip(h - half);
+  const b = tip(h + half);
   const mid = tip(h);
   const marker = {
     x: x + MARKER_OFFSET_U * Math.cos(rad(h + 90)),
@@ -56,11 +63,24 @@ export function BranchCrew({ lay, identity, spraying, elevationM, onTap }: Props
       )}
       <g
         transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(h + 90).toFixed(1)}) scale(1.25)`}
+        data-branch={monitor ? 'monitor' : 'crew'}
       >
-        <ellipse className="scene-shadow" cx="2" cy="4" rx="11" ry="8" />
-        <ellipse className="scene-crew__ppe" rx="10" ry="6.5" />
-        <path className="scene-crew__band" d="M-9 1.5 h18" />
-        <circle className="scene-crew__helmet" cy="-1" r="4.6" />
+        {monitor ? (
+          <>
+            {/* Top down: three splayed legs on the ground, the barrel pointing at the fire. */}
+            <ellipse className="scene-shadow" cx="2" cy="4" rx="12" ry="10" />
+            <path className="scene-monitor__legs" d="M0 0 L-10 8 M0 0 L10 8 M0 0 L0 -10" />
+            <rect className="scene-monitor__barrel" x="-3" y="-17" width="6" height="17" rx="2" />
+            <circle className="scene-monitor__body" r="5" />
+          </>
+        ) : (
+          <>
+            <ellipse className="scene-shadow" cx="2" cy="4" rx="11" ry="8" />
+            <ellipse className="scene-crew__ppe" rx="10" ry="6.5" />
+            <path className="scene-crew__band" d="M-9 1.5 h18" />
+            <circle className="scene-crew__helmet" cy="-1" r="4.6" />
+          </>
+        )}
       </g>
       <g transform={`translate(${marker.x.toFixed(1)} ${marker.y.toFixed(1)})`}>
         <circle className="scene-paper" r="13" />

@@ -130,6 +130,19 @@ describe('store: scenarios and the Wake', () => {
     expect(sim.sources.some((s) => s.kind === 'static')).toBe(true);
   });
 
+  it('free play loads the sandbox: two trucks of the player’s appliance, attack pump active', () => {
+    const applianceId = useStore.getState().playerSpec.id;
+    useStore.getState().loadScenario('free-play');
+    const { sim, scenarioId, lesson } = useStore.getState();
+    expect(scenarioId).toBe('free-play');
+    expect(lesson).toBeNull();
+    expect(sim.trucks.map((t) => t.spec.id)).toEqual([applianceId, applianceId]);
+    expect(sim.activeTruckId).toBe('attack');
+    // The player's appliance stays the one picked, whichever truck is being operated.
+    useStore.getState().setActiveTruck('base');
+    expect(useStore.getState().playerSpec.id).toBe(applianceId);
+  });
+
   it('refuses a scenario the active appliance can’t play, naming both', () => {
     const spec = activeTruck(useStore.getState().sim).spec;
     const noSuction: ApplianceSpec = {

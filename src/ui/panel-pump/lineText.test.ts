@@ -35,6 +35,13 @@ describe('hose lay description', () => {
     );
     expect(describeLine({ ...l, elevationM: -6 })).toMatch(/6 m downhill$/);
   });
+
+  it('names a monitor for what it is', () => {
+    const l = line([{ hose: '65L', lengthM: 30 }]);
+    expect(describeLine({ ...l, branch: { tipMm: 25, kind: 'monitor' } })).toBe(
+      '1 × 30 m 65 mm lined · 25 mm monitor',
+    );
+  });
 });
 
 describe('relay hose description', () => {

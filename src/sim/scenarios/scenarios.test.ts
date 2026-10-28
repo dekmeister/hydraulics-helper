@@ -31,8 +31,9 @@ describe.each(SCENARIOS.map((s) => [s.id, s] as const))('scenario %s', (_id, sce
   );
 
   // Issue #10: crews run 25 mm canvas in the bush and 38 mm rubber in the village; 65 mm on a
-  // delivery isn't standard for attack (it stays for hydrant layflat and suction).
-  it.each(specs.map((spec) => [spec.id, spec] as const))(
+  // delivery isn't standard for attack (it stays for hydrant layflat and suction). Free play
+  // (no lesson) lays whatever there is to try.
+  it.skipIf(scenario.lesson === undefined).each(specs.map((spec) => [spec.id, spec] as const))(
     'lays the setting’s attack hose, laid lines and event lines alike, on %s',
     (_specId, spec) => {
       const laid = scenario.build(spec).state.lines.flatMap((l) => l.segments.map((s) => s.hose));
@@ -46,15 +47,16 @@ describe.each(SCENARIOS.map((s) => [s.id, s] as const))('scenario %s', (_id, sce
     },
   );
 
-  // Issue #19: the player starts every job from cold; support trucks are already running.
+  // Issue #19: the player starts every job from cold; support trucks are already running, except
+  // in free play, where every truck is the player's to start.
   it.each(specs.map((spec) => [spec.id, spec] as const))(
     'starts the player’s engine cold and its script starts it, on %s',
     (_specId, spec) => {
       const { state, script } = scenario.build(spec);
       for (const truck of state.trucks) {
-        const player = truck.id === state.activeTruckId;
-        expect(truck.engine.running).toBe(!player);
-        expect(truck.rpm).toBe(player ? 0 : truck.spec.engine.idleRpm);
+        const cold = truck.id === state.activeTruckId || scenario.lesson === undefined;
+        expect(truck.engine.running).toBe(!cold);
+        expect(truck.rpm).toBe(cold ? 0 : truck.spec.engine.idleRpm);
       }
       // A script that works the pump (anything but the tank-fill inlet) starts it first.
       const { ignition, start } = spec.engine.controls;

@@ -9,7 +9,7 @@ A part-task trainer for fire appliance pump operation, built as a browser game. 
 - **Work a pump panel.** Gauges (discharge, compound, tacho, tank), delivery and inlet valves, throttle and primer, in either a **simplified** panel or a **realistic** one drawn like the real pump bay. Every job starts with the pump engine cold and ends with it shut down: ignition on, hold START until it fires, and at the end hold STOP until it has stopped (let go too soon and it picks up again).
 - **See the fireground.** A map of the truck, hose lays, branches and crews, water sources and other trucks. Lines charge when water flows; tap a hose to find its delivery on the panel.
 - **Play the lesson ladder.** Seven scenarios, from your first 38 mm line on tank through hydrant supply, draughting, closed and open relays, to a changing incident. The first one is fully guided. Each ends with a debrief that tells you what went wrong and why ("you cavitated for 40 s: the lift was too high for that flow").
-- **Free play.** Any scenario's setup with no objectives, to experiment.
+- **Free play.** A sandbox fireground with no objectives: two trucks, a dam to draught from, a hydrant, a relay between the pumps, crews up and down the slope and a monitor. Try anything, and break it.
 - **Choose your truck.** Each appliance has its own pump, plumbing and panel layout. Currently a Category 1 and a Category 7 tanker.
 
 Terminology is Australian fire-service throughout: deliveries, branches, draughting, tank-to-pump, kPa and L/min.

@@ -7,6 +7,7 @@ import { runScript, type TraceSample } from './run';
 import { CLOSED_RELAY } from './closedRelay';
 import { DRAUGHTING } from './draughting';
 import { FIRST_LINE } from './firstLine';
+import { FREE_PLAY } from './freePlay';
 import { HYDRANT_SUPPLY } from './hydrantSupply';
 import { HYDRANT_TANK } from './hydrantTank';
 import { INCIDENT } from './incident';
@@ -27,6 +28,7 @@ export const SCENARIOS: readonly Scenario[] = [
   CLOSED_RELAY,
   OPEN_RELAY,
   INCIDENT,
+  FREE_PLAY,
 ];
 
 export function getScenario(id: string): Scenario {

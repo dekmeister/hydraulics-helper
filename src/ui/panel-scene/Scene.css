@@ -377,6 +377,19 @@ circle.scene-highlight--outer {
   stroke: var(--color-material-ink);
   stroke-width: 1.6;
 }
+/* Monitor: a heavy branch on its own base, in metal against the khaki crews. */
+.scene-monitor__legs {
+  fill: none;
+  stroke: var(--color-material-ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.scene-monitor__barrel,
+.scene-monitor__body {
+  fill: var(--color-scene-truck-cab);
+  stroke: var(--color-material-ink);
+  stroke-width: 1.6;
+}
 
 /* Legend: the scene's key, and the thumb-sized way to pick a line. */
 .scene-legend {

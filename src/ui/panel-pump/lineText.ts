@@ -25,12 +25,12 @@ function describeClimb(elevationM: number): string[] {
 
 /**
  * Short description of a hose lay for its delivery row, e.g.
- * "3 × 30 m 38 mm lined · 15 mm branch · 14 m uphill". Runs of the same hose are grouped.
+ * "3 × 30 m 38 mm lined · 15 mm branch · 14 m uphill" (or "25 mm monitor"). Runs of the same hose are grouped.
  */
 export function describeLine(line: HoseLine): string {
   return [
     describeHose(line.segments),
-    `${String(line.branch.tipMm)} mm branch`,
+    `${String(line.branch.tipMm)} mm ${line.branch.kind === 'monitor' ? 'monitor' : 'branch'}`,
     ...describeClimb(line.elevationM),
   ].join(' · ');
 }

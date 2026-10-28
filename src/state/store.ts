@@ -116,7 +116,7 @@ interface PumpOpsStore {
    * lesson and clears the scenario id unless given.
    */
   reset: (sim?: SimState, scenarioId?: string | null) => void;
-  /** Scenario the sim was loaded from, if any (the header picker shows it). */
+  /** Scenario the sim was loaded from, if any (the header names it). */
   scenarioId: string | null;
   /**
    * The player's own appliance: the truck active when the sim was loaded. Scenarios are built
@@ -126,8 +126,8 @@ interface PumpOpsStore {
   /** Load a scenario's initial state on the player's appliance for free play; throws if it can't play it. */
   loadScenario: (id: string) => void;
   /**
-   * Train on another catalogue appliance (saved): ends any lesson and loads free play's tank attack
-   * on it, staying on the screen showing. Throws on an id not in the catalogue.
+   * Train on another catalogue appliance (saved): ends any lesson and loads tank attack on it with
+   * no lesson, staying on the screen showing (the menu's Free play loads the sandbox). Throws on an id not in the catalogue.
    */
   setPlayerAppliance: (id: string) => void;
   /** Displayed readings for the last `WAKE_HISTORY_S` of sim time, oldest first. */

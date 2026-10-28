@@ -311,6 +311,15 @@ const RELAY_CAPTIONS: Readonly<Record<RelayStateId, string>> = {
     'kPa: 2 m lift plus suction loss), discharge ~690 kPa; its relay delivery open and described "Relay · 4 × 30 m ' +
     '65 mm lined · to Attack pump · 20 m uphill"; other deliveries NO LINE. Scene: BASE PUMP label ' +
     'inverted; legend rows are the base pump’s deliveries (relay one "Relay · ~820 L/min").',
+  'free-play':
+    'Free play, both trucks working (header "FREE PLAY", no select). Scene: BASE PUMP by the dam on ' +
+    'hard suction, a hydrant’s green layflat into its hydrant-to-tank coupling, its own bush crew ' +
+    'spraying, and a charged blue relay hose +20 m up to the ATTACK PUMP (label inverted). Attack ' +
+    'crews spraying at +10 m and −10 m; where the truck has a 65 mm delivery (Cat 1), a MONITOR on ' +
+    'it: a metal tripod with a barrel and no crew, its jet longer and narrower than the crews’. ' +
+    'Legend: the monitor’s row "~660 L/min" (Cat 1), relay "~930 L/min · ~170 kPa at the inlet" ' +
+    '(Cat 7: ~360 L/min, ~300 kPa). Pump panel: two truck buttons, ATTACK PUMP pressed; compound ' +
+    'positive; the monitor’s delivery described "2 × 30 m 65 mm lined · 25 mm monitor". No lamps lit.',
 };
 
 /** A relay fixture set: the player's appliance, and the base pump's when it differs. */

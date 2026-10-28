@@ -25,6 +25,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 * Mixed relay lessons with a much smaller base pump than the attack pump aren't required to pass (`ladder.test.ts`); the app never offers them.
 * A refill lesson on the `hydrant-tank` fireground (the free-play `tank-refill` scenario was retired in issue #10). Overflow now spills a pool (issue #18); the lesson could tally litres wasted out the overflow for the debrief, or fault leaving hydrant to tank open on a full tank.
 * `hydrant-tank` can't ask "hold the tank level" or "the tank is rising": conditions see only the tank fraction. A tank-trend condition (rate over a window) would let the lesson teach reading the tank gauge against the hydrant, e.g. a second crew that out-draws the fill.
+* **Free play's gaps** (`scenarios/freePlay.ts`): no open relay or portable dam and no hydrant straight to suction, since each truck has one suction inlet and the closed relay takes the attack pump's. Both trucks are the player's appliance; a mixed pair (Cat 1 base, Cat 7 attack) would need a picker. A truck with no 65 mm delivery (the Cat 7) gets no monitor, so its sandbox can't over-run the relay. A third truck, or a choice of lay on load, would cover these.
 * "Resume a game in progress" (needs `SimState` versioning, see code health).
 
 ## Sim and hydraulics

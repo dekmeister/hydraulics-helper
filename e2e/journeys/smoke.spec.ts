@@ -4,8 +4,16 @@ test('app opens on the scenario menu; free play shows both panels', async ({ pag
   await gotoApp(page);
   await expect(page.getByRole('heading', { name: 'Scenarios', level: 1 })).toBeVisible();
   await page.getByRole('button', { name: 'Free play', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Scene' })).toBeVisible();
+  const scene = page.getByRole('region', { name: 'Scene' });
+  await expect(scene).toBeVisible();
   await expect(page.getByRole('region', { name: 'Pump panel' })).toBeVisible();
+  // The sandbox: two trucks to switch between, and nothing to pick in the header.
+  await expect(scene.getByText('Free play', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox')).toHaveCount(0);
+  const trucks = page.getByRole('group', { name: 'Truck you operate' }).getByRole('button');
+  await expect(trucks).toHaveCount(2);
+  await trucks.nth(1).click();
+  await expect(trucks.nth(1)).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('sim time moves only through __pumpops.step()', async ({ page }) => {

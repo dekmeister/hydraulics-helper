@@ -1,7 +1,7 @@
 import { PumpPanel } from '../panel-pump/PumpPanel';
 import { SceneView } from '../panel-scene/SceneView';
 import { useStore } from '../../state/store';
-import { ScenarioPicker } from './ScenarioPicker';
+import { ScenarioTitle } from './ScenarioTitle';
 import { TruckSwitcher } from './TruckSwitcher';
 import './AppShell.css';
 
@@ -15,7 +15,7 @@ export function AppShell() {
           <h2 id="scene-title" className="app-panel__title">
             Scene
           </h2>
-          <ScenarioPicker />
+          <ScenarioTitle />
         </div>
         <SceneView />
       </section>

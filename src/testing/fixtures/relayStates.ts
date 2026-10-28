@@ -10,7 +10,13 @@ import { chargedFor, settle, throttleForKpa } from './panelStates';
 import { OVERFLOW_FIXTURE_S } from './sourceStates';
 
 export type RelayStateId =
-  'closed-working' | 'closed-over-run' | 'burst' | 'open-dam' | 'dam-overflowing' | 'base-panel';
+  | 'closed-working'
+  | 'closed-over-run'
+  | 'burst'
+  | 'open-dam'
+  | 'dam-overflowing'
+  | 'base-panel'
+  | 'free-play';
 
 /** Scenario each state is built from, so the header picker shows it. */
 export const RELAY_STATE_SCENARIO: Readonly<Record<RelayStateId, string>> = {
@@ -20,7 +26,14 @@ export const RELAY_STATE_SCENARIO: Readonly<Record<RelayStateId, string>> = {
   'open-dam': 'open-relay',
   'dam-overflowing': 'open-relay',
   'base-panel': 'closed-relay',
+  'free-play': 'free-play',
 };
+
+/** Base pump throttle in the free-play fixture: the relay and its bush crew both in water. */
+const FREE_PLAY_BASE_THROTTLE = 0.9;
+
+/** Attack pump throttle in the free-play fixture: the monitor flowing without over-running the relay. */
+const FREE_PLAY_ATTACK_THROTTLE = 0.4;
 
 /** Attack pump throttle on the heavy lines and the open relay: a comfortable residual. */
 const WORKING_THROTTLE = 0.6;
@@ -51,7 +64,9 @@ export function relayState(
 ): SimState {
   const built = getScenario(RELAY_STATE_SCENARIO[id]).build(spec, support).state;
   const inlet = inletOfKind(spec, 'suction');
-  const lines = built.lines.map((l) => l.deliveryId);
+  const lines = built.lines
+    .filter((l) => l.truckId === built.activeTruckId)
+    .map((l) => l.deliveryId);
   const working = inputs(WORKING_THROTTLE, [inlet, ...lines]);
   // Every fixture here works the attack lines: they start charged (the fill is the scene's fixture).
   const initial = chargedFor(built, working);
@@ -93,5 +108,31 @@ export function relayState(
       const open = trimmedInputs();
       return switchTruck(trimmed(open), 'base', open);
     }
+    case 'free-play': {
+      const attack = inputs(FREE_PLAY_ATTACK_THROTTLE, [inlet, ...lines]);
+      return settle(chargedFor(freePlayBaseWorking(built), attack), attack, 20);
+    }
   }
+}
+
+/**
+ * Free play with the base crew's work done: the base pump primed at the dam, its relay and bush
+ * line open at `FREE_PLAY_BASE_THROTTLE` (its line charged).
+ */
+function freePlayBaseWorking(state: SimState): SimState {
+  const base = state.trucks.find((t) => t.id === 'base');
+  if (base === undefined) throw new Error('free play has no base pump');
+  const open = [
+    inletOfKind(base.spec, 'suction'),
+    ...state.links.filter((l) => l.truckId === base.id).map((l) => l.deliveryId),
+    ...state.lines.filter((l) => l.truckId === base.id).map((l) => l.deliveryId),
+  ];
+  const held = inputs(FREE_PLAY_BASE_THROTTLE, open);
+  const charged = chargedFor(state, held);
+  return {
+    ...charged,
+    trucks: charged.trucks.map((t) =>
+      t.id === base.id ? { ...t, pump: { ...t.pump, primed: true }, inputs: held } : t,
+    ),
+  };
 }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { SCENARIOS } from '../../sim/scenarios';
+import { FREE_PLAY } from '../../sim/scenarios/freePlay';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import {
   missingRequirements,
@@ -39,8 +40,8 @@ export function ScenarioMenu() {
   const briefs = useMemo(() => new Map(LADDER.map((s) => [s.id, lessonBrief(s, spec)])), [spec]);
   const playable = (s: Scenario) => missingRequirements(s, spec, {}, true).length === 0;
   const next = LADDER.find((s) => playable(s) && results[s.id]?.[spec.id]?.passed !== true);
-  // The sandbox is tank attack, or the first fireground this appliance can play.
-  const sandbox = [TANK_ATTACK, ...SCENARIOS].find((s) => supports(s, spec));
+  // The sandbox fireground, or on a truck that can't work it, the first one it can play.
+  const sandbox = [FREE_PLAY, TANK_ATTACK, ...SCENARIOS].find((s) => supports(s, spec));
   return (
     <main className="screen menu" aria-labelledby="menu-title">
       <h1 id="menu-title" className="screen__title">
@@ -118,7 +119,8 @@ export function ScenarioMenu() {
           Free play
         </h2>
         <p className="menu-card__brief">
-          No objectives and no score: any scenario’s fireground, every control yours.
+          Two trucks, a dam, a hydrant, a relay, crews and a monitor. No objectives and no score:
+          try anything, break things.
         </p>
         <button
           type="button"

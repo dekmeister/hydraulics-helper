@@ -8,6 +8,8 @@ export interface LineKit {
   hose: string;
   lengths: number;
   tipMm: number;
+  /** A monitor on the end instead of a crew's branch. */
+  monitor?: boolean;
 }
 
 /** A line plan before it's attached to a delivery; `elevationM` is the branch above the pump. */
@@ -28,6 +30,13 @@ export const BUSH_LINE: LineKit = { hose: '25U', lengths: 1, tipMm: 12 };
  * 15 mm branch (Table 1: 350 kPa, ~280 L/min), about 700 kPa at the pump.
  */
 export const VILLAGE_LINE: LineKit = { hose: '38L', lengths: 3, tipMm: 15 };
+
+/**
+ * A monitor on 65 mm: two lengths of 65 mm rubber to a monitor with a 25 mm tip (Table 1: 700 kPa,
+ * ~1100 L/min), more than a relay or a draught keeps up with. // PLACEHOLDER — needs Dek (the usual
+ * monitor tip and lay)
+ */
+export const MONITOR_LINE: LineKit = { hose: '65L', lengths: 2, tipMm: 25, monitor: true };
 
 /**
  * The free delivery closest in size to `hose` (adaptors assumed); takes it out of `free`. Throws
@@ -66,7 +75,8 @@ export function attachLines(
         lengthM: STANDARD_LENGTH_M,
       })),
       elevationM: plan.elevationM ?? 0,
-      branch: { tipMm: plan.tipMm },
+      branch:
+        plan.monitor === true ? { tipMm: plan.tipMm, kind: 'monitor' } : { tipMm: plan.tipMm },
     };
   });
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CAT1 } from '../../sim/appliances/cat1';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
+import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { relayLays, portableDams } from '../../state/relay';
 import { activeTruck, selectWarnings } from '../../state/selectors';
 import { spillPoolSize } from '../../state/spill';
@@ -69,3 +70,22 @@ describe.each(
     expect(lit(s)).toEqual({});
   });
 });
+
+// Free play's fixture (catalog.ts caption): both trucks working, the monitor flowing, nothing lit.
+describe.each(APPLIANCES.map((spec) => [spec.id, spec] as const))(
+  'free-play fixture state: %s',
+  (_id, spec) => {
+    it('relay charged with residual to spare, base primed, every line flowing, nothing lit', () => {
+      const s = relayState(spec, 'free-play');
+      expect(s.activeTruckId).toBe('attack');
+      expect(relayLays(s)[0]?.state).toBe('charged');
+      expect(activeTruck(s).readings.compoundKpa).toBeGreaterThan(100);
+      expect(s.trucks.find((t) => t.id === 'base')?.pump.primed).toBe(true);
+      for (const l of s.lines) {
+        const flow = s.trucks.find((t) => t.id === l.truckId)?.readings.branchFlowLpm[l.id] ?? 0;
+        expect(flow).toBeGreaterThan(50);
+      }
+      expect(lit(s)).toEqual({});
+    });
+  },
+);

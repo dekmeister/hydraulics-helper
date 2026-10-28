@@ -124,6 +124,7 @@ export function SceneTruck(props: TruckProps) {
             identity={identityOf(lay.deliveryId)}
             spraying={d?.state === 'charged'}
             elevationM={d?.line?.elevationM ?? 0}
+            monitor={d?.line?.branch.kind === 'monitor'}
             onTap={tap(lay.deliveryId)}
           />
         );

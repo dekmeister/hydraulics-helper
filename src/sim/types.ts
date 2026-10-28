@@ -253,9 +253,17 @@ export interface HoseSegment {
   lengthM: number;
 }
 
+/**
+ * What's on the end of a line: a crew's hand-held branch, or a monitor (a big branch set up on the
+ * ground, worked stationary for its reach). The scene draws it; the hydraulics only see the tip.
+ */
+export type BranchKind = 'handheld' | 'monitor';
+
 /** Branch (nozzle) at the end of a line, sized by its tip bore. */
 export interface Branch {
   tipMm: number;
+  /** Default 'handheld'. */
+  kind?: BranchKind;
 }
 
 /** One hose lay from a delivery to a branch. */
