@@ -4,7 +4,7 @@ Read `docs/ARCHITECTURE.md` (design) and `docs/BACKLOG.md` (open work) before wr
 
 ## Project one-liner
 
-Browser game teaching NSW-style fire pump operation: interactive pump panel + scene overview, driven by a small, honest hydraulics sim. Built to support multiple appliance types (different pumps, plumbing and panel layouts); each appliance is data, not code (`ARCHITECTURE.md` §9). TypeScript + Vite + React + SVG + Zustand + Vitest + Playwright. No backend, no RFS branding.
+Browser game teaching NSW-style fire pump operation: interactive pump panel + scene overview, driven by a small, honest hydraulics sim. Built to support multiple appliance types (different pumps, plumbing and panel layouts); each appliance is data, not code (`docs/decisions/002-appliances-are-data.md`). TypeScript + Vite + React + SVG + Zustand + Vitest + Playwright. No backend, no RFS branding.
 
 ## Commands
 
@@ -74,7 +74,7 @@ If you break `dev`, fixing it takes priority over new features.
 ## Session workflow
 
 1. Pick one `docs/BACKLOG.md` item (or the slice Dek names). Restate it in one sentence before starting.
-2. Skim the relevant `ARCHITECTURE.md` section; if reality has diverged from the doc, update the doc in the same session.
+2. Skim the relevant part of `ARCHITECTURE.md` and any `docs/decisions/` record for the area; if reality has diverged from the doc, update the doc in the same session.
 3. Implement (tests-first for sim; journey/fixture alongside UI). Run the checks the change warrants (see Commands); for UI changes, do the review step above.
 4. Remove the finished item from `docs/BACKLOG.md`; add anything deferred to the backlog or the "needs Dek" list.
 5. Summarise: what changed, what's demoable, which fixtures you reviewed and which renders/traces changed and why, open questions.

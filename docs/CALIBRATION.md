@@ -1,6 +1,6 @@
 # Calibration
 
-The single source of truth for the sim's numbers (ARCHITECTURE §6, §9.5). Constants carry the same status as the code comments:
+The single source of truth for the sim's numbers (`ARCHITECTURE.md`). Constants carry the same status as the code comments:
 
 * **doctrine-confirmed**: stated in the RFS Hydraulics Manual v4.0, or fitted directly to its tables.
 * **PLACEHOLDER — needs Dek**: the manual is silent; a plausible value until Dek supplies the real one.

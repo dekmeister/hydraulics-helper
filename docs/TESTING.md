@@ -216,4 +216,4 @@ Cross-product tests (appliance × scenario × support pairing) wrap their case l
 
 * Cross-browser pixel baselines. Chromium only; a non-pixel WebKit/Firefox smoke run may come later.
 * Audio. Test the *state* that drives audio (`src/audio/params.test.ts`: pitch and levels from rpm, primer, cavitation, flow), not the sound. The synth never starts in the e2e build.
-* Performance. Revisit if the scene panel gets animated enough to matter (ARCHITECTURE §2).
+* Performance. Revisit if the scene panel gets animated enough to matter (`ARCHITECTURE.md`).
