@@ -113,6 +113,11 @@ export interface TruckSolveInput {
   /** Relay hoses leaving this truck's deliveries. */
   relayOut?: readonly RelayOutlet[];
   /**
+   * Deliveries with nothing connected (`bareDeliveryIds`); default none. Open, each discharges to
+   * air at the truck through its valve alone.
+   */
+  bareDeliveryIds?: readonly ControlId[];
+  /**
    * Water in each lay, L (`SimState.lineWaterL`). Omitted, every line is taken as full: the
    * steady-state solve the calibration rows are written against.
    */
@@ -138,6 +143,7 @@ function bisectDecreasing(g: (x: number) => number, lo: number, hi: number): num
  * can't be pulled below the pump's cavitation pressure: there the flow the pump can draw is capped,
  * extra rpm adds nothing, and `cavitation` says how far past that limit the pump is pushed.
  * Relays: feeds join the inlet paths; outlets join the lines (open) or add a fixed flow (closed).
+ * A bare delivery opened joins them too, flowing to air through its valve.
  * `lines` must be this truck's lines, one per delivery.
  */
 export function solveTruck(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckReadings {
@@ -181,6 +187,14 @@ function solvePump(truck: TruckSolveInput, lines: readonly HoseLine[]): TruckRea
     ...(truck.relayOut ?? []).flatMap((o) =>
       o.kind === 'open' ? [{ ...o, line: undefined, filling: false }] : [],
     ),
+    // A bare outlet open to air at pump level: P = (k/open²)·Q², the valve's loss alone.
+    ...(truck.bareDeliveryIds ?? []).flatMap((deliveryId) => {
+      const delivery = spec.deliveries.find((d) => d.id === deliveryId);
+      const valve = inputs.valves[deliveryId] ?? 0;
+      if (delivery === undefined || valve < VALVE_CLOSED_EPS) return [];
+      const r = valveLossCoeff(delivery.sizeMm) / (valve * valve);
+      return [{ deliveryId, line: undefined, r, headKpa: 0, filling: false }];
+    }),
   ];
   const fixed = (truck.relayOut ?? []).flatMap((o) => (o.kind === 'fixed' ? [o] : []));
   const fixedLpm = fixed.reduce((q, o) => q + o.flowLpm, 0);

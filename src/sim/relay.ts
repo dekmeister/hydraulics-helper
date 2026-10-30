@@ -10,6 +10,7 @@ import {
 import { surgeKpa } from './hammer';
 import { hoseResistance, hoseType, isRigid } from './hose';
 import type { RelayFeed } from './inlets';
+import { bareDeliveryIds } from './hosed';
 import { solveTruck, valveLossCoeff, type RelayOutlet, type TruckSolveInput } from './network';
 import type {
   ApplianceSpec,
@@ -206,7 +207,10 @@ export function solveSite(
   for (const id of order) {
     const truck = truckById.get(id);
     if (truck === undefined) throw new Error(`No truck '${id}'`);
-    const input = prepare(truck, feeds.get(id) ?? []);
+    const input = {
+      ...prepare(truck, feeds.get(id) ?? []),
+      bareDeliveryIds: bareDeliveryIds(state, id),
+    };
     inputs.set(id, input);
     const leaving = leavingOf(id);
     for (const link of leaving) {

@@ -127,9 +127,7 @@ for (const spec of JOURNEY_APPLIANCES) {
       expect(open).toBeLessThanOrEqual(0.55);
     });
 
-    test('a tap does what the layout says, and a delivery with no line is disabled', async ({
-      page,
-    }, testInfo) => {
+    test('a tap does what the layout says', async ({ page }, testInfo) => {
       const layout = layoutFor(spec.id);
       const state = await getState(page);
       for (const line of state.lines) {
@@ -143,14 +141,42 @@ for (const spec of JOURNEY_APPLIANCES) {
         await tapOrClick(valve, testInfo);
         await expect(valve).toHaveAttribute('aria-valuenow', item.tap === 'toggle' ? '100' : '0');
       }
+    });
 
+    test('a delivery with nothing connected opens and gushes at the truck (issue #16)', async ({
+      page,
+    }) => {
+      const layout = layoutFor(spec.id);
+      const state = await getState(page);
       const used = new Set(state.lines.map((l) => l.deliveryId));
-      for (const d of spec.deliveries.filter((x) => !used.has(x.id))) {
-        await expect(page.getByRole('slider', { name: controlName(layout, d.id) })).toHaveAttribute(
-          'aria-disabled',
-          'true',
-        );
-      }
+      const bare = spec.deliveries.find((d) => !used.has(d.id));
+      const tankInlet = spec.inlets.find((i) => i.kind === 'tank');
+      test.skip(bare === undefined, 'tank attack lays a line on every delivery');
+      if (bare === undefined || tankInlet === undefined)
+        throw new Error('no bare delivery or tank');
+      const discharge = instrumentName(state, layout, 'discharge');
+      const gush = page.getByTestId(`outlet-gush-${bare.id}`);
+
+      await dragValve(
+        page,
+        page.getByRole('slider', { name: controlName(layout, tankInlet.id) }),
+        1,
+      );
+      await dragThrottle(page, 0.5);
+      await stepAndSettle(page, 50);
+      const shut = await meterValue(page, discharge);
+      await expect(gush).toHaveCount(0);
+
+      const valve = page.getByRole('slider', { name: controlName(layout, bare.id) });
+      await expect(valve).not.toHaveAttribute('aria-disabled', 'true');
+      await dragValve(page, valve, 1);
+      await stepAndSettle(page, 50);
+      await expect(gush).toBeVisible();
+      expect(await meterValue(page, discharge)).toBeLessThan(shut / 2);
+
+      await dragValve(page, valve, 0);
+      await stepAndSettle(page, 50);
+      await expect(gush).toHaveCount(0);
     });
 
     test('throttle vernier buttons step the throttle', async ({ page }) => {

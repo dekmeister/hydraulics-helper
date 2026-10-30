@@ -135,6 +135,25 @@ describe.each([CAT1, TEST_APPLIANCE])('lesson progress on $id', (spec) => {
     expect(shut.progress.stats.crewDryS).toBe(0);
   });
 
+  it('counts water out an empty delivery: seconds and litres, not a laid line (issue #16)', () => {
+    const endless: LessonDef = {
+      ...LESSON,
+      objectives: [{ id: 'never', text: 'Never', when: { kind: 'time', max: -1 } }],
+    };
+    const start = { state: site(spec), progress: startLesson(endless, P) };
+    const laid = play(endless, start, on, 50);
+    expect(laid.progress.stats.bareOpenS).toBe(0);
+    expect(laid.progress.stats.bareOpenL).toBe(0);
+    const bare = spec.deliveries.map((d) => d.id).filter((id) => id !== spec.deliveries[0]?.id);
+    if (bare[0] === undefined) throw new Error(`${spec.id} has one delivery`);
+    const r = play(endless, start, tankAttackInputs(spec, 0.6, [bare[0]]), 50);
+    expect(r.progress.stats.bareOpenS).toBeCloseTo(50 * TICK_S, 9);
+    // Litres out the outlet: what left the tank, since nothing else is open.
+    const drawn = (start.state.trucks[0]?.tankL ?? 0) - (r.state.trucks[0]?.tankL ?? 0);
+    expect(r.progress.stats.bareOpenL).toBeGreaterThan(0);
+    expect(r.progress.stats.bareOpenL).toBeCloseTo(drawn, 0);
+  });
+
   it('applies event effects to the sim', () => {
     const def: LessonDef = {
       ...LESSON,

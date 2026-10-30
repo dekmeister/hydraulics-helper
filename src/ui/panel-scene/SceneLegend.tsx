@@ -42,7 +42,7 @@ function statusText(d: DeliveryLine, cavitating: boolean): string {
     case 'dry':
       return 'Laid, dry';
     case 'none':
-      return 'No line';
+      return d.moving ? `Open at the truck · ${formatWhole(d.flowLpm)} L/min` : 'Nothing connected';
   }
 }
 

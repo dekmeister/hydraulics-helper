@@ -61,28 +61,6 @@
   fill: var(--color-material-steel);
 }
 
-.valve--disabled {
-  cursor: not-allowed;
-}
-
-.valve--disabled .valve__art {
-  opacity: 0.5;
-}
-
-.valve__chip {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  padding: 2px 8px;
-  border: 1.5px dashed var(--color-material-steel-dim);
-  border-radius: var(--radius-plate);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  color: var(--color-material-steel);
-}
-
 /* Throttle */
 .throttle {
   display: flex;

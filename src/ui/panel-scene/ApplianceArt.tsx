@@ -1,5 +1,6 @@
 import type { TankLevelState } from '../../state/tankLevel';
 import type { SceneArt } from '../appliances/types';
+import { outletGushLobe } from './burstGush';
 import { PUMP_BAY_U as BAY_U, type TruckPose } from './geometry';
 
 export interface CouplingView {
@@ -8,6 +9,11 @@ export interface CouplingView {
   /** Nothing connected: the coupling carries a blank cap. */
   capped: boolean;
   highlighted: boolean;
+  /**
+   * A bare delivery opened (issue #16): how big to draw the water thrown out of it, 0–1
+   * (`burstGushScale`); 0 or omitted, none.
+   */
+  gush?: number;
 }
 
 interface Props {
@@ -19,6 +25,29 @@ interface Props {
 }
 
 const BAR_H = 8;
+
+/** Water thrown out of a bare delivery opened at the truck, from its coupling. */
+function OutletGush(props: {
+  control: string;
+  at: { x: number; y: number };
+  facingDeg: number;
+  scale: number;
+}) {
+  const lobe = outletGushLobe(props.scale, props.facingDeg);
+  return (
+    <g
+      className="scene-gush"
+      transform={`translate(${props.at.x.toFixed(1)} ${props.at.y.toFixed(1)})`}
+      data-testid={`outlet-gush-${props.control}`}
+      data-scale={props.scale.toFixed(2)}
+    >
+      <path className="scene-gush__body" d={lobe.body} />
+      {lobe.streaks.map((d) => (
+        <path key={d} className="scene-gush__streak" d={d} />
+      ))}
+    </g>
+  );
+}
 
 /**
  * Tank fill bar along the body: tank-lit fill, amber with a triangle (on the empty end of the bar,
@@ -102,6 +131,9 @@ export function ApplianceArt({ art, pose, couplings, tank }: Props) {
               <circle className="scene-highlight" cx={c.x} cy={c.y} r="10" />
             )}
             <circle className={classes.join(' ')} cx={c.x} cy={c.y} r="5.5" />
+            {view?.gush !== undefined && view.gush > 0 && (
+              <OutletGush control={c.control} at={c} facingDeg={c.facingDeg} scale={view.gush} />
+            )}
           </g>
         );
       })}

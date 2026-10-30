@@ -22,8 +22,8 @@ export function useDelivery(control: ControlId) {
   const toggleHighlight = useStore((s) => s.toggleHighlight);
   return {
     laid: line !== undefined || relayText !== undefined,
-    /** What's on it, in words: the lay, the relay, or 'No line laid'. */
-    lineText: line !== undefined ? describeLine(line) : (relayText ?? 'No line laid'),
+    /** What's on it, in words: the lay, the relay, or 'Nothing connected'. */
+    lineText: line !== undefined ? describeLine(line) : (relayText ?? 'Nothing connected'),
     open,
     setOpen: (v: number) => {
       setValve(control, v);

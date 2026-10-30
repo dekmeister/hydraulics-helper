@@ -13,7 +13,6 @@ export interface LeverGestureOptions {
   value: number;
   onChange: (open: number) => void;
   tap: TapBehaviour;
-  disabled: boolean;
   /** Opening for a pointer position; the lever's own geometry. */
   openingAt: (e: PointerEvent) => number;
 }
@@ -23,18 +22,12 @@ export interface LeverGestureOptions {
  * DRAG_THRESHOLD_PX drags the lever to the pointer; a tap toggles or does nothing per `tap`;
  * arrow, Page and Home/End keys step it (and Enter/Space toggle when taps do).
  */
-export function useLeverGesture({
-  value,
-  onChange,
-  tap,
-  disabled,
-  openingAt,
-}: LeverGestureOptions) {
+export function useLeverGesture({ value, onChange, tap, openingAt }: LeverGestureOptions) {
   const gesture = useRef<Gesture | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const onPointerDown = (e: PointerEvent<HTMLElement>) => {
-    if (disabled || gesture.current !== null) return;
+    if (gesture.current !== null) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     gesture.current = {
       pointerId: e.pointerId,
@@ -65,7 +58,6 @@ export function useLeverGesture({
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
-    if (disabled) return;
     const next =
       tap === 'toggle' && (e.key === 'Enter' || e.key === ' ')
         ? value >= 0.5

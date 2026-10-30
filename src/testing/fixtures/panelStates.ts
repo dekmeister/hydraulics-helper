@@ -2,6 +2,7 @@
 // appliance from the tank-attack scenario so every appliance gets the same set.
 import { TICK_S, VALVE_CLOSED_EPS } from '../../sim/constants';
 import { advance, chargeLines, warmStart } from '../../sim/engine';
+import { bareDeliveryIds } from '../../sim/hosed';
 import { lineFill } from '../../sim/lineFill';
 import { TANK_ATTACK } from '../../sim/scenarios/tankAttack';
 import type { ApplianceSpec, ControlId, PlayerInputs, SimState } from '../../sim/types';
@@ -12,7 +13,17 @@ export const TANK_ATTACK_TARGET_KPA = 700;
 /** Sim time each fixture state runs for before capture, s: long past the 0.5 s rpm lag. */
 const RUN_S = 10;
 
-export type PanelStateId = 'idle' | 'tank-attack-700' | 'tank-low' | 'tank-empty' | EngineStateId;
+export type PanelStateId =
+  'idle' | 'tank-attack-700' | 'tank-low' | 'tank-empty' | 'empty-delivery-open' | EngineStateId;
+
+/**
+ * Whether `spec`'s tank attack leaves a delivery with nothing connected, so it can show
+ * `empty-delivery-open`.
+ */
+export function hasBareDelivery(spec: ApplianceSpec): boolean {
+  const s = TANK_ATTACK.build(spec).state;
+  return bareDeliveryIds(s, s.activeTruckId).length > 0;
+}
 
 /** The engine being started or stopped, on the tank-attack fireground with every valve shut. */
 export type EngineStateId =
@@ -159,6 +170,13 @@ export function panelState(spec: ApplianceSpec, id: PanelStateId): SimState {
       return settle(chargedFor(withTankL(initial, 0.2 * capacityL), inputs), inputs);
     case 'tank-empty':
       return settle(chargedFor(withTankL(initial, 0), inputs), inputs);
+    case 'empty-delivery-open': {
+      // As tank-attack-700, then a delivery with nothing on it opened too (issue #16).
+      const [bare] = bareDeliveryIds(initial, initial.activeTruckId);
+      if (bare === undefined) throw new Error(`tank attack leaves no delivery bare on ${spec.id}`);
+      const both = attackInputs(spec, [line.deliveryId, bare], throttle);
+      return settle(chargedFor(initial, inputs), both);
+    }
   }
 }
 

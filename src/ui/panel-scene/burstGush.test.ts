@@ -5,6 +5,7 @@ import {
   BURST_GUSH_MIN_SCALE,
   burstGushLobes,
   burstGushScale,
+  outletGushLobe,
 } from './burstGush';
 import { SPRAY_REACH_U } from './geometry';
 
@@ -55,5 +56,18 @@ describe('burstGushLobes', () => {
       expect(lobe.body).toMatch(/^M/);
       expect(lobe.streaks.length).toBeGreaterThan(1);
     }
+  });
+});
+
+describe('outletGushLobe', () => {
+  it('throws one lobe straight out of the outlet, as far as a burst lobe', () => {
+    // Outlet facing rearward (180°): the lobe runs out along −x.
+    const { tip } = outletGushLobe(1, 180);
+    expect(tip.x).toBeCloseTo(-SPRAY_REACH_U, 6);
+    expect(tip.y).toBeCloseTo(0, 6);
+    expect(Math.hypot(outletGushLobe(0.5, 30).tip.x, outletGushLobe(0.5, 30).tip.y)).toBeCloseTo(
+      SPRAY_REACH_U / 2,
+      6,
+    );
   });
 });

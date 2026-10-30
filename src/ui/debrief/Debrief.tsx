@@ -16,6 +16,7 @@ const SCORE_LABEL: Readonly<Record<ScoreLineId, string>> = {
   hammer: 'Water hammer',
   bursts: 'Burst relay lengths',
   crewDry: 'Crews without water',
+  bareOutlet: 'Water out an empty delivery',
 };
 
 const signed = (n: number) => (n > 0 ? `+${String(n)}` : n < 0 ? `−${String(-n)}` : '0');

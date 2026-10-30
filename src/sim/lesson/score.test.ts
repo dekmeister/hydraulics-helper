@@ -33,6 +33,7 @@ function ended(
   tally: Partial<FaultTally> = {},
   crewDryS = 0,
   doneIds = ['a', 'b'],
+  bareOpenS = 0,
 ): LessonProgress {
   const p = startLesson(DEF, P);
   return {
@@ -45,7 +46,7 @@ function ended(
         doneIds.includes(o.id) ? { heldS: 0, doneAtS: 1 } : { heldS: 0 },
       ]),
     ),
-    stats: { ...p.stats, crewDryS },
+    stats: { ...p.stats, crewDryS, bareOpenS },
   };
 }
 
@@ -56,12 +57,19 @@ describe('scoreLesson', () => {
 
   it('takes capped points off for each kind of fault', () => {
     const s = scoreLesson(DEF, ended({ cavitationS: 40, waterHammer: 1 }), STATE);
-    expect(s.lines.find((l) => l.id === 'cavitation')?.points).toBe(-10);
+    expect(s.lines.find((l) => l.id === 'cavitation')?.points).toBe(-5);
     expect(s.lines.find((l) => l.id === 'hammer')?.points).toBe(-5);
-    expect(s).toMatchObject({ points: 85, stars: 2 });
+    expect(s).toMatchObject({ points: 90, stars: 3 });
+    const bare = scoreLesson(DEF, ended({}, 0, ['a', 'b'], 4), STATE);
+    expect(bare.lines.find((l) => l.id === 'bareOutlet')).toMatchObject({ amount: 4, points: -2 });
     const worst = scoreLesson(
       DEF,
-      ended({ cavitationS: 999, overheatS: 999, waterHammer: 9, hoseBursts: 3 }, 999),
+      ended(
+        { cavitationS: 999, overheatS: 999, waterHammer: 9, hoseBursts: 3 },
+        999,
+        undefined,
+        999,
+      ),
       STATE,
     );
     expect(worst).toMatchObject({ points: 60, stars: 1 });
@@ -70,7 +78,12 @@ describe('scoreLesson', () => {
   it('adds up: the lines always sum to the total', () => {
     for (const p of [
       ended(),
-      ended({ cavitationS: 999, overheatS: 999, waterHammer: 9, hoseBursts: 3 }, 999),
+      ended(
+        { cavitationS: 999, overheatS: 999, waterHammer: 9, hoseBursts: 3 },
+        999,
+        undefined,
+        999,
+      ),
       ended({}, 0, ['a']),
     ]) {
       const s = scoreLesson(DEF, p, STATE);

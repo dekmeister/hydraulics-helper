@@ -129,7 +129,7 @@ function DeliveryRow({ item }: { item: Extract<PanelItem, { kind: 'delivery' }> 
         onChange={setOpen}
         function="outlet"
         tap={item.tap}
-        {...(laid ? {} : { disabledReason: 'NO LINE' })}
+        hose={laid}
       />
     </div>
   );

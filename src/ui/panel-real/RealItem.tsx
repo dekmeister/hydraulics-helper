@@ -38,6 +38,8 @@ function simpleItem<K extends PanelItem['kind']>(
 const COUPLING_Y = 0.43;
 /** A coupling's bore, as a fraction of its outer radius. */
 const BORE_FRAC = 0.69;
+/** A coupled hose's core (inside its casing), as a fraction of the coupling's outer radius. */
+const HOSE_CORE_FRAC = 0.5;
 
 function Outlet({
   item,
@@ -71,7 +73,6 @@ function Outlet({
         geometry={item}
         box={leverBox(item)}
         style={boxStyle(leverBox(item), plate)}
-        {...(laid ? {} : { disabledReason: 'NO LINE' })}
       />
       <button
         ref={ref}
@@ -89,12 +90,14 @@ function Outlet({
           {/* Centred across the box, on its drop's end, sized to its fitting with the size
               stamped in the bore; the number plate goes under it. */}
           <circle cx={c.w / 2} cy={cy} r={r} style={{ fill: COLOR.galvLight }} />
-          <circle
-            cx={c.w / 2}
-            cy={cy}
-            r={r * BORE_FRAC}
-            style={{ fill: laid ? COLOR.galvDark : COLOR.galv }}
-          />
+          <circle cx={c.w / 2} cy={cy} r={r * BORE_FRAC} style={{ fill: COLOR.galv }} />
+          {laid && (
+            // The hose coupled on, seen end-on in the bore: casing and core as the scene draws a lay.
+            <g data-part="hose">
+              <circle cx={c.w / 2} cy={cy} r={r * BORE_FRAC} style={{ fill: COLOR.ink }} />
+              <circle cx={c.w / 2} cy={cy} r={r * HOSE_CORE_FRAC} style={{ fill: COLOR.outlet }} />
+            </g>
+          )}
           <text x={c.w / 2} y={cy} className="real-outlet__size">
             {sizeMm}
           </text>

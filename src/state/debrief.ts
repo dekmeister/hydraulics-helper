@@ -75,6 +75,15 @@ export function debrief(def: LessonDef, p: LessonProgress, score: Score): Debrie
       detail: `Their delivery was open but ${DRY_WHY[why]}. Watch the gauges that warn you first.`,
     });
   }
+  if (p.stats.bareOpenS > 0)
+    findings.push({
+      id: 'bare-outlet',
+      tone: 'fault',
+      title: `Water ran out an empty delivery for ${seconds(p.stats.bareOpenS)}`,
+      detail:
+        `About ${String(Math.round(p.stats.bareOpenL / 10) * 10)} L went on the ground at the ` +
+        'truck. Keep a delivery with nothing connected shut.',
+    });
   const bursts = amount('bursts');
   if (bursts > 0)
     findings.push({
@@ -108,7 +117,7 @@ export function debrief(def: LessonDef, p: LessonProgress, score: Score): Debrie
       id: 'clean',
       tone: 'good',
       title: 'Clean running',
-      detail: 'No cavitation, overheating, water hammer or crews left without water.',
+      detail: 'No cavitation, overheating, water hammer, wasted water or crews left without water.',
     });
 
   const headline =

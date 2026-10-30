@@ -19,11 +19,12 @@ interface Penalty {
 
 /** The caps sum to `CLEAN_POINTS`, so the score's lines always add up to its total. */
 export const PENALTIES = {
-  cavitation: { per: 0.5, cap: 10 },
+  cavitation: { per: 0.5, cap: 5 },
   overheat: { per: 0.5, cap: 5 },
   hammer: { per: 5, cap: 10 },
   bursts: { per: 10, cap: 10 },
   crewDry: { per: 0.5, cap: 5 },
+  bareOutlet: { per: 0.5, cap: 5 },
 } as const satisfies Record<string, Penalty>;
 
 export type ScoreLineId = 'objectives' | 'clean' | keyof typeof PENALTIES;
@@ -54,7 +55,8 @@ const penalty = (id: keyof typeof PENALTIES, amount: number): ScoreLine => {
 
 /**
  * The lesson's score: objectives done, then penalties for cavitation and overheat seconds, water
- * hammer, burst relay lengths and seconds a crew was left without water. Uses the faults frozen at
+ * hammer, burst relay lengths, seconds a crew was left without water and seconds water ran out a
+ * delivery with nothing connected. Uses the faults frozen at
  * the end of the lesson, or the live ones while it runs.
  */
 export function scoreLesson(def: LessonDef, p: LessonProgress, state: SimState): Score {
@@ -76,6 +78,7 @@ export function scoreLesson(def: LessonDef, p: LessonProgress, state: SimState):
     penalty('hammer', tally?.waterHammer ?? 0),
     penalty('bursts', bursts),
     penalty('crewDry', p.stats.crewDryS),
+    penalty('bareOutlet', p.stats.bareOpenS),
   ].map((l) => ({ ...l, points: failed ? 0 : Math.round(l.points) }));
   const lines: ScoreLine[] = [
     objectives,

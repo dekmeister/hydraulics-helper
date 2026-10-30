@@ -2,6 +2,7 @@
 // moves on, failures end it, and the debrief's statistics accumulate. Pure and deterministic.
 import { VALVE_CLOSED_EPS } from '../constants';
 import { connectedSupplies } from '../engine';
+import { bareDeliveryIds } from '../hosed';
 import { lineFill } from '../lineFill';
 import type { FaultTally, HoseLine, SimState, TruckState } from '../types';
 import { holds, type LessonFacts } from './conditions';
@@ -29,6 +30,9 @@ export interface LessonStats {
   watered: string[];
   /** Seconds at least one crew with an open delivery had no water. */
   crewDryS: number;
+  /** Seconds water ran out a delivery with nothing connected, and the litres it wasted. */
+  bareOpenS: number;
+  bareOpenL: number;
   dryCauses: Partial<Record<DryCause, number>>;
   cavitationBy: Partial<Record<CavitationSupply, number>>;
   peakTempC: number;
@@ -61,7 +65,15 @@ export function startLesson(def: LessonDef, playerTruckId: string): LessonProgre
     acks: [],
     firedAtS: {},
     radio: [],
-    stats: { watered: [], crewDryS: 0, dryCauses: {}, cavitationBy: {}, peakTempC: 0 },
+    stats: {
+      watered: [],
+      crewDryS: 0,
+      bareOpenS: 0,
+      bareOpenL: 0,
+      dryCauses: {},
+      cavitationBy: {},
+      peakTempC: 0,
+    },
   };
 }
 
@@ -147,6 +159,11 @@ function stepStats(
         atBranch(l.id) < CREW_WATER_MIN_LPM &&
         !charging(l),
     );
+  // Water out a bare outlet goes on the ground at the truck, winding down or not.
+  const bareLpm = bareDeliveryIds(state, truck.id)
+    .map((id) => truck.readings.deliveryFlowLpm[id] ?? 0)
+    .filter((q) => q >= CREW_WATER_MIN_LPM)
+    .reduce((a, q) => a + q, 0);
   const add = <K extends string>(m: Partial<Record<K, number>>, k: K) => ({
     ...m,
     [k]: (m[k] ?? 0) + dtS,
@@ -154,6 +171,8 @@ function stepStats(
   return {
     watered,
     crewDryS: stats.crewDryS + (dry ? dtS : 0),
+    bareOpenS: stats.bareOpenS + (bareLpm > 0 ? dtS : 0),
+    bareOpenL: stats.bareOpenL + (bareLpm * dtS) / 60,
     dryCauses: dry ? add(stats.dryCauses, dryCause(state, truck)) : stats.dryCauses,
     cavitationBy:
       truck.readings.cavitation > 0

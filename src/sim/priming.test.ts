@@ -100,6 +100,13 @@ describe.each([
     expect(truckOf(run(draught(spec, 3), inputs, 50)).pump.vacuumKpa).toBe(0);
   });
 
+  it('can’t prime with a bare delivery open either: the outlet is open to air (issue #16)', () => {
+    const bare = createInitialState(spec, [], draughtSite(spec, 3, 1e6));
+    const inputs = { ...priming(spec), valves: { suction: 1, a: 1 } };
+    expect(timeToPrime(bare, inputs, 60)).toBeUndefined();
+    expect(timeToPrime(bare, priming(spec))).toBeDefined();
+  });
+
   it('once primed, delivers water and loses prime when the dam runs dry', () => {
     let s = draught(spec, 3, 400);
     while (!truckOf(s).pump.primed) s = run(s, priming(spec), 1);

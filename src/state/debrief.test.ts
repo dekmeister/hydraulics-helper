@@ -16,6 +16,7 @@ function score(amounts: Partial<Record<string, number>>): Score {
     'hammer',
     'bursts',
     'crewDry',
+    'bareOutlet',
   ] as const;
   return {
     points: 50,
@@ -50,7 +51,13 @@ describe('debrief', () => {
     const p = progress({
       status: 'failed',
       failure: 'cavitation-damage',
-      stats: { ...progress().stats, crewDryS: 12.3, dryCauses: { prime: 12.3 } },
+      stats: {
+        ...progress().stats,
+        crewDryS: 12.3,
+        dryCauses: { prime: 12.3 },
+        bareOpenS: 6,
+        bareOpenL: 412.6,
+      },
     });
     const d = debrief(DEF, p, score({ cavitation: 61, hammer: 2, overheat: 5 }));
     expect(d.headline).toBe('Scenario failed');
@@ -58,11 +65,14 @@ describe('debrief', () => {
       'failure',
       'cavitation',
       'crew-dry',
+      'bare-outlet',
       'hammer',
       'overheat',
     ]);
     expect(d.findings[0]?.detail).toMatch(/cavitated for over 60 s/);
     expect(d.findings[2]?.detail).toMatch(/lost its prime/);
-    expect(d.findings[3]?.title).toBe('Water hammer 2 times');
+    expect(d.findings[3]?.title).toBe('Water ran out an empty delivery for 6 s');
+    expect(d.findings[3]?.detail).toMatch(/About 410 L/);
+    expect(d.findings[4]?.title).toBe('Water hammer 2 times');
   });
 });

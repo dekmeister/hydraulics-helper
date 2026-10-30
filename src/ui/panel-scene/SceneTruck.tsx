@@ -5,6 +5,7 @@ import type { TruckState } from '../../sim/types';
 import type { DeliveryIdentity } from '../appliances/identity';
 import type { SceneArt } from '../appliances/types';
 import { ApplianceArt } from './ApplianceArt';
+import { burstGushScale } from './burstGush';
 import { BranchCrew } from './BranchCrew';
 import { HoseLay } from './HoseLay';
 import type { SiteTruckGeometry } from './siteLayout';
@@ -104,6 +105,8 @@ export function SceneTruck(props: TruckProps) {
             control: d.deliveryId,
             capped: d.state === 'none',
             highlighted: active && d.state === 'none' && highlighted === d.deliveryId,
+            // Nothing connected but water moving: it's pouring out at the truck.
+            gush: d.state === 'none' && d.moving ? burstGushScale(d.flowLpm) : 0,
           })),
           ...truck.spec.inlets
             .filter((i) => i.kind !== 'tank')

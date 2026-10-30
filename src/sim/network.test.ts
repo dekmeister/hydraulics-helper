@@ -28,15 +28,19 @@ const SPEC: ApplianceSpec = {
   instruments: [],
 };
 
-/** Solve `spec` at fixed rpm with a full tank; valves not listed are shut. */
+/** Solve `spec` at fixed rpm with a full tank; valves not listed are shut, bare deliveries named. */
 const solve = (
   valves: Record<string, number>,
   lines = [layLine('a', '38L', 3, 15)],
   rpm = 2500,
   spec = SPEC,
+  bareDeliveryIds: readonly string[] = [],
 ) => {
   const inputs: PlayerInputs = { throttle: 0, valves, switches: {} };
-  return solveTruck({ spec, rpm, tankL: 3000, inputs: sanitiseInputs(spec, inputs) }, lines);
+  return solveTruck(
+    { spec, rpm, tankL: 3000, inputs: sanitiseInputs(spec, inputs), bareDeliveryIds },
+    lines,
+  );
 };
 
 describe('network solve', () => {
@@ -90,8 +94,35 @@ describe('network solve', () => {
     expect(r.deliveryFlowLpm.a).toBe(0);
   });
 
-  it('treats a delivery with no line laid as blank-capped', () => {
-    expect(solve({ tank: 1, b: 1 }).deliveryFlowLpm.b).toBe(0);
+  it('a delivery with nothing on it is shut off by its valve alone', () => {
+    expect(solve({ tank: 1 }, [], 2500, SPEC, ['a', 'b']).pumpFlowLpm).toBe(0);
+  });
+
+  it('an open delivery with nothing on it discharges to air through its valve (issue #16)', () => {
+    const r = solve({ tank: 1, b: 1 }, [layLine('a', '38L', 3, 15)], 2500, SPEC, ['b']);
+    const q = r.deliveryFlowLpm.b ?? 0;
+    expect(q).toBeGreaterThan(0);
+    // P_discharge = k_valve·Q², no hose and no branch: exact to the solver's tolerance.
+    expect(r.dischargeKpa).toBeCloseTo(valveLossCoeff(64) * q * q, 3);
+    expect(r.pumpFlowLpm).toBeCloseTo(q, 6);
+  });
+
+  it('an open bare outlet takes more than a laid line and drops the discharge', () => {
+    const line = layLine('a', '38L', 3, 15);
+    const laid = solve({ tank: 1, a: 1 }, [line]);
+    const bare = solve({ tank: 1, b: 1 }, [line], 2500, SPEC, ['b']);
+    expect(bare.pumpFlowLpm).toBeGreaterThan(laid.pumpFlowLpm);
+    expect(bare.dischargeKpa).toBeLessThan(laid.dischargeKpa);
+    expect(bare.branchKpa[line.id]).toBe(0);
+  });
+
+  it('a bare outlet cracked open passes less water; wide open it out-draws the tank', () => {
+    // Even 20 % open the 64 mm outlet takes all the tank-to-pump can feed, so crack it.
+    const half = solve({ tank: 1, b: 0.03 }, [], 2500, SPEC, ['b']);
+    const full = solve({ tank: 1, b: 1 }, [], 2500, SPEC, ['b']);
+    expect(half.deliveryFlowLpm.b ?? 0).toBeGreaterThan(0);
+    expect(half.deliveryFlowLpm.b ?? 0).toBeLessThan(full.deliveryFlowLpm.b ?? 0);
+    expect(full.cavitation).toBeGreaterThan(0);
   });
 
   it('a partly open delivery valve passes less water', () => {

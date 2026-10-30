@@ -15,8 +15,8 @@ export interface ValveHandleProps {
   /** Handle colour by function (Design §2). */
   function: 'inlet' | 'outlet';
   tap: TapBehaviour;
-  /** When set, the valve can't be worked and this chip says why, e.g. 'NO LINE'. */
-  disabledReason?: string;
+  /** A delivery with a lay or relay on it: draws the start of the hose on the outlet end. */
+  hose?: boolean;
 }
 
 // Drawing space (viewBox 0 0 200 120): pipe along y = 84, lever pivot at (70, 84).
@@ -32,15 +32,41 @@ function stateText(value: number): string {
 }
 
 /**
+ * The start of a hose on the pipe's outlet end, drawn as the scene draws a lay (ink casing, blue
+ * core) behind a coupling collar: something is connected to this delivery.
+ */
+function HoseStub() {
+  return (
+    <g data-part="hose">
+      <rect x={168} y={PIVOT.y - 9} width={VIEW.w - 168} height={18} style={{ fill: COLOR.ink }} />
+      <rect
+        x={168}
+        y={PIVOT.y - 5}
+        width={VIEW.w - 168}
+        height={10}
+        style={{ fill: COLOR.outlet }}
+      />
+      <rect
+        x={160}
+        y={PIVOT.y - 11}
+        width={10}
+        height={22}
+        rx={2}
+        style={{ fill: COLOR.galvLight }}
+      />
+    </g>
+  );
+}
+
+/**
  * Quarter-turn lever valve (Design §5, sheet 03): drag the lever through 90° (closed across the pipe,
  * open along it), with detents at both ends. Taps toggle or do nothing per `tap`. Pointer Events
  * only; a role="slider" with arrow, Page, Home/End keys (and Enter/Space when tap toggles).
  */
 export function ValveHandle(props: ValveHandleProps) {
-  const { label, value, onChange, tap, disabledReason } = props;
+  const { label, value, onChange, tap, hose = false } = props;
   const fn = props.function;
   const svgRef = useRef<SVGSVGElement>(null);
-  const disabled = disabledReason !== undefined;
 
   const openingAtPointer = (e: PointerEvent): number => {
     const box = svgRef.current?.getBoundingClientRect();
@@ -53,7 +79,6 @@ export function ValveHandle(props: ValveHandleProps) {
     value,
     onChange,
     tap,
-    disabled,
     openingAt: openingAtPointer,
   });
 
@@ -67,18 +92,16 @@ export function ValveHandle(props: ValveHandleProps) {
 
   return (
     <div
-      className={`valve${dragging ? ' valve--dragging' : ''}${disabled ? ' valve--disabled' : ''}`}
+      className={`valve${dragging ? ' valve--dragging' : ''}`}
       role="slider"
-      tabIndex={disabled ? -1 : 0}
+      tabIndex={0}
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(value * 100)}
-      aria-valuetext={
-        disabled ? `${stateText(value)}, ${disabledReason.toLowerCase()}` : stateText(value)
-      }
-      aria-disabled={disabled || undefined}
+      aria-valuetext={stateText(value)}
       data-function={fn}
+      data-hose={hose || undefined}
       {...handlers}
     >
       <svg
@@ -93,32 +116,28 @@ export function ValveHandle(props: ValveHandleProps) {
         <text x={VIEW.w - 6} y={72} textAnchor="end" className="valve__end-label">
           OPEN
         </text>
-        {!disabled && value > 0 && (
+        {value > 0 && (
           <text x={VIEW.w - 6} y={30} textAnchor="end" className="valve__percent">
             {formatPercent(value)}
           </text>
         )}
 
         {/* Travel path: dotted when closed; fills in the handle colour as it opens. */}
-        {!disabled && (
-          <>
-            <path
-              d={TRAVEL_PATH}
-              fill="none"
-              strokeWidth={1.5}
-              strokeDasharray="2 5"
-              style={{ stroke: COLOR.steelDim }}
-            />
-            <path
-              d={TRAVEL_PATH}
-              fill="none"
-              strokeWidth={4}
-              pathLength={100}
-              strokeDasharray={`${String(value * 100)} 100`}
-              style={{ stroke: fn === 'inlet' ? COLOR.steel : handle }}
-            />
-          </>
-        )}
+        <path
+          d={TRAVEL_PATH}
+          fill="none"
+          strokeWidth={1.5}
+          strokeDasharray="2 5"
+          style={{ stroke: COLOR.steelDim }}
+        />
+        <path
+          d={TRAVEL_PATH}
+          fill="none"
+          strokeWidth={4}
+          pathLength={100}
+          strokeDasharray={`${String(value * 100)} 100`}
+          style={{ stroke: fn === 'inlet' ? COLOR.steel : handle }}
+        />
 
         {/* Pipe and valve body, lit from the upper left. */}
         <rect
@@ -147,6 +166,7 @@ export function ValveHandle(props: ValveHandleProps) {
           style={{ fill: COLOR.galvLight }}
         />
         <rect x={46} y={PIVOT.y + 6} width={48} height={12} rx={6} style={{ fill: COLOR.galv }} />
+        {hose && <HoseStub />}
 
         <g className="valve__lever" style={leverStyle}>
           <rect
@@ -174,7 +194,7 @@ export function ValveHandle(props: ValveHandleProps) {
               height={36}
               rx={9}
               strokeWidth={1.5}
-              style={{ fill: disabled ? COLOR.galvDark : handle, stroke: handleStroke }}
+              style={{ fill: handle, stroke: handleStroke }}
             />
           ) : (
             <>
@@ -183,7 +203,7 @@ export function ValveHandle(props: ValveHandleProps) {
                 cy={PIVOT.y - 58}
                 r={11}
                 strokeWidth={1.5}
-                style={{ fill: disabled ? COLOR.galvDark : handle, stroke: handleStroke }}
+                style={{ fill: handle, stroke: handleStroke }}
               />
               <circle cx={PIVOT.x} cy={PIVOT.y - 58} r={4.5} style={{ fill: COLOR.galvLight }} />
             </>
@@ -198,7 +218,6 @@ export function ValveHandle(props: ValveHandleProps) {
         />
         <circle cx={PIVOT.x} cy={PIVOT.y} r={3} style={{ fill: COLOR.ink }} />
       </svg>
-      {disabled && <span className="valve__chip">{disabledReason}</span>}
     </div>
   );
 }

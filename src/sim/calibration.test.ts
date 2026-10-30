@@ -125,7 +125,9 @@ function draughtAt(liftM: number, throttle: number, lines: HoseLine[]) {
   const s = primedState(
     chargeLines(createInitialState(DRAUGHT_SPEC, lines, draughtSite(DRAUGHT_SPEC, liftM))),
   );
-  return truckOf(run(s, inputsWith(throttle, ['suction', 'a', 'b']), 50)).readings;
+  // Only the laid deliveries: a bare one would dump water at the truck (issue #16).
+  const open = ['suction', ...lines.map((l) => l.deliveryId)];
+  return truckOf(run(s, inputsWith(throttle, open), 50)).readings;
 }
 
 /** Wide open on two big lines: whatever the suction can give, the pump takes. */

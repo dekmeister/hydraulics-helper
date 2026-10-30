@@ -225,26 +225,6 @@
   cursor: grabbing;
 }
 
-.bay-lever--disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.bay-lever__chip {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  padding: 1px 6px;
-  border: 1.5px dashed var(--color-material-steel-dim);
-  border-radius: var(--radius-plate);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--color-material-steel);
-  white-space: nowrap;
-}
-
 /* Coupling with its number plate: locates the hose on the scene. */
 .real-outlet {
   padding: 0;

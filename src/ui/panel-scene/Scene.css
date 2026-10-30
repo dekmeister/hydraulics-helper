@@ -543,8 +543,24 @@ circle.scene-highlight--outer {
   stroke-linecap: round;
 }
 
+/* Water thrown out of a bare delivery opened at the truck (issue #16): the same white gush. */
+.scene-gush path.scene-gush__body {
+  fill: var(--color-scene-spray);
+  stroke: var(--color-scene-dam);
+  stroke-width: 2;
+  opacity: 0.92;
+}
+.scene-gush path.scene-gush__streak {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  .scene-relay path.scene-relay__gush-streak {
+  .scene-relay path.scene-relay__gush-streak,
+  .scene-gush path.scene-gush__streak {
     animation: scene-relay-gush 0.4s linear infinite;
   }
 }

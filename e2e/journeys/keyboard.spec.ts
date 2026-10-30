@@ -22,19 +22,15 @@ for (const spec of JOURNEY_APPLIANCES) {
       window.__pumpops?.load({ scenario: 'tank-attack', appliance });
     }, spec.id);
     await startEngine(page);
-    const state = await getState(page);
-    const laid = new Set(state.lines.map((l) => l.deliveryId));
     const expected = layoutItems(layoutFor(spec.id)).flatMap((i) => {
       switch (i.kind) {
         case 'valve':
         case 'primer':
         case 'engine-switch':
           return [i.label];
-        case 'delivery': {
-          // Every delivery can be found on the scene and back; NO LINE valves are disabled.
-          const locate = [`Show ${i.label} on scene`, `Show ${i.label} on panel`];
-          return laid.has(i.control) ? [i.label, ...locate] : locate;
-        }
+        case 'delivery':
+          // Every delivery's valve works, laid or not, and it can be found on the scene and back.
+          return [i.label, `Show ${i.label} on scene`, `Show ${i.label} on panel`];
         case 'throttle':
           return [i.label, `${i.label} down`, `${i.label} up`];
         default:
@@ -70,12 +66,10 @@ for (const spec of JOURNEY_APPLIANCES) {
       window.__pumpops?.load({ scenario: 'tank-attack', appliance });
     }, spec.id);
     await startEngine(page);
-    const laid = new Set((await getState(page)).lines.map((l) => l.deliveryId));
     const items = layoutItems(layoutFor(spec.id));
 
     for (const item of items) {
       if (item.kind !== 'valve' && item.kind !== 'delivery') continue;
-      if (item.kind === 'delivery' && !laid.has(item.control)) continue;
       const valve = page.getByRole('slider', { name: item.label, exact: true });
       await valve.focus();
       await page.keyboard.press('ArrowUp');
@@ -113,7 +107,6 @@ for (const spec of REALISTIC_APPLIANCES) {
     test.skip(testInfo.project.name !== 'desktop', 'keyboard pass runs on desktop');
     await load(page, 'tank-attack', spec.id);
     await showRealistic(page);
-    const laid = new Set((await getState(page)).lines.map((l) => l.deliveryId));
     const expected = layoutItems(layoutFor(spec.id)).flatMap((i) => {
       switch (i.kind) {
         case 'valve':
@@ -121,10 +114,8 @@ for (const spec of REALISTIC_APPLIANCES) {
         case 'throttle':
         case 'engine-switch':
           return [i.label];
-        case 'delivery': {
-          const locate = [`Show ${i.label} on scene`, `Show ${i.label} on panel`];
-          return laid.has(i.control) ? [i.label, ...locate] : locate;
-        }
+        case 'delivery':
+          return [i.label, `Show ${i.label} on scene`, `Show ${i.label} on panel`];
         default:
           return [];
       }

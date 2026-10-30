@@ -3,7 +3,9 @@ import { APPLIANCES } from '../../sim/appliances/catalogue';
 import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { activeTruck, engineStatus, selectWarnings } from '../../state/selectors';
 import { LOW_TANK_FRACTION } from '../../state/tankLevel';
-import { engineStates, panelState, TANK_ATTACK_TARGET_KPA } from './panelStates';
+import { bareDeliveryIds } from '../../sim/hosed';
+import { deliveryLines } from '../../state/selectors';
+import { engineStates, hasBareDelivery, panelState, TANK_ATTACK_TARGET_KPA } from './panelStates';
 
 describe.each([...APPLIANCES, TEST_APPLIANCE].map((s) => [s.id, s] as const))(
   'panel fixture states: %s',
@@ -38,6 +40,19 @@ describe.each([...APPLIANCES, TEST_APPLIANCE].map((s) => [s.id, s] as const))(
       );
       expect(lit).toEqual([]);
     });
+
+    it.runIf(hasBareDelivery(spec))(
+      'empty-delivery-open dumps water at the truck and pulls the discharge down',
+      () => {
+        const s = panelState(spec, 'empty-delivery-open');
+        const t = activeTruck(s);
+        const [bare] = bareDeliveryIds(s, t.id);
+        const d = deliveryLines(s).find((x) => x.deliveryId === bare);
+        expect(d).toMatchObject({ state: 'none', moving: true });
+        expect(t.readings.dischargeKpa).toBeLessThan(TANK_ATTACK_TARGET_KPA * 0.8);
+        expect(t.tankL).toBeGreaterThan(0.5 * capacityL);
+      },
+    );
 
     it('tank-low is under the low mark but not empty, and tank-empty reads dry', () => {
       const low = activeTruck(panelState(spec, 'tank-low'));

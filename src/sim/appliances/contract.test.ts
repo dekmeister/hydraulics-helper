@@ -203,6 +203,19 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
       expectSane(s);
     });
 
+    it('opened with nothing connected, every delivery dumps water at the truck (issue #16)', () => {
+      const inputs = tankAttackInputs(spec, 0.6, allDeliveries(spec));
+      const bare = run(createInitialState(spec), inputs, 50);
+      const laid = run(createInitialState(spec, lineOnEveryDelivery(spec)), inputs, 50);
+      expectSane(bare);
+      for (const d of spec.deliveries) {
+        expect(truckOf(bare).readings.deliveryFlowLpm[d.id] ?? 0).toBeGreaterThan(0);
+      }
+      // No hose or branch to hold it back: the tank drains faster than through laid lines.
+      expect(truckOf(bare).tankL).toBeLessThan(truckOf(laid).tankL);
+      expect(truckOf(bare).readings.dischargeKpa).toBeLessThan(truckOf(laid).readings.dischargeKpa);
+    });
+
     describe('engine start and stop', () => {
       const { ignition, start, stop } = spec.engine.controls;
       const ticksFor = (s: number) => Math.round(s / TICK_S);

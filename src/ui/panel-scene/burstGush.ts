@@ -1,5 +1,6 @@
-// Water gushing out of a burst relay length, for the scene: how big, and the shapes. A split
-// 65 mm length pours a heavy sheet sideways out of both sides of the split, not a fine spray.
+// Water gushing out of a burst relay length, or out of a bare delivery opened at the truck (issue
+// #16), for the scene: how big, and the shapes. A split 65 mm length pours a heavy sheet sideways
+// out of both sides of the split, not a fine spray; a bare outlet throws one straight out.
 import { CHARGED_MIN_LPM } from '../../state/selectors';
 import { SPRAY_REACH_U, type Point } from './geometry';
 
@@ -45,29 +46,39 @@ const fmt = (n: number) => n.toFixed(1);
  * axes), relative to the split: narrow at the hole, fanning out to `SPRAY_REACH_U × scale`.
  */
 export function burstGushLobes(scale: number, headingDeg: number): GushLobe[] {
-  const reach = SPRAY_REACH_U * scale;
+  return [90, -90].map((side) => gushLobe(SPRAY_REACH_U * scale, headingDeg + side));
+}
+
+/**
+ * The one lobe thrown straight out of a bare outlet facing `facingDeg` (degrees, the drawing's
+ * axes), relative to the coupling: narrow at the outlet, fanning out to `SPRAY_REACH_U × scale`.
+ */
+export function outletGushLobe(scale: number, facingDeg: number): GushLobe {
+  return gushLobe(SPRAY_REACH_U * scale, facingDeg);
+}
+
+/** A lobe of water thrown `reach` out from the hole along `outDeg`. */
+function gushLobe(reach: number, outDeg: number): GushLobe {
   const w = reach * LOBE_WIDTH;
-  return [90, -90].map((side) => {
-    const a = ((headingDeg + side) * Math.PI) / 180;
-    const out = { x: Math.cos(a), y: Math.sin(a) };
-    const across = { x: -out.y, y: out.x };
-    // A point `u` out from the split and `v` across the lobe.
-    const at = (u: number, v: number): Point => ({
-      x: u * out.x + v * across.x,
-      y: u * out.y + v * across.y,
-    });
-    const p = (u: number, v: number) => {
-      const q = at(u, v);
-      return `${fmt(q.x)} ${fmt(q.y)}`;
-    };
-    const body =
-      `M${p(0, -2)} ` +
-      `C${p(reach * 0.35, -w * 0.6)}, ${p(reach * 0.8, -w / 2)}, ${p(reach, -w * 0.15)} ` +
-      `Q${p(reach * 1.05, 0)}, ${p(reach, w * 0.15)} ` +
-      `C${p(reach * 0.8, w / 2)}, ${p(reach * 0.35, w * 0.6)}, ${p(0, 2)} Z`;
-    const streaks = STREAK_OFFSETS.map(
-      (k) => `M${p(reach * 0.1, 0)} L${p(reach * STREAK_REACH, k * w)}`,
-    );
-    return { body, streaks, tip: at(reach, 0) };
+  const a = (outDeg * Math.PI) / 180;
+  const out = { x: Math.cos(a), y: Math.sin(a) };
+  const across = { x: -out.y, y: out.x };
+  // A point `u` out from the hole and `v` across the lobe.
+  const at = (u: number, v: number): Point => ({
+    x: u * out.x + v * across.x,
+    y: u * out.y + v * across.y,
   });
+  const p = (u: number, v: number) => {
+    const q = at(u, v);
+    return `${fmt(q.x)} ${fmt(q.y)}`;
+  };
+  const body =
+    `M${p(0, -2)} ` +
+    `C${p(reach * 0.35, -w * 0.6)}, ${p(reach * 0.8, -w / 2)}, ${p(reach, -w * 0.15)} ` +
+    `Q${p(reach * 1.05, 0)}, ${p(reach, w * 0.15)} ` +
+    `C${p(reach * 0.8, w / 2)}, ${p(reach * 0.35, w * 0.6)}, ${p(0, 2)} Z`;
+  const streaks = STREAK_OFFSETS.map(
+    (k) => `M${p(reach * 0.1, 0)} L${p(reach * STREAK_REACH, k * w)}`,
+  );
+  return { body, streaks, tip: at(reach, 0) };
 }

@@ -102,11 +102,11 @@ export function TankGallery({
 }
 
 export function ValveGallery() {
-  const outlets: [string, number, string | undefined][] = [
-    ['outlet closed', 0, undefined],
-    ['outlet 50 %', 0.5, undefined],
-    ['outlet open', 1, undefined],
-    ['outlet disabled', 0, 'NO LINE'],
+  const outlets: [string, number, boolean][] = [
+    ['outlet closed', 0, false],
+    ['outlet 50 %', 0.5, false],
+    ['outlet open', 1, false],
+    ['outlet closed, hose on', 0, true],
   ];
   const inlets: [string, number][] = [
     ['inlet closed', 0],
@@ -114,7 +114,7 @@ export function ValveGallery() {
   ];
   return (
     <Gallery>
-      {outlets.map(([caption, value, reason]) => (
+      {outlets.map(([caption, value, hose]) => (
         <Card key={caption} caption={caption}>
           <ValveHandle
             label={caption}
@@ -122,7 +122,7 @@ export function ValveGallery() {
             onChange={noop}
             function="outlet"
             tap="none"
-            {...(reason === undefined ? {} : { disabledReason: reason })}
+            hose={hose}
           />
         </Card>
       ))}

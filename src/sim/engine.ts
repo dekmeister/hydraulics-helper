@@ -9,6 +9,7 @@ import {
 import { FLUTTER_KICK, FLUTTER_MEMORY, PUMP_TEMP_CAUTION_C, VALVE_CLOSED_EPS } from './constants';
 import { stepEngine } from './engineControl';
 import { detectHammer } from './hammer';
+import { hosesOn } from './hosed';
 import { inletPaths, type ConnectedSupply, type RelayFeed } from './inlets';
 import { drainOut, stepLineWater } from './lineFill';
 import type { TruckSolveInput } from './network';
@@ -126,14 +127,9 @@ interface Prepared {
   wet: boolean;
 }
 
-/** Deliveries with a hose on them, lay or relay: what an open valve leaks air from, or hammers. */
-function hosesOn(state: SimState, truckId: string) {
-  return [...state.lines, ...state.links].filter((h) => h.truckId === truckId);
-}
-
 /**
  * First half of a truck's tick: engine rpm chases the throttle and priming runs. The casing is
- * flooded if a tank, hydrant or relay feed is open to it; an open delivery with a hose leaks air.
+ * flooded if a tank, hydrant or relay feed is open to it; any open delivery leaks air, hosed or bare.
  */
 function prepareTruck(
   state: SimState,
@@ -158,7 +154,7 @@ function prepareTruck(
   // Pump to tank open lets air in on the discharge side, as an open delivery does.
   const pttId = spec.pumpToTank?.id;
   const openToAir =
-    hosesOn(state, truck.id).some((h) => (clean.valves[h.deliveryId] ?? 0) >= VALVE_CLOSED_EPS) ||
+    spec.deliveries.some((d) => (clean.valves[d.id] ?? 0) >= VALVE_CLOSED_EPS) ||
     (pttId !== undefined && (clean.valves[pttId] ?? 0) >= VALVE_CLOSED_EPS);
   const primed = stepPrime(truck.pump, { spec, inputs: clean, supplies, flooded, openToAir }, dtS);
   const wet = flooded || primed.primed;

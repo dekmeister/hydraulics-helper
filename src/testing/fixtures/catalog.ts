@@ -6,6 +6,7 @@ import { TEST_APPLIANCE } from '../../sim/appliances/testAppliance';
 import { getScenario } from '../../sim/scenarios';
 import { supports } from '../../sim/scenarios/types';
 import type { ApplianceSpec } from '../../sim/types';
+import { hasBareDelivery } from './panelStates';
 import { RELAY_STATE_SCENARIO, relayState, type RelayStateId } from './relayStates';
 import {
   REALISTIC_APPLIANCES,
@@ -40,8 +41,10 @@ export interface FixtureMeta {
 const PANEL_CAPTIONS = {
   idle:
     'Pump panel at rest with the tank-attack lines laid: every needle at its zero stop except ' +
-    'engine rpm at idle; tank full (all segments lit). Every valve closed; deliveries with no ' +
-    'line read NO LINE and are dimmed. Throttle at idle with chevrons. Supply section: tank to pump ' +
+    'engine rpm at idle; tank full (all segments lit). Every valve closed and none dimmed or ' +
+    'chipped; a laid delivery’s valve has the start of a hose (ink casing, blue core) past a ' +
+    'collar on its pipe end, one with nothing connected a bare pipe end and the text "Nothing ' +
+    'connected". Throttle at idle with chevrons. Supply section: tank to pump ' +
     'and suction inlet (green knobs, closed) and the primer (HOLD). Every lamp unlit, HAMMER ' +
     'last. "No warnings." Deliveries (Cat 1) as cards side by side, text over the valve, at 768 ' +
     'and 1280 px; stacked rows, valve on the right, at 375 px. Engine section: status "Running", ' +
@@ -73,6 +76,14 @@ const PANEL_CAPTIONS = {
     'As tank-attack-700, but the tank is empty: no segments lit, red outline, every pressure ' +
     'needle on its zero stop, TANK lamp red with a diamond (steady with a ring: reduced motion), ' +
     'message "Tank empty: the pump has no water."',
+  'empty-delivery-open':
+    'As tank-attack-700, then a delivery with nothing connected opened as well (issue #16): its ' +
+    'row reads "Nothing connected", its lever is along the pipe with no hose stub on the pipe ' +
+    'end (the laid line’s valve has one). The bare outlet dumps the pump’s water (Cat 1: ' +
+    '~1500 L/min out the 65 mm): discharge needle near its zero stop (~30 kPa), compound just ' +
+    'below 0. On the scene, a large white gush thrown straight out of that delivery’s coupling ' +
+    'at the truck; the laid line still charged, its legend row showing a much smaller flow; the ' +
+    'bare delivery’s row "Open at the truck · N L/min". Tank still nearly full.',
 } as const;
 
 export type PanelState = keyof typeof PANEL_CAPTIONS;
@@ -92,9 +103,12 @@ const ALL_PANEL_STATES = Object.keys(PANEL_CAPTIONS) as PanelState[];
 export const PANEL_FIXTURE_SETS: readonly PanelFixtureSet[] = [
   ...APPLIANCES.map((spec) => ({
     spec,
-    // The ignition trap only where STOP needs the ignition.
+    // The ignition trap only where STOP needs the ignition; an open empty delivery only where
+    // tank attack leaves one empty.
     states: ALL_PANEL_STATES.filter(
-      (s) => s !== 'stop-without-ignition' || spec.engine.controls.stop.needsIgnition,
+      (s) =>
+        (s !== 'stop-without-ignition' || spec.engine.controls.stop.needsIgnition) &&
+        (s !== 'empty-delivery-open' || hasBareDelivery(spec)),
     ),
   })),
   { spec: TEST_APPLIANCE, states: ['idle', 'tank-attack-700', 'cranking'] },
@@ -118,8 +132,9 @@ const SCENE_CAPTIONS = {
     'Scene panel alone. Plan view: red truck with white cab near the dam (lower left), every ' +
     'laid line charged (ink casing, blue core) from a coupling on the truck to a crew figure ' +
     'whose branch sprays a pale fan towards the fire glow (upper right); each branch has its ' +
-    'delivery glyph and tag on a paper disc. A delivery with no line shows a dark blank cap. ' +
-    'North arrow, scale bar. Legend: laid deliveries "Charged · N L/min", others "No line"; ' +
+    'delivery glyph and tag on a paper disc. A delivery with nothing connected shows a dark ' +
+    'blank cap and no gush (its valve is shut). North arrow, scale bar. Legend: laid deliveries ' +
+    '"Charged · N L/min", others "Nothing connected"; ' +
     'tank water just under full.',
   'one-line-off':
     'As all-charged, but the first line’s delivery is shut: that hose is thin dashed canvas ' +
@@ -312,7 +327,7 @@ const RELAY_CAPTIONS: Readonly<Record<RelayStateId, string>> = {
     'As closed-working, switched to the base pump: header BASE PUMP pressed, panel "Base pump · ' +
     '…" with its throttle part out, suction valve open, primer PRIMED, compound in vacuum (~−50 ' +
     'kPa: 2 m lift plus suction loss), discharge ~690 kPa; its relay delivery open and described "Relay · 4 × 30 m ' +
-    '65 mm lined · to Attack pump · 20 m uphill"; other deliveries NO LINE. Scene: BASE PUMP label ' +
+    '65 mm lined · to Attack pump · 20 m uphill"; other deliveries "Nothing connected" with bare pipe ends (the relay one has a hose stub). Scene: BASE PUMP label ' +
     'inverted; legend rows are the base pump’s deliveries (relay one "Relay · ~820 L/min").',
   'free-play':
     'Free play, both trucks working (header "FREE PLAY", no select). Scene: BASE PUMP by the dam on ' +
@@ -473,7 +488,8 @@ const REALISTIC_CAPTIONS: Readonly<Record<RealisticStateId, string>> = {
     'to-pump lever far left pointing right (across its pipe, shut), blue pump-to-tank lever ' +
     'pointing up (shut), green external inlet lever up (shut) by the big coupling low left, PRIME ' +
     'T-handle home between it and the outlets; three blue outlet levers pointing right (shut), D1 ' +
-    'and D3 couplings open (laid), D2 capped and its lever dimmed with NO LINE; two reels drawn ' +
+    'and D3 couplings with a hose coupled on, seen end-on in the bore (ink ring, blue core), D2 ' +
+    'capped (plain galvanised bore) and its lever as bright as the others; two reels drawn ' +
     'plainly at the top. Right of the instrument panel, level with it and as tall, a narrow ' +
     'column with a TANK plate over the sight tube (full, float at the top); the Side of truck ' +
     'inset (hydrant-to-tank lever up, shut) alone under the bay. Warning strip below, no lamps ' +
@@ -601,7 +617,8 @@ export const FIXTURES: readonly FixtureMeta[] = [
     expect:
       'Lever valves on pipes. Outlets (blue grip): closed (lever up, dotted arc), 50 % (lever at ' +
       '45°, half the arc filled blue, "50 %"), open (lever along the pipe, "100 %"), and ' +
-      'disabled (dimmed, dark grip, dashed NO LINE chip). Inlets (green ball knob): closed and ' +
+      'closed with a hose on (the start of a hose, ink casing and blue core, past a collar on the ' +
+      'pipe’s right end). Inlets (green ball knob): closed and ' +
       'open (arc filled steel white).',
   },
   {

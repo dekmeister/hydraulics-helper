@@ -19,8 +19,6 @@ export interface BayLeverProps {
   /** Its hit box on the plate, plate units: the lever draws in plate coordinates inside it. */
   box: RBox;
   style: CSSProperties;
-  /** When set, the lever can't be worked and this chip says why, e.g. 'NO LINE'. */
-  disabledReason?: string;
 }
 
 function stateText(value: number): string {
@@ -35,10 +33,9 @@ function stateText(value: number): string {
  * glance. Same gestures, keys and ARIA as the simplified panel's ValveHandle.
  */
 export function BayLever(props: BayLeverProps) {
-  const { label, value, onChange, tap, geometry: g, box, style, disabledReason } = props;
+  const { label, value, onChange, tap, geometry: g, box, style } = props;
   const fn = props.function;
   const svgRef = useRef<SVGSVGElement>(null);
-  const disabled = disabledReason !== undefined;
 
   const openingAt = (e: PointerEvent): number => {
     const r = svgRef.current?.getBoundingClientRect();
@@ -47,7 +44,7 @@ export function BayLever(props: BayLeverProps) {
     const py = r.top + ((g.pivot.y - box.y) / box.h) * r.height;
     return leverOpeningAt(e.clientX - px, e.clientY - py, g.shutDeg, g.openDeg);
   };
-  const { dragging, handlers } = useLeverGesture({ value, onChange, tap, disabled, openingAt });
+  const { dragging, handlers } = useLeverGesture({ value, onChange, tap, openingAt });
 
   const angle = leverAngleDeg(value, g.shutDeg, g.openDeg);
   const handle = fn === 'inlet' ? COLOR.inlet : COLOR.outlet;
@@ -64,18 +61,15 @@ export function BayLever(props: BayLeverProps) {
 
   return (
     <div
-      className={`bay-lever${dragging ? ' bay-lever--dragging' : ''}${disabled ? ' bay-lever--disabled' : ''}`}
+      className={`bay-lever${dragging ? ' bay-lever--dragging' : ''}`}
       style={style}
       role="slider"
-      tabIndex={disabled ? -1 : 0}
+      tabIndex={0}
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(value * 100)}
-      aria-valuetext={
-        disabled ? `${stateText(value)}, ${disabledReason.toLowerCase()}` : stateText(value)
-      }
-      aria-disabled={disabled || undefined}
+      aria-valuetext={stateText(value)}
       data-function={fn}
       data-shut-deg={g.shutDeg}
       data-open-deg={g.openDeg}
@@ -87,25 +81,21 @@ export function BayLever(props: BayLeverProps) {
         viewBox={`${String(box.x)} ${String(box.y)} ${String(box.w)} ${String(box.h)}`}
         aria-hidden="true"
       >
-        {!disabled && (
-          <>
-            <path
-              d={arc}
-              fill="none"
-              strokeWidth={3}
-              strokeDasharray="3 8"
-              style={{ stroke: COLOR.steelDim }}
-            />
-            <path
-              d={arc}
-              fill="none"
-              strokeWidth={7}
-              pathLength={100}
-              strokeDasharray={`${String(value * 100)} 100`}
-              style={{ stroke: fn === 'inlet' ? COLOR.steel : handle }}
-            />
-          </>
-        )}
+        <path
+          d={arc}
+          fill="none"
+          strokeWidth={3}
+          strokeDasharray="3 8"
+          style={{ stroke: COLOR.steelDim }}
+        />
+        <path
+          d={arc}
+          fill="none"
+          strokeWidth={7}
+          pathLength={100}
+          strokeDasharray={`${String(value * 100)} 100`}
+          style={{ stroke: fn === 'inlet' ? COLOR.steel : handle }}
+        />
         <g transform={`rotate(${String(angle)} ${String(px)} ${String(py)})`}>
           <rect
             x={px - A.shadowHalfW + (dragging ? A.dragLift.x : A.restLift.x)}
@@ -132,13 +122,12 @@ export function BayLever(props: BayLeverProps) {
             height={L * A.gripLengthFrac}
             rx={A.gripHalfW}
             strokeWidth={A.gripStrokeW}
-            style={{ fill: disabled ? COLOR.galv : handle, stroke: handleStroke }}
+            style={{ fill: handle, stroke: handleStroke }}
           />
         </g>
         <circle data-part="pivot" cx={px} cy={py} r={A.pivotR} style={{ fill: COLOR.galvEdge }} />
         <circle cx={px} cy={py} r={A.hubR} style={{ fill: COLOR.ink }} />
       </svg>
-      {disabled && <span className="bay-lever__chip">{disabledReason}</span>}
     </div>
   );
 }
