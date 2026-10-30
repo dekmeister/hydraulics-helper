@@ -1,4 +1,4 @@
-// Priming (ARCHITECTURE §4.6): every primer kind, the vacuum test, air leaks, duty cycle, loss of
+// Priming: every primer kind, the vacuum test, air leaks, duty cycle, loss of
 // prime. Inline specs so placeholders elsewhere can be re-tuned without moving these.
 import { describe, expect, it } from 'vitest';
 import { CAT1 } from './appliances/cat1';

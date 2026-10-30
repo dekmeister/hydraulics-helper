@@ -1,4 +1,4 @@
-// What the pump sounds like right now (ARCHITECTURE §7: what an operator hears). Pure, so it can be
+// What the pump sounds like right now (what an operator hears). Pure, so it can be
 // tested without audio (docs/TESTING.md §9); engine.ts turns it into sound.
 import { primerControlId } from '../sim/appliances/controls';
 import type { PlayerInputs, TruckState } from '../sim/types';

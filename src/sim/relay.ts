@@ -1,4 +1,4 @@
-// Relay pumping (ARCHITECTURE §4.7): hoses from one truck's delivery to another truck or a dam,
+// Relay pumping (docs/decisions/004): hoses from one truck's delivery to another truck or a dam,
 // and the solve order that couples the pumps of a closed relay.
 import {
   HEAD_KPA_PER_M,

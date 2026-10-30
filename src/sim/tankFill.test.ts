@@ -1,4 +1,4 @@
-// Ways water gets back into the tank (ARCHITECTURE §4.3): pump to tank, a return from the
+// Ways water gets back into the tank (docs/decisions/003): pump to tank, a return from the
 // discharge side that refills the tank from a hydrant or a draught and cools a churning pump; and
 // a tank-fill inlet (hydrant to tank), which bypasses the pump.
 import { describe, expect, it } from 'vitest';

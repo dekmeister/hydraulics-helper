@@ -1,4 +1,4 @@
-// Appliance contract suite (ARCHITECTURE §9.5): every registered appliance, plus a test-only one
+// Appliance contract suite (docs/decisions/002): every registered appliance, plus a test-only one
 // with a different shape, must pass these. Generic behaviour belongs here, not in per-truck tests.
 import { describe, expect, it } from 'vitest';
 import {
@@ -580,7 +580,7 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
   },
 );
 
-// Relay contract (ARCHITECTURE §4.7): every appliance relays to every other, its own kind included.
+// Relay contract (docs/decisions/004): every appliance relays to every other, its own kind included.
 const PAIRS = ALL.flatMap((base) => ALL.map((receiver) => [base, receiver] as const)).filter(
   ([, receiver]) => receiver.inlets.some((i) => i.kind === 'suction'),
 );

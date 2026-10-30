@@ -1,4 +1,4 @@
-// Warning lamps for the active truck (ARCHITECTURE §7 HUD). Pure functions of sim state and inputs.
+// Warning lamps for the active truck. Pure functions of sim state and inputs.
 import {
   HOSE_WORKING_KPA,
   PUMP_TEMP_ALARM_C,

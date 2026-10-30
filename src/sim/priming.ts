@@ -1,5 +1,8 @@
-// Priming for draughting (ARCHITECTURE §4.6): the primer pulls vacuum until it lifts water up the
+// Priming for draughting: the primer pulls vacuum until it lifts water up the
 // hard suction to the pump, which then "catches". Behaviour switches on `primer.kind`.
+// Tank, hydrant and relay supplies are flooded and never need it; only a draught path waits for the
+// catch. `pump.primed` is one flag per pump, so a truck may draught from one static source for now
+// (`validateSite`); per-supply priming waits for an appliance with two suction inlets.
 import { ATMOSPHERIC_KPA, HEAD_KPA_PER_M, VACUUM_HOLD_TAU_S, VALVE_CLOSED_EPS } from './constants';
 import { hoseVolumeL, isRigid } from './hose';
 import type { ConnectedSupply } from './inlets';

@@ -133,7 +133,7 @@ const LESSON: LessonDef = {
   ],
 };
 
-/** Ladder step 8: a full incident driven by events (ARCHITECTURE §5). */
+/** Ladder step 8: a full incident driven by events. */
 export const INCIDENT: Scenario = {
   id: 'incident',
   title: 'Interface fire: crews move, a line goes in, a hydrant tops up the tank',

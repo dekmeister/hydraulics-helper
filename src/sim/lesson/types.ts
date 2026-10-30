@@ -1,5 +1,5 @@
 // A lesson: what the player must do in a scenario, what can go wrong, what happens along the way
-// and how a guided scenario coaches them (ARCHITECTURE §5). Plain, JSON-shaped data: everything is
+// and how a guided scenario coaches them (docs/decisions/005). Plain, JSON-shaped data: everything is
 // named symbolically (a line, an inlet kind, a gauge), never by a spec control id, so one lesson
 // plays on every appliance that can play the scenario.
 import type { HoseSegment, InletKind, InstrumentKind, WaterSource } from '../types';

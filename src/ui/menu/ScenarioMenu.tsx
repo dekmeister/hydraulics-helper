@@ -26,7 +26,7 @@ const LADDER: readonly Scenario[] = SCENARIOS.filter((s) => s.lesson !== undefin
 );
 
 /**
- * The scenario ladder (ARCHITECTURE §5): each lesson with its brief, how the player has done on it
+ * The scenario ladder: each lesson with its brief, how the player has done on it
  * with this appliance, and the next one to try marked. Free play loads the sandbox.
  */
 export function ScenarioMenu() {

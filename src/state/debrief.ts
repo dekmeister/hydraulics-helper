@@ -1,4 +1,4 @@
-// The debrief (ARCHITECTURE §5): what went wrong in a lesson and why, in plain words. Pure.
+// The debrief: what went wrong in a lesson and why, in plain words. Pure.
 import { RELAY_MIN_RESIDUAL_KPA } from '../sim/constants';
 import type { CavitationSupply, DryCause, LessonProgress } from '../sim/lesson/progress';
 import type { Score } from '../sim/lesson/score';

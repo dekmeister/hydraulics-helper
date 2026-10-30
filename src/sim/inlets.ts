@@ -1,4 +1,4 @@
-// Pump inlet side (ARCHITECTURE §4.3): every open inlet path is a source head behind a resistance,
+// Pump inlet side (docs/decisions/003): every open inlet path is a source head behind a resistance,
 // and the paths combine in parallel at the pump inlet.
 import {
   HEAD_KPA_PER_M,

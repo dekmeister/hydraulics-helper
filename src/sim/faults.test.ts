@@ -1,4 +1,4 @@
-// Churn overheat, water hammer and gauge flutter (ARCHITECTURE §4.6).
+// Churn overheat, water hammer and gauge flutter.
 import { describe, expect, it } from 'vitest';
 import {
   AMBIENT_C,

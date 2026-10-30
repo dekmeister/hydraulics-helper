@@ -90,7 +90,7 @@ const LESSON: LessonDef = {
 };
 
 /**
- * Open relay via a portable dam (ARCHITECTURE §5 ladder step 7): a base pump at the hydrant, its
+ * Open relay via a portable dam (ladder step 7): a base pump at the hydrant, its
  * tank topped up through hydrant to tank, fills a portable dam beside the attack pump, which
  * primes and draughts from it. The pumps are decoupled:
  * the lesson is the dam level, filled at one rate and drawn at another.

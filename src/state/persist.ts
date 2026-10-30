@@ -1,4 +1,4 @@
-// Settings and scenario progress, saved as one small versioned JSON blob (ARCHITECTURE §8). Parsing
+// Settings and scenario progress, saved as one small versioned JSON blob. Parsing
 // is defensive: anything unreadable falls back to defaults rather than breaking the app.
 
 /** localStorage key; the version is in the blob too, so a future v2 can migrate v1. */

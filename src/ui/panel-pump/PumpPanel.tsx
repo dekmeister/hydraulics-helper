@@ -38,7 +38,7 @@ function Section({ section }: { section: PanelSection }) {
 }
 
 /**
- * The pump panel, rendered from the active appliance's layout data (ARCHITECTURE §9.4): the
+ * The pump panel, rendered from the active appliance's layout data: the
  * simplified panel, or the realistic bay where the appliance has one and the player chose it.
  * Generic: nothing here knows which truck it is drawing.
  */

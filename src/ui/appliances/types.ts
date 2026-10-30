@@ -1,4 +1,4 @@
-// Pump panel layout as data (ARCHITECTURE §9.4). Plain data only: e2e specs import layouts to
+// Pump panel layout as data. Plain data only: e2e specs import layouts to
 // enumerate what must be on screen, so nothing here may pull in React.
 import type { EngineSwitch } from '../../sim/lesson/types';
 import type { ControlId } from '../../sim/types';
@@ -76,7 +76,7 @@ export interface PanelLayout {
 }
 
 // ---------------------------------------------------------------------------
-// Scene art (ARCHITECTURE §9.4): how the appliance is drawn on the plan-view scene.
+// Scene art: how the appliance is drawn on the plan-view scene.
 // ---------------------------------------------------------------------------
 
 /**

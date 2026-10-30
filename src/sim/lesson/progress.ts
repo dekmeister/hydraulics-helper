@@ -1,4 +1,4 @@
-// A lesson in play (ARCHITECTURE §5): after each sim tick, events fire, objectives count, the coach
+// A lesson in play: after each sim tick, events fire, objectives count, the coach
 // moves on, failures end it, and the debrief's statistics accumulate. Pure and deterministic.
 import { VALVE_CLOSED_EPS } from '../constants';
 import { connectedSupplies } from '../engine';

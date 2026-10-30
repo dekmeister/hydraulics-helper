@@ -1,4 +1,4 @@
-// Realistic pump-bay layout as data (ARCHITECTURE §9.4): the real arrangement of a truck's panel
+// Realistic pump-bay layout as data: the real arrangement of a truck's panel
 // and plumbing, simplified as a part-task trainer. Plain data only, like the panel layout: e2e
 // specs import it. Accessible names, delivery tags and tap behaviour come from the appliance's
 // simplified layout, so both views name every control the same way.

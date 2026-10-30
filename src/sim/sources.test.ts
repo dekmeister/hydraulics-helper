@@ -1,4 +1,4 @@
-// Water sources at the pump inlet (ARCHITECTURE §4.3): hydrant, tank and draught paths in
+// Water sources at the pump inlet (docs/decisions/003): hydrant, tank and draught paths in
 // parallel, the cavitation floor and soft-hose collapse.
 import { describe, expect, it } from 'vitest';
 import { chargeLines, createInitialState, type SiteOptions } from './engine';

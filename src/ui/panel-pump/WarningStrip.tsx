@@ -62,7 +62,7 @@ interface Props {
 }
 
 /**
- * Warning strip (ARCHITECTURE §7): a lamp per warning plus a polite live region spelling out
+ * Warning strip: a lamp per warning plus a polite live region spelling out
  * whatever is lit, so faults read without sound and without colour alone.
  */
 export function WarningStrip({ warnings, onReplaceBurst }: Props) {

@@ -1,4 +1,4 @@
-/* Realistic pump bay (ARCHITECTURE §9.4): plates drawn to the panel's width, items placed on them
+/* Realistic pump bay: plates drawn to the panel's width, items placed on them
    by percentage of the plate's viewBox. */
 .real-panel {
   display: flex;

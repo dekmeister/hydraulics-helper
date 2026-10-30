@@ -18,7 +18,7 @@ import { supports, type Scenario, type SupportSpecs } from './types';
 
 export { APPLIANCES };
 
-/** Every scenario, in ladder order (ARCHITECTURE §5), then the free-play-only ones. */
+/** Every scenario, in ladder order, then the free-play-only ones. */
 export const SCENARIOS: readonly Scenario[] = [
   FIRST_LINE,
   TANK_ATTACK,

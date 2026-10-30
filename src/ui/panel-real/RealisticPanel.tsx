@@ -43,7 +43,7 @@ function Plate({ plate, simple }: { plate: RealPlate; simple: PanelLayout }) {
 }
 
 /**
- * The realistic pump bay (ARCHITECTURE §9.4): the truck's own arrangement, drawn from its
+ * The realistic pump bay: the truck's own arrangement, drawn from its
  * realistic layout, plate by plate as on the truck (each with any plates beside it, one row at
  * one height), with the insets side by side under them and the warning strip last. Generic:
  * nothing here knows which truck it is drawing.

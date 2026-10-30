@@ -61,7 +61,7 @@ export function connectedSupplies(
 /**
  * Fresh state at t = 0 with any number of trucks (`TruckSetup`: spec, label, held inputs), their
  * lays, and whatever sources, supply hoses and relays the scenario sets out (checked by
- * `validateSite`). Specs are copied in so the state stays self-contained (ARCHITECTURE §9.2).
+ * `validateSite`). Specs are copied in so the state stays self-contained (docs/decisions/002).
  */
 export function createSiteState(
   trucks: readonly TruckSetup[],

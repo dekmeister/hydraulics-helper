@@ -1,4 +1,4 @@
-// Fireground data checks (ARCHITECTURE §9.6): a scenario's sources, supply hoses and relays must
+// Fireground data checks (docs/decisions/002): a scenario's sources, supply hoses and relays must
 // fit the trucks they're plugged into. Data errors throw at state creation instead of being ignored.
 import { relayOrder } from './relay';
 import type { ApplianceSpec, HoseLine, RelayLink, SupplyLine, WaterSource } from './types';

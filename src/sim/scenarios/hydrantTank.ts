@@ -68,7 +68,7 @@ const LESSON: LessonDef = {
   failures: [TANK_DRY, ...PUMP_DAMAGE],
 };
 
-/** Hydrant to tank (ARCHITECTURE §5 ladder step 3): the usual way to take a hydrant. */
+/** Hydrant to tank (ladder step 3): the usual way to take a hydrant. */
 export const HYDRANT_TANK: Scenario = {
   id: 'hydrant-tank',
   title: 'House fire: hydrant to tank',

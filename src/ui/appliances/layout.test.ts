@@ -1,4 +1,4 @@
-// Layout ↔ spec consistency (ARCHITECTURE §9.4, docs/TESTING.md layer 4): every control and
+// Layout ↔ spec consistency (docs/decisions/002, docs/TESTING.md layer 4): every control and
 // instrument the spec defines is placed exactly once, and nothing is placed that it lacks.
 import { describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../../sim/appliances/catalogue';

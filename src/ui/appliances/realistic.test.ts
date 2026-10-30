@@ -1,4 +1,4 @@
-// Realistic layout ↔ spec and simplified layout (ARCHITECTURE §9.4): the realistic view places
+// Realistic layout ↔ spec and simplified layout: the realistic view places
 // exactly what the simplified panel does (bar the warning strip, which it draws once under the
 // plates), so both views name the same controls; and on a 375 px phone every control is a thumb
 // target that overlaps no other.

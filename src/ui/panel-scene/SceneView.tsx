@@ -26,7 +26,7 @@ function tankOf(truck: TruckState) {
 }
 
 /**
- * Plan view of the fireground (ARCHITECTURE §7, Design §7): every truck with its hose lays and the
+ * Plan view of the fireground (Design §7): every truck with its hose lays and the
  * crews on its branches, supply and relay hoses, drawn from each appliance's scene art and the
  * sim. Lines charge and branches spray from sim flow; tapping a line or its legend row highlights
  * its delivery on the panel, and tapping another truck operates it. Generic: nothing here knows

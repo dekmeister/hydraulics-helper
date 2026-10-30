@@ -1,4 +1,4 @@
-// Scoring a lesson (ARCHITECTURE §5): gentle, a trainer not a punisher. The weights are UI tuning,
+// Scoring a lesson: gentle, a trainer not a punisher. The weights are UI tuning,
 // not physics. // PLACEHOLDER — needs Dek (CALIBRATION "needs Dek": scoring)
 import type { SimState } from '../types';
 import type { LessonProgress } from './progress';

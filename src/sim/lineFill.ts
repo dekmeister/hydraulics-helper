@@ -1,4 +1,4 @@
-// Water in a delivery line (ARCHITECTURE §4.5, issue #6). A line holds `waterL` litres, filled from
+// Water in a delivery line (issue #6). A line holds `waterL` litres, filled from
 // the pump end. While it fills, the air ahead of the front leaves through the open branch, which
 // barely resists it (orifice loss scales with density; air is ~1/830 of water), so the pump sees
 // only the valve, the friction of the wet length and the head up to the front. Plug flow, uniform

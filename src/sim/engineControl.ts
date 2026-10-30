@@ -1,4 +1,4 @@
-// Starting and stopping the pump engine (ARCHITECTURE §4.4): ignition, a held START that cranks
+// Starting and stopping the pump engine: ignition, a held START that cranks
 // until the engine fires, and a held STOP that cuts the fuel until it has run down.
 import { ENGINE_AT_REST_FRACTION_OF_IDLE } from './constants';
 import { lagRpm } from './pump';

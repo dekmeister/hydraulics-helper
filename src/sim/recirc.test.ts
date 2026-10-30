@@ -1,4 +1,4 @@
-// Tank recirculation (ARCHITECTURE §4.4): a fixed bleed from the discharge back into the tank, as
+// Tank recirculation: a fixed bleed from the discharge back into the tank, as
 // the Cat 7's 3-way valve set to TANK RECIRC (Resources/Photos/Cat7_Hydraulic_Diagram.jpg). It
 // always flows while the pump has water, so a pump with no relief can churn without cooking.
 import { describe, expect, it } from 'vitest';

@@ -1,4 +1,4 @@
-// The scenario loader (ARCHITECTURE §9.6): builds a scenario on the player's appliance and checks it
+// The scenario loader (docs/decisions/002, 005): builds a scenario on the player's appliance and checks it
 // can be played there, capabilities and lesson both.
 import { startLesson, type LessonProgress } from '../lesson/progress';
 import type { LessonDef } from '../lesson/types';

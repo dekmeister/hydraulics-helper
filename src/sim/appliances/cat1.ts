@@ -23,7 +23,7 @@ export const CAT1: ApplianceSpec = {
   engine: {
     idleRpm: 800, // PLACEHOLDER — needs Dek
     maxRpm: 3000, // the plate's "do not exceed 3000 RPM" // doctrine-confirmed (Cat1B photos)
-    rpmLagS: 0.5, // throttle-to-rpm time constant (ARCHITECTURE §4.4) // PLACEHOLDER — needs Dek
+    rpmLagS: 0.5, // throttle-to-rpm time constant // PLACEHOLDER — needs Dek
     cylinders: 3, // Hatz 3L pumpset engine, for the engine note // doctrine-confirmed (data plate)
     speedController: {
       rampRpmPerS: 400, // governor run-up while the switch is held // PLACEHOLDER — needs Dek

@@ -1,4 +1,4 @@
-// Scene art ↔ spec consistency (ARCHITECTURE §9.4, docs/TESTING.md layer 4): one coupling per
+// Scene art ↔ spec consistency (docs/decisions/002, docs/TESTING.md layer 4): one coupling per
 // spec delivery and external inlet, nothing the spec lacks, and every coupling drawn on the truck body.
 import { describe, expect, it } from 'vitest';
 import { APPLIANCES } from '../../sim/appliances/catalogue';

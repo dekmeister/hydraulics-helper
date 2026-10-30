@@ -1,4 +1,4 @@
-// Needle damping (ARCHITECTURE §4.1): display values chase their target as a critically damped
+// Needle damping: display values chase their target as a critically damped
 // spring, which reads as a real gauge's mechanical lag and never overshoots.
 
 /**

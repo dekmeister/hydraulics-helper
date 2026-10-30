@@ -1,4 +1,4 @@
-// Building a fireground state (ARCHITECTURE §4.8): trucks, lays, sources, supplies and relays.
+// Building a fireground state: trucks, lays, sources, supplies and relays.
 import { idleInputs, sanitiseInputs, validateInputs } from './appliances/controls';
 import { AMBIENT_C, VALVE_CLOSED_EPS } from './constants';
 import { DEFAULT_SEED } from './rng';

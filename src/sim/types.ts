@@ -1,4 +1,4 @@
-// Plain, serialisable sim data (ARCHITECTURE §4.8, §9.2).
+// Plain, serialisable sim data (docs/decisions/002).
 
 /** Id of a control or instrument as defined by an appliance spec, e.g. 'd1', 'tank-to-pump'. */
 export type ControlId = string;
@@ -7,7 +7,7 @@ export type ControlId = string;
 export type HoseId = string;
 
 // ---------------------------------------------------------------------------
-// Appliance spec: immutable data describing one vehicle type (ARCHITECTURE §9).
+// Appliance spec: immutable data describing one vehicle type (docs/decisions/002).
 // ---------------------------------------------------------------------------
 
 /** Centrifugal pump curve: P = shutoffKpa·(rpm/maxRpm)² − droopKpaPerLpm2·Q². */
@@ -339,7 +339,7 @@ export interface HoseBurst {
   peakKpa: number;
 }
 
-/** A relay hose from one truck's delivery to another truck or a dam (ARCHITECTURE §4.7). */
+/** A relay hose from one truck's delivery to another truck or a dam (docs/decisions/004). */
 export interface RelayLink {
   id: string;
   /** Supplying truck and the delivery the relay hose leaves from. */
@@ -460,7 +460,7 @@ export interface TruckState {
   id: string;
   /** UI copy naming the truck on the fireground, e.g. 'Base pump'. */
   label: string;
-  /** Copy of the appliance spec, so saved states stay self-contained (ARCHITECTURE §9.2). */
+  /** Copy of the appliance spec, so saved states stay self-contained (docs/decisions/002). */
   spec: ApplianceSpec;
   rpm: number;
   engine: EngineState;
@@ -496,7 +496,7 @@ export interface SimState {
   linkReadings: Record<string, RelayReading>;
 }
 
-/** Everything the player can change, keyed by spec control id (ARCHITECTURE §9.3). */
+/** Everything the player can change, keyed by spec control id (docs/decisions/002). */
 export interface PlayerInputs {
   /** Throttle position, 0 (idle) to 1 (full). */
   throttle: number;

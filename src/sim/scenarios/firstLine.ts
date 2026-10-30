@@ -127,7 +127,7 @@ const LESSON: LessonDef = {
   ],
 };
 
-/** Ladder step 1, fully guided: one 25 mm bush line on tank (ARCHITECTURE §5). */
+/** Ladder step 1, fully guided: one 25 mm bush line on tank. */
 export const FIRST_LINE: Scenario = {
   id: 'first-line',
   title: 'First line: one 25 mm line from the tank',

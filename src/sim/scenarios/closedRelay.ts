@@ -112,7 +112,7 @@ const LESSON: LessonDef = {
 };
 
 /**
- * Closed relay uphill (ARCHITECTURE §5 ladder step 6): a base pump already primed at the dam
+ * Closed relay uphill (ladder step 6): a base pump already primed at the dam
  * pushes water 20 m up 4 lengths of 65 mm into the attack pump's suction inlet. The player opens
  * the relay inlet and two lines, keeps the compound above 100 kPa residual, over-runs the relay at
  * full throttle (inlet zero, hose soft) and recovers.

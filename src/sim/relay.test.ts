@@ -1,4 +1,4 @@
-// Relay pumping (M5, ARCHITECTURE §4.7). Relays run between two different appliance specs
+// Relay pumping (M5, docs/decisions/004). Relays run between two different appliance specs
 // wherever the behaviour is generic; the contract suite covers every pair.
 import { describe, expect, it } from 'vitest';
 import { CAT1 } from './appliances/cat1';

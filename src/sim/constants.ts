@@ -2,7 +2,7 @@
 // Sources: RFS Hydraulics Manual v4.0 (L = line in hydraulics-manual.txt), digested in
 // Resources/hydraulics-manual-GAME-NOTES.md. Worked examples: docs/CALIBRATION.md.
 
-/** Fixed sim timestep in seconds (10 Hz). Architecture choice, not a doctrine figure (ARCHITECTURE §4.1). */
+/** Fixed sim timestep in seconds (10 Hz). Architecture choice, not a doctrine figure (docs/decisions/001). */
 export const TICK_S = 0.1;
 
 /** Pressure per metre of head, kPa/m. Doctrine rounds 9.8 to 10 (L702–741). // doctrine-confirmed */

@@ -3,7 +3,7 @@ import type { Condition, LessonDef } from '../lesson/types';
 import { playerInstruments } from '../lesson/validate';
 import type { ApplianceSpec, ControlId, InstrumentKind, SimState } from '../types';
 
-/** Capabilities an appliance needs to play a scenario (ARCHITECTURE §9.6). */
+/** Capabilities an appliance needs to play a scenario (docs/decisions/002). */
 export interface ScenarioRequirements {
   tank: boolean;
   minDeliveries: number;
