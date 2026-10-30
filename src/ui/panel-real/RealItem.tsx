@@ -183,6 +183,7 @@ function Throttle({
   const press = useStore((s) => s.pressSpeedSwitch);
   const release = useStore((s) => s.releaseSpeedSwitch);
   const setThrottle = useStore((s) => s.setThrottle);
+  const flick = useStore((s) => s.flickSpeedSwitch);
   if (item.variant === 'vernier') {
     if (engine.vernier === undefined) throw new Error('a vernier knob needs EngineSpec.vernier');
     return (
@@ -207,7 +208,7 @@ function Throttle({
       }}
       onRelease={release}
       onFlick={(d) => {
-        setThrottle(value + d * rates.flick);
+        flick(d, rates.flick);
       }}
       style={boxStyle(item.box, plate)}
     />

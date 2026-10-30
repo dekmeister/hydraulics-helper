@@ -3,6 +3,7 @@ import { APPLIANCES, getAppliance } from '../sim/appliances/catalogue';
 import { switchControlIds, valveControlIds } from '../sim/appliances/controls';
 import { TICK_S } from '../sim/constants';
 import { advance, switchTruck } from '../sim/engine';
+import { speedControllerDead } from '../sim/engineControl';
 import { getScenario } from '../sim/scenarios';
 import { supports } from '../sim/scenarios/types';
 import { TANK_ATTACK } from '../sim/scenarios/tankAttack';
@@ -139,6 +140,8 @@ interface PumpOpsStore {
   /** Push a speed switch: flick the throttle by `rates.flick` now, then ramp at `rates.perS`. */
   pressSpeedSwitch: (direction: 1 | -1, rates: { perS: number; flick: number }) => void;
   releaseSpeedSwitch: () => void;
+  /** One flick of a speed switch (by keyboard): the throttle moves by `flick` of its travel. */
+  flickSpeedSwitch: (direction: 1 | -1, flick: number) => void;
   /** Set a valve-type control (0 shut – 1 open) by spec control id. */
   setValve: (id: ControlId, open: number) => void;
   /** Set an on/off control (primer) by spec control id. */
@@ -228,11 +231,14 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
       if (screen !== 'play') return {};
       let next = sim;
       let panel = inputs;
+      let ramp = throttleRamp;
       let playing = lesson;
       const samples = [...wake];
       for (let i = 0; i < ticks; i++) {
-        if (throttleRamp !== null)
-          panel = { ...panel, throttle: rampedThrottle(panel.throttle, throttleRamp, TICK_S) };
+        if (ramp !== null && speedControllerDead(activeTruck(next))) ramp = null;
+        if (ramp !== null)
+          panel = { ...panel, throttle: rampedThrottle(panel.throttle, ramp, TICK_S) };
+        const wasRunning = activeTruck(next).engine.running;
         next = advance(next, panel, TICK_S);
         if (playing !== null) {
           const held = activeTruck(next).inputs;
@@ -240,6 +246,11 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
           // An event that set the operated truck's controls (a support truck the player has
           // switched to) moves the panel with them, or the next tick would undo it.
           if (activeTruck(next).inputs !== held) panel = activeTruck(next).inputs;
+        }
+        // The speed controller's governor goes back to idle when the engine stops (issue #29).
+        if (wasRunning && speedControllerDead(activeTruck(next))) {
+          panel = { ...panel, throttle: 0 };
+          ramp = null;
         }
         samples.push(wakeSample(next));
       }
@@ -253,6 +264,7 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
         inputs: panel,
         lesson: playing,
         saved: recorded,
+        throttleRamp: ramp,
         wake: samples.filter((w) => w.tS >= cutoff),
       };
     });
@@ -289,13 +301,24 @@ export const useStore = create<PumpOpsStore>()((set, get) => ({
   },
   throttleRamp: null,
   pressSpeedSwitch: (direction, rates) => {
-    set(({ inputs }) => ({
-      inputs: { ...inputs, throttle: clamp01(inputs.throttle + direction * rates.flick) },
-      throttleRamp: { direction, perS: rates.perS },
-    }));
+    set(({ sim, inputs }) =>
+      speedControllerDead(activeTruck(sim))
+        ? {}
+        : {
+            inputs: { ...inputs, throttle: clamp01(inputs.throttle + direction * rates.flick) },
+            throttleRamp: { direction, perS: rates.perS },
+          },
+    );
   },
   releaseSpeedSwitch: () => {
     set({ throttleRamp: null });
+  },
+  flickSpeedSwitch: (direction, flick) => {
+    set(({ sim, inputs }) =>
+      speedControllerDead(activeTruck(sim))
+        ? {}
+        : { inputs: { ...inputs, throttle: clamp01(inputs.throttle + direction * flick) } },
+    );
   },
   setThrottle: (position) => {
     set(({ inputs }) => ({ inputs: { ...inputs, throttle: clamp01(position) } }));

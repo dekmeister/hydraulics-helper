@@ -10,6 +10,7 @@ import {
   TICK_S,
 } from '../constants';
 import { createIdleInputs, createInitialState, switchTruck } from '../engine';
+import { speedControllerDead } from '../engineControl';
 import {
   closedRelayPair,
   draughtSite,
@@ -238,6 +239,12 @@ describe.each(ALL.map((spec) => [spec.id, spec] as const))(
         expect(Math.abs(truckOf(open).readings.compoundKpa - headKpa)).toBeLessThanOrEqual(0.5);
         expect(truckOf(open).readings.compoundKpa).toBeGreaterThan(0);
         expect(truckOf(open).rpm).toBe(0);
+      });
+
+      it('has a dead speed controller only while stopped, and only if it has one (issue #29)', () => {
+        const hasController = spec.engine.speedController !== undefined;
+        expect(speedControllerDead(truckOf(cold()))).toBe(hasController);
+        expect(speedControllerDead(truckOf(started()))).toBe(false);
       });
 
       it('starts with the ignition on and START held through the crank, and settles at idle', () => {

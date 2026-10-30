@@ -21,6 +21,7 @@ import {
   sliderValue,
   startEngine,
   stepAndSettle,
+  stopEngine,
   tapOrClick,
 } from '../panel';
 import { load, openInlet, prime, throttle } from '../sources';
@@ -213,6 +214,30 @@ for (const spec of REALISTIC_APPLIANCES) {
       });
       await tapOrClick(locate, info);
       await expect(locate).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('the speed controller is dead with the engine off, and idles again after a stop (issue #29)', async ({
+      page,
+    }) => {
+      test.skip(throttleVariant(spec.id) !== 'speed-switch', 'no speed controller');
+      await load(page, 'tank-attack', spec.id, undefined, { cold: true });
+      await showRealistic(page);
+      const throttleNow = async () => activeTruckOf(await getState(page)).inputs.throttle;
+
+      // Held up with the engine off, the switch does nothing: it starts at idle.
+      await holdSpeedSwitch(page, 'up', 20);
+      expect(await throttleNow()).toBe(0);
+      await startEngine(page);
+      await stepAndSettle(page, 60);
+      expect(activeTruckOf(await getState(page)).rpm).toBeCloseTo(spec.engine.idleRpm, -1);
+
+      // Running, it works; stopping the engine puts the governor back to idle.
+      await holdSpeedSwitch(page, 'up', 20);
+      expect(await throttleNow()).toBeGreaterThan(0.3);
+      await stopEngine(page);
+      expect(await throttleNow()).toBe(0);
+      await holdSpeedSwitch(page, 'up', 20);
+      expect(await throttleNow()).toBe(0);
     });
 
     test('tank attack through the bay levers and the vernier throttle', async ({ page }, info) => {

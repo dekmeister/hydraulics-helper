@@ -81,3 +81,12 @@ export function stopWithoutIgnition(truck: Pick<TruckState, 'spec' | 'inputs'>):
   const { stop } = truck.spec.engine.controls;
   return stop.needsIgnition && truck.inputs.switches[stop.id] === true && !ignitionOn(truck);
 }
+
+/**
+ * An electronic speed controller (`EngineSpec.speedController`) has no effect with the engine
+ * stopped, and the governor goes back to idle when the engine stops. A cable throttle is a lever
+ * that stays where it's left, so a truck without one is never dead (issue #29).
+ */
+export function speedControllerDead(truck: Pick<TruckState, 'spec' | 'engine'>): boolean {
+  return truck.spec.engine.speedController !== undefined && !truck.engine.running;
+}

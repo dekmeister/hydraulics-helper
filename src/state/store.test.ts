@@ -50,9 +50,31 @@ describe('store', () => {
     expect(useStore.getState().saved.settings.panelView).toBe('realistic');
   });
 
+  /** Ignition on, START held until it fires, then let go: as a player starts the active truck. */
+  function startEngine() {
+    const { controls, crankS } = activeTruck(useStore.getState().sim).spec.engine;
+    useStore.getState().setSwitch(controls.ignition, true);
+    useStore.getState().setSwitch(controls.start, true);
+    useStore.getState().step(Math.ceil(crankS / 0.1) + 1);
+    useStore.getState().setSwitch(controls.start, false);
+    expect(activeTruck(useStore.getState().sim).engine.running).toBe(true);
+  }
+
+  /** Hold STOP until the engine has run down, then let go. */
+  function stopEngine() {
+    const { controls } = activeTruck(useStore.getState().sim).spec.engine;
+    useStore.getState().setSwitch(controls.stop.id, true);
+    useStore.getState().step(100);
+    useStore.getState().setSwitch(controls.stop.id, false);
+    expect(activeTruck(useStore.getState().sim).engine.running).toBe(false);
+  }
+
+  const RATES = { perS: 0.1, flick: 0.02 };
+
   it('runs the throttle up while a speed switch is held, by sim time, and holds on release', () => {
+    startEngine();
     const { pressSpeedSwitch, releaseSpeedSwitch } = useStore.getState();
-    pressSpeedSwitch(1, { perS: 0.1, flick: 0.02 });
+    pressSpeedSwitch(1, RATES);
     // The press flicks the throttle at once.
     expect(useStore.getState().inputs.throttle).toBeCloseTo(0.02, 12);
     useStore.getState().step(10); // 1 s
@@ -61,11 +83,65 @@ describe('store', () => {
     releaseSpeedSwitch();
     useStore.getState().step(10);
     expect(useStore.getState().inputs.throttle).toBeCloseTo(0.12, 9);
-    pressSpeedSwitch(-1, { perS: 0.1, flick: 0.02 });
+    pressSpeedSwitch(-1, RATES);
     useStore.getState().step(50);
     expect(useStore.getState().inputs.throttle).toBe(0);
     releaseSpeedSwitch();
   });
+
+  // Issue #29: an electronic speed switch is dead with the engine off, and the governor goes back
+  // to idle when the engine stops; a cable throttle is a lever that stays where it is left.
+  describe.each(APPLIANCES.map((spec) => [spec.id, spec] as const))(
+    'throttle with the engine off: %s',
+    (id, spec) => {
+      const electronic = spec.engine.speedController !== undefined;
+      beforeEach(() => {
+        useStore.getState().setPlayerAppliance(id);
+        useStore.getState().reset(createInitialState(spec, [], { engine: 'off' }), null);
+      });
+
+      it('ignores the speed switch, held or flicked, until the engine runs', () => {
+        const { pressSpeedSwitch, flickSpeedSwitch, releaseSpeedSwitch } = useStore.getState();
+        if (!electronic) return;
+        pressSpeedSwitch(1, RATES);
+        expect(useStore.getState().throttleRamp).toBeNull();
+        useStore.getState().step(30);
+        flickSpeedSwitch(1, RATES.flick);
+        releaseSpeedSwitch();
+        expect(useStore.getState().inputs.throttle).toBe(0);
+        startEngine();
+        useStore.getState().step(60);
+        expect(activeTruck(useStore.getState().sim).rpm).toBeCloseTo(spec.engine.idleRpm, -1);
+      });
+
+      it('lets the engine start at the throttle left on a cable, and at idle after a stop on a switch', () => {
+        startEngine();
+        useStore.getState().setThrottle(0.6);
+        useStore.getState().step(5);
+        stopEngine();
+        expect(useStore.getState().inputs.throttle).toBe(electronic ? 0 : 0.6);
+        expect(useStore.getState().throttleRamp).toBeNull();
+        startEngine();
+        useStore.getState().step(60);
+        const target = electronic
+          ? spec.engine.idleRpm
+          : spec.engine.idleRpm + 0.6 * (spec.engine.maxRpm - spec.engine.idleRpm);
+        expect(activeTruck(useStore.getState().sim).rpm).toBeCloseTo(target, -1);
+      });
+
+      it('drops a held speed switch when the engine stops under it', () => {
+        if (!electronic) return;
+        startEngine();
+        useStore.getState().pressSpeedSwitch(1, RATES);
+        useStore.getState().step(20);
+        stopEngine();
+        expect(useStore.getState().throttleRamp).toBeNull();
+        expect(useStore.getState().inputs.throttle).toBe(0);
+        useStore.getState().step(20);
+        expect(useStore.getState().inputs.throttle).toBe(0);
+      });
+    },
+  );
 
   it('clamps inputs to 0–1', () => {
     const { setThrottle, setValve, sim } = useStore.getState();

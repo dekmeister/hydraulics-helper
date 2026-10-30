@@ -10,6 +10,7 @@ import {
 } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { primerStatus } from '../../state/supply';
+import { speedControllerDead } from '../../sim/engineControl';
 import type { ApplianceSpec, InstrumentSpec } from '../../sim/types';
 import type { PanelItem } from '../appliances/types';
 import { EngineSwitch } from './controls/EngineSwitch';
@@ -36,6 +37,8 @@ function findInstrument(spec: ApplianceSpec, id: string): InstrumentSpec {
 }
 
 const useActiveSpec = () => useStore((s) => activeTruck(s.sim).spec);
+
+const ignore = () => undefined;
 
 /** The active truck's reading for an instrument, in its native unit. */
 const useReading = (instrument: InstrumentSpec) =>
@@ -155,11 +158,13 @@ function ThrottleItem({ item }: { item: Extract<PanelItem, { kind: 'throttle' }>
   const { engine } = useActiveSpec();
   const position = useStore((s) => s.inputs.throttle);
   const setThrottle = useStore((s) => s.setThrottle);
+  // An electronic speed controller does nothing with the engine stopped (issue #29).
+  const dead = useStore((s) => speedControllerDead(activeTruck(s.sim)));
   return (
     <Throttle
       label={item.label}
       value={position}
-      onChange={setThrottle}
+      onChange={dead ? ignore : setThrottle}
       vernierStep={vernierStep(engine.idleRpm, engine.maxRpm)}
     />
   );
