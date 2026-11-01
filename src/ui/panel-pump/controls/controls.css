@@ -111,6 +111,9 @@
   color: var(--color-material-steel);
   font: 600 24px/1 var(--font-display);
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .panel-button:active {
@@ -230,6 +233,7 @@
   cursor: pointer;
   touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
 }
 .engine-switch__sub {
   font-size: 9px;

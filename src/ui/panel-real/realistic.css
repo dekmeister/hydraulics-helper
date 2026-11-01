@@ -218,6 +218,7 @@
   touch-action: none;
   cursor: grab;
   user-select: none;
+  -webkit-user-select: none;
   border-radius: var(--radius-card);
 }
 
@@ -282,6 +283,8 @@
   background: none;
   border-radius: var(--radius-card);
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   cursor: pointer;
 }
 
@@ -307,6 +310,7 @@
   touch-action: none;
   cursor: ns-resize;
   user-select: none;
+  -webkit-user-select: none;
   border-radius: var(--radius-card);
 }
 
@@ -339,6 +343,7 @@
   touch-action: none;
   cursor: grab;
   user-select: none;
+  -webkit-user-select: none;
   border-radius: var(--radius-card);
 }
 
@@ -398,6 +403,8 @@
   background: none;
   cursor: pointer;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .hand-primer__handle > svg {
@@ -451,6 +458,7 @@
   cursor: pointer;
   touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
 }
 .real-engine__cap {
   display: block;

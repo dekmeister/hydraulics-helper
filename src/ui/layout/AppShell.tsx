@@ -9,7 +9,14 @@ import './AppShell.css';
 export function AppShell() {
   const activeTruckId = useStore((s) => s.sim.activeTruckId);
   return (
-    <main className="app-shell">
+    // A long press raises the context menu on touch browsers, and the menu cancels the pointer, which
+    // drops a held primer or START (issue #21). Nothing in the shell needs the menu.
+    <main
+      className="app-shell"
+      onContextMenu={(e) => {
+        e.preventDefault();
+      }}
+    >
       <section className="app-panel" aria-labelledby="scene-title">
         <div className="app-panel__head">
           <h2 id="scene-title" className="app-panel__title">

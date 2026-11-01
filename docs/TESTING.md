@@ -128,6 +128,8 @@ This turns "test layouts at 375 / 768 / 1280 px" from a manual step into a faili
 
 Helpers in `e2e/panel.ts` drive the real controls (`dragValve` sweeps around the lever's `data-part="pivot"`, `dragThrottle` moves the `data-part="handle"` along the `data-part="track"`), find names from the layout data, and `stepAndSettle()` before reading meters. Journeys run over every catalogue appliance.
 
+Touch holds (issue #21, `journeys/touch-hold.spec.ts`): every pressed, held or dragged control must refuse the long-press `contextmenu` and compute `user-select: none` / `touch-action: none`. Playwright can't raise Android's real callout, so this checks the cause (the event and the styles); a real Android phone and TV browser still need a hands-on check. A new press/hold control's class goes in that spec's `SURFACES`.
+
 Each journey plays a lesson as a player would, at the `phone` project at minimum. Examples:
 
 * **Tank attack:** load scenario → tap tank-to-pump → drag delivery 1 valve open → drag throttle to ~60 % → `step(300)` → expect discharge meter within the scenario's band, tank meter lower than at start, no warnings. Open delivery 2 → `step(50)` → discharge has sagged.

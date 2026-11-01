@@ -13,6 +13,13 @@ body {
 }
 
 .app-shell {
+  /* An instrument panel, not a page of text: a long press (a primer, START, a lever) must not
+     select what's under the thumb or raise the callout, on Android and TV browsers (issue #21).
+     The -webkit- forms are for older Android WebViews. All three inherit. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(40vh, auto) minmax(50vh, auto);
