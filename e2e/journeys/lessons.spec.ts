@@ -120,7 +120,7 @@ for (const spec of JOURNEY_APPLIANCES) {
       page,
       (p) => p.coachIndex >= 6,
       async (s) => {
-        if (activeTruckOf(s).readings.dischargeKpa < 900) await nudgeThrottle(page, 6);
+        if (activeTruckOf(s).readings.dischargeKpa < 1000) await nudgeThrottle(page, 6);
       },
       30,
     );

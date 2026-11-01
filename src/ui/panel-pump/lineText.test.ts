@@ -44,6 +44,18 @@ describe('hose lay description', () => {
   });
 });
 
+describe('Dial-A-Jet description', () => {
+  it('names the jet setting', () => {
+    const l = line([
+      { hose: '25U', lengthM: 30 },
+      { hose: '25U', lengthM: 30 },
+    ]);
+    expect(describeLine({ ...l, branch: { tipMm: 8, model: 'dialAJet' } })).toBe(
+      '2 × 30 m 25 mm unlined · 8 mm Dial-A-Jet',
+    );
+  });
+});
+
 describe('relay hose description', () => {
   const relay = (elevationM: number): RelayLink => ({
     id: 'r',

@@ -45,7 +45,7 @@ describe('lesson copy', () => {
   it('names what was laid', () => {
     const text = 'Charge the {line:ID} ({hose:ID}, {tip:ID} branch at {kpa:ID}).';
     expect(resolveText(text.replaceAll('ID', 'line-1'), cat1)).toBe(
-      'Charge the 25 mm line (25 mm, 12 mm branch at 250 kPa).',
+      'Charge the 25 mm line (25 mm, 8 mm branch at 700 kPa).',
     );
     expect(resolveText(text.replaceAll('ID', 'line-2'), light)).toBe(
       'Charge the 38 mm line (38 mm, 15 mm branch at 350 kPa).',

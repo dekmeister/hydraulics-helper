@@ -43,6 +43,17 @@ describe.each([CAT1, TEST_APPLIANCE])('conditions on $id', (spec) => {
     expect(holds({ kind: 'tank', max: 1, min: 0.9 }, s, facts())).toBe(true);
   });
 
+  it('reads the tank down to its crew-protection reserve, or empty without one', () => {
+    const reserveL = spec.tank?.reserveL ?? 0;
+    const at = (tankL: number): SimState => ({
+      ...s,
+      trucks: s.trucks.map((x) => ({ ...x, tankL })),
+    });
+    expect(holds({ kind: 'reserve' }, at(reserveL + 1), facts())).toBe(false);
+    expect(holds({ kind: 'reserve' }, at(reserveL), facts())).toBe(true);
+    expect(holds({ kind: 'reserve' }, at(0), facts())).toBe(true);
+  });
+
   it('judges the branch against its Table 1 band', () => {
     const band = branchBand(s, 'line-38');
     expect(band?.targetKpa).toBe(350);

@@ -89,6 +89,11 @@ export interface TankSpec {
    * compound gauge as a few kPa while nothing flows. Taken as constant over the tank's level.
    */
   headM: number;
+  /**
+   * Water the crew keeps back for its own protection if the fire overruns the truck, L: drawing the
+   * tank below it fails a lesson. Absent (0): no reserve kept.
+   */
+  reserveL?: number;
 }
 
 /**
@@ -259,11 +264,20 @@ export interface HoseSegment {
  */
 export type BranchKind = 'handheld' | 'monitor';
 
+/**
+ * How a branch's flow and working pressure are found from `Branch.tipMm`: 'smoothBore' (default) is
+ * a plain tip read off the manual's Table 1; 'dialAJet' is the bush crew's rated variable branch,
+ * where `tipMm` is the jet setting (3.2, 5 or 8 mm) and the maker's table gives the flow.
+ */
+export type BranchModel = 'smoothBore' | 'dialAJet';
+
 /** Branch (nozzle) at the end of a line, sized by its tip bore. */
 export interface Branch {
   tipMm: number;
   /** Default 'handheld'. */
   kind?: BranchKind;
+  /** Default 'smoothBore'. */
+  model?: BranchModel;
 }
 
 /** One hose lay from a delivery to a branch. */

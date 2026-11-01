@@ -43,7 +43,7 @@ These are least-squares fits to Table 3 (p32, kPa per 30 m length), divided by 3
 | Hose | k_m (kPa per (L/min)² per m) | Check point (manual) |
 |---|---|---|
 | 25 mm lined `25L` | 3.60e-4 | 150 L/min → 250 kPa/length (L928) |
-| 25 mm unlined `25U` (bush canvas, percolating) | 1.0e-3 | **PLACEHOLDER — needs Dek** (row 50): Table 3 has no 25 mm unlined column; 25L × 2.8, the unlined:lined ratio at 38 and 65 mm, so 150 L/min → ~680 kPa/length (`calibration.test.ts`) |
+| 25 mm unlined `25U` (bush canvas, percolating) | 1.0e-3 | the manufacturer's AS-2792 figure as reported by Doull & Huynh 2010, 75.2 L/min → ~171 kPa/length (`calibration.test.ts`); Table 3 has no 25 mm unlined column. Doctrine-confirmed (Dek, 2026-11-01: use it, the RFS field lay's ~20 % more is a working error; row 50) |
 | 38 mm unlined `38U` | 1.43e-4 | 500 L/min → 1000 |
 | 38 mm lined `38L` | 5.10e-5 | 500 L/min → 400 (L966) |
 | 50 mm unlined `50U` | 3.47e-5 | 500 L/min → 260 |
@@ -66,6 +66,20 @@ All six rows are asserted to within ±2 % (the manual rounds its flows).
 | 25 | 700 | 1100 | 1102 |
 | 30 | 800 | 1700 | 1697 |
 | 32 | 800 | 1900 | 1931 |
+
+### Dial-A-Jet (the bush crew's branch; asserted in `calibration.test.ts`, `branch.test.ts`)
+
+A 25 mm variable branch with straight-jet settings of 3.2, 5 and 8 mm (`Branch.model: 'dialAJet'`, `tipMm` the setting). Source: the maker's archived specification table plus an RFS field test (`Resources/bush-branch-and-hose-DATA.md` §2). The sim uses the orifice law Q = k·√P with k set so each jet gives the maker's flow at 690 kPa, which the network solver needs (a square-law resistance in series with the hose).
+
+| Jet | Maker at 350 / 690 / 1034 kPa | Sim at 690 | Sim at 1034 | Sim at 350 |
+|---|---|---|---|---|
+| 3.2 mm | 14 / 18 / 20 L/min | 18 | 22 (+10 %) | 12.8 |
+| 5 mm | 32 / 45 / 50 L/min | 45 | 55 (+10 %) | 32 |
+| 8 mm | 45 / 77 / 91 L/min | 77 | 94 (+3.5 %) | 55 (+22 %) |
+
+Working pressure is **700 kPa preferred, anything in the maker's 350–1034 kPa band acceptable** (Dek, 2026-11-01): a lesson aims the throttle at 700 but only judges the branch "at working pressure" inside the band. The fog setting isn't modelled (its flow falls above 690 kPa, which a square law can't follow). The square law runs high at 350 kPa on the 8 mm jet (+22 %): a long lay on that jet reads a little more flow than the real one gives.
+
+Worked examples (pump pressure for 700 kPa at the branch, `25U` flat, tolerance ±3 %): 8 mm on 2 lengths ~1060 kPa, on 3 lengths ~1240; 5 mm on 5 lengths ~1010. Held at the Cat 1's 1200 kPa relief, the 8 mm jet gives ~677 kPa on 3 lengths and ~591 on 4.
 
 ### Worked examples
 
@@ -145,12 +159,13 @@ These are the manual's gauge-response rules (L3379–3386, L3504–3511):
 | Engine stop | energise-to-stop: STOP works only with the ignition on, held until it has stopped | doctrine-confirmed (placard, Dek) |
 | Cranking | fires after 1.5 s held at 200 rpm | PLACEHOLDER — needs Dek |
 | Stop run-down | τ = 0.8 s with the fuel cut; picks up again if STOP is let go above 400 rpm | PLACEHOLDER — needs Dek |
-| Tank | 3000 L | PLACEHOLDER — needs Dek |
+| Tank | 3200 L (Cat 1 band 3001–4000 L, Bush Firefighter manual p189) | doctrine-confirmed (Dek, 2026-11-01) |
+| Crew-protection reserve | 300 L: a lesson fails when the tank reaches it (`TankSpec.reserveL`, `TANK_RESERVE`) | PLACEHOLDER — needs Dek (Dek, 2026-11-01: the BF manual's 1000 L is more than the trucks carry; row 59) |
 | Tank head | water 1 m above the pump eye: +10 kPa compound at rest | PLACEHOLDER — needs Dek (49) |
 | Tank-to-pump loss | −15 kPa compound at 1000 L/min | PLACEHOLDER — needs Dek (manual: "slight negative", L3529) |
 | Primer | Electric rotary vane, max 60 s on in 180 s | doctrine-confirmed (L1890) |
-| Relief | Preset (not adjustable), dumps to tank | doctrine-confirmed (L2322–2336) |
-| Relief set pressure | 1100 kPa | PLACEHOLDER — needs Dek |
+| Relief | Preset (not adjustable), dumps to tank | the manual says most Cat 1 tankers have one (L2322–2336), but neither Cat 1 panel photo shows a relief lamp or adjuster, so that the Cat1B has one is unconfirmed (`bush-branch-and-hose-DATA.md` §6) |
+| Relief set pressure | **1200 kPa**, an assumption (2026-11-01; was 1100): above the 700 kPa-at-branch pump pressure for 2 lengths of 25 mm on an 8 mm jet (~1060), 17 % over the rated 1000 kPa, under the 1400 kPa shutoff and the hose ratings. A preset must clear normal working pressure or it fights the operator; no Cat 1 figure found in any source | PLACEHOLDER — needs Dek |
 | Relief bypass slope | 50 L/min per kPa over set (holds ~15 kPa over set) | PLACEHOLDER — needs Dek |
 | Gauge scales | discharge 0–2500, compound −100…1600 kPa, tacho 0–4000 rpm (the Cat1B's GAAM faces); tacho red from 3000 and compound red past −80 (the panel's limits); other zones in Needs Dek #9 | faces and limits doctrine-confirmed (photos, 2026-10-28); other zones PLACEHOLDER |
 | Suction inlet | 65 mm with a green lever valve, low left of the bay, plated "EXTERNAL INLET TO PUMP"; 10 kPa at 1000 L/min through it | size doctrine-confirmed (Dek, 2026-10-25); loss PLACEHOLDER — needs Dek |
@@ -159,6 +174,8 @@ These are the manual's gauge-response rules (L3379–3386, L3504–3511):
 | Cavitation inlet pressure | −84 kPa (the Table 4 fit for a generic pump) | PLACEHOLDER — needs Dek (the Cat 1 pump's own) |
 | Primer performance | best vacuum 80 kPa (primes to just under 8 m), 2.9 L/s of air (≈ 14 s at 4 m on 6 m of hard suction, counting the rising column; was 1.5 L/s before it was counted) | PLACEHOLDER — needs Dek |
 | Casing volume / churn heat | 10 L; 10 kW at max rpm (≈ 4–5 min churning to the amber lamp at 0.8 throttle) | PLACEHOLDER — needs Dek |
+
+**Dial-A-Jet re-lay** (2026-11-01): every bush line is now two lengths of 25 mm canvas on a Dial-A-Jet's 8 mm jet (`BUSH_LINE`; free play's downhill crew runs five lengths on the 5 mm jet, `BUSH_LINE_LONG`), the Cat 1 relief is 1200 kPa (was 1100), and `25U` stays 1.0e-3. The first-line coach now says ~1050 kPa at the pump (two lengths lose ~350 kPa at 77 L/min) for ~700 at the branch: Cat 1 at throttle 0.82 reads 1063 kPa / 701 kPa; the old 950 kPa / 250 kPa had a 12 mm tip drawing ~150 L/min through one length. The lesson band for a Dial-A-Jet is 350–1034 kPa, so the tank-attack lines read 618 / 684 kPa at 0.75 and 674 / 740 at 0.8 (crew 2, 10 m downhill, reads ~66 kPa over crew 1) and the lesson passes anywhere in the band. Scripted throttles that were tuned for the old lay moved where they sat well below the new working pressure: first-line 0.75 → 0.82, draughting 0.6 → 0.75 (two lines 587 kPa each at the branch), open relay 0.6 → 0.75 and 0.5 → 0.65; the others read inside the band unchanged. At full throttle the relief now opens at 1210 kPa (draughting 511 L/min bypassed, closed relay 690, open relay 587 on the Cat 1), a little higher and later than at 1100. Two lines draw ~155 L/min, so the tank lasts longer (and a downhill line takes ~2 minutes, not 30 s, to drain). The paragraphs below give the pre-Dial-A-Jet figures (12 mm tips, one length) where not restated.
 
 **Tank-attack trace** (`src/sim/scenarios/__traces__/tank-attack.cat1-generic.csv`), since issue #10: two bush lines, each one length of 25 mm canvas with a 12 mm branch, crew 1 on d1 and crew 2 10 m downhill on d3 (both 38 mm outlets through the adaptor; crew 1 was on d2 before the Cat1B renumbering, no value moved).
 
@@ -184,6 +201,8 @@ Crew 2's branch reads ~26 kPa over crew 1's: the 10 m drop less the extra flow i
 
 Tank overflow (issue #18) appended a `spilledL` column to every truck in every trace, and `source.<id>.spilledL` for each portable dam; no other value moved. It is non-zero wherever a full tank is filled faster than it's drawn: the retired tank-refill trace (settling at overflow × τ, as above), `hydrant-tank.cat7-generic` (from t ≈ 171 s until two lines out-draw the hydrant), the open relay's base pump (~30 L: its hydrant puts ~1030 L/min into a full tank it draws ~660 L/min from, needs Dek 48), and 2–3 L on Cat 7 runs whose recirculation (~25 L/min) returns into a full tank while the pump works off a hydrant or draught. The scene draws a pool from 4 L (~50 L/min overflowing) and the overflow is heard from 50 L/min (`state/spill.ts`, `audio/params.ts`), so the recirculation's trickle is neither seen nor heard.
 
+**Tank 3000 → 3200 L** (Dek, 2026-11-01): every Cat 1 trace's `tankL` (and `attack.`/`base.tankL` where a Cat 1 plays a relay role) starts 200 L higher and stays 200 L higher; no other value moved, except free play on a Cat 1 attack pump, whose tank ran dry at t ≈ 169 s and now has ~186 L left there, so from t = 169 s its lines keep flowing (discharge ~600 kPa where it read 0). The reserve doesn't touch the traces: they are scripted runs, and the reserve only fails a lesson.
+
 Pump to tank (2026-10-25) added a `pumpToTankLpm` column (after `reliefLpm`) to every Cat 1 trace; it is 0 throughout, and no other value moved. Its behaviour is asserted in `sim/tankFill.test.ts`: Q = open·√(P_d/k), recirculating on tank holds the level, refilling from a hydrant at the return flow, overflowing when full, cooling a churning pump (5 min at 0.8 throttle: > 10 °C cooler cracked 20 %), and blocking the primer.
 
 ## Cat 7 tanker (`sim/appliances/cat7.ts`, id `cat7-generic`)
@@ -202,7 +221,8 @@ From Dek's photos (`Resources/Photos/Cat7_*`, 2026-10-25): the pump's own panel,
 | Cylinders (engine note) | 1 | PLACEHOLDER — needs Dek |
 | Pump shutoff (zero flow, max rpm) | 1400 kPa | PLACEHOLDER — needs Dek |
 | Pump droop | 700/550² kPa/(L/min)², i.e. rated ~550 L/min at 700 kPa | PLACEHOLDER — needs Dek (sized so the 38 mm crew line and the light line run together, row 39) |
-| Tank | 1600 L | PLACEHOLDER — needs Dek |
+| Tank | 1600 L (Cat 7 band 801–1600 L, Bush Firefighter manual p189) | doctrine-confirmed (Dek, 2026-11-01) |
+| Crew-protection reserve | 300 L, as the Cat 1 | PLACEHOLDER — needs Dek (row 59) |
 | Deliveries | d1, d2: two outlets with blue ball-valve levers on the manifold; 38 mm from the couplings | arrangement doctrine-confirmed (photo); size PLACEHOLDER — needs Dek; the hose reel's valve is deferred |
 | Tank to pump | Butterfly valve with a yellow, green-tipped lever on the pipe down from the tank; 6 kPa at 400 L/min | valve doctrine-confirmed (photo, diagram); loss PLACEHOLDER — needs Dek |
 | Suction inlet | 65 mm on a butterfly valve with a notched yellow lever, then a check valve and the DN65 Y-strainer on the pump's eye; 10 kPa at 400 L/min | arrangement and size doctrine-confirmed (photo: strainer marked DN65); loss PLACEHOLDER — needs Dek |
@@ -238,11 +258,11 @@ Recirculation takes ~25 L/min throughout. The smaller pump sags more when the se
 
 1. **Cat 1 pump curve**: rated duty now from the Cat1B data plate (1200 L/min at 1000 kPa, row C15). Still needed: shutoff pressure (1400 kPa, which sets the droop through the rated point), idle rpm, engine response, and whether the plate's duty is at 3000 rpm.
 2. **Cat 1 tank capacity** and crew-protection reserve.
-3. **Relief set pressure** and how sharply it holds.
+3. **Relief set pressure** and how sharply it holds. (2026-11-01: assumed 1200 kPa, see the Cat 1 table and `Resources/bush-branch-and-hose-DATA.md` §6; the real preset, and whether the Cat1B has one, are unknown.)
 4. **Tank-to-pump inlet reading** at typical flows.
 5. **Delivery valve loss** when fully open, per size.
 6. **Dry-pump behaviour.** At the moment, tank-to-pump shut or tank empty means every gauge reads 0 at once. Real behaviour, such as a brief run-down or a full casing holding pressure with the inlet shut, is for M4, alongside cavitation.
-7. **Trace branch choice**: 12 mm on the bush 25 mm line and 15 mm on the village 38 mm line, both from Table 1 (issue #10; before it, 15 mm on 38 mm and 20 mm on 65 mm). Is that representative of what a Cat 1 crew would run?
+7. **Trace branch choice**: the bush 25 mm line is a Dial-A-Jet on its 8 mm jet (77 L/min at ~700 kPa; data in `Resources/bush-branch-and-hose-DATA.md`, modelled since 2026-11-01; the 12 mm/250 kPa/150 L/min tip it replaced was about double the real flow), and the village 38 mm line a 15 mm tip from Table 1. Still open: which jet a crew normally works on (8 mm for attack, 5 mm on a long lay; the free-play long lay is on 5 mm) and whether the player or a lesson event can change the setting mid-scenario (the setting is fixed per line today). The fog setting isn't modelled.
 8. ~~**Cat 1 delivery sizes**~~ Resolved (Dek, 2026-10-25): 65/38/38 mm, the nominal 2½" and 1½" sizes. Moving d1 and the suction from 64 to 65 mm lowered d1's valve loss by (64/65)⁴ ≈ 6 %; every Cat 1 golden trace moved by ≤ 1.1 (kPa, L/min or L), except the incident, whose hydrant changeover now fires 2 s later (t = 84 s, a hold condition near a band edge) and so ends with 26 L less in the tank. Since 2026-10-28 the Cat 1 follows the Cat1B: 38 | 65 | 38 left to right, numbered d1–d3 in that order (Dek).
 9. **Gauge zones** (`instruments[].scale` on each spec; `ui/panel-pump/gauge/dials.ts` builds the faces from it). The Cat 1 faces are the Cat1B's GAAM gauges (2026-10-28: compound −100…1600 kPa, pressure 0–2500 kPa, tacho 0–4000 rpm), with red past the panel's −80 kPa and 3000 RPM. Still guessed: compound amber −80…−70; discharge amber 1100–1400 (relief set to shutoff), and no discharge red band. Do the real faces carry any coloured zones, or should these go?
 10. **Low-tank warning** at ≤ ¼ tank (`state/tankLevel.ts`, from the Design spec). Is there a doctrine crew-protection reserve to warn at instead?
@@ -285,12 +305,13 @@ Recirculation takes ~25 L/min throughout. The smaller pump sags more when the se
 47. ~~**Spilled water soak time**~~ Resolved (Dek, 2026-10-27): τ = 5 s, a game-feel choice so the pool shows the overflow as it happens rather than a measured soak rate. The scene's pool shows from 4 L and stops spreading at 80 L (~10 m past the body), and the overflow gush is heard from 50 L/min, full at 1000 L/min: presentation, not hydraulics.
 48. **Open relay base pump overflows** (`sim/scenarios/openRelay.ts`): the base pump's operator keeps hydrant to tank fully open, ~1030 L/min into a full tank it draws ~660 L/min from, so ~370 L/min goes out the overflow for the whole job and the scene shows a pool round the base pump. Would a real operator throttle hydrant to tank to match the draw, or is an overflowing base tank normal at a fill point? If it's throttled, the scenario holds a part-open setting and its traces' `base.spilledL` goes to 0.
 49. **Tank head on the compound** (issue #13, `TankSpec.headM`): the tank's water is taken as 1 m above the pump eye on the Cat 1 (+10 kPa at rest) and 0.8 m on the Cat 7 (+8 kPa), constant over the tank's level. What does the compound show on each truck when tank to pump is opened, and does it fall noticeably as the tank empties? The head also gravity-feeds an open delivery with the engine stopped (a few L/min into a laid line), and the traces now reach each objective about a second sooner.
-50. **25 mm percolating hose** (issue #10, `25U` in `sim/constants.ts`): Table 3 has no 25 mm unlined column, so the friction is 25L × 2.8 (the unlined:lined ratio at 38 and 65 mm): ~680 kPa a length at 150 L/min. That limits a bush crew to **one length** with a 12 mm branch (~950 kPa at the pump; two lengths would need ~1600). What does 25 mm canvas really lose, and what does a bush crew usually run (lengths, branch)? Percolation (the weep that keeps canvas from burning) isn't modelled as a flow.
+50. **25 mm percolating hose** (`25U`, `sim/constants.ts`): settled 2026-11-01. Doull & Huynh 2010 measured RFS 25 mm percolating hose on a Cat 1 at 75.2 L/min: ~6.9 kPa/m in a straight lay against the manufacturer's AS-2792 ~5.7 kPa/m (`bush-branch-and-hose-DATA.md` §4). Dek: use the manufacturer figure (`25U` 1.0e-3); the field lay's ~20 % more (more with bends) is a working error. Crews routinely run 2+ lengths, 5+ seen, so a bush line is two lengths minimum (`MIN_CREW_LENGTHS`; row 7 for the branch). Percolation (the weep that keeps canvas from burning) isn't modelled as a flow.
 51. **Tank attack downhill crew** (issue #10, `scenarios/tankAttack.ts`): with every bush line the same, crew 2 works 10 m below the pump so the lesson still teaches gating one delivery back (+100 kPa at its branch). Typical, and is 10 m the right drop?
 52. **Village main** (issue #10, `scenarios/hydrantSupply.ts`): pumping direct from the hydrant uses a weaker village main, 300 kPa static and 200 kPa residual at 600 L/min, so that two 38 mm lines at full throttle over-run it on a Cat 1 (zero at ~760 L/min through two lengths of 65 mm); on the C14 main (400 static, 300 at 1100) two 38 mm lines never could. Representative of a village main? The test appliance's pump can't over-run even this one (compound ~45 kPa at full throttle).
 53. **Bush lines and the supply traps** (issue #10): two bush lines draw ~300 L/min (~370 flat out), too little to cavitate the 4 m draught (it would need ~7.8 m of lift), over-run or burst the C12 closed relay (a slammed inlet surges ~465 kPa against 1300), or drain the open relay's portable dam. So the draughting and relay lessons no longer have those traps (Dek, 2026-10-27: accept for now; the briefs no longer promise them). Tests, fixtures and journeys of those faults lay a heavy pair (65 mm + 38 mm) on the same fireground (`scenarios/heavyLines.ts`). Restoring the traps needs a scenario change: a longer or steeper relay, a deeper dam, more crews, or a bulk-water attack truck. Which?
 54. **25 mm hammer on a fill** (issue #10): on the test appliance's pump, a 25 mm line opened at 0.75 throttle logs a 502 kPa water hammer the moment it charges: the fill's rush (an empty hose takes all the pump gives) drops to branch flow in one tick, in a small bore. Row 44c says the front reaching the branch isn't modelled as a surge, but the flow drop is counted as one here. Is a hammer on charging a short 25 mm line something to teach ("charge at idle"), or should the fill's end be exempt until 44c is modelled? The guided first-line journey charges at idle; the coach doesn't yet say to.
 55. **Cat1B data plate rules of thumb** (`Cat1B_Panel.jpg`): fog branch 700 kPa, straight branch 500 kPa, "1 length of 38 mm hose = 100 kPa loss", 1 m elevation = ±10 kPa. The head rule matches `HEAD_KPA_PER_M`. At what flow is the 100 kPa per 38 mm length meant (our `38L` loses 100 kPa a 30 m length at ~255 L/min, about a 15 mm branch’s flow)? And should the lessons teach 700 / 500 kPa branch pressures alongside the manual's Table 1 optimum pressures the sim uses?
-56. **Cat1B pump at rated duty**: 1200 L/min at 1000 kPa is more than the relief's 1100 kPa set and 1400 kPa shutoff leave room for at high flow; is the relief set higher on this pumpset, and is 1400 kPa near its real shutoff?
+56. **Cat1B pump at rated duty**: 1200 L/min at 1000 kPa is more than the relief's 1100 kPa set and 1400 kPa shutoff leave room for at high flow; is the relief set higher on this pumpset (assumed 1200 kPa, 2026-11-01), and is 1400 kPa near its real shutoff? Does the Cat1B have a relief at all (no lamp or adjuster on its panel)?
 57. **Free play** (`scenarios/freePlay.ts`, `MONITOR_LINE` in `scenarios/lay.ts`): the monitor is 2 lengths of 65 mm with a 25 mm tip (Table 1: 700 kPa, ~1100 L/min); on a Cat 1 at a 0.4 throttle on the relay it flows ~660 L/min at ~250 kPa, and at 0.6 it over-runs the relay. The attack crews are at +10 m (38 mm, 15 mm tip) and −10 m (25 mm canvas, 12 mm tip); the base pump draughts a 2 m lift on 2 × 3 m of hard suction, and the relay is 4 × 65 mm, 20 m up, as in the closed relay. What tip and lay would a crew put on a monitor off a Cat 1's 65 mm delivery, and does a monitor ever run off a Cat 7's 38 mm outlets?
 58. **An open delivery with nothing connected** (issue #16): the sim takes it as open to air with only the valve's loss (still a placeholder, item 5), so an open 65 mm dumps ~1500 L/min and collapses the discharge, ignoring the blank cap. Is that the right lesson, or should the cap's bleeder limit it to a small flow? Is there an exit loss worth adding? Scoring: 0.5 points a second it flows, capped at 5, with cavitation's cap lowered from 10 to 5 so the clean-running caps still sum to 40. Is that weighting right?
+59. **Crew-protection reserve** (`TankSpec.reserveL`, 2026-11-01): 300 L on the Cat 1 and the Cat 7, a placeholder; the Bush Firefighter manual's example (1000 L on a large Cat 1, p40) is more than the trucks really keep (Dek). A lesson fails when the tank reaches the reserve (`TANK_RESERVE`, `{ kind: 'reserve' }`); the test appliance keeps none, so it fails at empty. What reserve do crews keep on each truck, and should the tank gauge or lamp mark it?

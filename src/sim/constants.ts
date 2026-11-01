@@ -33,8 +33,9 @@ export interface HoseType {
  */
 export const HOSES: Readonly<Record<string, HoseType>> = {
   '25L': { sizeMm: 25, lined: true, kPerM: 3.6e-4 }, // 150 L/min → 250 kPa per length (L928)
-  // Bush canvas (percolating): Table 3 has no 25 mm unlined column, so 25L × 2.8, the unlined:lined
-  // ratio at 38 and 65 mm; 150 L/min → ~680 kPa per length. // PLACEHOLDER — needs Dek
+  // Bush canvas (percolating): the manufacturer's AS-2792 figure, ~5.7 kPa/m (171 kPa a length) at
+  // 75.2 L/min, reported in Doull & Huynh 2010; Table 3 has no 25 mm unlined column. The RFS field
+  // lay measured ~20 % higher; Dek, 2026-11-01: use the manufacturer figure. // doctrine-confirmed
   '25U': { sizeMm: 25, lined: false, kPerM: 1.0e-3 },
   '38U': { sizeMm: 38, lined: false, kPerM: 1.43e-4 }, // 500 L/min → 1000 kPa per length
   '38L': { sizeMm: 38, lined: true, kPerM: 5.1e-5 }, // 500 L/min → 400 kPa per length (L966)
@@ -126,6 +127,30 @@ export const BRANCH_OPTIMUM_KPA: Readonly<Record<number, number>> = {
   30: 800,
   32: 800,
 };
+
+/**
+ * Dial-A-Jet (the bush crew's 25 mm variable branch): flow in L/min of each straight-jet setting at
+ * the maker's 690 kPa (100 psi) test pressure, keyed by jet bore in mm. Manufacturer's archived
+ * specification table, cross-checked by an RFS field test that measured 75.2 L/min at 700 kPa on
+ * the 8 mm jet (Doull & Huynh 2010); Resources/bush-branch-and-hose-DATA.md §2. The fog setting
+ * isn't listed (its flow falls above 690 kPa, which the square law can't follow). // doctrine-confirmed (Dek, 2026-11-01)
+ */
+export const DIAL_A_JET_FLOW_LPM: Readonly<Record<number, number>> = {
+  3.2: 18,
+  5: 45,
+  8: 77,
+};
+
+/** Pressure at which `DIAL_A_JET_FLOW_LPM` was measured, kPa (the maker's 100 psi). */
+export const DIAL_A_JET_RATED_KPA = 690;
+
+/**
+ * Dial-A-Jet working pressures, kPa: 700 preferred, anything in the maker's 350–1034 kPa band works
+ * acceptably (Dek, 2026-11-01). // doctrine-confirmed
+ */
+export const DIAL_A_JET_WORKING_KPA = 700;
+export const DIAL_A_JET_MIN_KPA = 350;
+export const DIAL_A_JET_MAX_KPA = 1034;
 
 /**
  * How far a branch may sit from its Table 1 optimum and still count as "at working pressure" in a

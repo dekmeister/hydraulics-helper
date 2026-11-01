@@ -1,7 +1,7 @@
 // Helpers for lesson journeys (M6): start from the menu, read the lesson, and play like a player:
 // closed-loop on what the branches and gauges show, but only ever through the real controls.
 import type { Locator, Page } from '@playwright/test';
-import { BRANCH_BAND_FRACTION, BRANCH_OPTIMUM_KPA } from '../src/sim/constants';
+import { branchWorkingBand } from '../src/sim/branch';
 import type { LessonProgress } from '../src/sim/lesson/progress';
 import type { SimState } from '../src/sim/types';
 import { expect } from './fixtures';
@@ -41,15 +41,12 @@ export function lineFlow(state: SimState, line: string): number {
     : (activeTruckOf(state).readings.deliveryFlowLpm[lay.deliveryId] ?? 0);
 }
 
-/** A branch's Table 1 target and band, as the lesson judges it. */
+/** A branch's target pressure and band, as the lesson judges it. */
 export function band(state: SimState, line: string) {
-  const tip = state.lines.find((l) => l.id === line)?.branch.tipMm ?? 0;
-  const target = BRANCH_OPTIMUM_KPA[tip] ?? 0;
-  return {
-    target,
-    min: target * (1 - BRANCH_BAND_FRACTION),
-    max: target * (1 + BRANCH_BAND_FRACTION),
-  };
+  const lay = state.lines.find((l) => l.id === line);
+  const working = lay === undefined ? undefined : branchWorkingBand(lay.branch);
+  if (working === undefined) throw new Error(`no working band for line '${line}'`);
+  return { target: working.targetKpa, min: working.minKpa, max: working.maxKpa };
 }
 
 /** Press the throttle's − or + vernier `n` times (Design sheet 03: 25 rpm a press). */

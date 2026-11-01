@@ -17,7 +17,7 @@ import {
   truckOf,
   TEST_STARTING,
 } from './testUtils';
-import type { ApplianceSpec, HoseLine, HoseSegment } from './types';
+import type { ApplianceSpec, Branch, HoseLine, HoseSegment } from './types';
 
 const lengths = (hose: string, n: number): HoseSegment[] =>
   Array.from({ length: n }, () => ({ hose, lengthM: STANDARD_LENGTH_M }));
@@ -58,15 +58,50 @@ describe('calibration: supply-line friction C10 (L1024–1039), 1000 L/min over 
   });
 });
 
-// Table 3 has no 25 mm unlined column: 25U is 25L scaled by the 38 and 65 mm unlined:lined ratio
-// (2.8). PLACEHOLDER — needs Dek. One length with a 12 mm branch is the bush crew's lay.
-describe('calibration: 25 mm percolating hose (PLACEHOLDER)', () => {
-  it('loses about 2.8 × the lined figure: ~680 kPa a length at 150 L/min', () => {
-    expectWithinRel(hoseFrictionKpa(lengths('25U', 1), 150), 2.8 * 243, PUMP_TOL);
+// 25 mm percolating canvas (`25U`): Table 3 has no 25 mm unlined column, so the figure is the
+// manufacturer's AS-2792 friction, ~5.7 kPa/m at 75.2 L/min, as reported in Doull & Huynh (2010)
+// (Resources/bush-branch-and-hose-DATA.md §4). Dek, 2026-11-01: use it, not the ~20 % higher field one.
+describe('calibration: 25 mm percolating hose (manufacturer figure, DH10)', () => {
+  it('loses ~171 kPa a 30 m length at 75.2 L/min (5.7 kPa/m)', () => {
+    expectWithinRel(hoseFrictionKpa(lengths('25U', 1), 75.2), 171, PUMP_TOL);
+  });
+});
+
+// The bush branch is a Dial-A-Jet: flow per jet setting from the maker's table at 690 kPa
+// (bush-branch-and-hose-DATA.md §2), orifice law Q = k·√P through that point.
+describe('calibration: Dial-A-Jet branch', () => {
+  const jet = (tipMm: number): Branch => ({ tipMm, model: 'dialAJet' });
+
+  it.each([
+    [3.2, 18],
+    [5, 45],
+    [8, 77],
+  ])('%s mm jet flows %s L/min at the maker’s 690 kPa (tolerance ±1 %%)', (tipMm, lpm) => {
+    expectWithinRel(branchFlowLpm(jet(tipMm), 690), lpm, 0.01);
   });
 
-  it('needs about 930 kPa at the pump for one length and a 12 mm branch', () => {
-    expectWithinRel(pumpKpa(250, lengths('25U', 1), 150), 930, PUMP_TOL);
+  // Above the rated point the square law runs high: the maker's 1034 kPa column is 91 / 50 / 20 L/min
+  // (3.5 % over on 8 mm, 10 % over on 5 mm and 3.2 mm). Tolerance ±11 %.
+  it.each([
+    [3.2, 20],
+    [5, 50],
+    [8, 91],
+  ])('%s mm jet is within 11 %% of the maker’s %s L/min at 1034 kPa', (tipMm, lpm) => {
+    expectWithinRel(branchFlowLpm(jet(tipMm), 1034), lpm, 0.11);
+  });
+
+  // §5 of the data file: pump pressure for 700 kPa at the branch, 25U on a flat lay. Tolerance ±3 %.
+  it.each([
+    [8, 2, 1060],
+    [8, 3, 1240],
+    [5, 5, 1010],
+  ])('%s mm jet on %s lengths of 25 mm needs ~%s kPa at the pump for 700 kPa', (tip, n, kpa) => {
+    const flow = branchFlowLpm(jet(tip), 700);
+    expectWithinRel(pumpKpa(700, lengths('25U', n), flow), kpa, 0.03);
+  });
+
+  it('is within the Cat 1’s relief on two 8 mm lengths: 700 kPa needs ~1060, relief opens at 1200', () => {
+    expect(CAT1.relief?.kind === 'preset' ? CAT1.relief.setKpa : 0).toBeGreaterThan(1060 * 1.1);
   });
 });
 

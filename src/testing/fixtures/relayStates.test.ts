@@ -91,7 +91,7 @@ describe.each(rotate(APPLIANCES, 0).map((spec) => [spec.id, spec] as const))(
       expect(s.trucks.find((t) => t.id === 'base')?.pump.primed).toBe(true);
       for (const l of s.lines) {
         const flow = s.trucks.find((t) => t.id === l.truckId)?.readings.branchFlowLpm[l.id] ?? 0;
-        expect(flow).toBeGreaterThan(50);
+        expect(flow).toBeGreaterThan(20); // the 5 mm Dial-A-Jet on the long lay flows ~30 L/min
       }
       expect(lit(s)).toEqual({});
     });

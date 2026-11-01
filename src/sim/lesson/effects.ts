@@ -3,7 +3,7 @@
 import { sanitiseInputs } from '../appliances/controls';
 import { STANDARD_LENGTH_M } from '../constants';
 import { hoseType } from '../hose';
-import { takeDelivery } from '../scenarios/lay';
+import { branchOf, takeDelivery } from '../scenarios/lay';
 import { validateSite } from '../site';
 import type { HoseLine, SimState } from '../types';
 import { truckOf } from './refs';
@@ -36,7 +36,7 @@ function layLine(state: SimState, playerTruckId: string, e: Extract<Effect, { ki
       lengthM: STANDARD_LENGTH_M,
     })),
     elevationM: line.elevationM ?? 0,
-    branch: { tipMm: line.tipMm },
+    branch: branchOf(line),
   };
   return check({ ...state, lines: [...state.lines, lay] });
 }

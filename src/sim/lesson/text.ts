@@ -1,15 +1,14 @@
 // Lesson copy that names what was laid, so the hose, tip and pressures in the text can't drift from
 // the scenario's lay: text says `{line:line-1}` and the loader fills in what's on the ground.
-import { BRANCH_OPTIMUM_KPA } from '../constants';
 import { hoseType } from '../hose';
 import type { SimState } from '../types';
-import { workingFlowLpm } from './refs';
+import { branchBand, workingFlowLpm } from './refs';
 import type { LessonDef } from './types';
 
 /**
  * Placeholders, each naming a line laid by the scenario or one of its events:
  * - `{line:ID}` "25 mm line", `{hose:ID}` "25 mm", `{tip:ID}` "12 mm", `{kpa:ID}` "250 kPa" (its
- *   branch's Table 1 pressure);
+ *   branch's target pressure: Table 1's, or 700 for a Dial-A-Jet);
  * - `{flow:ID:F}` F × the line's working flow, to 10 L/min, e.g. "700 L/min" (`ofWorking` targets).
  * `{target}` is the UI's (the coach target's label) and passes through.
  */
@@ -33,7 +32,7 @@ function fill(
     case 'tip':
       return `${String(lay.branch.tipMm)} mm`;
     case 'kpa': {
-      const kpa = BRANCH_OPTIMUM_KPA[lay.branch.tipMm];
+      const kpa = branchBand(state, id)?.targetKpa;
       return kpa === undefined ? undefined : `${String(kpa)} kPa`;
     }
     case 'flow': {

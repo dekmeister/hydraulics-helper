@@ -6,7 +6,7 @@ const PRIMER_WORDS: Readonly<Record<PrimerSpec['kind'], string>> = {
   selfPriming: 'self-priming',
 };
 
-/** A truck's fitout in one line, from its spec: '3 deliveries (65, 38, 38 mm) · 3000 L tank · …'. */
+/** A truck's fitout in one line, from its spec: '3 deliveries (65, 38, 38 mm) · 3200 L tank · …'. */
 export function applianceSummary(spec: ApplianceSpec): string {
   const n = spec.deliveries.length;
   const sizes = spec.deliveries.map((d) => String(d.sizeMm)).join(', ');

@@ -1,7 +1,7 @@
 import { START_UP, shutDown } from './engineSteps';
 import { STANDARD_LENGTH_M } from '../constants';
 import { createInitialState } from '../engine';
-import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
+import { PUMP_DAMAGE, TANK_RESERVE, shutdownObjective } from '../lesson/common';
 import type { LessonDef, LineDef } from '../lesson/types';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
 import { attachLines, BUSH_LINE, VILLAGE_LINE, type PlannedLine } from './lay';
@@ -9,7 +9,7 @@ import type { Scenario } from './types';
 
 /**
  * Crew 1 protects the houses on 38 mm rubber; moved up the slope with a fourth length it wants
- * ~930 kPa at the pump. (25 mm canvas couldn't take the extra length: two lengths lose ~1400 kPa.)
+ * ~930 kPa at the pump. (Crew 2's two lengths of 25 mm canvas lose ~350 kPa at their 77 L/min.)
  */
 const FIRST: PlannedLine = { id: 'line-1', ...VILLAGE_LINE };
 /** Crew 2 runs 25 mm canvas onto spot fires in the yards once the fire spreads. */
@@ -23,7 +23,7 @@ const LESSON: LessonDef = {
     'A bush fire reaching the edge of town. Crew 1 protects the houses on a {line:line-1}, then ' +
     'moves up the slope behind them; a second crew runs {hose:line-2} canvas onto spot fires in ' +
     'the yards; and ' +
-    'when the street hydrant is connected you open it into the tank before the tank runs dry. ' +
+    'when the street hydrant is connected you open it into the tank before it reaches the crew-protection reserve. ' +
     'Listen to the radio and keep both crews in water.',
   objectives: [
     {
@@ -62,7 +62,7 @@ const LESSON: LessonDef = {
     {
       id: 'changeover',
       text:
-        'Open hydrant to tank before the tank runs dry; leave tank to pump open. Keep both crews ' +
+        'Open hydrant to tank before the tank reaches its reserve; leave tank to pump open. Keep both crews ' +
         'in water for 20 s.',
       when: {
         kind: 'all',
@@ -79,7 +79,10 @@ const LESSON: LessonDef = {
     shutdownObjective(['changeover'], [FIRST.id, SECOND.id]),
   ],
   failures: [
-    { ...TANK_DRY, text: 'The tank ran dry before the changeover: both crews lost water.' },
+    {
+      ...TANK_RESERVE,
+      text: 'The tank went into the crew-protection reserve before the changeover.',
+    },
     ...PUMP_DAMAGE,
   ],
   events: [
@@ -127,7 +130,7 @@ const LESSON: LessonDef = {
       ],
       radio: {
         from: 'OIC',
-        text: 'Hydrant’s connected to your hydrant-to-tank inlet. Open it before the tank runs dry.',
+        text: 'Hydrant’s connected to your hydrant-to-tank inlet. Open it before you’re into the reserve.',
       },
     },
   ],

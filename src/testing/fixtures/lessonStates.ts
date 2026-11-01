@@ -63,7 +63,7 @@ export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtu
         operate(lesson.def, start, getScenario('first-line').solution ?? []),
       );
     case 'failed':
-      // Two lines on a nearly empty tank: both crews charged, then it runs dry.
+      // Two lines on a nearly empty tank: both crews charged, then it reaches the reserve.
       return played('tank-attack', spec, (start, lesson) =>
         operate(
           lesson.def,
@@ -71,7 +71,10 @@ export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtu
             ...start,
             state: {
               ...start.state,
-              trucks: start.state.trucks.map((t) => ({ ...t, tankL: 400 })),
+              trucks: start.state.trucks.map((t) => ({
+                ...t,
+                tankL: 400 + (t.spec.tank?.reserveL ?? 0),
+              })),
             },
           },
           [
@@ -81,8 +84,8 @@ export function lessonState(spec: ApplianceSpec, id: LessonStateId): LessonFixtu
             { open: { line: 'line-2' } },
             { throttle: 0.75 },
             { wait: 60 },
-            // A smaller pump draws less: let it run on until the tank is dry.
-            { until: { kind: 'tank', max: 0 }, maxS: 240 },
+            // A smaller pump draws less: let it run on into the reserve.
+            { until: { kind: 'reserve' }, maxS: 240 },
           ],
         ),
       );

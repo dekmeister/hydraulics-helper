@@ -1,7 +1,7 @@
 import { START_UP, shutDown, startEngineSteps } from './engineSteps';
 import { createInitialState } from '../engine';
 import { inletOfKind } from '../appliances/controls';
-import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
+import { PUMP_DAMAGE, TANK_RESERVE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
 import { attachLines, BUSH_LINE, twoLines, type PlannedLine } from './lay';
 import type { Scenario } from './types';
@@ -21,7 +21,7 @@ const LINES: readonly PlannedLine[] = [
 const LESSON: LessonDef = {
   ladder: 2,
   brief:
-    'Two bush crews on the tank, each on a {line:line-1} with a {tip:line-1} branch. Crew 2 ' +
+    'Two bush crews on the tank, each on a {line:line-1} with a Dial-A-Jet branch. Crew 2 ' +
     'is working 10 m down the slope, so its branch gains pressure from the fall. One pump ' +
     'pressure serves both: set the pump for crew 1 and gate crew 2 back until both branches ' +
     'are right.',
@@ -53,7 +53,7 @@ const LESSON: LessonDef = {
     },
     shutdownObjective(['both'], ['line-1', 'line-2']),
   ],
-  failures: [TANK_DRY, ...PUMP_DAMAGE],
+  failures: [TANK_RESERVE, ...PUMP_DAMAGE],
 };
 
 export const TANK_ATTACK: Scenario = {

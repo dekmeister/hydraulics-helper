@@ -455,8 +455,8 @@ const DEBRIEF_CAPTIONS = {
   failed:
     'Debrief: "SCENARIO FAILED", "2. Tank attack…". ☆☆☆ and the points the objectives earned ' +
     '(Cat 1 45, Cat 7 30); WHAT HAPPENED leads with an amber-edged "Scenario failed / The tank ' +
-    'ran dry with crews on the branches."; OBJECTIVES: four, about crew 1’s and crew 2’s 25 mm ' +
-    'lines, holding both at about 250 kPa, and shut down; the met ones ✓ (Cat 1 three, Cat 7 two), ' +
+    'went into the crew-protection reserve with crews on the branches."; OBJECTIVES: four, about crew 1’s and crew 2’s 25 mm ' +
+    'lines, holding both at about 350–1034 kPa (700 preferred), and shut down; the met ones ✓ (Cat 1 three, Cat 7 two), ' +
     'the rest ○; SCORE Objectives +N, Clean running 0 (a failed run earns its objectives only), ' +
     'each penalty 0, Total N: the lines add up. No NEXT SCENARIO button.',
 } as const;
@@ -635,7 +635,7 @@ export const FIXTURES: readonly FixtureMeta[] = [
     expect:
       'Scenario menu: app bar (PUMPOPS, ABOUT, SOUND ON; no SCENARIOS button here), "SCENARIOS", "Pick ' +
       'the truck you’re training on, then a scenario." A YOUR APPLIANCE card: one row per ' +
-      'catalogue truck (radio dot, name, fitout line such as "3 deliveries (65, 38, 38 mm) · 3000 L ' +
+      'catalogue truck (radio dot, name, fitout line such as "3 deliveries (65, 38, 38 mm) · 3200 L ' +
       'tank · electric primer · tacho"), Category 1 tanker checked with an ink border. Eight paper cards numbered 1–8 in ink discs, each with title, ' +
       'brief and "Not tried yet"; card 1 has an ink border, GUIDED and NEXT UP tags and a filled ' +
       'START button; the rest have outlined START buttons. A FREE PLAY card last.',

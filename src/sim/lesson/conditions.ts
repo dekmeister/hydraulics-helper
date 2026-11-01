@@ -77,6 +77,10 @@ export function holds(c: Condition, state: SimState, facts: LessonFacts): boolea
       const capacityL = t?.spec.tank?.capacityL ?? 0;
       return t !== undefined && capacityL > 0 && within(t.tankL / capacityL, c);
     }
+    case 'reserve': {
+      const t = truck(c.truck);
+      return t !== undefined && t.tankL <= (t.spec.tank?.reserveL ?? 0);
+    }
     case 'branch': {
       const band = branchBand(state, c.line);
       return (
@@ -176,6 +180,7 @@ export function validateCondition(
     case 'throttle':
     case 'engine':
     case 'tank':
+    case 'reserve':
     case 'primed':
     case 'cavitating':
     case 'tally':

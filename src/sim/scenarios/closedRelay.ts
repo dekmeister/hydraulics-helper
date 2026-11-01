@@ -176,7 +176,7 @@ export const CLOSED_RELAY: Scenario = {
         { tS: 2, valves: { [a.deliveryId]: 1 } },
         { tS: 5, throttle: 0.4 },
         { tS: 40, valves: { [b.deliveryId]: 1 } },
-        // Bush lines want ~950 kPa: the relay's pressure at the inlet leaves little to add.
+        // Bush lines want ~1050 kPa: the relay's pressure at the inlet leaves little to add.
         { tS: 60, throttle: 0.45 },
         { tS: 90, throttle: 1 },
         { tS: 120, throttle: 0.45 },

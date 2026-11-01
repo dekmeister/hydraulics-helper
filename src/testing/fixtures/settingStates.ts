@@ -16,7 +16,7 @@ export const SETTING_STATE_SCENARIO: Readonly<Record<SettingStateId, string>> = 
 
 /**
  * Discharge each is trimmed to, kPa: ~700 for the village's 38 mm lines, ~950 for the interface's
- * uphill 38 mm and 25 mm canvas.
+ * uphill 38 mm and 25 mm canvas (whose Dial-A-Jet gets ~600 kPa, inside its 350–1034 band).
  */
 const WORKING_KPA: Readonly<Record<SettingStateId, number>> = { village: 700, interface: 950 };
 

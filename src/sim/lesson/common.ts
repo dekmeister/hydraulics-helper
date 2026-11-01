@@ -16,11 +16,14 @@ export const PUMP_DAMAGE: readonly Failure[] = [
   },
 ];
 
-/** The player's tank ran dry with crews depending on it. */
-export const TANK_DRY: Failure = {
-  id: 'tank-dry',
-  text: 'The tank ran dry with crews on the branches.',
-  when: { kind: 'tank', max: 0 },
+/**
+ * The player drew the tank into the crew-protection reserve (`TankSpec.reserveL`, or dry on a truck
+ * that keeps none) with crews depending on it.
+ */
+export const TANK_RESERVE: Failure = {
+  id: 'tank-reserve',
+  text: 'The tank went into the crew-protection reserve with crews on the branches.',
+  when: { kind: 'reserve' },
 };
 
 /**

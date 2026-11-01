@@ -12,6 +12,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 
 ## Gameplay and content
 
+* **Dial-A-Jet follow-ups** (2026-11-01, `Resources/bush-branch-and-hose-DATA.md`): the jet setting is fixed per line (`Branch.tipMm` with `model: 'dialAJet'`). Wanted: a lesson event or a crew radio call that dials a line down (8 → 5 mm) when a long lay can't hold 700 kPa, and a scenario that teaches it (five lengths on the 8 mm jet at ~1000 kPa gets ~435 kPa; on 5 mm the full 700). The fog setting isn't modelled (its flow falls above 690 kPa, which the square-law branch can't follow; it would need a table-driven branch in `lineResistance`), and the square law reads ~22 % high at 350 kPa on the 8 mm jet. Only free play lays the long (5-length) bush line; the ladder lessons all run two lengths.
 * Reactive firefighters (lose water → animate + radio call), incident escalation.
 * Branch shut-off by the crew (branch operator closing a controlled branch) as a scenario event. Goes with **pressurised vs flowing** (CALIBRATION row 13): `LineState` `charged` is "delivery flows"; once a branch can be shut, split it so the hose follows pressure (`DeliveryLine.branchKpa`) and the spray follows flow.
 * Hose carried per appliance (scenarios lay their setting's kit: `BUSH_LINE`, `VILLAGE_LINE` in `scenarios/lay.ts`, issue #10); unlined hose beyond the bush's 25 mm canvas.
@@ -66,6 +67,7 @@ New work: pick an item (or the slice Dek names), and when it's done delete it fr
 
 ## Code health
 
+* **Possible e2e flake:** `lessons.spec.ts` › "the incident's events…" failed 4 times early on 2026-11-01 (full-file and parallel runs), then passed 56 runs in a row with the same code; not reproduced, cause unknown. If it shows up again, capture the error and check `playUntil`/`trimBranch` for waits that depend on wall-clock time.
 * `advance(state, inputs, dt)` takes inputs for the active truck only, so a `ScriptStep` can't drive a support truck (the fill sequence, a booster failure) and an AI operator would have to write `truck.inputs` from outside `advance`. Change it to a per-truck inputs map (unlisted trucks keep their held inputs).
 * `SimState` has no schema version; settings and results are persisted (versioned), but add one before saving a game in progress. The closed-relay fit reads last tick's `linkReadings` flow, so a save must keep it.
 * **Returns to the tank** are summed by hand per mechanism (relief `dumpTo: 'tank'`, `pumpToTank`, `recirc`) in `network.ts`, `engine.ts`, `state/plumbing.ts`, `scenarios/trace.ts`, `testUtils.ts`, `create.ts` and `dryReadings`. Before a second appliance fits a recirc, or a switchable one (the Cat 7's FOAM ON), fold them into one list of returns with a single return-to-tank reading, and decide whether a recirc can be a control. `RecircSpec.sizeMm` is descriptive only (the sim reads the loss); drop it or use it in that rework.

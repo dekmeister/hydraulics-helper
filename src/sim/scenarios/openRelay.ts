@@ -184,10 +184,10 @@ export const OPEN_RELAY: Scenario = {
         ...prime(true),
         ...prime(false),
         { tS: 22, valves: { [a.deliveryId]: 1 } },
-        { tS: 25, throttle: 0.6 },
+        { tS: 25, throttle: 0.75 },
         { tS: 60, valves: { [b.deliveryId]: 1 } },
         { tS: 90, throttle: 1 },
-        { tS: 150, throttle: 0.5 },
+        { tS: 150, throttle: 0.65 },
       ],
       durationS: 300,
     };

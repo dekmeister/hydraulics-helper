@@ -38,8 +38,8 @@ const FREE_PLAY_ATTACK_THROTTLE = 0.4;
 /** Attack pump throttle on the heavy lines and the open relay: a comfortable residual. */
 const WORKING_THROTTLE = 0.6;
 
-/** Attack pump discharge the closed relay's bush lines are trimmed to: ~250 kPa at each branch. */
-const BUSH_WORKING_KPA = 950;
+/** Attack pump discharge the closed relay's bush lines are trimmed to: ~700 kPa at each branch. */
+const BUSH_WORKING_KPA = 1050;
 
 const inputs = (throttle: number, open: readonly ControlId[], on: readonly ControlId[] = []) =>
   ({

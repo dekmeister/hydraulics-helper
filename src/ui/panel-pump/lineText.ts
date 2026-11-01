@@ -1,5 +1,5 @@
 import { hoseType } from '../../sim/hose';
-import type { HoseLine, HoseSegment, RelayLink } from '../../sim/types';
+import type { Branch, HoseLine, HoseSegment, RelayLink } from '../../sim/types';
 import { formatWhole } from '../format';
 
 /** Hose in runs of the same hose, e.g. "3 × 30 m 38 mm lined + 1 × 30 m 65 mm lined". */
@@ -23,6 +23,13 @@ function describeClimb(elevationM: number): string[] {
   return [`${formatWhole(Math.abs(elevationM))} m ${elevationM > 0 ? 'uphill' : 'downhill'}`];
 }
 
+/** "8 mm Dial-A-Jet" (the jet setting), "25 mm monitor" or "15 mm branch". */
+function describeBranch(branch: Branch): string {
+  const tip = `${String(branch.tipMm)} mm`;
+  if (branch.model === 'dialAJet') return `${tip} Dial-A-Jet`;
+  return `${tip} ${branch.kind === 'monitor' ? 'monitor' : 'branch'}`;
+}
+
 /**
  * Short description of a hose lay for its delivery row, e.g.
  * "3 × 30 m 38 mm lined · 15 mm branch · 14 m uphill" (or "25 mm monitor"). Runs of the same hose are grouped.
@@ -30,7 +37,7 @@ function describeClimb(elevationM: number): string[] {
 export function describeLine(line: HoseLine): string {
   return [
     describeHose(line.segments),
-    `${String(line.branch.tipMm)} mm ${line.branch.kind === 'monitor' ? 'monitor' : 'branch'}`,
+    describeBranch(line.branch),
     ...describeClimb(line.elevationM),
   ].join(' · ');
 }

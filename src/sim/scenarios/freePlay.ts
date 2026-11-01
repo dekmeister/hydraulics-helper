@@ -2,7 +2,14 @@ import { startEngineSteps } from './engineSteps';
 import { inletOfKind } from '../appliances/controls';
 import { createSiteState } from '../engine';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
-import { attachLines, BUSH_LINE, MONITOR_LINE, VILLAGE_LINE, type PlannedLine } from './lay';
+import {
+  attachLines,
+  BUSH_LINE,
+  BUSH_LINE_LONG,
+  MONITOR_LINE,
+  VILLAGE_LINE,
+  type PlannedLine,
+} from './lay';
 import { ATTACK_ID, BASE_ID, baseRelay, lengths } from './relayTrucks';
 import { supportSpec, type Scenario, type ScriptStep, type SupportRole } from './types';
 import { hoseType } from '../hose';
@@ -17,12 +24,12 @@ const DOWNHILL_M = -10;
 
 /**
  * The attack pump's lays, most wanted first, laid while it has deliveries: a monitor (only on a
- * delivery big enough for its hose), a crew up the slope on 38 mm and a bush crew down it.
+ * delivery big enough for its hose), a crew up the slope on 38 mm and a bush crew down it on a long lay of canvas.
  */
 const ATTACK_LINES: readonly PlannedLine[] = [
   { id: 'monitor', ...MONITOR_LINE },
   { id: 'line-uphill', ...VILLAGE_LINE, elevationM: UPHILL_M },
-  { id: 'line-downhill', ...BUSH_LINE, elevationM: DOWNHILL_M },
+  { id: 'line-downhill', ...BUSH_LINE_LONG, elevationM: DOWNHILL_M },
 ];
 
 /** A bush crew working off the base pump at the dam. */

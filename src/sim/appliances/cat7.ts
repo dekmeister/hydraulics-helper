@@ -14,7 +14,7 @@ export const CAT7: ApplianceSpec = {
   pump: {
     shutoffKpa: 1400, // pressure rise at zero flow, max rpm // PLACEHOLDER — needs Dek
     // Rated ~550 L/min at 700 kPa, max rpm: (1400 − 700) / 550². Sized so the lessons' two crew
-    // lines (38 mm with a 15 mm tip, the 25 mm light line with a 12 mm tip) run at working
+    // lines (38 mm with a 15 mm tip, the 25 mm light line with a Dial-A-Jet) run at working
     // pressure with some throttle in hand: sized for the lessons, not read off the truck
     // (CALIBRATION needs Dek 39). // PLACEHOLDER — needs Dek
     droopKpaPerLpm2: 700 / 550 ** 2,
@@ -45,7 +45,8 @@ export const CAT7: ApplianceSpec = {
     runDownS: 0.5, // a small engine runs down quicker than the Cat 1's // PLACEHOLDER — needs Dek
   },
   tank: {
-    capacityL: 1600, // PLACEHOLDER — needs Dek
+    capacityL: 1600, // Cat 7 band is 801–1600 L (BF manual p189) // doctrine-confirmed (Dek, 2026-11-01)
+    reserveL: 300, // crew-protection reserve // PLACEHOLDER — needs Dek (Dek, 2026-11-01: 1000 L is too high)
     // Tank water about 0.8 m above the pump inlet: ~8 kPa on the compound at rest. // PLACEHOLDER — needs Dek
     headM: 0.8,
   },

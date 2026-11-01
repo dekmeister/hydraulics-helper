@@ -5,6 +5,7 @@ import { TEST_APPLIANCE } from '../appliances/testAppliance';
 import { isRigid } from '../hose';
 import { eligibleAppliances, getScenario, scenarioTraceCsv, SCENARIOS } from './index';
 import { APPLIANCES } from '../appliances/catalogue';
+import { MIN_CREW_LENGTHS } from './lay';
 import { loadScenario } from './load';
 import { missingRequirements, supports, supportsLesson } from './types';
 import type { ApplianceSpec } from '../types';
@@ -32,6 +33,23 @@ describe.each(SCENARIOS.map((s, i) => [s.id, s, i] as const))('scenario %s', (_i
       expect(new Set(used).size).toBe(used.length);
       const deliveryIds = spec.deliveries.map((d) => d.id);
       for (const l of lines) expect(deliveryIds).toContain(l.deliveryId);
+    },
+  );
+
+  // RFS doctrine: a crew's line is never less than two lengths, whether laid at the start or by an
+  // event; moving a branch only adds to it.
+  it.each(specs.map((spec) => [spec.id, spec] as const))(
+    'lays every crew line at least two lengths long, on %s',
+    (_specId, spec) => {
+      const laid = scenario.build(spec).state.lines.map((l) => [l.id, l.segments.length] as const);
+      const events = (scenario.lesson?.events ?? []).flatMap((e) =>
+        (e.effects ?? []).flatMap((x) =>
+          x.kind === 'layLine' ? [[x.line.id, x.line.lengths] as const] : [],
+        ),
+      );
+      for (const [id, n] of [...laid, ...events]) {
+        expect(n, `${id}: lengths`).toBeGreaterThanOrEqual(MIN_CREW_LENGTHS);
+      }
     },
   );
 

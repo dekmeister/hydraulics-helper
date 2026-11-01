@@ -1,15 +1,27 @@
 import { STANDARD_LENGTH_M } from '../constants';
 import { DEFAULT_TRUCK_ID } from '../engine';
 import { hoseType } from '../hose';
-import type { ApplianceSpec, DeliverySpec, HoseLine } from '../types';
+import type { ApplianceSpec, Branch, BranchModel, DeliverySpec, HoseLine } from '../types';
 
 /** What a crew runs out: a hose, how many standard lengths of it, and the branch tip. */
 export interface LineKit {
   hose: string;
   lengths: number;
+  /** The tip bore, or for a Dial-A-Jet the jet setting, mm. */
   tipMm: number;
+  /** Default 'smoothBore'. */
+  model?: BranchModel;
   /** A monitor on the end instead of a crew's branch. */
   monitor?: boolean;
+}
+
+/** The branch a kit puts on the end of its line. */
+export function branchOf(kit: LineKit): Branch {
+  return {
+    tipMm: kit.tipMm,
+    ...(kit.model === undefined ? {} : { model: kit.model }),
+    ...(kit.monitor === true ? { kind: 'monitor' as const } : {}),
+  };
 }
 
 /** A line plan before it's attached to a delivery; `elevationM` is the branch above the pump. */
@@ -18,12 +30,22 @@ export interface PlannedLine extends LineKit {
   elevationM?: number;
 }
 
+/** The shortest line a crew runs: RFS doctrine is never less than two lengths. // doctrine-confirmed (Dek) */
+export const MIN_CREW_LENGTHS = 2;
+
 /**
- * A bush crew's line (issue #10): one length of 25 mm canvas on a 38→25 adaptor with a 12 mm
- * branch (Table 1: 250 kPa, ~150 L/min), about 930 kPa at the pump. One length because percolating
- * hose loses ~680 kPa a length at that flow (`25U`). // PLACEHOLDER — needs Dek (the usual lay)
+ * A bush crew's line: two lengths of 25 mm canvas on a 38→25 adaptor with a Dial-A-Jet on its 8 mm
+ * jet (77 L/min at 700 kPa), about 1060 kPa at the pump: ~180 kPa a length of friction at that flow.
+ * Two is the doctrinal minimum; crews run more. // doctrine-confirmed (Dek, 2026-11-01)
  */
-export const BUSH_LINE: LineKit = { hose: '25U', lengths: 1, tipMm: 12 };
+export const BUSH_LINE: LineKit = { hose: '25U', lengths: 2, tipMm: 8, model: 'dialAJet' };
+
+/**
+ * A long bush lay: five lengths of 25 mm canvas, the crew dialled down to the 5 mm jet (45 L/min at
+ * 700 kPa), about 1010 kPa at the pump. On the 8 mm jet five lengths would need 1600 kPa for 700,
+ * so at ~1000 kPa it would get ~435 kPa: workable, but the 5 mm jet holds the full pressure.
+ */
+export const BUSH_LINE_LONG: LineKit = { hose: '25U', lengths: 5, tipMm: 5, model: 'dialAJet' };
 
 /**
  * A village crew's line (issue #10): three lengths of 38 mm rubber hose, taken as lined, with a
@@ -75,8 +97,7 @@ export function attachLines(
         lengthM: STANDARD_LENGTH_M,
       })),
       elevationM: plan.elevationM ?? 0,
-      branch:
-        plan.monitor === true ? { tipMm: plan.tipMm, kind: 'monitor' } : { tipMm: plan.tipMm },
+      branch: branchOf(plan),
     };
   });
 }

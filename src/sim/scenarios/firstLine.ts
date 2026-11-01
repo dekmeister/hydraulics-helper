@@ -1,12 +1,12 @@
 import { inletOfKind } from '../appliances/controls';
 import { createInitialState } from '../engine';
-import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
+import { PUMP_DAMAGE, TANK_RESERVE, shutdownObjective } from '../lesson/common';
 import type { LessonDef, ValveRef } from '../lesson/types';
 import { START_UP, shutDown, startEngineSteps, stopEngineSteps } from './engineSteps';
 import { attachLines, BUSH_LINE, type PlannedLine } from './lay';
 import type { Scenario } from './types';
 
-/** The bush crew's line: 25 mm canvas, 12 mm tip, 250 kPa at the branch (Table 1), ~950 at the pump. */
+/** The bush crew's line: two lengths of 25 mm canvas, a Dial-A-Jet on 8 mm, 700 kPa at the branch, ~1050 at the pump. */
 const LINE: PlannedLine = { id: 'line-1', ...BUSH_LINE };
 const ON_LINE: ValveRef = { line: LINE.id };
 const TANK: ValveRef = { inlet: 'tank' };
@@ -14,7 +14,7 @@ const TANK: ValveRef = { inlet: 'tank' };
 const LESSON: LessonDef = {
   ladder: 1,
   brief:
-    'A bush crew has run out a length of 25 mm canvas hose with a 12 mm branch. Get them water from ' +
+    'A bush crew has run out two lengths of 25 mm canvas hose with a Dial-A-Jet branch. Get them water from ' +
     'the tank at the right pressure, then shut down cleanly. The pump is cold: you start it. ' +
     'The coach walks you through it.',
   objectives: [
@@ -32,12 +32,12 @@ const LESSON: LessonDef = {
     },
     shutdownObjective(['pressure'], [LINE.id]),
   ],
-  failures: [TANK_DRY, ...PUMP_DAMAGE],
+  failures: [TANK_RESERVE, ...PUMP_DAMAGE],
   coach: [
     {
       id: 'welcome',
       text:
-        'This is your pump panel. A crew is waiting on the end of a length of 25 mm canvas hose. ' +
+        'This is your pump panel. A crew is waiting on the end of two lengths of 25 mm canvas hose. ' +
         'You’ll start the pump, open the tank to the pump, open their delivery, then bring the ' +
         'pressure up.',
     },
@@ -69,16 +69,16 @@ const LESSON: LessonDef = {
     },
     {
       id: 'throttle',
-      text: 'Bring the throttle up and watch the discharge gauge climb. Aim for about 950 kPa.',
+      text: 'Bring the throttle up and watch the discharge gauge climb. Aim for about 1050 kPa.',
       target: { throttle: true },
-      done: { kind: 'gauge', gauge: 'discharge', min: 850 },
+      done: { kind: 'gauge', gauge: 'discharge', min: 950 },
     },
     {
       id: 'friction',
       text:
         'The discharge gauge shows pressure at the pump, not at the branch. Canvas hose weeps to ' +
-        'keep itself wet, and one length of 25 mm loses about 700 kPa to friction at this flow, ' +
-        'so 950 at the pump is about 250 at the branch: what a 12 mm tip wants.',
+        'keep itself wet, and two lengths of 25 mm lose about 350 kPa to friction at this flow, ' +
+        'so 1050 at the pump is about 700 at the branch: what a Dial-A-Jet is rated for.',
       target: { gauge: 'discharge' },
     },
     {
@@ -143,7 +143,7 @@ export const FIRST_LINE: Scenario = {
         ...startEngineSteps(spec),
         { tS: 0, valves: { [tankInlet]: 1 } },
         { tS: 2, valves: { [delivery]: 1 } },
-        { tS: 5, throttle: 0.75 },
+        { tS: 5, throttle: 0.82 },
         { tS: 40, throttle: 0 },
         ...[0.75, 0.5, 0.25, 0].map((open, i) => ({ tS: 45 + i, valves: { [delivery]: open } })),
         ...stopEngineSteps(spec, 50),

@@ -47,7 +47,7 @@ Each tick (fixed 10 Hz) solves the network as if steady, then Euler-steps the sl
 
 * **Inlets** ([003](decisions/003-inlets-as-parallel-paths.md)): tank, hydrant, draught and closed relay are parallel source paths at the pump inlet, floored at the cavitation pressure. Hydrant to tank bypasses the pump.
 * **Pump**: an affinity-law curve, `P = shutoff·(rpm/max)² − droop·Q²`, per appliance, with engine start/stop, relief and recirculation as spec options.
-* **Lines**: valve loss, hose friction per metre (`HOSES` catalogue), elevation at 10 kPa/m, branch orifice law. Lines fill and empty (`lineFill.ts`).
+* **Lines**: valve loss, hose friction per metre (`HOSES` catalogue), elevation at 10 kPa/m, branch orifice law (a smooth-bore tip from Table 1, or a Dial-A-Jet's jet setting from the maker's flow table: `sim/branch.ts`). Lines fill and empty (`lineFill.ts`).
 * **Relays** ([004](decisions/004-relay-equivalent-source.md)): a closed relay couples two pump solves; an open relay ends at a tank or dam.
 * **Teaching behaviours**: cavitation, priming and loss of prime, churn overheat, water hammer, relay bursts, tank running dry and overflow. Each module's header says how it works; the assumptions that need Dek's confirmation are in `docs/CALIBRATION.md`.
 

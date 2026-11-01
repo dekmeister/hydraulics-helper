@@ -104,10 +104,10 @@ export const DRAUGHTING: Scenario = {
         ...prime(true),
         ...prime(false),
         { tS: 27, valves: { [a.deliveryId]: 1 } },
-        { tS: 30, throttle: 0.6 },
+        { tS: 30, throttle: 0.75 },
         { tS: 60, valves: { [b.deliveryId]: 1 } },
         { tS: 90, throttle: 1 },
-        { tS: 120, throttle: 0.6 },
+        { tS: 120, throttle: 0.75 },
       ],
       durationS: 180,
     };

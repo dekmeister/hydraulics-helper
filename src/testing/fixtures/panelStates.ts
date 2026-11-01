@@ -183,8 +183,12 @@ export function panelState(spec: ApplianceSpec, id: PanelStateId): SimState {
 export type SceneStateId =
   'all-charged' | 'one-line-off' | 'tank-low' | 'tank-empty' | 'line-filling';
 
-/** How long the empty-tank scene runs on: a line laid downhill drains out its branch by then, s. */
-const DRAIN_S = 30;
+/**
+ * How long the empty-tank scene runs on: a line laid downhill drains out its branch by then, s. The
+ * bush line's two lengths (~30 L) leave a Dial-A-Jet's 8 mm jet at ~30 L/min under their 10 m head,
+ * slowing as they empty: about two minutes.
+ */
+const DRAIN_S = 180;
 
 /** Most the 'line-filling' fixture runs waiting for the front to pass half way, s. */
 const FILLING_MAX_S = 60;

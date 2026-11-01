@@ -24,10 +24,10 @@ describe.each([...APPLIANCES, TEST_APPLIANCE])('lesson fixture states on $id', (
     expect(lessonState(spec, 'passed').lesson.progress.status).toBe('passed');
   });
 
-  it('failed: the tank ran dry with crews on the branches', () => {
+  it('failed: the tank went into the reserve with crews on the branches', () => {
     const { lesson } = lessonState(spec, 'failed');
     expect(lesson.progress.status).toBe('failed');
-    expect(lesson.progress.failure).toBe('tank-dry');
+    expect(lesson.progress.failure).toBe('tank-reserve');
     expect(lesson.progress.stats.crewDryS).toBe(0);
   });
 });

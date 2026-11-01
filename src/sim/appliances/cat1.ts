@@ -42,7 +42,8 @@ export const CAT1: ApplianceSpec = {
     runDownS: 0.8, // spin-down time constant with the fuel cut // PLACEHOLDER — needs Dek
   },
   tank: {
-    capacityL: 3000, // PLACEHOLDER — needs Dek
+    capacityL: 3200, // Cat 1 band is 3001–4000 L (BF manual p189); 3200 per Dek // doctrine-confirmed (Dek, 2026-11-01)
+    reserveL: 300, // crew-protection reserve // PLACEHOLDER — needs Dek (Dek, 2026-11-01: 1000 L is too high)
     // Tank water about 1 m above the pump eye: ~10 kPa on the compound at rest (issue #13). // PLACEHOLDER — needs Dek
     headM: 1,
   },
@@ -105,7 +106,10 @@ export const CAT1: ApplianceSpec = {
   relief: {
     kind: 'preset', // Cat 1 relief is preset, not adjustable, and dumps to tank (L2322–2336) // doctrine-confirmed
     dumpTo: 'tank',
-    setKpa: 1100, // PLACEHOLDER — needs Dek
+    // Above the ~1060 kPa a 2-length 8 mm Dial-A-Jet line needs for 700 kPa at the branch, ~17 %
+    // over the rated 1000 kPa, under the 1400 kPa shutoff. No Cat 1 figure found; a preset must
+    // clear normal working pressure (bush-branch-and-hose-DATA.md §6). // PLACEHOLDER — needs Dek
+    setKpa: 1200,
     slopeLpmPerKpa: 50, // bypass flow per kPa over set; holds discharge within ~20 kPa of set // PLACEHOLDER — needs Dek
   },
   // Dial markings: the GAAM faces on the Cat1B panel (Resources/Photos/Cat1B_Panel.jpg). The

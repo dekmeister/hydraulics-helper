@@ -96,7 +96,8 @@ for (const spec of JOURNEY_APPLIANCES) {
       await dragThrottle(page, 0.5);
       await stepAndSettle(page, 5);
       await expect(hoseLay(page, first.deliveryId)).toHaveAttribute('data-state', 'charged');
-      await stepAndSettle(page, 600);
+      // The 60 L lasts a minute on a Dial-A-Jet's ~60 L/min; run well past it (ticks, 10 per second).
+      await stepAndSettle(page, 1500);
       await expect(hoseLay(page, first.deliveryId)).toHaveAttribute('data-state', 'holding');
       await expect(spray(page, first.deliveryId)).toHaveCount(0);
     });

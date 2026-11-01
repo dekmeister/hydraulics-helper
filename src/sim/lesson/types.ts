@@ -48,6 +48,8 @@ export type Condition =
   | ({ kind: 'gauge'; gauge: GaugeId; truck?: string } & Range)
   /** Water in the tank as a fraction of capacity, 0–1. */
   | ({ kind: 'tank'; truck?: string } & Range)
+  /** The tank is down to its crew-protection reserve (`TankSpec.reserveL`), or empty without one. */
+  | { kind: 'reserve'; truck?: string }
   /** The branch on `line` is within its working band (Table 1 pressure for its tip ± a margin). */
   | { kind: 'branch'; line: string }
   /**

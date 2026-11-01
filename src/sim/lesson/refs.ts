@@ -1,7 +1,6 @@
 // Resolving a lesson's symbolic names (a line, an inlet kind, the player's truck) against a state.
 import { primerControlId } from '../appliances/controls';
-import { branchFlowLpm } from '../branch';
-import { BRANCH_BAND_FRACTION, BRANCH_OPTIMUM_KPA } from '../constants';
+import { branchFlowLpm, branchWorkingBand, type BranchBand } from '../branch';
 import type { ControlId, HoseLine, RelayLink, SimState, TruckState } from '../types';
 import type { EngineSwitch, ValveRef } from './types';
 
@@ -55,26 +54,13 @@ export function resolveEngineSwitch(
   return which === 'stop' ? controls.stop.id : controls[which];
 }
 
-/** A branch's working band, kPa: its tip's Table 1 optimum ± `BRANCH_BAND_FRACTION`. */
-export interface BranchBand {
-  targetKpa: number;
-  minKpa: number;
-  maxKpa: number;
-}
-
 /** The working band for the branch on `line`; undefined for an unknown line or an unlisted tip. */
 export function branchBand(state: SimState, line: string): BranchBand | undefined {
   const lay = state.lines.find((l) => l.id === line);
-  const targetKpa = lay === undefined ? undefined : BRANCH_OPTIMUM_KPA[lay.branch.tipMm];
-  if (targetKpa === undefined) return undefined;
-  return {
-    targetKpa,
-    minKpa: targetKpa * (1 - BRANCH_BAND_FRACTION),
-    maxKpa: targetKpa * (1 + BRANCH_BAND_FRACTION),
-  };
+  return lay === undefined ? undefined : branchWorkingBand(lay.branch);
 }
 
-/** Flow through the branch on `line` at its Table 1 pressure, L/min; undefined if it has none. */
+/** Flow through the branch on `line` at its target pressure, L/min; undefined if it has none. */
 export function workingFlowLpm(state: SimState, line: string): number | undefined {
   const lay = state.lines.find((l) => l.id === line);
   const band = branchBand(state, line);

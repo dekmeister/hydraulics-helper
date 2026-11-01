@@ -18,6 +18,7 @@ scripts/deploy.sh
 # Source manual: third-party material, kept locally only
 Resources/*.pdf
 Resources/hydraulics-manual.txt
+Resources/bush-firefighter-manual.txt
 
 # Test and review output
 dist-e2e/

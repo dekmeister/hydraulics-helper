@@ -2,7 +2,7 @@ import { START_UP, shutDown, startEngineSteps } from './engineSteps';
 import { STANDARD_LENGTH_M } from '../constants';
 import { createInitialState, DEFAULT_TRUCK_ID } from '../engine';
 import { inletOfKind } from '../appliances/controls';
-import { PUMP_DAMAGE, TANK_DRY, shutdownObjective } from '../lesson/common';
+import { PUMP_DAMAGE, TANK_RESERVE, shutdownObjective } from '../lesson/common';
 import type { LessonDef } from '../lesson/types';
 import { HYDRANT_MAIN_LOSS, HYDRANT_STATIC_KPA } from './hydrantSupply';
 import { attachLines, twoLines, VILLAGE_LINE, type PlannedLine } from './lay';
@@ -65,7 +65,7 @@ const LESSON: LessonDef = {
     },
     shutdownObjective(['both'], ['line-1', 'line-2']),
   ],
-  failures: [TANK_DRY, ...PUMP_DAMAGE],
+  failures: [TANK_RESERVE, ...PUMP_DAMAGE],
 };
 
 /** Hydrant to tank (ladder step 3): the usual way to take a hydrant. */
