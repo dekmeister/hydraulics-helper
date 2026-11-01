@@ -81,6 +81,8 @@ If you break `dev`, fixing it takes priority over new features.
 
 Commits: imperative, scoped, e.g. `sim: add draughting lift + prime states`, `ui: compound gauge dual scale`. Small commits over one mega-commit.
 
+Branches: work on `main` by default. Only create a feature branch as an exception, when Dek asks for one.
+
 ## When unsure
 
 * **Physics/doctrine question** (a friction coefficient, standard branch flow, correct gauge behaviour): don't guess silently. Implement behind a `PLACEHOLDER` constant, add a row to `docs/CALIBRATION.md` under "needs Dek", and flag it in the summary. Dek is a systems/RF engineer with fire-service domain knowledge — precise questions get precise answers.
